@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("DRIVER")
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  garage    Garage?
+  reviews   Review[]
+  favorites GarageFavorite[]
+  vehicles  UserVehicle[]
+}
+
+model Garage {
+  id          String  @id @default(cuid())
+  ownerId     String  @unique
+  name        String
+  slug        String  @unique
+  description String?
+  address     String
+  city        String
+  province    String  @default("QC")
+  postalCode  String
+  phone       String
+  email       String?
+  website     String?
+  logoUrl     String?
+  coverUrl    String?
+  latitude    Float?
+  longitude   Float?
+
+  subscriptionStatus String    @default("TRIAL")
+  subscriptionEndAt  DateTime?
+  stripeCustomerId   String?
+  stripePriceId      String?
+
+  yearFounded     Int?
+  employeeCount   Int?
+  languages       String?
+  openingHours    String?
+  acceptsWalkIn   Boolean @default(true)
+  appointmentOnly Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner        User                 @relation(fields: [ownerId], references: [id])
+  services     GarageService[]
+  brands       GarageBrand[]
+  reviews      Review[]
+  favorites    GarageFavorite[]
+  availability GarageAvailability[]
+  photos       GaragePhoto[]
+}
+
+model GarageService {
+  id          String  @id @default(cuid())
+  garageId    String
+  categoryId  String
+  name        String
+  description String?
+  priceMin    Float?
+  priceMax    Float?
+  durationMin Int?
+  active      Boolean @default(true)
+
+  garage   Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+}
+
+model ServiceCategory {
+  id          String @id @default(cuid())
+  name        String
+  nameEn      String?
+  icon        String?
+  description String?
+  sortOrder   Int    @default(0)
+
+  services GarageService[]
+}
+
+model GarageBrand {
+  id       String  @id @default(cuid())
+  garageId String
+  brand    String
+  accepts  Boolean @default(true)
+  note     String?
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, brand])
+}
+
+model GarageAvailability {
+  id        String  @id @default(cuid())
+  garageId  String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, dayOfWeek])
+}
+
+model GaragePhoto {
+  id        String  @id @default(cuid())
+  garageId  String
+  url       String
+  caption   String?
+  sortOrder Int     @default(0)
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  garageId     String
+  userId       String
+  rating       Int
+  title        String?
+  comment      String?
+  service      String?
+  vehicleMake  String?
+  vehicleModel String?
+  vehicleYear  Int?
+  ownerReply   String?
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model GarageFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  garageId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  garage Garage @relation(fields: [garageId], references: [id])
+
+  @@unique([userId, garageId])
+}
+
+model UserVehicle {
+  id           String   @id @default(cuid())
+  userId       String
+  year         Int
+  make         String
+  model        String
+  trim         String?
+  color        String?
+  mileage      Int?
+  licensePlate String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
