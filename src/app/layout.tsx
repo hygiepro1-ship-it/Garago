@@ -1,23 +1,31 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-
 export const metadata: Metadata = {
-  title: "GarageQC — Trouvez le bon garage au Québec",
+  title: "GarageQC — Comparez les garages, réservez au meilleur prix",
   description:
-    "Trouvez le meilleur garage pour votre véhicule au Québec. Filtrez par marque, modèle, service et disponibilité. Lisez les avis vérifiés.",
-  keywords: ["garage", "mécanique", "Québec", "pneus", "entretien", "réparation auto"],
+    "Trouvez le meilleur garage pour votre véhicule exact au Québec. Filtrez par marque, modèle, finition, service et disponibilité. Avis vérifiés, prix transparents.",
+  keywords: ["garage", "mécanique", "Québec", "pneus", "entretien", "réparation auto", "vidange", "freins"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-gray-50 font-sans">
+    <html lang="fr" className="h-full">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body
+        className="min-h-full flex flex-col antialiased"
+        style={{
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif",
+          backgroundColor: "#f8fafc",
+        }}
+      >
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>
