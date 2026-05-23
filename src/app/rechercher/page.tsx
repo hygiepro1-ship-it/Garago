@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
-import { VEHICLE_MAKES, getModelsForMake, getTrimsForModel, getYears, hasTrims } from "@/lib/vehicleData";
+import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 
 function SearchContent() {
@@ -18,7 +18,6 @@ function SearchContent() {
   const [year, setYear] = useState(searchParams.get("year") ?? "");
   const [make, setMake] = useState(searchParams.get("make") ?? "");
   const [model, setModel] = useState(searchParams.get("model") ?? "");
-  const [trim, setTrim] = useState(searchParams.get("trim") ?? "");
   const [service, setService] = useState(searchParams.get("service") ?? "");
   const [city, setCity] = useState(searchParams.get("city") ?? "");
   const [walkInOnly, setWalkInOnly] = useState(false);
@@ -26,8 +25,6 @@ function SearchContent() {
 
   const years = getYears();
   const models = make ? getModelsForMake(make) : [];
-  const trims = model ? getTrimsForModel(model) : [];
-  const showTrim = model && hasTrims(model);
 
   const selectedService = SERVICE_CATEGORIES.find((s) => s.id === service);
 
@@ -63,7 +60,6 @@ function SearchContent() {
     if (year) params.set("year", year);
     if (make) params.set("make", make);
     if (model) params.set("model", model);
-    if (trim) params.set("trim", trim);
     if (service) params.set("service", service);
     if (city) params.set("city", city);
     router.push(`/rechercher?${params.toString()}`);
@@ -71,7 +67,7 @@ function SearchContent() {
   }
 
   function clearAll() {
-    setYear(""); setMake(""); setModel(""); setTrim("");
+    setYear(""); setMake(""); setModel("");
     setService(""); setCity(""); setWalkInOnly(false); setMinRating("");
     router.push("/rechercher");
   }
@@ -91,20 +87,14 @@ function SearchContent() {
               <option value="">Année</option>
               {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
-            <select className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={make} onChange={(e) => { setMake(e.target.value); setModel(""); setTrim(""); }}>
+            <select className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}>
               <option value="">Marque</option>
               {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
-            <select className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={model} onChange={(e) => { setModel(e.target.value); setTrim(""); }} disabled={!make}>
+            <select className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}>
               <option value="">Modèle</option>
               {models.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
-            {showTrim && (
-              <select className="rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={trim} onChange={(e) => setTrim(e.target.value)} style={{ backgroundColor: "rgba(249,115,22,0.15)", color: "#fb923c", border: "1px solid rgba(249,115,22,0.4)" }}>
-                <option value="">Finition</option>
-                {trims.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            )}
             <select className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400" value={service} onChange={(e) => setService(e.target.value)}>
               <option value="">Prestation</option>
               {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -116,10 +106,9 @@ function SearchContent() {
             >
               Rechercher
             </button>
-            {(year || make || model || trim) && (
+            {(year || make || model) && (
               <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg" style={{ backgroundColor: "rgba(249,115,22,0.2)", color: "#fb923c" }}>
-                <span>🚗</span>
-                {year} {make} {model}{trim ? ` — ${trim}` : ""}
+                🚗 {year} {make} {model}
               </div>
             )}
           </div>
@@ -237,7 +226,7 @@ function SearchContent() {
                   {loading ? "Recherche en cours..." : (
                     <>
                       <span className="font-bold text-gray-900">{total}</span> garage{total !== 1 ? "s" : ""} trouvé{total !== 1 ? "s" : ""}
-                      {make && <span> • Compatible <strong>{make} {model}</strong>{trim ? ` ${trim}` : ""}</span>}
+                      {make && <span> • Compatible <strong>{make} {model}</strong></span>}
                     </>
                   )}
                 </p>
@@ -247,7 +236,7 @@ function SearchContent() {
               {hasFilters && (
                 <div className="flex flex-wrap gap-2">
                   {make && <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>🚗 {make}</span>}
-                  {model && <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>{model}{trim ? ` — ${trim}` : ""}</span>}
+                  {model && <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>{model}</span>}
                   {selectedService && <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>{selectedService.icon} {selectedService.name}</span>}
                   {city && <span className="text-xs px-3 py-1.5 rounded-full font-semibold bg-gray-100 text-gray-700">📍 {city}</span>}
                 </div>
