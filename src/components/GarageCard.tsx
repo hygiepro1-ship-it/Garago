@@ -18,9 +18,10 @@ interface GarageCardProps {
     appointmentOnly: boolean;
   };
   highlightService?: string;
+  distance?: string;          // e.g. "3.2 km"
 }
 
-export default function GarageCard({ garage, highlightService }: GarageCardProps) {
+export default function GarageCard({ garage, highlightService, distance }: GarageCardProps) {
   const acceptedBrands = garage.brands.filter((b) => b.accepts).slice(0, 6);
   const services = garage.services.slice(0, 3);
 
@@ -63,7 +64,14 @@ export default function GarageCard({ garage, highlightService }: GarageCardProps
               >
                 {garage.name}
               </h3>
-              <p className="text-gray-500 text-xs">📍 {garage.city}, {garage.province}</p>
+              <p className="text-gray-500 text-xs flex items-center gap-1.5">
+                📍 {garage.city}, {garage.province}
+                {distance && (
+                  <span className="font-semibold px-1.5 py-0.5 rounded-md text-xs" style={{ backgroundColor: "#f0fdf4", color: "#15803d" }}>
+                    {distance}
+                  </span>
+                )}
+              </p>
 
               {/* Rating */}
               <div className="flex items-center gap-1.5 mt-1.5">
