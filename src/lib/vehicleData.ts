@@ -1,9 +1,9 @@
 export const VEHICLE_MAKES = [
   "Acura", "Alfa Romeo", "Audi", "BMW", "Buick", "Cadillac",
-  "Chevrolet", "Chrysler", "Dodge", "Ford", "Genesis", "GMC",
+  "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "Genesis", "GMC",
   "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia",
   "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz",
-  "MINI", "Mitsubishi", "Nissan", "Porsche", "RAM", "Subaru",
+  "MINI", "Mitsubishi", "Nissan", "Polestar", "Porsche", "RAM", "Rivian", "Subaru",
   "Tesla", "Toyota", "Volkswagen", "Volvo",
 ];
 
@@ -18,6 +18,9 @@ export const VEHICLE_MODELS: Record<string, string[]> = {
   Chevrolet: ["Blazer", "Bolt EV", "Camaro", "Colorado", "Equinox", "Malibu", "Silverado 1500", "Silverado 2500", "Spark", "Tahoe", "Trailblazer", "Traverse"],
   Chrysler: ["300", "Pacifica", "Voyager"],
   Dodge: ["Challenger", "Charger", "Durango", "Grand Caravan", "Hornet"],
+  Fiat: ["500", "500X", "500L"],
+  Polestar: ["2", "3", "4"],
+  Rivian: ["R1T", "R1S"],
   Ford: ["Bronco", "Edge", "Escape", "Expedition", "Explorer", "F-150", "F-250", "Maverick", "Mustang", "Mustang Mach-E", "Ranger", "Transit"],
   Genesis: ["G70", "G80", "G90", "GV70", "GV80"],
   GMC: ["Acadia", "Canyon", "Sierra 1500", "Sierra 2500", "Terrain", "Yukon"],
@@ -214,6 +217,59 @@ export const VEHICLE_TRIMS: Record<string, string[]> = {
   "GV70": ["Standard", "Advanced", "Prestige", "Sport", "Sport Prestige", "Electrified"],
   "GV80": ["Standard", "Advanced", "Prestige"],
   "G80": ["Standard", "Advanced", "Prestige", "Sport Advanced", "Sport Prestige", "Electrified"],
+  "G70": ["Standard", "Advanced", "Prestige"],
+  "G90": ["Standard", "Advanced", "Prestige"],
+  // Fiat
+  "500": ["Pop", "Lounge", "Abarth"],
+  "500X": ["Pop", "Trekking", "Trekking Plus"],
+  // Polestar
+  "2": ["Standard Range", "Long Range Single", "Long Range Dual", "BST Edition"],
+  "3": ["Long Range Single", "Long Range Dual", "Long Range Dual Performance"],
+  "4": ["Long Range Single", "Long Range Dual", "Long Range Dual BST"],
+  // Rivian
+  "R1T": ["Standard", "Adventure", "Launch Edition"],
+  "R1S": ["Standard", "Adventure", "Launch Edition"],
+  // Buick
+  "Enclave": ["Preferred", "Essence", "Premium", "Avenir"],
+  "Encore": ["Preferred", "Essence", "Premium"],
+  "Encore GX": ["Preferred", "Select", "Essence", "Premium"],
+  "Envision": ["Preferred", "Essence", "Premium", "Avenir"],
+  // Cadillac
+  "XT4": ["Luxury", "Premium Luxury", "Sport"],
+  "XT5": ["Luxury", "Premium Luxury", "Sport", "Platinum"],
+  "XT6": ["Luxury", "Premium Luxury", "Sport", "Platinum"],
+  "CT4": ["Luxury", "Premium Luxury", "Sport", "V-Series", "V-Series Blackwing"],
+  "CT5": ["Luxury", "Premium Luxury", "Sport", "V-Series", "V-Series Blackwing"],
+  "Escalade": ["Luxury", "Premium Luxury", "Sport", "Platinum", "ESV Luxury", "ESV Platinum"],
+  // Infiniti
+  "Q50": ["Pure", "Luxe", "Red Sport 400", "Sensory"],
+  "Q60": ["Pure", "Luxe", "Red Sport 400", "Sensory"],
+  "QX50": ["Pure", "Luxe", "Sensory", "Autograph"],
+  "QX55": ["Pure", "Luxe", "Sensory", "Autograph"],
+  "QX60": ["Pure", "Luxe", "Sensory", "Autograph"],
+  "QX80": ["Pure", "Luxe", "Sensory", "Autograph"],
+  // Porsche
+  "Cayenne": ["Base", "S", "GTS", "Turbo", "Turbo S", "e-Hybrid", "Turbo S e-Hybrid"],
+  "Macan": ["Base", "S", "GTS", "Turbo", "4", "4S", "4 Electric"],
+  "911": ["Carrera", "Carrera S", "Carrera 4", "Carrera 4S", "Targa 4", "Targa 4S", "GT3", "Turbo", "Turbo S"],
+  "Panamera": ["Base", "4", "4S", "GTS", "Turbo S", "4 e-Hybrid", "Turbo S e-Hybrid"],
+  "Taycan": ["Base", "4", "4S", "GTS", "Turbo", "Turbo S", "Cross Turismo"],
+  // BMW X1/X7
+  "X1": ["sDrive28i", "xDrive28i", "M35i"],
+  "X7": ["xDrive40i", "xDrive50i", "M60i", "M Competition"],
+  // Mitsubishi
+  "Outlander": ["ES", "SE", "SEL", "SEL Premium"],
+  "Eclipse Cross": ["ES", "SE", "SEL", "SEL Premium"],
+  "RVR": ["ES", "SE", "SE Limited", "GT", "GT S-AWC"],
+  "Outlander PHEV": ["ES", "SE", "SEL", "SEL Premium"],
+  // Jaguar
+  "F-Pace": ["P250 S", "P250 SE", "P250 R-Dynamic SE", "P400 R-Dynamic HSE", "SVR"],
+  "E-Pace": ["S", "SE", "R-Dynamic SE"],
+  // Land Rover
+  "Range Rover": ["SE", "HSE", "Autobiography", "SVAutobiography"],
+  "Range Rover Sport": ["S", "SE", "HSE", "Autobiography"],
+  "Defender": ["90 S", "90 SE", "90 HSE", "110 S", "110 SE", "110 HSE", "110 X"],
+  "Discovery": ["S", "SE", "HSE", "R-Dynamic SE"],
 };
 
 export function getYears(): number[] {

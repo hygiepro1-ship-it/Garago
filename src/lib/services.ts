@@ -107,6 +107,42 @@ export const SERVICE_CATEGORIES = [
     icon: "🪟",
     description: "Remplacement et réparation de vitres",
   },
+  {
+    id: "timing",
+    name: "Courroie de distribution",
+    icon: "🔩",
+    description: "Remplacement courroie ou chaîne de distribution",
+  },
+  {
+    id: "clutch",
+    name: "Embrayage",
+    icon: "🔄",
+    description: "Remplacement d'embrayage et boîte manuelle",
+  },
+  {
+    id: "preventive",
+    name: "Entretien préventif",
+    icon: "📋",
+    description: "Révision 30 000 km, 60 000 km, 100 000 km",
+  },
+  {
+    id: "bearing",
+    name: "Roulements de roue",
+    icon: "⭕",
+    description: "Remplacement de roulements et moyeux",
+  },
+  {
+    id: "fuel",
+    name: "Système de carburant",
+    icon: "⛽",
+    description: "Nettoyage injecteurs, pompe à carburant, filtre",
+  },
+  {
+    id: "rust",
+    name: "Protection contre la rouille",
+    icon: "🛡️",
+    description: "Traitement antirouille et protection de carrosserie",
+  },
 ];
 
 export const QUEBEC_CITIES = [

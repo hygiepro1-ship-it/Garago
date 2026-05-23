@@ -20,6 +20,11 @@ export default function DashboardConducteurPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/connexion");
+    if (status === "authenticated") {
+      fetch("/api/vehicles")
+        .then((r) => r.json())
+        .then((data) => { if (Array.isArray(data)) setVehicles(data); });
+    }
   }, [status, router]);
 
   async function addVehicle(e: React.FormEvent) {

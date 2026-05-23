@@ -92,6 +92,38 @@ export default function DashboardGaragePage() {
     setTimeout(() => setSuccess(""), 3000);
   }
 
+  // ---- Horaires state ----
+  const DAYS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+  const [horaires, setHoraires] = useState<{ dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }[]>(
+    DAYS.map((_, i) => ({ dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 }))
+  );
+  useEffect(() => {
+    if (garage?.availability && garage.availability.length > 0) {
+      setHoraires(DAYS.map((_, i) => {
+        const a = garage.availability.find((x: any) => x.dayOfWeek === i);
+        return a
+          ? { dayOfWeek: i, openTime: a.openTime ?? "08:00", closeTime: a.closeTime ?? "17:00", isClosed: !!a.isClosed }
+          : { dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 };
+      }));
+    }
+  }, [garage]);
+
+  function setHoraireField(dayIndex: number, field: string, value: string | boolean) {
+    setHoraires((prev) => prev.map((h) => h.dayOfWeek === dayIndex ? { ...h, [field]: value } : h));
+  }
+
+  async function saveHoraires() {
+    setSaving(true);
+    await fetch("/api/garage/availability", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ horaires }),
+    });
+    setSaving(false);
+    setSuccess("Horaires sauvegardés ✓");
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
   // ---- Profile state ----
   const [profileData, setProfileData] = useState<any>({});
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
@@ -319,28 +351,49 @@ export default function DashboardGaragePage() {
       {/* Horaires */}
       {activeTab === "horaires" && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <h2 className="font-bold text-gray-900 text-lg mb-2">Horaires d'ouverture</h2>
-          <p className="text-gray-500 text-sm mb-5">Configurez vos heures d'ouverture pour chaque jour de la semaine</p>
-          <div className="space-y-3">
-            {["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"].map((day, i) => {
-              const avail = garage.availability?.find((a: any) => a.dayOfWeek === i);
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="font-bold text-gray-900 text-lg">Horaires d'ouverture</h2>
+              <p className="text-gray-500 text-sm">Configurez vos heures d'ouverture pour chaque jour de la semaine</p>
+            </div>
+            <button onClick={saveHoraires} disabled={saving} className="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 disabled:opacity-50">
+              {saving ? "Sauvegarde..." : "Sauvegarder"}
+            </button>
+          </div>
+          <div className="space-y-3 mt-5">
+            {DAYS.map((day, i) => {
+              const h = horaires[i];
               return (
-                <div key={day} className="flex items-center gap-4 p-3 rounded-xl border border-gray-200">
+                <div key={day} className={`flex items-center gap-4 p-3 rounded-xl border ${h.isClosed ? "border-gray-100 bg-gray-50" : "border-gray-200"}`}>
                   <span className="w-24 text-sm font-semibold text-gray-700">{day}</span>
-                  <input type="time" defaultValue={avail?.openTime ?? "08:00"} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" disabled={avail?.isClosed} />
+                  <input
+                    type="time"
+                    value={h.openTime}
+                    onChange={(e) => setHoraireField(i, "openTime", e.target.value)}
+                    disabled={h.isClosed}
+                    className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm disabled:opacity-40"
+                  />
                   <span className="text-gray-400 text-sm">—</span>
-                  <input type="time" defaultValue={avail?.closeTime ?? "17:00"} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm" disabled={avail?.isClosed} />
-                  <label className="flex items-center gap-2 text-sm text-gray-600 ml-auto">
-                    <input type="checkbox" defaultChecked={avail?.isClosed} className="accent-red-500" />
+                  <input
+                    type="time"
+                    value={h.closeTime}
+                    onChange={(e) => setHoraireField(i, "closeTime", e.target.value)}
+                    disabled={h.isClosed}
+                    className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm disabled:opacity-40"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-gray-600 ml-auto cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={h.isClosed}
+                      onChange={(e) => setHoraireField(i, "isClosed", e.target.checked)}
+                      className="accent-red-500"
+                    />
                     Fermé
                   </label>
                 </div>
               );
             })}
           </div>
-          <button className="mt-4 bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800">
-            Sauvegarder les horaires
-          </button>
         </div>
       )}
 
