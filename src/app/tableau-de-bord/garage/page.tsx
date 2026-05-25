@@ -8,6 +8,7 @@ import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
+import BrandLogo from "@/components/BrandLogo";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
@@ -337,21 +338,38 @@ export default function DashboardGaragePage() {
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-400 inline-block" /> Refusée</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-gray-300 inline-block" /> Non configurée</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {VEHICLE_MAKES.map((brand) => {
               const status = getBrandStatus(brand);
               return (
-                <div key={brand} className={`border rounded-xl p-3 transition-all ${status === "accepts" ? "border-green-300 bg-green-50" : status === "refuses" ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
-                  <p className="font-semibold text-gray-900 text-sm mb-2">{brand}</p>
+                <div
+                  key={brand}
+                  className="border rounded-xl p-3 transition-all"
+                  style={
+                    status === "accepts" ? { borderColor: "#86efac", backgroundColor: "#f0fdf4" } :
+                    status === "refuses" ? { borderColor: "#fca5a5", backgroundColor: "#fef2f2" } :
+                    { borderColor: "#e2e8f0", backgroundColor: "white" }
+                  }
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <BrandLogo brand={brand} size={24} />
+                    <p className="font-semibold text-gray-900 text-xs truncate">{brand}</p>
+                  </div>
                   <div className="flex gap-1">
                     <button
                       onClick={() => toggleBrand(brand, true)}
-                      className={`flex-1 text-xs py-1 rounded-lg font-medium transition-colors ${status === "accepts" ? "bg-green-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-green-100"}`}
-                    >✓ Oui</button>
+                      className="flex-1 text-xs py-1 rounded-lg font-semibold transition-colors"
+                      style={status === "accepts"
+                        ? { backgroundColor: "#16a34a", color: "white" }
+                        : { backgroundColor: "#f1f5f9", color: "#475569" }}
+                    >✓</button>
                     <button
                       onClick={() => toggleBrand(brand, false)}
-                      className={`flex-1 text-xs py-1 rounded-lg font-medium transition-colors ${status === "refuses" ? "bg-red-400 text-white" : "bg-gray-100 text-gray-600 hover:bg-red-100"}`}
-                    >✗ Non</button>
+                      className="flex-1 text-xs py-1 rounded-lg font-semibold transition-colors"
+                      style={status === "refuses"
+                        ? { backgroundColor: "#dc2626", color: "white" }
+                        : { backgroundColor: "#f1f5f9", color: "#475569" }}
+                    >✗</button>
                   </div>
                 </div>
               );

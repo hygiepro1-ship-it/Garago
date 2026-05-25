@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 
 interface GarageCardProps {
   garage: {
@@ -126,16 +127,16 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
             </div>
           )}
 
-          {/* Brands */}
+          {/* Brands — logos */}
           {acceptedBrands.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               {acceptedBrands.map((b, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 rounded-md text-gray-600 font-medium" style={{ backgroundColor: "#f1f5f9" }}>
-                  {b.brand}
-                </span>
+                <div key={i} title={b.brand} className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-100 bg-white p-0.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                  <BrandLogo brand={b.brand} size={22} />
+                </div>
               ))}
               {garage.brands.filter((b) => b.accepts).length > 6 && (
-                <span className="text-xs px-2 py-0.5 rounded-md text-gray-400 bg-gray-50">
+                <span className="text-xs px-2 py-0.5 rounded-md text-gray-400 bg-gray-50 border border-gray-100">
                   +{garage.brands.filter((b) => b.accepts).length - 6}
                 </span>
               )}

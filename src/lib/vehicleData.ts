@@ -1,16 +1,23 @@
-export const VEHICLE_MAKES = [
-  "Acura", "Alfa Romeo", "Audi", "BMW", "Buick", "Cadillac",
-  "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "Genesis", "GMC",
-  "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia",
-  "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz",
-  "MINI", "Mitsubishi", "Nissan", "Polestar", "Porsche", "RAM", "Rivian", "Subaru",
-  "Tesla", "Toyota", "Volkswagen", "Volvo",
-];
+// VEHICLE_MAKES is defined in vehicleBrands.ts (single source of truth).
+// Re-exported here so existing imports keep working unchanged.
+export { VEHICLE_MAKES } from "@/lib/vehicleBrands";
 
 // Models per make
 export const VEHICLE_MODELS: Record<string, string[]> = {
-  Acura: ["ILX", "MDX", "RDX", "TLX", "NSX"],
+  // ── Exotic / Luxury ──────────────────────────────────────
+  "Aston Martin": ["DB11", "DB12", "DBS", "DBX", "Vantage", "Valkyrie"],
+  "Bentley":      ["Bentayga", "Continental GT", "Flying Spur", "Mulsanne"],
+  "BYD":          ["Atto 3", "Han", "Seal", "Tang", "Dolphin"],
+  "Ferrari":      ["296 GTB", "296 GTS", "296 GT3", "F8 Tributo", "F8 Spider", "Portofino M", "Roma", "SF90 Stradale", "812 Superfast", "Purosangue"],
+  "Lamborghini":  ["Huracán", "Huracán Spyder", "Huracán Sterrato", "Urus", "Urus S", "Urus Performante", "Revuelto"],
+  "Lotus":        ["Eletre", "Emira", "Evija"],
+  "Lucid":        ["Air Pure", "Air Touring", "Air Grand Touring", "Air Sapphire"],
+  "Maserati":     ["Ghibli", "GranTurismo", "GranCabrio", "Levante", "Quattroporte", "Grecale", "MC20"],
+  "McLaren":      ["Artura", "GT", "720S", "750S", "765LT", "Senna"],
+  "Rolls-Royce":  ["Cullinan", "Ghost", "Phantom", "Silver Shadow", "Spectre", "Wraith"],
+  // ── Standard ────────────────────────────────────────────
   "Alfa Romeo": ["Giulia", "Stelvio", "Tonale"],
+  Acura: ["ILX", "MDX", "RDX", "TLX", "NSX"],
   Audi: ["A3", "A4", "A5", "A6", "A7", "A8", "Q3", "Q5", "Q7", "Q8", "e-tron", "TT", "RS3", "RS6"],
   BMW: ["Série 1", "Série 2", "Série 3", "Série 4", "Série 5", "Série 7", "X1", "X3", "X5", "X7", "iX", "i4", "M3", "M5"],
   Buick: ["Enclave", "Encore", "Encore GX", "Envision"],

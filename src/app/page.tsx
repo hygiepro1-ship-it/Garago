@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
+import { getModelsForMake, getYears } from "@/lib/vehicleData";
+import { BRANDS } from "@/lib/vehicleBrands";
 import { SERVICE_CATEGORIES } from "@/lib/services";
+import BrandLogo from "@/components/BrandLogo";
 
 const SERVICES_ROW = [
   { id: "oil",         name: "Vidange d'huile",     price: "dès 59 $" },
@@ -30,6 +32,7 @@ export default function HomePage() {
 
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
+  const VEHICLE_MAKES = BRANDS.map(b => b.name);
 
   function handleMakeChange(m: string) { setMake(m); setModel(""); }
 
@@ -148,6 +151,34 @@ export default function HomePage() {
                   {s.name}
                 </span>
                 <span className="text-xs text-gray-400 group-hover:text-orange-500">{s.price}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MARQUES ────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-100 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
+            Marques prises en charge — {BRANDS.length} marques disponibles au Canada
+          </p>
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
+            {BRANDS.map((brand) => (
+              <button
+                key={brand.name}
+                onClick={() => {
+                  router.push(`/rechercher?make=${encodeURIComponent(brand.name)}`);
+                }}
+                title={brand.name}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-all group"
+              >
+                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-gray-100 group-hover:border-orange-200 transition-colors" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                  <BrandLogo brand={brand.name} size={32} />
+                </div>
+                <span className="text-center text-gray-500 group-hover:text-gray-700 transition-colors" style={{ fontSize: 9, lineHeight: 1.2, maxWidth: 52 }}>
+                  {brand.name}
+                </span>
               </button>
             ))}
           </div>
