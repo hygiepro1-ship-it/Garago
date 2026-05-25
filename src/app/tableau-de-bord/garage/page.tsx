@@ -774,6 +774,68 @@ export default function DashboardGaragePage() {
                 <span className="text-sm font-medium text-gray-700">Sur rendez-vous seulement</span>
               </label>
             </div>
+
+            {/* Cal.com integration */}
+            <div className="border border-orange-200 rounded-xl p-4 bg-orange-50">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">📅</span>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Calendrier Cal.com (recommandé)</p>
+                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+                    Connectez votre compte Cal.com pour que vos clients réservent directement depuis votre profil.
+                    L'application mobile Cal.com vous permet de gérer vos disponibilités depuis votre téléphone.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">
+                    Lien Cal.com <span className="font-normal text-gray-400">(ex : <code className="bg-white px-1 rounded">mon-garage/rendez-vous</code>)</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 flex-shrink-0">cal.com/</span>
+                    <input
+                      className={inputClass}
+                      value={profileData.calcomLink ?? ""}
+                      onChange={(e) => setProfileData({ ...profileData, calcomLink: e.target.value })}
+                      placeholder="mon-garage/rendez-vous"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <a
+                    href="https://cal.com/signup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
+                  >
+                    Créer un compte Cal.com gratuit →
+                  </a>
+                  <a
+                    href="https://apps.apple.com/app/cal-com/id1615858471"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
+                  >
+                    📱 App iOS
+                  </a>
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.cal.calcom"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
+                  >
+                    📱 App Android
+                  </a>
+                </div>
+                {profileData.calcomLink && (
+                  <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                    ✓ Le widget Cal.com s'affichera sur votre profil public à la place du formulaire par défaut.
+                  </p>
+                )}
+              </div>
+            </div>
+
             <button type="submit" disabled={saving} className="bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-800 disabled:opacity-50">
               {saving ? "Sauvegarde..." : "Sauvegarder le profil"}
             </button>

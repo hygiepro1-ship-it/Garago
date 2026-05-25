@@ -85,6 +85,8 @@ model Garage {
   stripeCustomerId   String?
   stripePriceId      String?
 
+  calcomLink      String? // ex: "mon-garage/rdv" → cal.com/mon-garage/rdv
+
   yearFounded     Int?
   employeeCount   Int?
   languages       String?
