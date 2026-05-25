@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
+import { BRANDS } from "@/lib/vehicleBrands";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
@@ -324,52 +325,108 @@ export default function DashboardGaragePage() {
       {/* Marques */}
       {activeTab === "marques" && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="font-bold text-gray-900 text-lg">Marques de véhicules</h2>
-              <p className="text-gray-500 text-sm">Indiquez les marques que vous acceptez ou refusez</p>
+              <p className="text-gray-500 text-sm mt-0.5">
+                Cliquez sur ✓ pour les marques que vous acceptez, ✗ pour celles que vous refusez.
+              </p>
             </div>
-            <button onClick={saveBrands} disabled={saving} className="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 disabled:opacity-50">
+            <button
+              onClick={saveBrands}
+              disabled={saving}
+              className="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 flex-shrink-0"
+            >
               {saving ? "Sauvegarde..." : "Sauvegarder"}
             </button>
           </div>
-          <div className="flex gap-4 text-sm mb-4">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> Acceptée</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-400 inline-block" /> Refusée</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-gray-300 inline-block" /> Non configurée</span>
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-5 pb-4 border-b border-gray-100">
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-green-500 inline-flex items-center justify-center text-white font-bold text-xs">✓</span>
+              Acceptée
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-red-500 inline-flex items-center justify-center text-white font-bold text-xs">✗</span>
+              Refusée
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-gray-200 inline-block" />
+              Non configurée (neutre)
+            </span>
+            <span className="ml-auto text-gray-400">
+              {brands.filter(b => b.accepts).length} acceptée{brands.filter(b => b.accepts).length !== 1 ? "s" : ""} ·{" "}
+              {brands.filter(b => !b.accepts).length} refusée{brands.filter(b => !b.accepts).length !== 1 ? "s" : ""}
+            </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-            {VEHICLE_MAKES.map((brand) => {
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+            {BRANDS.map(({ name: brand, logoUrl, color }) => {
               const status = getBrandStatus(brand);
+              const isAccepted = status === "accepts";
+              const isRefused  = status === "refuses";
+
               return (
                 <div
                   key={brand}
-                  className="border rounded-xl p-3 transition-all"
+                  className="relative flex flex-col items-center rounded-2xl border-2 transition-all duration-150 overflow-hidden"
                   style={
-                    status === "accepts" ? { borderColor: "#86efac", backgroundColor: "#f0fdf4" } :
-                    status === "refuses" ? { borderColor: "#fca5a5", backgroundColor: "#fef2f2" } :
-                    { borderColor: "#e2e8f0", backgroundColor: "white" }
+                    isAccepted ? { borderColor: "#22c55e", backgroundColor: "#f0fdf4" } :
+                    isRefused  ? { borderColor: "#ef4444", backgroundColor: "#fef2f2" } :
+                    { borderColor: "#e2e8f0", backgroundColor: "#fafafa" }
                   }
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <BrandLogo brand={brand} size={24} />
-                    <p className="font-semibold text-gray-900 text-xs truncate">{brand}</p>
+                  {/* Status ribbon */}
+                  {isAccepted && (
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                      <span className="text-white text-xs font-bold leading-none">✓</span>
+                    </div>
+                  )}
+                  {isRefused && (
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shadow-sm">
+                      <span className="text-white text-xs font-bold leading-none">✗</span>
+                    </div>
+                  )}
+
+                  {/* Logo area */}
+                  <div className="w-full flex items-center justify-center pt-4 pb-2 px-3">
+                    <div
+                      className="w-14 h-14 rounded-xl bg-white flex items-center justify-center"
+                      style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.10)", padding: 6 }}
+                    >
+                      <BrandLogo brand={brand} size={44} />
+                    </div>
                   </div>
-                  <div className="flex gap-1">
+
+                  {/* Name */}
+                  <p className="text-center font-semibold text-gray-800 px-2 pb-2 leading-tight" style={{ fontSize: 11 }}>
+                    {brand}
+                  </p>
+
+                  {/* Buttons */}
+                  <div className="flex w-full border-t border-gray-100">
                     <button
                       onClick={() => toggleBrand(brand, true)}
-                      className="flex-1 text-xs py-1 rounded-lg font-semibold transition-colors"
-                      style={status === "accepts"
-                        ? { backgroundColor: "#16a34a", color: "white" }
-                        : { backgroundColor: "#f1f5f9", color: "#475569" }}
-                    >✓</button>
+                      title="Accepter cette marque"
+                      className="flex-1 py-2 text-xs font-bold transition-colors"
+                      style={isAccepted
+                        ? { backgroundColor: "#22c55e", color: "white" }
+                        : { backgroundColor: "transparent", color: "#6b7280" }}
+                    >
+                      ✓
+                    </button>
+                    <div className="w-px bg-gray-100" />
                     <button
                       onClick={() => toggleBrand(brand, false)}
-                      className="flex-1 text-xs py-1 rounded-lg font-semibold transition-colors"
-                      style={status === "refuses"
-                        ? { backgroundColor: "#dc2626", color: "white" }
-                        : { backgroundColor: "#f1f5f9", color: "#475569" }}
-                    >✗</button>
+                      title="Refuser cette marque"
+                      className="flex-1 py-2 text-xs font-bold transition-colors"
+                      style={isRefused
+                        ? { backgroundColor: "#ef4444", color: "white" }
+                        : { backgroundColor: "transparent", color: "#6b7280" }}
+                    >
+                      ✗
+                    </button>
                   </div>
                 </div>
               );
