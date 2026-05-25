@@ -1,47 +1,48 @@
 "use client";
 
-import { getCalApi } from "@calcom/embed-react";
 import { useEffect } from "react";
 
 interface CalBookingProps {
-  calLink: string; // ex: "mon-garage/rdv"
+  calLink: string; // ex: "mon-garage/rendez-vous" (chemin relatif Calendly)
 }
 
 /**
- * Inline Cal.com booking embed — couleurs adaptées au thème du site.
- * Le garage configure son lien dans son tableau de bord (Profil → Lien Cal.com).
+ * Embed Calendly inline — s'affiche sur le profil du garage.
+ * Le lien est auto-rempli par le webhook quand le garagiste accepte l'invitation.
  */
 export default function CalBooking({ calLink }: CalBookingProps) {
+  // Charger le script Calendly une seule fois
   useEffect(() => {
-    (async () => {
-      const cal = await getCalApi({ namespace: "rdv" });
-      cal("ui", {
-        theme: "light",
-        styles: {
-          branding: { brandColor: "#f97316" },
-        },
-        hideEventTypeDetails: false,
-        layout: "month_view",
-      });
-    })();
+    if (document.getElementById("calendly-script")) return;
+    const script = document.createElement("script");
+    script.id  = "calendly-script";
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    document.head.appendChild(script);
   }, []);
 
+  const url = `https://calendly.com/${calLink}?hide_gdpr_banner=1&primary_color=f97316`;
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+    <div
+      className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+      style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
+    >
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Prendre rendez-vous</p>
-        <p className="text-xs text-gray-400 flex items-center gap-1.5 mt-1">
-          <span>📅</span> Sélectionnez une date et un créneau disponible
+      <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+          Prendre rendez-vous
+        </p>
+        <p className="text-xs text-gray-400 flex items-center gap-1.5">
+          <span>📅</span> Choisissez une date et un créneau disponible
         </p>
       </div>
 
-      {/* Cal embed */}
+      {/* Calendly inline widget */}
       <div
-        data-cal-namespace="rdv"
-        data-cal-link={calLink}
-        data-cal-config='{"layout":"month_view"}'
-        style={{ width: "100%", minHeight: 480, overflow: "hidden" }}
+        className="calendly-inline-widget"
+        data-url={url}
+        style={{ minWidth: 280, height: 660 }}
       />
     </div>
   );
