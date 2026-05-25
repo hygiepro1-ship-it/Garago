@@ -166,9 +166,7 @@ export default function DashboardGaragePage() {
     setTimeout(() => setSuccess(""), 3000);
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20 text-gray-500">Chargement de votre tableau de bord...</div>;
-
-  // Load appointments when tab opens
+  // Load appointments when tab opens — must be before any early return
   useEffect(() => {
     if (activeTab === "rdv" && !rdvLoaded && garage) {
       fetch("/api/garage/appointments")
@@ -176,6 +174,8 @@ export default function DashboardGaragePage() {
         .then(d => { setAppointments(Array.isArray(d) ? d : []); setRdvLoaded(true); });
     }
   }, [activeTab, rdvLoaded, garage]);
+
+  if (loading) return <div className="flex items-center justify-center py-20 text-gray-500">Chargement de votre tableau de bord...</div>;
 
   async function updateApptStatus(id: string, status: string) {
     await fetch(`/api/appointments/${id}`, {
