@@ -5,20 +5,17 @@ import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
-import { CITY_COORDINATES, haversineKm, formatDistance } from "@/lib/geo";
+import { garageDistance, formatDistance } from "@/lib/geo";
 
 type UserPos = { lat: number; lng: number };
 
-/** Attach a distance_km field to each garage based on its city coords vs user position. */
+/** Attach a distance_km field to each garage (exact coords or city centroid). */
 function withDistances(garages: any[], pos: UserPos | null): any[] {
   if (!pos) return garages;
-  return garages.map((g) => {
-    const coords = CITY_COORDINATES[g.city as string];
-    const distance_km = coords
-      ? haversineKm(pos.lat, pos.lng, coords.lat, coords.lng)
-      : null;
-    return { ...g, distance_km };
-  });
+  return garages.map((g) => ({
+    ...g,
+    distance_km: garageDistance(g, pos),
+  }));
 }
 
 function SearchContent() {

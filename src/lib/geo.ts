@@ -57,3 +57,23 @@ export function formatDistance(km: number): string {
   if (km < 10) return `${km.toFixed(1)} km`;
   return `${Math.round(km)} km`;
 }
+
+/**
+ * Returns the distance in km from userPos to a garage.
+ * Uses the garage's exact lat/lng when available, falls back to city centroid.
+ */
+export function garageDistance(
+  garage: { latitude?: number | null; longitude?: number | null; city?: string },
+  userPos: { lat: number; lng: number },
+): number | null {
+  // Prefer exact garage coordinates (set during registration)
+  if (garage.latitude != null && garage.longitude != null) {
+    return haversineKm(userPos.lat, userPos.lng, garage.latitude, garage.longitude);
+  }
+  // Fall back to city centroid
+  const coords = CITY_COORDINATES[garage.city ?? ""];
+  if (coords) {
+    return haversineKm(userPos.lat, userPos.lng, coords.lat, coords.lng);
+  }
+  return null;
+}

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { QUEBEC_CITIES } from "@/lib/services";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
+import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
 const PLANS = [
   {
@@ -82,10 +82,22 @@ export default function InscriptionGaragePage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [garageName, setGarageName] = useState("");
-  const [garageAddress, setGarageAddress] = useState("");
-  const [garageCity, setGarageCity] = useState("");
+  const [garageAddress, setGarageAddress]     = useState("");
+  const [garageCity, setGarageCity]           = useState("");
   const [garagePostalCode, setGaragePostalCode] = useState("");
-  const [garagePhone, setGaragePhone] = useState("");
+  const [garagePhone, setGaragePhone]         = useState("");
+  const [garageLat, setGarageLat]             = useState<number | null>(null);
+  const [garageLng, setGarageLng]             = useState<number | null>(null);
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
+
+  function handleAddressSelect(r: AddressResult) {
+    setGarageAddress(r.streetAddress);
+    setGarageCity(r.city);
+    setGaragePostalCode(r.postalCode);
+    setGarageLat(r.lat);
+    setGarageLng(r.lng);
+    setAddressConfirmed(true);
+  }
 
   // Step 2 — Services + marques exclues
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -119,6 +131,7 @@ export default function InscriptionGaragePage() {
         name, email, phone, password,
         role: "GARAGE_OWNER",
         garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
+        garageLat, garageLng,
       }),
     });
 
@@ -261,21 +274,23 @@ export default function InscriptionGaragePage() {
                         <input type="text" required className={inputClass} placeholder="Garage Tremblay & Fils" value={garageName} onChange={(e) => setGarageName(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
-                        <input type="text" required className={inputClass} placeholder="1234 Rue Saint-Denis" value={garageAddress} onChange={(e) => setGarageAddress(e.target.value)} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Ville</label>
-                          <select required className={inputClass} value={garageCity} onChange={(e) => setGarageCity(e.target.value)}>
-                            <option value="">Choisir</option>
-                            {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Code postal</label>
-                          <input type="text" required className={inputClass} placeholder="H2X 1Y4" value={garagePostalCode} onChange={(e) => setGaragePostalCode(e.target.value)} />
-                        </div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          Adresse du garage
+                        </label>
+                        <AddressAutocomplete
+                          onSelect={handleAddressSelect}
+                          placeholder="Ex : 1234 Rue Saint-Denis, Montréal"
+                          inputClass={inputClass}
+                        />
+                        {addressConfirmed && garageCity && (
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageAddress}</span>
+                            <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageCity}</span>
+                            {garagePostalCode && <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garagePostalCode}</span>}
+                            <span className="px-2 py-1 rounded-md font-semibold text-green-700 bg-green-50">Adresse vérifiée ✓</span>
+                          </div>
+                        )}
+                        <input type="hidden" required value={garageCity} onChange={() => {}} />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Téléphone du garage <span className="text-gray-400 font-normal">(optionnel)</span></label>

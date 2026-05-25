@@ -48,6 +48,8 @@ export async function PUT(req: NextRequest) {
       openingHours: body.openingHours ? JSON.stringify(body.openingHours) : null,
       acceptsWalkIn: body.acceptsWalkIn ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
+      latitude:  body.latitude  != null ? parseFloat(body.latitude)  : undefined,
+      longitude: body.longitude != null ? parseFloat(body.longitude) : undefined,
     },
   });
 

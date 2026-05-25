@@ -7,6 +7,7 @@ import Link from "next/link";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange } from "@/lib/utils";
+import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
@@ -127,6 +128,17 @@ export default function DashboardGaragePage() {
   // ---- Profile state ----
   const [profileData, setProfileData] = useState<any>({});
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
+
+  function handleAddressSelect(r: AddressResult) {
+    setProfileData((prev: any) => ({
+      ...prev,
+      address:   r.streetAddress,
+      city:      r.city,
+      postalCode: r.postalCode,
+      latitude:  r.lat,
+      longitude: r.lng,
+    }));
+  }
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -418,7 +430,16 @@ export default function DashboardGaragePage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
-              <input type="text" className={inputClass} value={profileData.address ?? ""} onChange={(e) => setProfileData({ ...profileData, address: e.target.value })} />
+              <AddressAutocomplete
+                onSelect={handleAddressSelect}
+                initialValue={profileData.address ?? ""}
+                inputClass={inputClass}
+              />
+              {profileData.latitude && profileData.longitude && (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  ✓ Coordonnées enregistrées — les clients proches vous trouveront en priorité
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

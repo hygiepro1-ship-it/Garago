@@ -6,7 +6,7 @@ import { slugify } from "@/lib/utils";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, role, phone, garageName, garageAddress, garageCity, garagePostalCode, garagePhone } = body;
+    const { name, email, password, role, phone, garageName, garageAddress, garageCity, garagePostalCode, garagePhone, garageLat, garageLng } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
           city: garageCity ?? "",
           postalCode: garagePostalCode ?? "",
           phone: garagePhone ?? phone ?? "",
+          latitude:  garageLat  ? parseFloat(garageLat)  : null,
+          longitude: garageLng ? parseFloat(garageLng) : null,
           subscriptionStatus: "TRIAL",
           subscriptionEndAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
         },
