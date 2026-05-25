@@ -11,7 +11,7 @@ import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
 
-type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
+type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "rdv";
 
 export default function DashboardGaragePage() {
   const { data: session, status } = useSession();
@@ -21,6 +21,17 @@ export default function DashboardGaragePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
+
+  // ---- Appointments state ----
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [rdvLoaded, setRdvLoaded] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    customerName: "", customerPhone: "", customerEmail: "",
+    vehicleYear: "", vehicleMake: "", vehicleModel: "",
+    serviceName: "", date: "", startTime: "", notes: "",
+  });
+  const [savingRdv, setSavingRdv] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/connexion"); return; }
@@ -157,12 +168,50 @@ export default function DashboardGaragePage() {
 
   if (loading) return <div className="flex items-center justify-center py-20 text-gray-500">Chargement de votre tableau de bord...</div>;
 
+  // Load appointments when tab opens
+  useEffect(() => {
+    if (activeTab === "rdv" && !rdvLoaded && garage) {
+      fetch("/api/garage/appointments")
+        .then(r => r.json())
+        .then(d => { setAppointments(Array.isArray(d) ? d : []); setRdvLoaded(true); });
+    }
+  }, [activeTab, rdvLoaded, garage]);
+
+  async function updateApptStatus(id: string, status: string) {
+    await fetch(`/api/appointments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+  }
+
+  async function saveManualRdv(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingRdv(true);
+    const res = await fetch("/api/garage/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(manualForm),
+    });
+    if (res.ok) {
+      const appt = await res.json();
+      setAppointments(prev => [appt, ...prev]);
+      setShowManualForm(false);
+      setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", date:"", startTime:"", notes:"" });
+      setSuccess("Rendez-vous ajouté ✓");
+      setTimeout(() => setSuccess(""), 3000);
+    }
+    setSavingRdv(false);
+  }
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "apercu", label: "Aperçu", icon: "📊" },
-    { id: "services", label: "Services", icon: "🔧" },
-    { id: "marques", label: "Marques", icon: "🚗" },
-    { id: "horaires", label: "Horaires", icon: "🕐" },
-    { id: "profil", label: "Profil", icon: "⚙️" },
+    { id: "apercu",   label: "Aperçu",        icon: "📊" },
+    { id: "rdv",      label: "Rendez-vous",   icon: "📅" },
+    { id: "services", label: "Services",       icon: "🔧" },
+    { id: "marques",  label: "Marques",        icon: "🚗" },
+    { id: "horaires", label: "Horaires",       icon: "🕐" },
+    { id: "profil",   label: "Profil",         icon: "⚙️" },
   ];
 
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -267,6 +316,195 @@ export default function DashboardGaragePage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Rendez-vous ────────────────────────────────────────────────── */}
+      {activeTab === "rdv" && (
+        <div className="space-y-4">
+          {/* Header + add button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-gray-900 text-lg">Rendez-vous</h2>
+              <p className="text-gray-500 text-sm">Demandes en ligne et réservations manuelles</p>
+            </div>
+            <button
+              onClick={() => setShowManualForm(true)}
+              className="bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 flex items-center gap-2"
+            >
+              + Nouveau RDV manuel
+            </button>
+          </div>
+
+          {/* Manual booking form */}
+          {showManualForm && (
+            <div className="bg-white rounded-2xl border border-blue-200 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900">Ajouter un rendez-vous</h3>
+                <button onClick={() => setShowManualForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+              </div>
+              <form onSubmit={saveManualRdv} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Nom du client *</label>
+                    <input className={inputClass} required value={manualForm.customerName} onChange={e=>setManualForm(f=>({...f,customerName:e.target.value}))} placeholder="Jean Tremblay" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
+                    <input className={inputClass} required type="tel" value={manualForm.customerPhone} onChange={e=>setManualForm(f=>({...f,customerPhone:e.target.value}))} placeholder="514 555-0100" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel</label>
+                    <input className={inputClass} type="email" value={manualForm.customerEmail} onChange={e=>setManualForm(f=>({...f,customerEmail:e.target.value}))} placeholder="jean@exemple.com" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Année véhicule</label>
+                    <input className={inputClass} value={manualForm.vehicleYear} onChange={e=>setManualForm(f=>({...f,vehicleYear:e.target.value}))} placeholder="2022" maxLength={4} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                    <input className={inputClass} value={manualForm.vehicleMake} onChange={e=>setManualForm(f=>({...f,vehicleMake:e.target.value}))} placeholder="Toyota" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                    <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Service</label>
+                    <input className={inputClass} value={manualForm.serviceName} onChange={e=>setManualForm(f=>({...f,serviceName:e.target.value}))} placeholder="Vidange d'huile" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Date *</label>
+                    <input className={inputClass} required type="date" value={manualForm.date} onChange={e=>setManualForm(f=>({...f,date:e.target.value}))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Heure *</label>
+                    <input className={inputClass} required type="time" value={manualForm.startTime} onChange={e=>setManualForm(f=>({...f,startTime:e.target.value}))} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Notes internes</label>
+                  <textarea className={`${inputClass} min-h-[60px]`} value={manualForm.notes} onChange={e=>setManualForm(f=>({...f,notes:e.target.value}))} placeholder="Notes visibles seulement par le garage…" />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button type="submit" disabled={savingRdv} className="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 disabled:opacity-50">
+                    {savingRdv ? "Ajout…" : "Ajouter le rendez-vous"}
+                  </button>
+                  <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 text-xs">
+            {[
+              { status: "PENDING",   label: "En attente",  bg: "#fef3c7", color: "#92400e" },
+              { status: "CONFIRMED", label: "Confirmé",    bg: "#d1fae5", color: "#065f46" },
+              { status: "COMPLETED", label: "Terminé",     bg: "#ede9fe", color: "#5b21b6" },
+              { status: "CANCELLED", label: "Annulé",      bg: "#fee2e2", color: "#991b1b" },
+            ].map(s => (
+              <span key={s.status} className="px-2.5 py-1 rounded-full font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
+                {s.label}
+              </span>
+            ))}
+          </div>
+
+          {/* Appointment list */}
+          {!rdvLoaded ? (
+            <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
+          ) : appointments.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+              <p className="text-4xl mb-3">📅</p>
+              <p className="text-gray-500 text-sm">Aucun rendez-vous pour l'instant.</p>
+              <p className="text-gray-400 text-xs mt-1">Les demandes en ligne et manuelles apparaîtront ici.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {appointments.map(a => {
+                const statusColors: Record<string, { bg: string; color: string; label: string }> = {
+                  PENDING:   { bg: "#fef3c7", color: "#92400e", label: "En attente" },
+                  CONFIRMED: { bg: "#d1fae5", color: "#065f46", label: "Confirmé"   },
+                  COMPLETED: { bg: "#ede9fe", color: "#5b21b6", label: "Terminé"    },
+                  CANCELLED: { bg: "#fee2e2", color: "#991b1b", label: "Annulé"     },
+                };
+                const sc = statusColors[a.status] ?? statusColors.PENDING;
+                const dateObj = new Date(a.date + "T12:00:00");
+                const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday:"short", day:"numeric", month:"short" });
+
+                return (
+                  <div key={a.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-start gap-4">
+                    {/* Date block */}
+                    <div className="flex-shrink-0 text-center bg-gray-50 rounded-xl px-3 py-2 border border-gray-100 min-w-[70px]">
+                      <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
+                      <p className="text-xl font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
+                      <p className="text-xs text-gray-500">{dateObj.toLocaleDateString("fr-CA",{month:"short"})}</p>
+                      <p className="text-sm font-bold text-orange-500 mt-0.5">{a.startTime}</p>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                          <p className="text-xs text-gray-500">{a.customerPhone}{a.customerEmail ? ` · ${a.customerEmail}` : ""}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                            {sc.label}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: a.source === "MANUAL" ? "#f1f5f9" : "#eff6ff", color: a.source === "MANUAL" ? "#64748b" : "#1d4ed8" }}>
+                            {a.source === "MANUAL" ? "Manuel" : "En ligne"}
+                          </span>
+                        </div>
+                      </div>
+                      {(a.vehicleMake || a.serviceName) && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          {[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}
+                          {a.serviceName ? ` · ${a.serviceName}` : ""}
+                        </p>
+                      )}
+                      {a.notes && <p className="text-xs text-gray-400 italic mb-2">"{a.notes}"</p>}
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {a.status === "PENDING" && (
+                          <>
+                            <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
+                              className="text-xs px-3 py-1 rounded-lg font-semibold bg-green-50 text-green-700 hover:bg-green-100 border border-green-200">
+                              ✓ Confirmer
+                            </button>
+                            <button onClick={() => updateApptStatus(a.id, "CANCELLED")}
+                              className="text-xs px-3 py-1 rounded-lg font-semibold bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
+                              ✗ Refuser
+                            </button>
+                          </>
+                        )}
+                        {a.status === "CONFIRMED" && (
+                          <>
+                            <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
+                              className="text-xs px-3 py-1 rounded-lg font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200">
+                              ✓ Marquer terminé
+                            </button>
+                            <button onClick={() => updateApptStatus(a.id, "CANCELLED")}
+                              className="text-xs px-3 py-1 rounded-lg font-semibold bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200">
+                              Annuler
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

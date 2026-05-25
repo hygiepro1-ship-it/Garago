@@ -53,12 +53,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  garage    Garage?
-  reviews   Review[]
-  favorites GarageFavorite[]
-  vehicles  UserVehicle[]
+  accounts     Account[]
+  sessions     Session[]
+  garage       Garage?
+  reviews      Review[]
+  favorites    GarageFavorite[]
+  vehicles     UserVehicle[]
+  appointments Appointment[]
 }
 
 model Garage {
@@ -101,6 +102,7 @@ model Garage {
   favorites    GarageFavorite[]
   availability GarageAvailability[]
   photos       GaragePhoto[]
+  appointments Appointment[]
 }
 
 model GarageService {
@@ -210,4 +212,41 @@ model UserVehicle {
   createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// ── Rendez-vous ────────────────────────────────────────────────────────────
+
+model Appointment {
+  id       String @id @default(cuid())
+  garageId String
+  userId   String? // null = manuel (client hors plateforme)
+
+  // Infos client (obligatoires pour manuels, pré-remplies pour membres)
+  customerName  String
+  customerPhone String
+  customerEmail String?
+
+  // Véhicule
+  vehicleYear  Int?
+  vehicleMake  String?
+  vehicleModel String?
+
+  // Service demandé
+  serviceName String?
+
+  // Plage horaire
+  date      String // "YYYY-MM-DD"
+  startTime String // "HH:MM"
+  endTime   String // "HH:MM"
+
+  // Gestion
+  status String @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
+  source String @default("ONLINE")  // ONLINE | MANUAL
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
 }

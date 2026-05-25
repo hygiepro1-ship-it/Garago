@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
 import StarRating from "@/components/StarRating";
+import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
@@ -290,6 +291,14 @@ export default function GarageProfilePage() {
 
         {/* Sidebar */}
         <div className="space-y-5">
+          {/* Booking widget */}
+          <BookingWidget
+            garageId={garage.id}
+            garageSlug={slug}
+            garageName={garage.name}
+            services={garage.services ?? []}
+          />
+
           {/* Horaires */}
           {garage.availability?.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
