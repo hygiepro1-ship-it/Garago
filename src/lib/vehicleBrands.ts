@@ -1,13 +1,12 @@
 /**
- * Car brand logos — served from car-logos-dataset (jsDelivr CDN).
+ * Car brand logos — served from GitHub raw CDN (car-logos-dataset by filippofilip95).
  * Only brands with an official dealer network in Canada are listed.
- * Package: https://www.npmjs.com/package/car-logos-dataset
- * CDN base: https://cdn.jsdelivr.net/npm/car-logos-dataset@2.2.3/logos/optimized/
+ * Repo: https://github.com/filippofilip95/car-logos-dataset
  *
  * Fallback: BrandLogo component shows styled initials on any load error.
  */
 
-const CDN = "https://cdn.jsdelivr.net/npm/car-logos-dataset@2.2.3/logos/optimized";
+const CDN = "https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized";
 
 export interface VehicleBrand {
   name:    string;
