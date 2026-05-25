@@ -16,23 +16,29 @@ export interface VehicleBrand {
 
 export const BRANDS: VehicleBrand[] = [
   // ── A ─────────────────────────────────────────────────────────────────────
+  { name: "Abarth",       logoUrl: `${CDN}/abarth.png`,       color: "#d4000f" },
   { name: "Acura",        logoUrl: `${CDN}/acura.png`,        color: "#cc0000" },
   { name: "Alfa Romeo",   logoUrl: `${CDN}/alfa-romeo.png`,   color: "#a6001a" },
+  { name: "Alpine",       logoUrl: `${CDN}/alpine.png`,       color: "#0055a4" },
   { name: "Aston Martin", logoUrl: `${CDN}/aston-martin.png`, color: "#004236" },
   { name: "Audi",         logoUrl: `${CDN}/audi.png`,         color: "#000000" },
 
   // ── B ─────────────────────────────────────────────────────────────────────
-  { name: "Bentley",   logoUrl: `${CDN}/bentley.png`,   color: "#1a1a1a" },
-  { name: "BMW",       logoUrl: `${CDN}/bmw.png`,       color: "#0066b2" },
-  { name: "Buick",     logoUrl: `${CDN}/buick.png`,     color: "#8a0000" },
-  { name: "BYD",       logoUrl: `${CDN}/byd.png`,       color: "#1d6bb5" },
+  { name: "Bentley",  logoUrl: `${CDN}/bentley.png`,  color: "#1a1a1a" },
+  { name: "BMW",      logoUrl: `${CDN}/bmw.png`,      color: "#0066b2" },
+  { name: "Buick",    logoUrl: `${CDN}/buick.png`,    color: "#8a0000" },
+  { name: "Bugatti",  logoUrl: `${CDN}/bugatti.png`,  color: "#c0002a" },
+  { name: "BYD",      logoUrl: `${CDN}/byd.png`,      color: "#1d6bb5" },
 
   // ── C ─────────────────────────────────────────────────────────────────────
   { name: "Cadillac",  logoUrl: `${CDN}/cadillac.png`,  color: "#b8985a" },
   { name: "Chevrolet", logoUrl: `${CDN}/chevrolet.png`, color: "#d4a017" },
   { name: "Chrysler",  logoUrl: `${CDN}/chrysler.png`,  color: "#231f20" },
+  { name: "Citroën",   logoUrl: `${CDN}/citroen.png`,   color: "#c7151a" },
+  { name: "Cupra",     logoUrl: `${CDN}/cupra.png`,     color: "#8B6914" },
 
   // ── D ─────────────────────────────────────────────────────────────────────
+  { name: "Dacia", logoUrl: `${CDN}/dacia.png`, color: "#005b99" },
   { name: "Dodge", logoUrl: `${CDN}/dodge.png`, color: "#d01f2b" },
 
   // ── F ─────────────────────────────────────────────────────────────────────
@@ -59,7 +65,9 @@ export const BRANDS: VehicleBrand[] = [
   { name: "Kia", logoUrl: `${CDN}/kia.png`, color: "#bb162b" },
 
   // ── L ─────────────────────────────────────────────────────────────────────
+  { name: "Lada",        logoUrl: `${CDN}/lada.png`,        color: "#002d62" },
   { name: "Lamborghini", logoUrl: `${CDN}/lamborghini.png`, color: "#c9a227" },
+  { name: "Lancia",      logoUrl: `${CDN}/lancia.png`,      color: "#002b7f" },
   { name: "Land Rover",  logoUrl: `${CDN}/land-rover.png`,  color: "#005a2b" },
   { name: "Lexus",       logoUrl: `${CDN}/lexus.png`,       color: "#1a1a1a" },
   { name: "Lincoln",     logoUrl: `${CDN}/lincoln.png`,     color: "#111111" },
@@ -67,27 +75,36 @@ export const BRANDS: VehicleBrand[] = [
   { name: "Lucid",       logoUrl: `${CDN}/lucid.png`,       color: "#0a0a0a" },
 
   // ── M ─────────────────────────────────────────────────────────────────────
-  { name: "Maserati",     logoUrl: `${CDN}/maserati.png`,     color: "#003087" },
-  { name: "Mazda",        logoUrl: `${CDN}/mazda.png`,        color: "#910000" },
-  { name: "McLaren",      logoUrl: `${CDN}/mclaren.png`,      color: "#e47216" },
-  { name: "Mercedes-Benz",logoUrl: `${CDN}/mercedes-benz.png`,color: "#111111" },
-  { name: "MINI",         logoUrl: `${CDN}/mini.png`,         color: "#000000" },
-  { name: "Mitsubishi",   logoUrl: `${CDN}/mitsubishi.png`,   color: "#e60012" },
+  { name: "Maserati",      logoUrl: `${CDN}/maserati.png`,      color: "#003087" },
+  { name: "Mazda",         logoUrl: `${CDN}/mazda.png`,         color: "#910000" },
+  { name: "McLaren",       logoUrl: `${CDN}/mclaren.png`,       color: "#e47216" },
+  { name: "Mercedes-Benz", logoUrl: `${CDN}/mercedes-benz.png`, color: "#111111" },
+  { name: "MINI",          logoUrl: `${CDN}/mini.png`,          color: "#000000" },
+  { name: "Mitsubishi",    logoUrl: `${CDN}/mitsubishi.png`,    color: "#e60012" },
 
   // ── N ─────────────────────────────────────────────────────────────────────
   { name: "Nissan", logoUrl: `${CDN}/nissan.png`, color: "#c3002f" },
 
+  // ── O ─────────────────────────────────────────────────────────────────────
+  { name: "Opel", logoUrl: `${CDN}/opel.png`, color: "#ffcc00" },
+
   // ── P ─────────────────────────────────────────────────────────────────────
-  { name: "Polestar", logoUrl: `${CDN}/polestar.png`, color: "#0a0a0a" },
-  { name: "Porsche",  logoUrl: `${CDN}/porsche.png`,  color: "#c9a227" },
+  { name: "Peugeot",  logoUrl: `${CDN}/peugeot.png`,  color: "#1a1a1a" },
+  { name: "Polestar", logoUrl: `${CDN}/polestar.png`,  color: "#0a0a0a" },
+  { name: "Porsche",  logoUrl: `${CDN}/porsche.png`,   color: "#c9a227" },
 
   // ── R ─────────────────────────────────────────────────────────────────────
-  { name: "RAM",        logoUrl: `${CDN}/ram.png`,        color: "#c8102e" },
-  { name: "Rivian",     logoUrl: `${CDN}/rivian.png`,     color: "#00b050" },
-  { name: "Rolls-Royce",logoUrl: `${CDN}/rolls-royce.png`,color: "#6e1a36" },
+  { name: "RAM",        logoUrl: `${CDN}/ram.png`,         color: "#c8102e" },
+  { name: "Renault",    logoUrl: `${CDN}/renault.png`,     color: "#efdf00" },
+  { name: "Rivian",     logoUrl: `${CDN}/rivian.png`,      color: "#00b050" },
+  { name: "Rolls-Royce",logoUrl: `${CDN}/rolls-royce.png`, color: "#6e1a36" },
 
   // ── S ─────────────────────────────────────────────────────────────────────
-  { name: "Subaru", logoUrl: `${CDN}/subaru.png`, color: "#003087" },
+  { name: "SEAT",      logoUrl: `${CDN}/seat.png`,      color: "#1a1a1a" },
+  { name: "Škoda",     logoUrl: `${CDN}/skoda.png`,     color: "#4ba82e" },
+  { name: "Smart",     logoUrl: `${CDN}/smart.png`,     color: "#00adef" },
+  { name: "SsangYong", logoUrl: `${CDN}/ssangyong.png`, color: "#003087" },
+  { name: "Subaru",    logoUrl: `${CDN}/subaru.png`,    color: "#003087" },
 
   // ── T ─────────────────────────────────────────────────────────────────────
   { name: "Tesla",  logoUrl: `${CDN}/tesla.png`,  color: "#e82127" },
