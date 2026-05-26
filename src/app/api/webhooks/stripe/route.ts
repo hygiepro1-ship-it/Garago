@@ -7,20 +7,14 @@
  *   - customer.subscription.deleted  → résiliation
  *   - invoice.payment_succeeded      → paiement réussi (renouvellement)
  *   - invoice.payment_failed         → paiement échoué
- *
- * Mode Calendly :
- *   - TEAMS  : CALENDLY_API_KEY configuré → invite auto à l'organisation
- *   - MANUEL : pas de clé → le garagiste colle son URL dans son tableau de bord
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { inviteToOrg } from "@/lib/calendly";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
 
-// Next.js App Router — désactiver le body parser pour que Stripe puisse vérifier la signature
 export const config = { api: { bodyParser: false } };
 
 export async function POST(req: NextRequest) {
@@ -52,7 +46,7 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         await prisma.garage.updateMany({
           where: { stripeCustomerId: sub.customer as string },
-          data: { subscriptionStatus: "EXPIRED" },
+          data:  { subscriptionStatus: "EXPIRED" },
         });
         break;
       }
@@ -72,7 +66,7 @@ export async function POST(req: NextRequest) {
         const inv = event.data.object as any;
         await prisma.garage.updateMany({
           where: { stripeCustomerId: inv.customer as string },
-          data: { subscriptionStatus: "PAST_DUE" },
+          data:  { subscriptionStatus: "PAST_DUE" },
         });
         break;
       }
@@ -92,15 +86,8 @@ async function handleSubscriptionChange(sub: Stripe.Subscription) {
     ? new Date(subAny.current_period_end * 1000)
     : null;
 
-  const garage = await prisma.garage.findFirst({
+  await prisma.garage.updateMany({
     where: { stripeCustomerId: sub.customer as string },
-    include: { owner: { select: { email: true } } },
-  });
-
-  if (!garage) return;
-
-  await prisma.garage.update({
-    where: { id: garage.id },
     data: {
       subscriptionStatus: isActive ? "ACTIVE" : sub.status.toUpperCase(),
       stripePriceId:      sub.items.data[0]?.price?.id ?? null,
@@ -108,19 +95,7 @@ async function handleSubscriptionChange(sub: Stripe.Subscription) {
     },
   });
 
-  // ── Invitation Calendly automatique (mode Teams uniquement) ─────────────
-  const hasCalendlyTeams =
-    process.env.CALENDLY_API_KEY &&
-    !process.env.CALENDLY_API_KEY.startsWith("YOUR_");
-
-  if (isActive && hasCalendlyTeams && garage.owner?.email && !garage.calcomLink) {
-    const result = await inviteToOrg(garage.owner.email);
-    if (result.success) {
-      console.log(`✉️  Invitation Calendly envoyée à ${garage.owner.email}`);
-    } else {
-      console.error(`❌ Échec invitation Calendly :`, result.error);
-    }
-  } else if (isActive && !hasCalendlyTeams) {
-    console.log(`ℹ️  Mode manuel : ${garage.owner?.email} doit coller son lien Calendly dans son tableau de bord.`);
+  if (isActive) {
+    console.log(`✅ Abonnement activé pour customer=${sub.customer}`);
   }
 }

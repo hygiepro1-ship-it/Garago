@@ -775,64 +775,23 @@ export default function DashboardGaragePage() {
               </label>
             </div>
 
-            {/* Calendly integration */}
-            <div className="border border-orange-200 rounded-xl p-4 bg-orange-50">
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-2xl">📅</span>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">Calendrier Calendly (recommandé)</p>
-                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                    Connectez votre compte Calendly gratuit pour que vos clients réservent directement depuis votre profil.
-                    L'application mobile Calendly vous permet de gérer vos disponibilités depuis votre téléphone.
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    Lien Calendly <span className="font-normal text-gray-400">(ex : <code className="bg-white px-1 rounded">info-garago/rdv</code>)</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 flex-shrink-0">calendly.com/</span>
-                    <input
-                      className={inputClass}
-                      value={profileData.calcomLink ?? ""}
-                      onChange={(e) => setProfileData({ ...profileData, calcomLink: e.target.value })}
-                      placeholder="votre-garage/rendez-vous"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <a
-                    href="https://calendly.com/signup"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors"
-                  >
-                    Créer un compte Calendly gratuit →
-                  </a>
-                  <a
-                    href="https://apps.apple.com/app/calendly/id901106803"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
-                  >
-                    📱 App iOS
-                  </a>
-                  <a
-                    href="https://play.google.com/store/apps/details?id=com.calendly.android"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
-                  >
-                    📱 App Android
-                  </a>
-                </div>
-                {profileData.calcomLink && (
-                  <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                    ✓ Le widget Calendly s'affichera sur votre profil public à la place du formulaire par défaut.
-                  </p>
-                )}
+            {/* Accès agenda mobile */}
+            <div className="border border-blue-200 rounded-xl p-4 bg-blue-50 flex items-start gap-3">
+              <span className="text-2xl">📱</span>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Agenda mobile</p>
+                <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+                  Gérez vos rendez-vous depuis votre téléphone — ajoutez des clients en 10 secondes, confirmez ou annulez en un tap.
+                </p>
+                <a
+                  href="/tableau-de-bord/garage/agenda"
+                  className="inline-flex items-center gap-1.5 mt-2 text-xs px-3 py-1.5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition-colors"
+                >
+                  📅 Ouvrir l'agenda →
+                </a>
+                <p className="text-xs text-gray-400 mt-1.5">
+                  Astuce : ouvrez ce lien sur votre téléphone et ajoutez-le à votre écran d'accueil.
+                </p>
               </div>
             </div>
 

@@ -7,7 +7,6 @@ import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
 import StarRating from "@/components/StarRating";
 import BookingWidget from "@/components/BookingWidget";
-import CalBooking from "@/components/CalBooking";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
@@ -292,16 +291,13 @@ export default function GarageProfilePage() {
 
         {/* Sidebar */}
         <div className="space-y-5">
-          {/* Booking — Cal.com si configuré, sinon widget maison */}
-          {garage.calcomLink
-            ? <CalBooking calLink={garage.calcomLink} />
-            : <BookingWidget
-                garageId={garage.id}
-                garageSlug={slug}
-                garageName={garage.name}
-                services={garage.services ?? []}
-              />
-          }
+          {/* Widget de réservation */}
+          <BookingWidget
+            garageId={garage.id}
+            garageSlug={slug}
+            garageName={garage.name}
+            services={garage.services ?? []}
+          />
 
           {/* Horaires */}
           {garage.availability?.length > 0 && (

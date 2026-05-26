@@ -29,34 +29,27 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = (session.user as any).id;
-  const body = await req.json();
+  const body   = await req.json();
 
   const garage = await prisma.garage.update({
     where: { ownerId: userId },
     data: {
-      name: body.name,
-      description: body.description,
-      address: body.address,
-      city: body.city,
-      postalCode: body.postalCode,
-      phone: body.phone,
-      email: body.email,
-      website: body.website,
-      yearFounded: body.yearFounded ? parseInt(body.yearFounded) : null,
-      employeeCount: body.employeeCount ? parseInt(body.employeeCount) : null,
-      languages: body.languages ? JSON.stringify(body.languages) : null,
-      openingHours: body.openingHours ? JSON.stringify(body.openingHours) : null,
-      acceptsWalkIn: body.acceptsWalkIn ?? true,
+      name:            body.name,
+      description:     body.description,
+      address:         body.address,
+      city:            body.city,
+      postalCode:      body.postalCode,
+      phone:           body.phone,
+      email:           body.email,
+      website:         body.website,
+      yearFounded:     body.yearFounded   ? parseInt(body.yearFounded)   : null,
+      employeeCount:   body.employeeCount ? parseInt(body.employeeCount) : null,
+      languages:       body.languages     ? JSON.stringify(body.languages)     : null,
+      openingHours:    body.openingHours  ? JSON.stringify(body.openingHours)  : null,
+      acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
-      // Accepte l'URL complète ou juste le chemin : "username/event", "https://calendly.com/username/event"
-      calcomLink: body.calcomLink
-        ? body.calcomLink.trim()
-            .replace(/^https?:\/\/calendly\.com\//, "")
-            .replace(/^https?:\/\/cal\.com\//, "")
-            .replace(/^calendly\.com\//, "")
-        : null,
-      latitude:  body.latitude  != null ? parseFloat(body.latitude)  : undefined,
-      longitude: body.longitude != null ? parseFloat(body.longitude) : undefined,
+      latitude:        body.latitude  != null ? parseFloat(body.latitude)  : undefined,
+      longitude:       body.longitude != null ? parseFloat(body.longitude) : undefined,
     },
   });
 
