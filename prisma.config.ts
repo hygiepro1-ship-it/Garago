@@ -1,14 +1,14 @@
-import path from "node:path";
 import { defineConfig } from "prisma/config";
 
-const dbUrl = (process.env["DATABASE_URL"] ?? "file:./prisma/dev.db").replace("file:", "");
-
+// prisma.config.ts : configuration pour les commandes CLI (migrate, db push, generate)
+// Utilise DIRECT_URL (connexion directe sans pooler) pour les migrations
+// Utilise DATABASE_URL en fallback (dev local sans pooler)
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: `file:${path.resolve(dbUrl)}`,
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "",
   },
 });

@@ -4,7 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  // Les URLs sont configurées dans prisma.config.ts via l'adaptateur PrismaPg (Prisma 7)
 }
 
 model Account {
