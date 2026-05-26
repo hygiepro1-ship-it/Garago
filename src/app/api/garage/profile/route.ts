@@ -48,7 +48,13 @@ export async function PUT(req: NextRequest) {
       openingHours: body.openingHours ? JSON.stringify(body.openingHours) : null,
       acceptsWalkIn: body.acceptsWalkIn ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
-      calcomLink: body.calcomLink ? body.calcomLink.trim().replace(/^https?:\/\/cal\.com\//, "") : null,
+      // Accepte l'URL complète ou juste le chemin : "username/event", "https://calendly.com/username/event"
+      calcomLink: body.calcomLink
+        ? body.calcomLink.trim()
+            .replace(/^https?:\/\/calendly\.com\//, "")
+            .replace(/^https?:\/\/cal\.com\//, "")
+            .replace(/^calendly\.com\//, "")
+        : null,
       latitude:  body.latitude  != null ? parseFloat(body.latitude)  : undefined,
       longitude: body.longitude != null ? parseFloat(body.longitude) : undefined,
     },

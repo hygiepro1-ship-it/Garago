@@ -8,7 +8,9 @@
  *   - invoice.payment_succeeded      → paiement réussi (renouvellement)
  *   - invoice.payment_failed         → paiement échoué
  *
- * À chaque activation : invite automatiquement le garagiste sur Calendly.
+ * Mode Calendly :
+ *   - TEAMS  : CALENDLY_API_KEY configuré → invite auto à l'organisation
+ *   - MANUEL : pas de clé → le garagiste colle son URL dans son tableau de bord
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -106,13 +108,19 @@ async function handleSubscriptionChange(sub: Stripe.Subscription) {
     },
   });
 
-  // ── Invitation Calendly automatique à la première activation ────────────
-  if (isActive && garage.owner?.email && !garage.calcomLink) {
+  // ── Invitation Calendly automatique (mode Teams uniquement) ─────────────
+  const hasCalendlyTeams =
+    process.env.CALENDLY_API_KEY &&
+    !process.env.CALENDLY_API_KEY.startsWith("YOUR_");
+
+  if (isActive && hasCalendlyTeams && garage.owner?.email && !garage.calcomLink) {
     const result = await inviteToOrg(garage.owner.email);
     if (result.success) {
       console.log(`✉️  Invitation Calendly envoyée à ${garage.owner.email}`);
     } else {
       console.error(`❌ Échec invitation Calendly :`, result.error);
     }
+  } else if (isActive && !hasCalendlyTeams) {
+    console.log(`ℹ️  Mode manuel : ${garage.owner?.email} doit coller son lien Calendly dans son tableau de bord.`);
   }
 }
