@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(url.toString(), {
       headers: {
-        "User-Agent": "GarageQC/1.0 (garageqc.ca)",
+        "User-Agent": "Garago/1.0 (garago.ca)",
         Accept: "application/json",
       },
       next: { revalidate: 60 }, // cache 60s

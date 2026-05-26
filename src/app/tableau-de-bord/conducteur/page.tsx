@@ -55,7 +55,7 @@ export default function DashboardConducteurPage() {
       {/* Welcome */}
       <div className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-2xl p-6 mb-8">
         <h1 className="text-2xl font-extrabold mb-1">Bonjour, {session?.user?.name} 👋</h1>
-        <p className="text-blue-200">Bienvenue sur votre espace conducteur GarageQC</p>
+        <p className="text-blue-200">Bienvenue sur votre espace conducteur Garago</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

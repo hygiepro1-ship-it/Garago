@@ -41,7 +41,7 @@ const PLANS = [
     features: [
       "Tout inclus dans l'essai",
       "Priorité dans les résultats",
-      'Badge "Garage certifié GarageQC"',
+      'Badge "Garage certifié Garago"',
       "Réponses aux avis clients",
       "Statistiques détaillées",
       "Support prioritaire 7j/7",
@@ -190,7 +190,7 @@ export default function InscriptionGaragePage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: "#f97316" }}>G</div>
-            <span className="text-white font-black text-base">GarageQC</span>
+            <span className="text-white font-black text-base">Garago</span>
           </Link>
           <span className="text-blue-300 text-sm">
             Déjà inscrit ? <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">Se connecter</Link>
@@ -320,7 +320,7 @@ export default function InscriptionGaragePage() {
               <div className="rounded-2xl p-6 text-white" style={{ backgroundColor: "#0b1f3a" }}>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-2xl">🚀</span>
-                  <span className="font-black text-lg">Pourquoi GarageQC?</span>
+                  <span className="font-black text-lg">Pourquoi Garago?</span>
                 </div>
                 <div className="space-y-3">
                   {[

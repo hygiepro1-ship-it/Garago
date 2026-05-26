@@ -38,7 +38,7 @@ export default function ConnexionPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🔧</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Connexion à GarageQC</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">Connexion à Garago</h1>
           <p className="text-gray-500 mt-2">Accédez à votre espace conducteur ou garage</p>
         </div>
 

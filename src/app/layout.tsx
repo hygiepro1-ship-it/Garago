@@ -5,9 +5,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "GarageQC — Comparez les garages, réservez au meilleur prix",
+  title: "Garago — Comparez les garages, réservez au meilleur prix",
   description:
-    "Trouvez le meilleur garage pour votre véhicule exact au Québec. Filtrez par marque, modèle, finition, service et disponibilité. Avis vérifiés, prix transparents.",
+    "Trouvez le meilleur garage pour votre véhicule exact au Canada. Filtrez par marque, modèle, finition, service et disponibilité. Avis vérifiés, prix transparents.",
   keywords: ["garage", "mécanique", "Québec", "pneus", "entretien", "réparation auto", "vidange", "freins"],
 };
 

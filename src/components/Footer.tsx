@@ -12,8 +12,8 @@ export default function Footer() {
                 G
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-white font-black text-lg tracking-tight">GARAGE</span>
-                <span className="text-xs font-bold tracking-widest" style={{ color: "#f97316" }}>QUÉBEC</span>
+                <span className="text-white font-black text-lg tracking-tight">GARAGO</span>
+                <span className="text-xs font-bold tracking-widest" style={{ color: "#f97316" }}>CANADA</span>
               </div>
             </div>
             <p className="text-sm leading-relaxed max-w-xs text-gray-500">
@@ -83,7 +83,7 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600">© {new Date().getFullYear()} GarageQC. Tous droits réservés.</p>
+          <p className="text-xs text-gray-600">© {new Date().getFullYear()} Garago. Tous droits réservés.</p>
           <div className="flex items-center gap-6 text-xs text-gray-600">
             <span>Fait avec ❤️ au Québec 🍁</span>
             <Link href="/tarifs" className="hover:text-gray-400 transition-colors">Tarifs</Link>

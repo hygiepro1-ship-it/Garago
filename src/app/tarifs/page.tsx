@@ -4,7 +4,7 @@ const FEATURES = [
   {
     icon: "👁️",
     title: "Visibilité immédiate",
-    desc: "Des milliers de conducteurs québécois cherchent un garage chaque jour sur GarageQC. Votre garage apparaît dans les résultats de recherche filtré par marque, service et ville — exactement là où vos futurs clients regardent.",
+    desc: "Des milliers de conducteurs québécois cherchent un garage chaque jour sur Garago. Votre garage apparaît dans les résultats de recherche filtré par marque, service et ville — exactement là où vos futurs clients regardent.",
     stat: "500+ recherches/jour",
     statColor: "#f97316",
   },
@@ -25,7 +25,7 @@ const FEATURES = [
   {
     icon: "⭐",
     title: "Avis vérifiés qui convertissent",
-    desc: "Les avis sur GarageQC sont liés à de vrais comptes conducteurs — aucun faux avis possible. Une réputation solide, construite mérite par mérite, qui vous différencie de la concurrence.",
+    desc: "Les avis sur Garago sont liés à de vrais comptes conducteurs — aucun faux avis possible. Une réputation solide, construite mérite par mérite, qui vous différencie de la concurrence.",
     stat: "4.7/5 note moyenne",
     statColor: "#f59e0b",
   },
@@ -50,9 +50,9 @@ const TESTIMONIALS = [
     name: "Patrick G.",
     garage: "Auto-Sport Laval",
     city: "Laval",
-    text: "En deux semaines sur GarageQC, j'ai eu 12 nouveaux clients que je n'aurais jamais trouvés autrement. L'abonnement s'est rentabilisé dès la première semaine.",
+    text: "En deux semaines sur Garago, j'ai eu 12 nouveaux clients que je n'aurais jamais trouvés autrement. L'abonnement s'est rentabilisé dès la première semaine.",
     rating: 5,
-    months: "6 mois sur GarageQC",
+    months: "6 mois sur Garago",
   },
   {
     name: "Sylvie M.",
@@ -60,15 +60,15 @@ const TESTIMONIALS = [
     city: "Montréal",
     text: "La fonction de marques exclues est parfaite pour moi — je ne fais que Toyota et Honda, et maintenant je reçois exactement ce type de clients. Plus de perte de temps.",
     rating: 5,
-    months: "1 an sur GarageQC",
+    months: "1 an sur Garago",
   },
   {
     name: "Carlos R.",
     garage: "Précision Mécanique",
     city: "Sherbrooke",
-    text: "J'étais sceptique, mais mes avis ont attiré 3 fois plus de clients qu'avant. GarageQC est devenu mon principal canal d'acquisition.",
+    text: "J'étais sceptique, mais mes avis ont attiré 3 fois plus de clients qu'avant. Garago est devenu mon principal canal d'acquisition.",
     rating: 5,
-    months: "8 mois sur GarageQC",
+    months: "8 mois sur Garago",
   },
 ];
 
@@ -86,8 +86,8 @@ const FAQ = [
     a: "Votre garage ne sera plus visible dans les résultats de recherche. Vos données sont conservées 90 jours, alors vous pouvez réactiver à tout moment sans recommencer de zéro.",
   },
   {
-    q: "Les conducteurs paient-ils pour utiliser GarageQC?",
-    a: "Non, jamais! GarageQC est 100% gratuit pour les conducteurs. Vous payez pour être visible auprès d'eux — c'est notre modèle et il fonctionne pour tout le monde.",
+    q: "Les conducteurs paient-ils pour utiliser Garago?",
+    a: "Non, jamais! Garago est 100% gratuit pour les conducteurs. Vous payez pour être visible auprès d'eux — c'est notre modèle et il fonctionne pour tout le monde.",
   },
   {
     q: "Combien de temps faut-il pour configurer mon profil?",
@@ -98,8 +98,8 @@ const FAQ = [
     a: "Les conducteurs inscrits sur la plateforme peuvent laisser un avis après avoir visité votre garage. Vous pouvez répondre à chaque avis depuis votre tableau de bord. Les avis sont liés à de vrais comptes — aucun faux avis possible.",
   },
   {
-    q: "Est-ce que GarageQC remplace mon site web?",
-    a: "Non, il le complète. GarageQC vous apporte une visibilité supplémentaire sur notre plateforme de recherche. Nous renvoyons même les clients vers votre site web si vous en avez un.",
+    q: "Est-ce que Garago remplace mon site web?",
+    a: "Non, il le complète. Garago vous apporte une visibilité supplémentaire sur notre plateforme de recherche. Nous renvoyons même les clients vers votre site web si vous en avez un.",
   },
 ];
 
@@ -179,7 +179,7 @@ export default function TarifsPage() {
             ))}
           </div>
           <div className="text-center mt-8">
-            <p className="text-lg font-black text-gray-900">GarageQC résout tous ces problèmes. Voici comment.</p>
+            <p className="text-lg font-black text-gray-900">Garago résout tous ces problèmes. Voici comment.</p>
           </div>
         </div>
       </section>
@@ -259,7 +259,7 @@ export default function TarifsPage() {
                 {[
                   "Tout de l'essai gratuit",
                   "Priorité dans les résultats",
-                  'Badge "Certifié GarageQC"',
+                  'Badge "Certifié Garago"',
                   "Réponse aux avis clients",
                   "Statistiques de visite",
                   "Support prioritaire 7j/7",
@@ -315,7 +315,7 @@ export default function TarifsPage() {
               <p className="text-gray-600 leading-relaxed">
                 Une vidange d'huile rapporte en moyenne <strong>60–90 $</strong>. Il vous faut donc{" "}
                 <strong className="text-orange-600">moins d'un nouveau client par mois</strong> pour rentabiliser votre abonnement Pro.
-                Nos garages partenaires rapportent en moyenne <strong>8 à 15 nouvelles demandes</strong> par mois via GarageQC.
+                Nos garages partenaires rapportent en moyenne <strong>8 à 15 nouvelles demandes</strong> par mois via Garago.
               </p>
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function TarifsPage() {
             Prêt à remplir votre agenda?
           </h2>
           <p className="text-blue-200 text-lg mb-8 leading-relaxed">
-            Rejoignez 500+ garages qui ont déjà choisi GarageQC pour développer leur clientèle au Québec.
+            Rejoignez 500+ garages qui ont déjà choisi Garago pour développer leur clientèle au Québec.
             <br />
             <strong className="text-white">Commencez gratuitement — aucune carte de crédit.</strong>
           </p>

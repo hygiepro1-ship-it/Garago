@@ -1,5 +1,5 @@
 /**
- * Calendly API — gestion des membres de l'organisation GaragePro.
+ * Calendly API — gestion des membres de l'organisation Garago.
  *
  * Flux d'activation d'un garage :
  *   1. Stripe webhook → subscription activée

@@ -44,9 +44,9 @@ async function main() {
   // Admin user
   const adminPwd = await bcrypt.hash("admin1234", 12);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@garageqc.ca" },
+    where: { email: "admin@garago.ca" },
     update: {},
-    create: { name: "Admin GarageQC", email: "admin@garageqc.ca", password: adminPwd, role: "ADMIN" },
+    create: { name: "Admin Garago", email: "admin@garago.ca", password: adminPwd, role: "ADMIN" },
   });
   console.log("✓ Admin créé:", admin.email);
 
@@ -247,7 +247,7 @@ async function main() {
 
   console.log("\n✅ Seed terminé avec succès!\n");
   console.log("Comptes de test:");
-  console.log("  Admin:      admin@garageqc.ca / admin1234");
+  console.log("  Admin:      admin@garago.ca / admin1234");
   console.log("  Conducteur: conducteur@exemple.com / driver1234");
   console.log("  Garage:     garage1@exemple.com / garage1234");
 }
