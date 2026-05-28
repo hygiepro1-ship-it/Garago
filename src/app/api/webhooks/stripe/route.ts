@@ -10,26 +10,26 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
-// Initialisation lazy — évite l'erreur au build si STRIPE_SECRET_KEY n'est pas défini
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY non défini");
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-}
+// Force la route en dynamique — empêche Next.js d'évaluer ce module au build
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const stripe  = getStripe();
+  // Import dynamique de Stripe — évite l'évaluation au build sans STRIPE_SECRET_KEY
+  const { default: Stripe } = await import("stripe");
+
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Stripe non configuré" }, { status: 500 });
+  }
+
+  const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
   const payload = await req.text();
   const sig     = req.headers.get("stripe-signature") ?? "";
-  const secret  = process.env.STRIPE_WEBHOOK_SECRET!;
 
-  let event: Stripe.Event;
+  let event: import("stripe").Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(payload, sig, secret);
+    event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err: any) {
     console.error("Stripe webhook signature invalide :", err.message);
     return NextResponse.json({ error: "Signature invalide" }, { status: 400 });
@@ -41,14 +41,14 @@ export async function POST(req: NextRequest) {
       // ── Abonnement activé / renouvelé ────────────────────────────────────
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        const sub = event.data.object as Stripe.Subscription;
+        const sub = event.data.object as import("stripe").Stripe.Subscription;
         await handleSubscriptionChange(sub);
         break;
       }
 
       // ── Abonnement résilié ───────────────────────────────────────────────
       case "customer.subscription.deleted": {
-        const sub = event.data.object as Stripe.Subscription;
+        const sub = event.data.object as import("stripe").Stripe.Subscription;
         await prisma.garage.updateMany({
           where: { stripeCustomerId: sub.customer as string },
           data:  { subscriptionStatus: "EXPIRED" },
@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
       case "invoice.payment_succeeded": {
         const inv = event.data.object as any;
         if (inv.subscription) {
-          const sub = await getStripe().subscriptions.retrieve(inv.subscription as string);
+          const { default: Stripe2 } = await import("stripe");
+          const stripe2 = new Stripe2(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
+          const sub = await stripe2.subscriptions.retrieve(inv.subscription as string);
           await handleSubscriptionChange(sub);
         }
         break;
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function handleSubscriptionChange(sub: Stripe.Subscription) {
+async function handleSubscriptionChange(sub: import("stripe").Stripe.Subscription) {
   const isActive = sub.status === "active" || sub.status === "trialing";
   const subAny   = sub as any;
   const endDate  = subAny.current_period_end
