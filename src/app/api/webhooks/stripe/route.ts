@@ -13,11 +13,16 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
-
-export const config = { api: { bodyParser: false } };
+// Initialisation lazy — évite l'erreur au build si STRIPE_SECRET_KEY n'est pas défini
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY non défini");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
+}
 
 export async function POST(req: NextRequest) {
+  const stripe  = getStripe();
   const payload = await req.text();
   const sig     = req.headers.get("stripe-signature") ?? "";
   const secret  = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
       case "invoice.payment_succeeded": {
         const inv = event.data.object as any;
         if (inv.subscription) {
-          const sub = await stripe.subscriptions.retrieve(inv.subscription as string);
+          const sub = await getStripe().subscriptions.retrieve(inv.subscription as string);
           await handleSubscriptionChange(sub);
         }
         break;
