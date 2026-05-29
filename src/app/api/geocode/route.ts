@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const q     = req.nextUrl.searchParams.get("q") ?? "";
-  const type  = req.nextUrl.searchParams.get("type"); // "postcode" for postal geocoding
+  const type  = req.nextUrl.searchParams.get("type");
   const lat   = req.nextUrl.searchParams.get("lat");
   const lng   = req.nextUrl.searchParams.get("lng");
-  const tight = req.nextUrl.searchParams.get("tight") === "1";
+  // Bounding box from postal extent for tight filtering: "minLng,minLat,maxLng,maxLat"
+  const bbox  = req.nextUrl.searchParams.get("bbox");
 
   if (q.trim().length < 3) return NextResponse.json([]);
 
@@ -15,7 +16,6 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("lang", "fr");
   url.searchParams.set("bbox", "-141,42,-52,84");
 
-  // Geo-bias: use postal center if available, otherwise default to Quebec
   if (lat && lng) {
     url.searchParams.set("lat", lat);
     url.searchParams.set("lon", lng);
@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("lon", "-73.0");
   }
 
-  // For street search biased tightly on a postal center, limit to addresses only
   if (type !== "postcode") {
     url.searchParams.set("osm_tag", "place:house");
   }
@@ -39,19 +38,29 @@ export async function GET(req: NextRequest) {
     const data     = await res.json();
     const features = data.features ?? [];
 
+    // Parse postal extent for tight filtering
+    let extentBbox: [number, number, number, number] | null = null;
+    if (bbox) {
+      const parts = bbox.split(",").map(Number);
+      if (parts.length === 4 && parts.every((n) => !isNaN(n))) {
+        extentBbox = parts as [number, number, number, number];
+      }
+    }
+
     const filtered = features.filter((f: any) => {
       const p = f.properties ?? {};
       if (p.countrycode !== "CA") return false;
       if (type === "postcode") return true;
-      // For street search: must have a street
       if (!p.street && !p.name) return false;
-      // If tight mode (postal center known): filter to results near the center
-      if (tight && lat && lng) {
+      // Filter strictly within the postal extent bounding box
+      if (extentBbox) {
         const [fLng, fLat] = f.geometry?.coordinates ?? [0, 0];
-        const dlat = fLat - parseFloat(lat);
-        const dlng = fLng - parseFloat(lng);
-        const dist = Math.sqrt(dlat * dlat + dlng * dlng);
-        return dist < 0.15; // ~15km radius
+        const [minLng, minLat, maxLng, maxLat] = extentBbox;
+        // Add 20% margin around the extent
+        const mLng = (maxLng - minLng) * 0.2;
+        const mLat = (maxLat - minLat) * 0.2;
+        return fLng >= minLng - mLng && fLng <= maxLng + mLng &&
+               fLat >= minLat - mLat && fLat <= maxLat + mLat;
       }
       return true;
     });

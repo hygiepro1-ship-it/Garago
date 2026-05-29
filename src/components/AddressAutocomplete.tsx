@@ -61,7 +61,11 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
   const [postal, setPostal]         = useState("");
   const [postalOk, setPostalOk]     = useState(false);
   const [postalErr, setPostalErr]   = useState("");
-  const [postalCenter, setPostalCenter] = useState<{ lat: number; lng: number; city: string; province: string } | null>(null);
+  const [postalCenter, setPostalCenter] = useState<{
+    lat: number; lng: number;
+    city: string; district: string; province: string;
+    bbox: string; // "minLng,minLat,maxLng,maxLat"
+  } | null>(null);
 
   const [street, setStreet]         = useState(initialValue);
   const [results, setResults]       = useState<any[]>([]);
@@ -89,10 +93,23 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
       if (Array.isArray(data) && data.length > 0) {
         const f    = data[0];
         const prop = f.properties ?? {};
-        const [lng, lat] = f.geometry?.coordinates ?? [0, 0];
-        const city = prop.city ?? prop.town ?? prop.village ?? prop.municipality ?? "";
-        const prov = PROVINCE_CODES[prop.state ?? ""] ?? prop.state ?? "QC";
-        setPostalCenter({ lat, lng, city, province: prov });
+        const [fLng, fLat] = f.geometry?.coordinates ?? [0, 0];
+        const city     = prop.city ?? prop.town ?? prop.village ?? prop.municipality ?? "";
+        const district = prop.district ?? prop.suburb ?? prop.neighbourhood ?? prop.quarter ?? "";
+        const prov     = PROVINCE_CODES[prop.state ?? ""] ?? prop.state ?? "QC";
+
+        // Use extent bounding box if available for precise filtering
+        const ext  = prop.extent as number[] | undefined;
+        let lat = fLat, lng = fLng, bbox = "";
+        if (ext && ext.length === 4) {
+          // extent: [minLng, maxLat, maxLng, minLat]
+          const [minLng, maxLat, maxLng, minLat] = ext;
+          lat  = (minLat + maxLat) / 2;
+          lng  = (minLng + maxLng) / 2;
+          bbox = `${minLng},${minLat},${maxLng},${maxLat}`;
+        }
+
+        setPostalCenter({ lat, lng, city, district, province: prov, bbox });
         setPostalErr("");
         return true;
       }
@@ -116,12 +133,15 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
   }
 
   // Search street address biased to postal center
-  const search = useCallback(async (q: string, center: { lat: number; lng: number } | null) => {
+  const search = useCallback(async (q: string, center: typeof postalCenter) => {
     if (q.trim().length < 3) { setResults([]); setOpen(false); return; }
     setLoading(true);
     try {
       let url = `/api/geocode?q=${encodeURIComponent(q)}`;
-      if (center) url += `&lat=${center.lat}&lng=${center.lng}&tight=1`;
+      if (center) {
+        url += `&lat=${center.lat}&lng=${center.lng}`;
+        if (center.bbox) url += `&bbox=${encodeURIComponent(center.bbox)}`;
+      }
       const res  = await fetch(url);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
@@ -189,7 +209,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
       </div>
       {postalCenter && (
         <p className="text-xs text-green-600 pl-1 -mt-1">
-          📍 {postalCenter.city}{postalCenter.city ? ", " : ""}{postalCenter.province}
+          📍 {[postalCenter.district, postalCenter.city, postalCenter.province].filter(Boolean).join(", ")}
         </p>
       )}
       {postalErr && (
