@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM   = process.env.EMAIL_FROM ?? "Garago <noreply@garago.ca>";
+// Lazy — avoids build-time crash when RESEND_API_KEY is not set
+function getResend() { return new Resend(process.env.RESEND_API_KEY); }
+const FROM = process.env.EMAIL_FROM ?? "Garago <noreply@garago.ca>";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ export async function sendBookingConfirmation(params: {
     <a href="${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/api/appointments/${params.appointmentId}/ics" style="display:inline-block;background:#f3f4f6;color:#374151;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">📅 Télécharger .ics</a>
   `;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to:      params.to,
     subject: `📅 RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`,
@@ -119,7 +120,7 @@ export async function sendBookingReminder(params: {
     <a href="tel:${params.garagePhone}" style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">📞 ${params.garagePhone}</a>
   `;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to:      params.to,
     subject: `⏰ Rappel RDV demain — ${params.garageName} à ${params.startTime}`,
