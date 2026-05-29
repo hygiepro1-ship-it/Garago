@@ -101,12 +101,32 @@ export default function HomePage() {
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
                     Prestation
                   </p>
-                  <select className={sel} value={service} onChange={(e) => setService(e.target.value)}>
-                    <option value="">Toutes les prestations</option>
-                    {SERVICE_CATEGORIES.map((s) => (
-                      <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
+                  <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                    {SERVICES_ROW.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setService(service === s.id ? "" : s.id)}
+                        className="flex-shrink-0 flex flex-col items-start px-3 py-2 rounded-lg border transition-all text-left"
+                        style={{
+                          borderColor: service === s.id ? "#f97316" : "#e5e7eb",
+                          backgroundColor: service === s.id ? "#fff7ed" : "#fff",
+                        }}
+                      >
+                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: service === s.id ? "#c2410c" : "#374151" }}>
+                          {s.name}
+                        </span>
+                        <span className="text-xs font-bold whitespace-nowrap" style={{ color: service === s.id ? "#f97316" : "#9ca3af" }}>
+                          {s.price}
+                        </span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
+                  {service && (
+                    <button type="button" onClick={() => setService("")} className="mt-1.5 text-xs text-gray-400 hover:text-gray-600 underline">
+                      Effacer la sélection
+                    </button>
+                  )}
                 </div>
 
                 {make && model && (
