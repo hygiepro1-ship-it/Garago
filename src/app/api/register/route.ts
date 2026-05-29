@@ -4,9 +4,15 @@ import { randomBytes } from "crypto";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 
+// 32-char alphabet — no ambiguous chars (0/O, 1/I/L removed)
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 function generateReferralCode(): string {
-  // Format: GAR-XXXXXX (uppercase alphanum, easy to share)
-  return "GAR-" + randomBytes(3).toString("hex").toUpperCase();
+  const bytes = randomBytes(8);
+  let part = "";
+  for (const b of bytes) part += ALPHABET[b % ALPHABET.length];
+  // GAR-XXXXXXXX — 32^8 ≈ 1 trillion combinations
+  return "GAR-" + part;
 }
 
 export async function POST(req: NextRequest) {
