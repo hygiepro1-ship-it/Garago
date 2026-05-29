@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
           await handleSubscriptionChange(sub);
 
           // ── Récompense de parrainage au 1er paiement ──────────────────
-          // billing_reason = "subscription_create" → c'est le tout premier paiement
-          if (inv.billing_reason === "subscription_create") {
+          // billing_reason = "subscription_create" + amount_paid > 0 → premier paiement réel (mensuel ou annuel)
+          if (inv.billing_reason === "subscription_create" && (inv.amount_paid ?? 0) > 0) {
             const newGarage = await prisma.garage.findFirst({
               where: { stripeCustomerId: inv.customer as string },
             });
