@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 interface BookingWidgetProps {
-  garageId: string;
-  garageSlug: string;
-  garageName: string;
+  garageId:     string;
+  garageSlug:   string;
+  garageName:   string;
+  garageAddress?: string;
+  garageCity?:    string;
   services: Array<{ category: { name: string } }>;
 }
 
@@ -15,7 +17,7 @@ type Step = "service" | "date" | "slot" | "info" | "done";
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DAYS_FR   = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
-export default function BookingWidget({ garageId, garageSlug, garageName, services }: BookingWidgetProps) {
+export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services }: BookingWidgetProps) {
   const { data: session } = useSession();
 
   const [step, setStep]           = useState<Step>("service");
@@ -33,8 +35,9 @@ export default function BookingWidget({ garageId, garageSlug, garageName, servic
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState("");
+  const [submitting, setSubmitting]   = useState(false);
+  const [error, setError]             = useState("");
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
   // Update name/email when session loads
   useEffect(() => {
@@ -101,6 +104,8 @@ export default function BookingWidget({ garageId, garageSlug, garageName, servic
     });
     setSubmitting(false);
     if (res.ok) {
+      const data = await res.json();
+      setAppointmentId(data.id ?? null);
       setStep("done");
     } else {
       const d = await res.json();
@@ -113,17 +118,77 @@ export default function BookingWidget({ garageId, garageSlug, garageName, servic
 
   // ── DONE ─────────────────────────────────────────────────────────────────
   if (step === "done") {
+    // Build Google Calendar URL
+    const gcalDate = selectedDate ? formatDate(selectedDate) : "";
+    const gcalStart = gcalDate.replace(/-/g, "") + "T" + (selectedSlot ?? "").replace(":", "") + "00";
+    const [sh, sm] = (selectedSlot ?? "00:00").split(":").map(Number);
+    const endMin = sh * 60 + sm + 60;
+    const gcalEnd = gcalDate.replace(/-/g, "") + "T" + String(Math.floor(endMin / 60)).padStart(2, "0") + String(endMin % 60).padStart(2, "0") + "00";
+    const location = [garageAddress, garageCity].filter(Boolean).join(", ");
+    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+      `&text=${encodeURIComponent(`RDV ${garageName}${service ? ` — ${service}` : ""}`)}` +
+      `&dates=${gcalStart}/${gcalEnd}` +
+      `&details=${encodeURIComponent(`Rendez-vous chez ${garageName}${service ? `\nService : ${service}` : ""}`)}` +
+      `&location=${encodeURIComponent(location)}`;
+
+    const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent` +
+      `&subject=${encodeURIComponent(`RDV ${garageName}`)}` +
+      `&startdt=${gcalDate}T${(selectedSlot ?? "00:00").replace(":", "")}00` +
+      `&enddt=${gcalDate}T${String(Math.floor(endMin / 60)).padStart(2, "0")}${String(endMin % 60).padStart(2, "0")}00` +
+      `&location=${encodeURIComponent(location)}`;
+
+    const icsUrl = appointmentId ? `/api/appointments/${appointmentId}/ics` : null;
+
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-        <div className="text-5xl mb-4">✅</div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Demande envoyée !</h3>
-        <p className="text-gray-500 text-sm mb-1">
-          Votre rendez-vous du <strong>{formatDateFr(selectedDate!)}</strong> à <strong>{selectedSlot}</strong> est en attente de confirmation.
-        </p>
-        <p className="text-gray-400 text-xs mt-3">Le garage vous contactera sous peu pour confirmer.</p>
+      <div className="bg-white rounded-2xl border border-gray-200 p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+        <div className="text-center mb-5">
+          <div className="text-5xl mb-3">✅</div>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">Demande envoyée !</h3>
+          <p className="text-gray-500 text-sm">
+            <strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> à <strong>{selectedSlot}</strong>
+          </p>
+          {email && (
+            <p className="text-gray-400 text-xs mt-2">Une confirmation a été envoyée à <strong>{email}</strong></p>
+          )}
+        </div>
+
+        {/* Calendar integration */}
+        <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Ajouter à votre calendrier</p>
+          <div className="flex flex-col gap-2">
+            <a
+              href={gcalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+            >
+              <span className="text-base">📅</span> Google Calendar
+            </a>
+            {icsUrl && (
+              <a
+                href={icsUrl}
+                className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-400 transition-colors"
+              >
+                <span className="text-base">🍎</span> Apple Calendrier / iCal
+              </a>
+            )}
+            <a
+              href={outlookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+            >
+              <span className="text-base">📧</span> Outlook Calendar
+            </a>
+            {icsUrl && (
+              <p className="text-xs text-gray-400 text-center mt-1">Le fichier .ics fonctionne aussi sur Android et tout autre calendrier</p>
+            )}
+          </div>
+        </div>
+
         <button
-          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); }}
-          className="mt-5 text-sm text-orange-500 hover:underline"
+          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); setAppointmentId(null); }}
+          className="mt-4 w-full text-center text-sm text-orange-500 hover:underline"
         >
           Prendre un autre rendez-vous
         </button>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendBookingConfirmation } from "@/lib/email";
 
 // POST /api/appointments — client booking (online)
 export async function POST(req: NextRequest) {
@@ -55,7 +56,24 @@ export async function POST(req: NextRequest) {
       status: "PENDING",
       source: "ONLINE",
     },
+    include: { garage: true },
   });
+
+  // Send confirmation email if customer provided an address
+  if (appt.customerEmail) {
+    sendBookingConfirmation({
+      to:            appt.customerEmail,
+      customerName:  appt.customerName,
+      garageName:    appt.garage.name,
+      garagePhone:   appt.garage.phone,
+      garageAddress: [appt.garage.address, appt.garage.city].filter(Boolean).join(", "),
+      date:          appt.date,
+      startTime:     appt.startTime,
+      endTime:       appt.endTime,
+      serviceName:   appt.serviceName,
+      appointmentId: appt.id,
+    }).catch(console.error);
+  }
 
   return NextResponse.json(appt, { status: 201 });
 }

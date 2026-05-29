@@ -1,0 +1,128 @@
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM   = process.env.EMAIL_FROM ?? "Garago <noreply@garago.ca>";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDateFr(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const months = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
+function baseLayout(body: string) {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Garago</title></head>
+<body style="margin:0;padding:0;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+        <!-- Header -->
+        <tr><td style="background:#1e3a5f;border-radius:16px 16px 0 0;padding:24px 32px">
+          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 Garago</span>
+        </td></tr>
+        <!-- Body -->
+        <tr><td style="background:#fff;padding:32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
+          ${body}
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="background:#f3f4f6;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:0;padding:16px 32px;text-align:center">
+          <p style="margin:0;color:#9ca3af;font-size:12px">Garago Canada — <a href="https://garago.ca" style="color:#f97316;text-decoration:none">garago.ca</a></p>
+          <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">Pour annuler ou modifier, contactez directement le garage.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+// ── Confirmation email ────────────────────────────────────────────────────────
+
+export async function sendBookingConfirmation(params: {
+  to:           string;
+  customerName: string;
+  garageName:   string;
+  garagePhone:  string;
+  garageAddress:string;
+  date:         string;
+  startTime:    string;
+  endTime:      string;
+  serviceName:  string | null;
+  appointmentId:string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Demande de rendez-vous envoyée ✅</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre demande a bien été reçue.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        ${params.serviceName ? `<p style="margin:0 0 8px;font-size:14px"><strong>🔧 Service :</strong> ${params.serviceName}</p>` : ""}
+        <p style="margin:0 0 8px;font-size:14px"><strong>📅 Date :</strong> ${fmtDateFr(params.date)}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🕐 Heure :</strong> ${params.startTime} – ${params.endTime}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🏪 Garage :</strong> ${params.garageName}</p>
+        <p style="margin:0;font-size:14px"><strong>📍 Adresse :</strong> ${params.garageAddress}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Le garage vous contactera pour <strong>confirmer</strong> votre rendez-vous. En cas de question, appelez directement :</p>
+    <a href="tel:${params.garagePhone}" style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">📞 ${params.garagePhone}</a>
+
+    <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0">
+    <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">Ajouter à votre calendrier</p>
+    <p style="margin:0 0 16px;color:#6b7280;font-size:13px">Ne manquez pas votre rendez-vous — ajoutez-le maintenant :</p>
+    <a href="${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/api/appointments/${params.appointmentId}/ics" style="display:inline-block;background:#f3f4f6;color:#374151;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">📅 Télécharger .ics</a>
+  `;
+
+  await resend.emails.send({
+    from:    FROM,
+    to:      params.to,
+    subject: `📅 RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`,
+    html:    baseLayout(body),
+  });
+}
+
+// ── Reminder email (24h before) ───────────────────────────────────────────────
+
+export async function sendBookingReminder(params: {
+  to:           string;
+  customerName: string;
+  garageName:   string;
+  garagePhone:  string;
+  garageAddress:string;
+  date:         string;
+  startTime:    string;
+  endTime:      string;
+  serviceName:  string | null;
+  appointmentId:string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel — votre rendez-vous est demain ⏰</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, voici un rappel de votre rendez-vous prévu demain.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        ${params.serviceName ? `<p style="margin:0 0 8px;font-size:14px"><strong>🔧 Service :</strong> ${params.serviceName}</p>` : ""}
+        <p style="margin:0 0 8px;font-size:14px"><strong>📅 Date :</strong> ${fmtDateFr(params.date)}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🕐 Heure :</strong> ${params.startTime} – ${params.endTime}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🏪 Garage :</strong> ${params.garageName}</p>
+        <p style="margin:0;font-size:14px"><strong>📍 Adresse :</strong> ${params.garageAddress}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Des questions ? Contactez le garage directement :</p>
+    <a href="tel:${params.garagePhone}" style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">📞 ${params.garagePhone}</a>
+  `;
+
+  await resend.emails.send({
+    from:    FROM,
+    to:      params.to,
+    subject: `⏰ Rappel RDV demain — ${params.garageName} à ${params.startTime}`,
+    html:    baseLayout(body),
+  });
+}

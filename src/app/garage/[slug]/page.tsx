@@ -296,6 +296,8 @@ export default function GarageProfilePage() {
             garageId={garage.id}
             garageSlug={slug}
             garageName={garage.name}
+            garageAddress={garage.address}
+            garageCity={garage.city}
             services={garage.services ?? []}
           />
 
