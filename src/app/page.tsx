@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getModelsForMake, getYears } from "@/lib/vehicleData";
@@ -29,6 +29,30 @@ export default function HomePage() {
   const [make, setMake]   = useState("");
   const [model, setModel] = useState("");
   const [service, setService] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState("");
+
+  const handleLocate = useCallback(() => {
+    setLocError("");
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const p = new URLSearchParams();
+        p.set("lat", String(pos.coords.latitude));
+        p.set("lng", String(pos.coords.longitude));
+        if (year)  p.set("year",  year);
+        if (make)  p.set("make",  make);
+        if (model) p.set("model", model);
+        router.push(`/rechercher?${p.toString()}`);
+      },
+      () => {
+        setLocating(false);
+        setLocError("Localisation refusée — entre ton adresse dans les filtres.");
+      },
+      { timeout: 8000 }
+    );
+  }, [year, make, model, router]);
 
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
@@ -97,34 +121,22 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    Prestation
-                  </p>
-                  <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-                    {SERVICES_ROW.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setService(service === s.id ? "" : s.id)}
-                        className="flex-shrink-0 flex flex-col items-start px-3 py-2 rounded-lg border transition-all text-left"
-                        style={{
-                          borderColor: service === s.id ? "#f97316" : "#e5e7eb",
-                          backgroundColor: service === s.id ? "#fff7ed" : "#fff",
-                        }}
-                      >
-                        <span className="text-xs font-semibold whitespace-nowrap" style={{ color: service === s.id ? "#c2410c" : "#374151" }}>
-                          {s.name}
-                        </span>
-                        <span className="text-xs font-bold whitespace-nowrap" style={{ color: service === s.id ? "#f97316" : "#9ca3af" }}>
-                          {s.price}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  {service && (
-                    <button type="button" onClick={() => setService("")} className="mt-1.5 text-xs text-gray-400 hover:text-gray-600 underline">
-                      Effacer la sélection
-                    </button>
+                  <button
+                    type="button"
+                    onClick={handleLocate}
+                    disabled={locating}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed transition-all text-sm font-semibold"
+                    style={{
+                      borderColor: "#cbd5e1",
+                      color: "#374151",
+                      backgroundColor: locating ? "#f8fafc" : "#fff",
+                    }}
+                  >
+                    <span className="text-base">{locating ? "⏳" : "📍"}</span>
+                    {locating ? "Localisation en cours…" : "Trouver le garage le plus proche"}
+                  </button>
+                  {locError && (
+                    <p className="mt-1.5 text-xs text-red-500">{locError}</p>
                   )}
                 </div>
 
