@@ -86,6 +86,9 @@ model Garage {
   stripeCustomerId   String?
   stripePriceId      String?
 
+  referralCode          String?  @unique
+  referredByCode        String?
+  referralRewardGranted Boolean  @default(false)
 
   yearFounded     Int?
   employeeCount   Int?

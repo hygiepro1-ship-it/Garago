@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+
+function generateReferralCode(): string {
+  // Format: GAR-XXXXXX (uppercase alphanum, easy to share)
+  return "GAR-" + randomBytes(3).toString("hex").toUpperCase();
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, role, phone, garageName, garageAddress, garageCity, garagePostalCode, garagePhone, garageLat, garageLng } = body;
+    const {
+      name, email, password, role, phone,
+      garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
+      garageLat, garageLng,
+      referredByCode, // Code de parrainage entré lors de l'inscription
+    } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
@@ -17,16 +28,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Un compte existe déjà avec ce courriel" }, { status: 409 });
     }
 
+    // Validate referral code if provided
+    if (referredByCode) {
+      const referrer = await prisma.garage.findUnique({ where: { referralCode: referredByCode.trim().toUpperCase() } });
+      if (!referrer) {
+        return NextResponse.json({ error: "Code de parrainage invalide" }, { status: 400 });
+      }
+    }
+
     const hashed = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashed,
-        role: role ?? "DRIVER",
-        phone,
-      },
+      data: { name, email, password: hashed, role: role ?? "DRIVER", phone },
     });
 
     if (role === "GARAGE_OWNER" && garageName) {
@@ -35,6 +48,12 @@ export async function POST(req: NextRequest) {
       let i = 1;
       while (await prisma.garage.findUnique({ where: { slug } })) {
         slug = `${baseSlug}-${i++}`;
+      }
+
+      // Generate unique referral code
+      let referralCode = generateReferralCode();
+      while (await prisma.garage.findUnique({ where: { referralCode } })) {
+        referralCode = generateReferralCode();
       }
 
       await prisma.garage.create({
@@ -49,7 +68,9 @@ export async function POST(req: NextRequest) {
           latitude:  garageLat  ? parseFloat(garageLat)  : null,
           longitude: garageLng ? parseFloat(garageLng) : null,
           subscriptionStatus: "TRIAL",
-          subscriptionEndAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+          subscriptionEndAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          referralCode,
+          referredByCode: referredByCode ? referredByCode.trim().toUpperCase() : null,
         },
       });
     }

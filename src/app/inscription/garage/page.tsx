@@ -88,6 +88,7 @@ export default function InscriptionGaragePage() {
   const [garagePhone, setGaragePhone]         = useState("");
   const [garageLat, setGarageLat]             = useState<number | null>(null);
   const [garageLng, setGarageLng]             = useState<number | null>(null);
+  const [referredByCode, setReferredByCode]   = useState("");
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
   function handleAddressSelect(r: AddressResult) {
@@ -132,6 +133,7 @@ export default function InscriptionGaragePage() {
         role: "GARAGE_OWNER",
         garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
         garageLat, garageLng,
+        referredByCode: referredByCode.trim().toUpperCase() || undefined,
       }),
     });
 
@@ -297,6 +299,25 @@ export default function InscriptionGaragePage() {
                         <input type="tel" className={inputClass} placeholder="(514) 555-5678" value={garagePhone} onChange={(e) => setGaragePhone(e.target.value)} />
                       </div>
                     </div>
+                  </div>
+
+                  {/* ── Code de parrainage ── */}
+                  <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50 p-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Code de parrainage <span className="text-gray-400 font-normal">(optionnel)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={inputClass}
+                      placeholder="Ex : GAR-A1B2C3"
+                      value={referredByCode}
+                      onChange={(e) => setReferredByCode(e.target.value.toUpperCase())}
+                      maxLength={10}
+                      style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+                    />
+                    <p className="mt-1.5 text-xs text-orange-700">
+                      🎁 Un garage vous a référé ? Entrez son code — il obtiendra 1 mois gratuit dès votre premier paiement.
+                    </p>
                   </div>
 
                   <button

@@ -297,6 +297,35 @@ export default function DashboardGaragePage() {
             </div>
           ))}
 
+          {/* Referral card */}
+          <div className="sm:col-span-2 lg:col-span-4 bg-white rounded-2xl border-2 border-dashed border-orange-300 shadow-sm p-6">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h3 className="font-bold text-gray-900 mb-1">Parrainage — Gagnez 1 mois gratuit</h3>
+                <p className="text-gray-500 text-sm mb-3">Partagez votre code avec un autre garage. Dès son premier paiement, vous recevez automatiquement 1 mois gratuit.</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
+                    {garage.referralCode ?? "—"}
+                  </span>
+                  {garage.referralCode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(garage.referralCode);
+                        setSuccess("Code copié ✓");
+                        setTimeout(() => setSuccess(""), 3000);
+                      }}
+                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+                    >
+                      Copier
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="text-4xl">🎁</div>
+            </div>
+          </div>
+
           {/* Recent reviews */}
           <div className="sm:col-span-2 lg:col-span-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-4">Avis récents</h3>

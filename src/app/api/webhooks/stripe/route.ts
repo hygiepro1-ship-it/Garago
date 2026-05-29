@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         break;
       }
 
-      // ── Paiement réussi (renouvellement mensuel) ─────────────────────────
+      // ── Paiement réussi (renouvellement mensuel + parrainage) ────────────
       case "invoice.payment_succeeded": {
         const inv = event.data.object as any;
         if (inv.subscription) {
@@ -64,6 +64,34 @@ export async function POST(req: NextRequest) {
           const stripe2 = new Stripe2(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
           const sub = await stripe2.subscriptions.retrieve(inv.subscription as string);
           await handleSubscriptionChange(sub);
+
+          // ── Récompense de parrainage au 1er paiement ──────────────────
+          // billing_reason = "subscription_create" → c'est le tout premier paiement
+          if (inv.billing_reason === "subscription_create") {
+            const newGarage = await prisma.garage.findFirst({
+              where: { stripeCustomerId: inv.customer as string },
+            });
+            if (newGarage?.referredByCode && !newGarage.referralRewardGranted) {
+              const referrer = await prisma.garage.findUnique({
+                where: { referralCode: newGarage.referredByCode },
+              });
+              if (referrer) {
+                const currentEnd = referrer.subscriptionEndAt ?? new Date();
+                const newEnd = new Date(Math.max(currentEnd.getTime(), Date.now()));
+                newEnd.setMonth(newEnd.getMonth() + 1); // +1 mois gratuit
+
+                await prisma.garage.update({
+                  where: { id: referrer.id },
+                  data: { subscriptionEndAt: newEnd },
+                });
+                await prisma.garage.update({
+                  where: { id: newGarage.id },
+                  data: { referralRewardGranted: true },
+                });
+                console.log(`🎁 +1 mois offert à ${referrer.name} pour parrainage de ${newGarage.name}`);
+              }
+            }
+          }
         }
         break;
       }
