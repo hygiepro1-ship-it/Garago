@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function normalizePostal(p: string) {
+  return p.toUpperCase().replace(/\s/g, "");
+}
+
 export async function GET(req: NextRequest) {
-  const q     = req.nextUrl.searchParams.get("q") ?? "";
-  const type  = req.nextUrl.searchParams.get("type");
-  const lat   = req.nextUrl.searchParams.get("lat");
-  const lng   = req.nextUrl.searchParams.get("lng");
-  // Bounding box from postal extent for tight filtering: "minLng,minLat,maxLng,maxLat"
-  const bbox  = req.nextUrl.searchParams.get("bbox");
+  const q        = req.nextUrl.searchParams.get("q") ?? "";
+  const type     = req.nextUrl.searchParams.get("type");
+  const lat      = req.nextUrl.searchParams.get("lat");
+  const lng      = req.nextUrl.searchParams.get("lng");
+  const postcode = req.nextUrl.searchParams.get("postcode"); // exact postcode filter
 
   if (q.trim().length < 3) return NextResponse.json([]);
 
   const url = new URL("https://photon.komoot.io/api/");
   url.searchParams.set("q", q);
-  url.searchParams.set("limit", type === "postcode" ? "1" : "6");
+  url.searchParams.set("limit", type === "postcode" ? "1" : "10");
   url.searchParams.set("lang", "fr");
   url.searchParams.set("bbox", "-141,42,-52,84");
 
@@ -24,8 +27,10 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("lon", "-73.0");
   }
 
-  if (type !== "postcode") {
-    url.searchParams.set("osm_tag", "place:house");
+  // No osm_tag filter for address searches — we allow houses AND streets,
+  // then filter by postcode/radius in code. For postcode lookups, keep default.
+  if (type === "postcode") {
+    // no additional filter needed
   }
 
   try {
@@ -38,30 +43,36 @@ export async function GET(req: NextRequest) {
     const data     = await res.json();
     const features = data.features ?? [];
 
-    // Parse postal extent for tight filtering
-    let extentBbox: [number, number, number, number] | null = null;
-    if (bbox) {
-      const parts = bbox.split(",").map(Number);
-      if (parts.length === 4 && parts.every((n) => !isNaN(n))) {
-        extentBbox = parts as [number, number, number, number];
-      }
-    }
+    const normalizedTarget = postcode ? normalizePostal(postcode) : null;
+    const centerLat = lat ? parseFloat(lat) : null;
+    const centerLng = lng ? parseFloat(lng) : null;
 
     const filtered = features.filter((f: any) => {
       const p = f.properties ?? {};
       if (p.countrycode !== "CA") return false;
       if (type === "postcode") return true;
-      if (!p.street && !p.name) return false;
-      // Filter strictly within the postal extent bounding box
-      if (extentBbox) {
-        const [fLng, fLat] = f.geometry?.coordinates ?? [0, 0];
-        const [minLng, minLat, maxLng, maxLat] = extentBbox;
-        // Add 20% margin around the extent
-        const mLng = (maxLng - minLng) * 0.2;
-        const mLat = (maxLat - minLat) * 0.2;
-        return fLng >= minLng - mLng && fLng <= maxLng + mLng &&
-               fLat >= minLat - mLat && fLat <= maxLat + mLat;
+      // Reject transit stops, waterways, parks — keep only routable addresses
+      const REJECT_KEYS = ["railway", "waterway", "natural", "leisure", "tourism", "amenity"];
+      if (REJECT_KEYS.includes(p.osm_key)) return false;
+
+      const isAddress = p.type === "house" || (p.street && p.housenumber);
+      const isStreet  = p.type === "street";
+      if (!isAddress && !isStreet) return false;
+
+      if (normalizedTarget) {
+        const targetFsa = normalizedTarget.slice(0, 3); // Forward Sortation Area (H2G)
+        if (p.postcode) {
+          // Match by FSA (first 3 chars) — same neighbourhood, different house codes are fine
+          return normalizePostal(p.postcode).slice(0, 3) === targetFsa;
+        }
+        // No postcode in result — keep only if within ~2 km of the postal center
+        if (centerLat !== null && centerLng !== null) {
+          const [fLng, fLat] = f.geometry?.coordinates ?? [0, 0];
+          return Math.abs(fLat - centerLat) <= 0.018 && Math.abs(fLng - centerLng) <= 0.025;
+        }
+        return false;
       }
+
       return true;
     });
 

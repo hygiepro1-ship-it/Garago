@@ -132,16 +132,14 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
     }
   }
 
-  // Search street address biased to postal center
-  const search = useCallback(async (q: string, center: typeof postalCenter) => {
+  // Search street address scoped to the entered postal code
+  const search = useCallback(async (q: string, center: typeof postalCenter, postalCode: string) => {
     if (q.trim().length < 3) { setResults([]); setOpen(false); return; }
     setLoading(true);
     try {
       let url = `/api/geocode?q=${encodeURIComponent(q)}`;
-      if (center) {
-        url += `&lat=${center.lat}&lng=${center.lng}`;
-        if (center.bbox) url += `&bbox=${encodeURIComponent(center.bbox)}`;
-      }
+      if (postalCode) url += `&postcode=${encodeURIComponent(postalCode)}`;
+      if (center) url += `&lat=${center.lat}&lng=${center.lng}`;
       const res  = await fetch(url);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
@@ -158,7 +156,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
     setStreet(val);
     setSelected(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(val, postalCenter), 300);
+    debounceRef.current = setTimeout(() => search(val, postalCenter, postal), 300);
   }
 
   function handleSelect(feature: any) {
