@@ -21,6 +21,15 @@ export default function DashboardGaragePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  async function startCheckout() {
+    setCheckoutLoading(true);
+    const res = await fetch("/api/stripe/checkout", { method: "POST" });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else setCheckoutLoading(false);
+  }
 
   // ---- Appointments state ----
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -258,8 +267,12 @@ export default function DashboardGaragePage() {
               <p className="text-yellow-700 text-sm">Activez votre abonnement pour continuer à apparaître dans les résultats.</p>
             </div>
           </div>
-          <button className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap">
-            S'abonner — 49$/mois
+          <button
+            onClick={startCheckout}
+            disabled={checkoutLoading}
+            className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60"
+          >
+            {checkoutLoading ? "Chargement…" : "S'abonner — 49$/mois"}
           </button>
         </div>
       )}

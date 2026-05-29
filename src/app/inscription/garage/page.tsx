@@ -316,7 +316,7 @@ export default function InscriptionGaragePage() {
                       style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
                     />
                     <p className="mt-1.5 text-xs text-orange-700">
-                      🎁 Un garage vous a référé ? Entrez son code — il obtiendra 1 mois gratuit dès votre premier paiement.
+                      🎁 Un garage vous a référé ? Entrez son code et obtenez <strong>10 % de réduction sur votre premier paiement</strong>.
                     </p>
                   </div>
 
