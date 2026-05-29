@@ -70,9 +70,8 @@ export default function HomePage() {
                 Cherchez par marque, modèle et type de service — sans surprise.
               </p>
               <div className="mt-8 flex flex-col gap-2 text-sm text-blue-300">
-                <span>✓ Prix affichés à l'avance</span>
-                <span>✓ Avis liés à de vrais comptes</span>
-                <span>✓ Filtrage par marque et modèle</span>
+                <span>✓ Réservation en ligne, simple et rapide</span>
+                <span>✓ Trouve le garage adapté à ton véhicule et ton besoin</span>
               </div>
             </div>
 
@@ -153,7 +152,7 @@ export default function HomePage() {
       <section className="bg-white border-b border-gray-100 py-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">
-            Prestations disponibles
+            Les prestations les plus demandées
           </p>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {SERVICES_ROW.map((s) => (
