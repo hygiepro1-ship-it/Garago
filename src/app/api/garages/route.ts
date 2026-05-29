@@ -43,6 +43,12 @@ export async function GET(req: NextRequest) {
       };
     }
 
+    const sort = searchParams.get("sort");
+    const orderBy: any =
+      sort === "popular"
+        ? [{ reviews: { _count: "desc" } }, { appointments: { _count: "desc" } }]
+        : { createdAt: "desc" };
+
     const [garages, total] = await Promise.all([
       prisma.garage.findMany({
         where,
@@ -58,10 +64,10 @@ export async function GET(req: NextRequest) {
             select: { rating: true },
           },
           _count: {
-            select: { reviews: true },
+            select: { reviews: true, appointments: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
       prisma.garage.count({ where }),
     ]);

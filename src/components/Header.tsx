@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import type { Lang } from "@/lib/i18n";
 
@@ -12,13 +12,35 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const role = (session?.user as any)?.role;
+  const [topServices, setTopServices] = useState<{ id: string; name: string }[]>([]);
 
-  const navItems = [
+  useEffect(() => {
+    fetch("/api/stats/popular-services")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setTopServices(data); })
+      .catch(() => {});
+  }, []);
+
+  // Static fallback services (shown until API responds)
+  const fallbackServices = [
     { label: t.nav.autoService, href: "/rechercher?service=engine" },
     { label: t.nav.tires,       href: "/rechercher?service=tires-winter" },
     { label: t.nav.brakes,      href: "/rechercher?service=brakes" },
-    { label: t.nav.findGarage,  href: "/rechercher" },
-    { label: t.nav.pricing,     href: "/tarifs" },
+  ];
+
+  const serviceItems =
+    topServices.length >= 2
+      ? [
+          { label: topServices[0].name, href: `/rechercher?service=${topServices[0].id}` },
+          { label: topServices[1].name, href: `/rechercher?service=${topServices[1].id}` },
+          ...fallbackServices.slice(2),
+        ]
+      : fallbackServices;
+
+  const navItems = [
+    ...serviceItems,
+    { label: lang === "fr" ? "Garages vedettes" : "Top Garages", href: "/rechercher?sort=popular" },
+    { label: t.nav.pricing, href: "/tarifs" },
   ];
 
   function toggleLang() {
