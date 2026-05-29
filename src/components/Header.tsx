@@ -21,21 +21,13 @@ export default function Header() {
       .catch(() => {});
   }, []);
 
-  // Static fallback services (shown until API responds)
-  const fallbackServices = [
-    { label: t.nav.autoService, href: "/rechercher?service=engine" },
-    { label: t.nav.tires,       href: "/rechercher?service=tires-winter" },
-    { label: t.nav.brakes,      href: "/rechercher?service=brakes" },
-  ];
-
   const serviceItems =
     topServices.length >= 2
       ? [
           { label: topServices[0].name, href: `/rechercher?service=${topServices[0].id}` },
           { label: topServices[1].name, href: `/rechercher?service=${topServices[1].id}` },
-          ...fallbackServices.slice(2),
         ]
-      : fallbackServices;
+      : []; // On n'affiche rien tant que l'API n'a pas répondu
 
   const navItems = [
     ...serviceItems,
