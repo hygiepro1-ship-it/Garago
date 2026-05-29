@@ -18,6 +18,7 @@ export default function Header() {
     { label: t.nav.tires,       href: "/rechercher?service=tires-winter" },
     { label: t.nav.brakes,      href: "/rechercher?service=brakes" },
     { label: t.nav.findGarage,  href: "/rechercher" },
+    { label: t.nav.pricing,     href: "/tarifs" },
   ];
 
   function toggleLang() {
