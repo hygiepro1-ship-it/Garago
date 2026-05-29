@@ -12,9 +12,10 @@ function escape(s: string) {
   return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const appt = await prisma.appointment.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { garage: true },
   });
 
