@@ -4,6 +4,15 @@ import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { randomBytes } from "crypto";
+
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function generateReferralCode(): string {
+  const bytes = randomBytes(8);
+  let part = "";
+  for (const b of bytes) part += ALPHABET[b % ALPHABET.length];
+  return "GAR-" + part;
+}
 
 // Charge .env.local (tsx n'a pas accès aux variables Next.js automatiquement)
 try {
@@ -175,6 +184,7 @@ async function main() {
         appointmentOnly: (gData as any).appointmentOnly ?? false,
         subscriptionStatus: "ACTIVE",
         subscriptionEndAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        referralCode: generateReferralCode(),
       },
     });
 

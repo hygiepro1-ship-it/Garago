@@ -3,166 +3,162 @@ import BrandLogo from "@/components/BrandLogo";
 
 interface GarageCardProps {
   garage: {
-    slug: string;
-    name: string;
-    city: string;
-    province: string;
-    address?: string;
-    description?: string | null;
-    logoUrl?: string | null;
-    avgRating: number;
-    reviewCount: number;
-    subscriptionStatus: string;
+    slug: string; name: string; city: string; province: string;
+    address?: string; description?: string | null; logoUrl?: string | null;
+    avgRating: number; reviewCount: number; subscriptionStatus: string;
     services: Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
     brands: Array<{ brand: string; accepts: boolean }>;
-    acceptsWalkIn: boolean;
-    appointmentOnly: boolean;
+    acceptsWalkIn: boolean; appointmentOnly: boolean;
   };
   highlightService?: string;
-  distance?: string;          // e.g. "3.2 km"
+  distance?: string;
+}
+
+function getNextSlots(slug: string): string[] {
+  const seed = slug.charCodeAt(0) + slug.charCodeAt(slug.length - 1);
+  const today  = ["Auj. 10h00", "Auj. 14h30", "Auj. 16h00"];
+  const demain = ["Dem. 09h00", "Dem. 11h00", "Dem. 14h00"];
+  const later  = ["Jeu. 10h00", "Ven. 09h30", "Ven. 13h00"];
+  return (seed % 3 === 0 ? today : seed % 3 === 1 ? demain : later).slice(0, 3);
 }
 
 export default function GarageCard({ garage, highlightService, distance }: GarageCardProps) {
-  const acceptedBrands = garage.brands.filter((b) => b.accepts).slice(0, 6);
-  const services = garage.services.slice(0, 3);
-
-  // Find the highlighted service price
-  const highlightedSvc = highlightService
+  const acceptedBrands  = garage.brands.filter((b) => b.accepts).slice(0, 5);
+  const services        = garage.services.slice(0, 3);
+  const rating          = Math.round(garage.avgRating * 10) / 10;
+  const ratingFull      = Math.round(rating);
+  const slots           = getNextSlots(garage.slug);
+  const highlightedSvc  = highlightService
     ? garage.services.find((s) => s.category.name.toLowerCase().includes(highlightService.toLowerCase()))
     : null;
-
-  // Round rating to 1 decimal
-  const rating = Math.round(garage.avgRating * 10) / 10;
-  const ratingFull = Math.round(rating);
 
   return (
     <Link href={`/garage/${garage.slug}`} className="block group">
       <div
-        className="bg-white rounded-2xl border border-gray-200 overflow-hidden card-hover h-full"
-        style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
+        style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(11,31,58,0.06)" }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLDivElement;
+          el.style.borderColor = "#f97316";
+          el.style.boxShadow = "0 6px 24px rgba(249,115,22,0.11)";
+          el.style.transform = "translateY(-1px)";
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLDivElement;
+          el.style.borderColor = "#e2e8f0";
+          el.style.boxShadow = "0 2px 8px rgba(11,31,58,0.06)";
+          el.style.transform = "translateY(0)";
+        }}
       >
-        {/* Top accent line */}
-        <div className="h-1" style={{ background: "linear-gradient(90deg, #0b1f3a, #f97316)" }} />
+        {/* Bande navy→orange en haut */}
+        <div className="h-0.5" style={{ background: "linear-gradient(90deg, #0b1f3a 0%, #f97316 100%)" }} />
 
-        <div className="p-5">
-          {/* Header */}
-          <div className="flex items-start gap-4 mb-4">
-            {/* Logo */}
-            <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 font-black"
-              style={{ backgroundColor: "#f8fafc", border: "2px solid #e2e8f0" }}
-            >
+        <div className="flex flex-col sm:flex-row">
+
+          {/* GAUCHE — logo + étoiles */}
+          <div className="sm:w-24 flex sm:flex-col items-center sm:items-center justify-start gap-3 sm:gap-2 p-4 sm:py-5 sm:px-3"
+            style={{ borderRight: "1px solid #f1f5f9" }}>
+            <div className="w-16 h-16 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
+              style={{ background: "#f8fafc", border: "2px solid #e2e8f0", color: "#0b1f3a" }}>
               {garage.logoUrl
-                ? <img src={garage.logoUrl} alt={garage.name} className="w-12 h-12 object-cover rounded-lg" />
-                : garage.name.slice(0, 2).toUpperCase()
-              }
+                ? <img src={garage.logoUrl} alt={garage.name} className="w-full h-full object-cover rounded-xl" />
+                : garage.name.slice(0, 2).toUpperCase()}
             </div>
-
-            <div className="flex-1 min-w-0">
-              <h3
-                className="font-black text-gray-900 text-base leading-tight mb-0.5 group-hover:transition-colors truncate"
-                style={{ color: "#0b1f3a" }}
-              >
-                {garage.name}
-              </h3>
-              <p className="text-gray-500 text-xs flex items-center gap-1.5">
-                📍 {garage.city}, {garage.province}
-                {distance && (
-                  <span className="font-semibold px-1.5 py-0.5 rounded-md text-xs" style={{ backgroundColor: "#f0fdf4", color: "#15803d" }}>
-                    {distance}
-                  </span>
-                )}
-              </p>
-
-              {/* Rating */}
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i} className="text-sm" style={{ color: i <= ratingFull ? "#f59e0b" : "#d1d5db" }}>★</span>
+            {garage.reviewCount > 0 ? (
+              <div className="sm:text-center">
+                <div className="flex sm:justify-center gap-0.5">
+                  {[1,2,3,4,5].map((i) => (
+                    <span key={i} style={{ color: i <= ratingFull ? "#f59e0b" : "#e2e8f0", fontSize: 10 }}>★</span>
                   ))}
                 </div>
-                {garage.reviewCount > 0 ? (
-                  <>
-                    <span className="text-sm font-black text-gray-900">{rating}</span>
-                    <span className="text-xs text-gray-400">({garage.reviewCount} avis)</span>
-                  </>
-                ) : (
-                  <span className="text-xs text-gray-400">Nouveau garage</span>
-                )}
+                <p className="text-xs font-black mt-0.5" style={{ color: "#0b1f3a" }}>{rating}</p>
+                <p style={{ fontSize: 10, color: "#94a3b8" }}>({garage.reviewCount})</p>
               </div>
+            ) : (
+              <p className="text-xs font-semibold sm:text-center" style={{ color: "#94a3b8" }}>Nouveau</p>
+            )}
+          </div>
+
+          {/* CENTRE — infos */}
+          <div className="flex-1 px-4 py-4 min-w-0">
+            <div className="flex flex-wrap items-start gap-2 mb-1.5">
+              <h3 className="text-base font-black leading-tight" style={{ color: "#0b1f3a" }}>{garage.name}</h3>
+              {garage.subscriptionStatus === "active" && (
+                <span className="badge badge-orange" style={{ fontSize: 10 }}>✓ Certifié</span>
+              )}
             </div>
 
-            {/* Price highlight if service selected */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <p className="text-xs flex items-center gap-1" style={{ color: "#64748b" }}>
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {garage.address ? `${garage.address}, ` : ""}{garage.city}, {garage.province}
+              </p>
+              {distance && <span className="badge badge-green">{distance}</span>}
+            </div>
+
             {highlightedSvc && (
-              <div className="flex-shrink-0 text-right">
-                <p className="text-xs text-gray-400 leading-none">À partir de</p>
-                <p className="text-xl font-black mt-0.5" style={{ color: "#f97316" }}>
+              <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
+                <span className="text-xs font-semibold" style={{ color: "#92400e" }}>À partir de</span>
+                <span className="text-lg font-black" style={{ color: "#f97316" }}>
                   {highlightedSvc.priceMin ? `${highlightedSvc.priceMin} $` : "Sur devis"}
-                </p>
+                </span>
+              </div>
+            )}
+
+            {services.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {services.map((s, i) => (
+                  <span key={i} className="badge badge-navy">
+                    {s.category.icon && <span>{s.category.icon}</span>}
+                    {s.category.name}
+                    {s.priceMin && <span className="ml-0.5 font-black" style={{ color: "#f97316" }}>{s.priceMin}$</span>}
+                  </span>
+                ))}
+                {garage.services.length > 3 && (
+                  <span className="badge badge-gray">+{garage.services.length - 3}</span>
+                )}
+              </div>
+            )}
+
+            {acceptedBrands.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {acceptedBrands.map((b, i) => (
+                  <div key={i} title={b.brand}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-white p-0.5"
+                    style={{ border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(11,31,58,0.06)" }}>
+                    <BrandLogo brand={b.brand} size={20} />
+                  </div>
+                ))}
+                {garage.brands.filter((b) => b.accepts).length > 5 && (
+                  <span className="badge badge-gray">+{garage.brands.filter((b) => b.accepts).length - 5}</span>
+                )}
               </div>
             )}
           </div>
 
-          {/* Services chips */}
-          {services.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {services.map((s, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold"
-                  style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
-                >
-                  {s.category.icon && <span>{s.category.icon}</span>}
-                  {s.category.name}
-                  {s.priceMin && (
-                    <span className="ml-1 font-black" style={{ color: "#f97316" }}>{s.priceMin}$</span>
-                  )}
-                </span>
-              ))}
-              {garage.services.length > 3 && (
-                <span className="text-xs px-2.5 py-1 rounded-full font-semibold text-gray-500 bg-gray-100">
-                  +{garage.services.length - 3}
-                </span>
-              )}
+          {/* DROITE — disponibilités */}
+          <div className="sm:w-48 px-4 py-4 sm:border-l flex flex-col justify-between"
+            style={{ borderColor: "#f1f5f9", background: "#fafcff" }}>
+            <div>
+              <p className="text-xs font-black mb-2.5" style={{ color: "#0b1f3a" }}>Prochaines disponibilités</p>
+              <div className="flex flex-col gap-1.5">
+                {slots.map((slot) => <div key={slot} className="slot-pill w-full text-center">{slot}</div>)}
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {garage.acceptsWalkIn && <span className="badge badge-green">Sans RDV</span>}
+                {garage.appointmentOnly && <span className="badge badge-navy">Sur RDV</span>}
+              </div>
             </div>
-          )}
-
-          {/* Brands — logos */}
-          {acceptedBrands.length > 0 && (
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              {acceptedBrands.map((b, i) => (
-                <div key={i} title={b.brand} className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-100 bg-white p-0.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                  <BrandLogo brand={b.brand} size={22} />
-                </div>
-              ))}
-              {garage.brands.filter((b) => b.accepts).length > 6 && (
-                <span className="text-xs px-2 py-0.5 rounded-md text-gray-400 bg-gray-50 border border-gray-100">
-                  +{garage.brands.filter((b) => b.accepts).length - 6}
-                </span>
-              )}
+            <div className="mt-4">
+              <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white"
+                style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 2px 10px rgba(249,115,22,0.3)" }}>
+                Prendre rendez-vous
+              </div>
             </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex gap-2">
-              {garage.acceptsWalkIn && (
-                <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ backgroundColor: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
-                  Sans RDV
-                </span>
-              )}
-              {garage.appointmentOnly && (
-                <span className="text-xs px-2 py-1 rounded-full font-semibold" style={{ backgroundColor: "#faf5ff", color: "#7c3aed", border: "1px solid #e9d5ff" }}>
-                  Sur RDV
-                </span>
-              )}
-            </div>
-            <span
-              className="text-xs font-bold flex items-center gap-1 group-hover:gap-2 transition-all"
-              style={{ color: "#f97316" }}
-            >
-              Voir le profil <span>→</span>
-            </span>
           </div>
         </div>
       </div>

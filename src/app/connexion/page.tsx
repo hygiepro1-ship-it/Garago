@@ -7,90 +7,155 @@ import Link from "next/link";
 
 export default function ConnexionPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+  const [showPwd,  setShowPwd]  = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    setLoading(true); setError("");
+    const res = await signIn("credentials", { email, password, redirect: false });
     if (res?.error) {
       setError("Courriel ou mot de passe invalide.");
       setLoading(false);
     } else {
-      router.push("/");
+      const session = await fetch("/api/auth/session").then((r) => r.json());
+      const role = session?.user?.role;
+      router.push(role === "GARAGE_OWNER" ? "/tableau-de-bord/garage" : "/tableau-de-bord/conducteur");
     }
   }
 
-  const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all";
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🔧</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Connexion à Garago</h1>
-          <p className="text-gray-500 mt-2">Accédez à votre espace conducteur ou garage</p>
+    <div className="min-h-screen flex">
+
+      {/* Panel gauche — navy Garago */}
+      <div className="hidden lg:flex flex-col justify-between w-[400px] flex-shrink-0 p-10 relative overflow-hidden"
+        style={{ background: "linear-gradient(160deg, #071428 0%, #0b1f3a 100%)" }}>
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%)" }} />
+
+        <div className="relative">
+          <Link href="/" className="inline-flex mb-10">
+            <div className="bg-white rounded-xl px-2.5 py-1">
+              <img src="/logo-garago.png" alt="Garago" className="h-9 w-auto object-contain" />
+            </div>
+          </Link>
+
+          <h2 className="text-3xl font-black text-white leading-snug mb-4">
+            Bienvenue sur<br />votre espace<br />
+            <span style={{ color: "#f97316" }}>Garago.</span>
+          </h2>
+          <p className="text-sm leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.4)" }}>
+            Retrouvez vos garages favoris, gérez vos rendez-vous et accédez à votre historique d'entretien.
+          </p>
+
+          <div className="space-y-4">
+            {[
+              { icon: "🔒", text: "Connexion sécurisée" },
+              { icon: "📅", text: "Historique de vos rendez-vous" },
+              { icon: "❤️", text: "Garages favoris enregistrés" },
+              { icon: "🔔", text: "Rappels d'entretien personnalisés" },
+            ].map((f) => (
+              <div key={f.text} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                  {f.icon}
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>{f.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+        <div className="relative p-4 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-1 mb-1.5">
+            {[1,2,3,4,5].map(i => <span key={i} style={{ color: "#f59e0b", fontSize: 13 }}>★</span>)}
+            <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+            &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes, avec le prix affiché d'avance. Incroyable.&rdquo;
+          </p>
+          <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>— Pierre G., Montréal</p>
+        </div>
+      </div>
+
+      {/* Panel droit — formulaire */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-white">
+        <div className="w-full max-w-sm">
+
+          <div className="lg:hidden text-center mb-8">
+            <Link href="/" className="inline-flex justify-center">
+              <img src="/logo-garago.png" alt="Garago" className="h-10 w-auto object-contain" />
+            </Link>
+          </div>
+
+          <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>Connexion</h1>
+          <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
+            Pas encore de compte ?{" "}
+            <Link href="/inscription/conducteur" className="font-bold" style={{ color: "#f97316" }}>
+              S'inscrire gratuitement
+            </Link>
+          </p>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
+                style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b" }}>
+                ⚠️ {error}
               </div>
             )}
+
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse courriel</label>
-              <input
-                type="email"
-                required
-                className={inputClass}
-                placeholder="vous@exemple.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Adresse courriel</label>
+              <input type="email" required className="garago-input" placeholder="vous@exemple.com"
+                value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
-              <input
-                type="password"
-                required
-                className={inputClass}
-                placeholder="Votre mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>Mot de passe</label>
+                <button type="button" className="text-xs font-semibold" style={{ color: "#f97316" }}>
+                  Mot de passe oublié ?
+                </button>
+              </div>
+              <div className="relative">
+                <input type={showPwd ? "text" : "password"} required className="garago-input pr-10"
+                  placeholder="Votre mot de passe"
+                  value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="button" onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d={showPwd
+                        ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        : "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      }/>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-700 text-white font-bold py-3 rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-60"
-            >
-              {loading ? "Connexion en cours..." : "Se connecter"}
+
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-base mt-2">
+              {loading
+                ? <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg> Connexion…
+                  </span>
+                : "Se connecter"
+              }
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 space-y-3 text-center text-sm">
-            <p className="text-gray-500">
-              Pas encore de compte ?{" "}
-              <Link href="/inscription/conducteur" className="text-blue-600 font-semibold hover:underline">
-                S'inscrire comme conducteur
-              </Link>
-            </p>
-            <p className="text-gray-500">
+          <div className="mt-8 pt-6 text-center" style={{ borderTop: "1px solid #e2e8f0" }}>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>
               Propriétaire d'un garage ?{" "}
-              <Link href="/inscription/garage" className="text-blue-600 font-semibold hover:underline">
-                Inscrire mon garage
+              <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
+                Inscrire mon garage →
               </Link>
             </p>
           </div>

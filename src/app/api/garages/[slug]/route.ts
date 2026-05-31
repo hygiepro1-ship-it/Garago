@@ -20,7 +20,8 @@ export async function GET(
         photos: { orderBy: { sortOrder: "asc" } },
         reviews: {
           include: { user: { select: { name: true, image: true } } },
-          orderBy: { createdAt: "desc" },
+          where: { isHidden: false },
+          orderBy: { createdAt: "desc" as const },
           take: 20,
         },
         owner: { select: { name: true, email: true } },

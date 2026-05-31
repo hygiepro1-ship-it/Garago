@@ -23,7 +23,14 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [step, setStep]           = useState<Step>("service");
   const [service, setService]     = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [calMonth, setCalMonth]   = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  // Initialize calMonth without new Date() to avoid SSR/client hydration mismatch
+  const [calMonth, setCalMonth]   = useState<Date>(() => {
+    if (typeof window === "undefined") {
+      // Server: return a placeholder (will be corrected by useEffect)
+      return new Date(2000, 0, 1);
+    }
+    const d = new Date(); d.setDate(1); return d;
+  });
   const [slots, setSlots]         = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -38,6 +45,12 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState("");
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
+
+  // Correct calMonth on client after SSR (avoid hydration mismatch)
+  useEffect(() => {
+    const d = new Date(); d.setDate(1);
+    setCalMonth(d);
+  }, []);
 
   // Update name/email when session loads
   useEffect(() => {
@@ -160,7 +173,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               href={gcalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-colors"
             >
               <span className="text-base">📅</span> Google Calendar
             </a>
@@ -176,7 +189,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               href={outlookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+              className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-colors"
             >
               <span className="text-base">📧</span> Outlook Calendar
             </a>

@@ -1,50 +1,64 @@
 "use client";
 
 import Link from "next/link";
-import { useLang } from "@/contexts/LanguageContext";
 
+const DRIVER_LINKS = [
+  { label: "Rechercher un garage",  href: "/rechercher" },
+  { label: "Vidange d'huile",       href: "/rechercher?service=oil" },
+  { label: "Pneus d'hiver",         href: "/rechercher?service=tires-winter" },
+  { label: "Freins",                href: "/rechercher?service=brakes" },
+  { label: "Climatisation",         href: "/rechercher?service=ac" },
+  { label: "Mon espace conducteur", href: "/tableau-de-bord/conducteur" },
+];
+
+const GARAGE_LINKS = [
+  { label: "Inscrire mon garage",   href: "/inscription/garage" },
+  { label: "Voir les tarifs",       href: "/tarifs" },
+  { label: "Tableau de bord",       href: "/tableau-de-bord/garage" },
+  { label: "Connexion",             href: "/connexion" },
+];
+
+const SERVICE_LINKS = [
+  { label: "🛢️  Vidange d'huile",   href: "/rechercher?service=oil" },
+  { label: "❄️  Pneus d'hiver",     href: "/rechercher?service=tires-winter" },
+  { label: "🔴  Freins",            href: "/rechercher?service=brakes" },
+  { label: "💨  Climatisation",     href: "/rechercher?service=ac" },
+  { label: "⚡  Diagnostic élec.", href: "/rechercher?service=electrical" },
+  { label: "🔍  Inspection",        href: "/rechercher?service=inspection" },
+];
 
 export default function Footer() {
-  const { lang, t } = useLang();
-  const f = t.footer;
-
   return (
-    <footer style={{ backgroundColor: "#071428" }} className="text-gray-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
+    <footer style={{ background: "#071428", color: "#475569" }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 mb-12">
 
           {/* Brand */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white" style={{ backgroundColor: "#f97316" }}>
-                G
+            <Link href="/" className="inline-flex mb-5">
+              <div className="bg-white rounded-xl px-3 py-1.5">
+                <img src="/logo-garago.png" alt="Garago" className="h-10 w-auto object-contain" />
               </div>
-              <div className="flex flex-col leading-none">
-                <span className="text-white font-black text-lg tracking-tight">GARAGO</span>
-                <span className="text-xs font-bold tracking-widest" style={{ color: "#f97316" }}>CANADA</span>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed max-w-xs text-gray-500">{f.tagline}</p>
-            <div className="flex items-center gap-2 mt-5 px-3 py-2 rounded-xl text-sm" style={{ backgroundColor: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)" }}>
-              <span className="text-yellow-400">★★★★★</span>
-              <span className="text-white font-bold">4.7/5</span>
-              <span className="text-gray-500">— 8 000+ {lang === "en" ? "reviews" : "avis"}</span>
+            </Link>
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
+              La plateforme de référence pour trouver, comparer et réserver un garage au Québec.
+              Prix affichés, avis vérifiés, réservation en ligne.
+            </p>
+            <div className="flex items-center gap-2 mt-5 px-3 py-2.5 rounded-xl"
+              style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.15)" }}>
+              <span style={{ color: "#f59e0b" }}>★★★★★</span>
+              <span className="text-white font-black text-sm">4.7/5</span>
+              <span className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>— 8 000+ avis</span>
             </div>
           </div>
 
-          {/* Conducteurs / Drivers */}
+          {/* Conducteurs */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-4">{f.drivers}</h4>
+            <h4 className="font-black text-white text-sm mb-4">Conducteurs</h4>
             <ul className="space-y-2.5 text-sm">
-              {[
-                { label: f.findGarage,   href: "/rechercher" },
-                { label: f.autoService,  href: "/rechercher?service=engine" },
-                { label: f.tireChange,   href: "/rechercher?service=tires-winter" },
-                { label: f.brakes,       href: "/rechercher?service=brakes" },
-                { label: f.myAccount,    href: "/tableau-de-bord/conducteur" },
-              ].map((l) => (
+              {DRIVER_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -52,34 +66,23 @@ export default function Footer() {
 
           {/* Garages */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-4">{f.garages}</h4>
+            <h4 className="font-black text-white text-sm mb-4">Garages</h4>
             <ul className="space-y-2.5 text-sm">
-              {[
-                { label: f.registerFree, href: "/inscription/garage" },
-                { label: f.pricing,      href: "/tarifs" },
-                { label: f.dashboard,    href: "/tableau-de-bord/garage" },
-                { label: f.signIn,       href: "/connexion" },
-              ].map((l) => (
+              {GARAGE_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Services populaires */}
+          {/* Services */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-4">{f.popularServices}</h4>
+            <h4 className="font-black text-white text-sm mb-4">Services populaires</h4>
             <ul className="space-y-2.5 text-sm">
-              {[
-                { label: `🛢️ ${f.oilChange}`,    href: "/rechercher?service=oil" },
-                { label: `❄️ ${f.winterTires}`,  href: "/rechercher?service=tires-winter" },
-                { label: `🔴 ${f.brakes}`,       href: "/rechercher?service=brakes" },
-                { label: `💨 ${f.ac}`,           href: "/rechercher?service=ac" },
-                { label: `⚡ ${f.diagnostic}`,   href: "/rechercher?service=electrical" },
-              ].map((l) => (
+              {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -87,13 +90,16 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600">© {new Date().getFullYear()} Garago. {f.rights}</p>
-          <div className="flex items-center gap-6 text-xs text-gray-600">
-            <span>{f.madeWith}</span>
-            <Link href="/tarifs" className="hover:text-gray-400 transition-colors">{f.pricing}</Link>
-            <span className="text-gray-700">{f.privacy}</span>
-            <span className="text-gray-700">{f.terms}</span>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
+            © {new Date().getFullYear()} Garago Technologies Inc. Tous droits réservés.
+          </p>
+          <div className="flex items-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
+            <span className="cursor-pointer hover:text-white transition-colors">Confidentialité</span>
+            <span className="cursor-pointer hover:text-white transition-colors">Conditions</span>
+            <Link href="/tarifs" className="hover:text-white transition-colors">Tarifs</Link>
+            <span style={{ color: "#f97316" }}>Fait avec ❤️ au Québec</span>
           </div>
         </div>
       </div>

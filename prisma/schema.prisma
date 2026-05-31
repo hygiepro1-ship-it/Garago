@@ -61,6 +61,7 @@ model User {
   favorites    GarageFavorite[]
   vehicles     UserVehicle[]
   appointments Appointment[]
+  reminders    MaintenanceReminder[]
 }
 
 model Garage {
@@ -76,8 +77,10 @@ model Garage {
   phone       String
   email       String?
   website     String?
-  logoUrl     String?
-  coverUrl    String?
+  logoUrl          String?
+  logoPosition     String  @default("center") // "top" | "center" | "bottom"
+  coverUrl         String?
+  coverPosition    String  @default("center") // "top" | "center" | "bottom"
   latitude    Float?
   longitude   Float?
 
@@ -108,6 +111,7 @@ model Garage {
   availability GarageAvailability[]
   photos       GaragePhoto[]
   appointments Appointment[]
+  blockedSlots BlockedSlot[]
 }
 
 model GarageService {
@@ -184,11 +188,25 @@ model Review {
   vehicleYear  Int?
   ownerReply   String?
   isVerified   Boolean  @default(false)
+  isHidden     Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  garageId  String
+  date      String   // "YYYY-MM-DD"
+  startTime String?  // "HH:MM" — null if allDay
+  endTime   String?  // "HH:MM" — null if allDay
+  reason    String?
+  allDay    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 }
 
 model GarageFavorite {
@@ -216,7 +234,23 @@ model UserVehicle {
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user      User                  @relation(fields: [userId], references: [id])
+  reminders MaintenanceReminder[]
+}
+
+model MaintenanceReminder {
+  id         String    @id @default(cuid())
+  userId     String
+  vehicleId  String?
+  title      String
+  notes      String?
+  dueDate    DateTime?
+  priority   String    @default("SOON") // URGENT | SOON | LOW
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  user    User         @relation(fields: [userId], references: [id])
+  vehicle UserVehicle? @relation(fields: [vehicleId], references: [id])
 }
 
 // ── Rendez-vous ────────────────────────────────────────────────────────────

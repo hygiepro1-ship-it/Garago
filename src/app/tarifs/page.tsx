@@ -124,7 +124,7 @@ export default function TarifsPage() {
             Votre garage mérite<br />
             <span style={{ color: "#f97316" }}>d'être trouvé.</span>
           </h1>
-          <p className="text-blue-200 text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-lg max-w-2xl mx-auto mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
             Des milliers de conducteurs québécois cherchent un garage de confiance chaque jour.
             Êtes-vous là où ils regardent?
           </p>
@@ -136,7 +136,7 @@ export default function TarifsPage() {
             >
               Inscrire mon garage — 30j gratuit
             </Link>
-            <a href="#formules" className="px-8 py-4 rounded-xl font-semibold text-blue-200 border border-blue-700 hover:bg-white/10 transition-all text-sm">
+            <a href="#formules" className="px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-all text-sm" style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.2)" }}>
               Voir les formules ↓
             </a>
           </div>
@@ -149,7 +149,7 @@ export default function TarifsPage() {
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-3xl font-black text-white">{s.value}</div>
-                <div className="text-sm text-blue-300 mt-0.5">{s.label}</div>
+                <div className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -252,9 +252,9 @@ export default function TarifsPage() {
               <h3 className="text-xl font-black text-white mb-1">Pro Mensuel</h3>
               <div className="flex items-baseline gap-1 my-4">
                 <span className="text-5xl font-black text-white">49</span>
-                <span className="text-blue-300"> $ / mois</span>
+                <span style={{ color: "rgba(255,255,255,0.5)" }}> $ / mois</span>
               </div>
-              <p className="text-blue-200 text-sm mb-6">Sans engagement. Résiliez en 1 clic à tout moment.</p>
+              <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>Sans engagement. Résiliez en 1 clic à tout moment.</p>
               <ul className="space-y-2.5 mb-8">
                 {[
                   "Tout de l'essai gratuit",
@@ -264,7 +264,7 @@ export default function TarifsPage() {
                   "Statistiques de visite",
                   "Support prioritaire 7j/7",
                 ].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-blue-100">
+                  <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.8)" }}>
                     <span className="text-orange-400 font-bold">✓</span>{f}
                   </li>
                 ))}
@@ -272,7 +272,7 @@ export default function TarifsPage() {
               <Link href="/inscription/garage" className="block w-full text-center font-black py-3.5 rounded-xl text-white transition-all hover:opacity-90" style={{ backgroundColor: "#f97316" }}>
                 Commencer l'essai 30j gratuit
               </Link>
-              <p className="text-center text-xs text-blue-400 mt-2">Aucune carte requise pendant l'essai</p>
+              <p className="text-center text-xs mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>Aucune carte requise pendant l'essai</p>
             </div>
 
             {/* Pro Annuel */}
@@ -422,7 +422,7 @@ export default function TarifsPage() {
           <h2 className="text-4xl font-black text-white mb-4">
             Prêt à remplir votre agenda?
           </h2>
-          <p className="text-blue-200 text-lg mb-8 leading-relaxed">
+          <p className="text-lg mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
             Rejoignez 500+ garages qui ont déjà choisi Garago pour développer leur clientèle au Québec.
             <br />
             <strong className="text-white">Commencez gratuitement — aucune carte de crédit.</strong>
@@ -436,7 +436,7 @@ export default function TarifsPage() {
               Inscrire mon garage — C'est gratuit
             </Link>
           </div>
-          <p className="text-blue-400 text-sm mt-4">30 jours d'essai · Sans engagement · Résiliation en 1 clic</p>
+          <p className="text-sm mt-4" style={{ color: "rgba(255,255,255,0.35)" }}>30 jours d'essai · Sans engagement · Résiliation en 1 clic</p>
         </div>
       </section>
     </div>

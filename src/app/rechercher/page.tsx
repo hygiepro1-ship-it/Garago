@@ -9,13 +9,9 @@ import { garageDistance, formatDistance } from "@/lib/geo";
 
 type UserPos = { lat: number; lng: number };
 
-/** Attach a distance_km field to each garage (exact coords or city centroid). */
 function withDistances(garages: any[], pos: UserPos | null): any[] {
   if (!pos) return garages;
-  return garages.map((g) => ({
-    ...g,
-    distance_km: garageDistance(g, pos),
-  }));
+  return garages.map((g) => ({ ...g, distance_km: garageDistance(g, pos) }));
 }
 
 function SearchContent() {
@@ -23,46 +19,39 @@ function SearchContent() {
   const router = useRouter();
 
   const [garages, setGarages] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
+  const [total,   setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [year, setYear]       = useState(searchParams.get("year")    ?? "");
-  const [make, setMake]       = useState(searchParams.get("make")    ?? "");
-  const [model, setModel]     = useState(searchParams.get("model")   ?? "");
-  const [service, setService] = useState(searchParams.get("service") ?? "");
-  const [city, setCity]       = useState(searchParams.get("city")    ?? "");
+  const [year,      setYear]      = useState(searchParams.get("year")    ?? "");
+  const [make,      setMake]      = useState(searchParams.get("make")    ?? "");
+  const [model,     setModel]     = useState(searchParams.get("model")   ?? "");
+  const [service,   setService]   = useState(searchParams.get("service") ?? "");
+  const [city,      setCity]      = useState(searchParams.get("city")    ?? "");
   const [walkInOnly, setWalkInOnly] = useState(false);
-  const [minRating, setMinRating]   = useState("");
+  const [minRating,  setMinRating]  = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Geolocation
-  const [userPos, setUserPos]       = useState<UserPos | null>(null);
-  const [geoStatus, setGeoStatus]   = useState<"idle" | "loading" | "ok" | "denied" | "error">("idle");
+  const [userPos,    setUserPos]    = useState<UserPos | null>(null);
+  const [geoStatus,  setGeoStatus]  = useState<"idle"|"loading"|"ok"|"denied"|"error">("idle");
   const [sortByDist, setSortByDist] = useState(false);
 
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
   const selectedService = SERVICE_CATEGORIES.find((s) => s.id === service);
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchGarages = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (make)    params.set("make",    make);
     if (service) params.set("service", service);
     if (city)    params.set("city",    city);
-
     try {
       const res  = await fetch(`/api/garages?${params}`);
       const data = await res.json();
       let results: any[] = data.garages ?? [];
-
       if (walkInOnly) results = results.filter((g) => g.acceptsWalkIn);
       if (minRating)  results = results.filter((g) => g.avgRating >= parseFloat(minRating));
-
-      // Attach distances whenever we have a position
       results = withDistances(results, userPos);
-
       setGarages(results);
       setTotal(results.length);
     } catch {
@@ -73,43 +62,25 @@ function SearchContent() {
   }, [make, service, city, walkInOnly, minRating, userPos]);
 
   useEffect(() => { fetchGarages(); }, [fetchGarages]);
-
-  // Re-attach distances when userPos changes without re-fetching
   useEffect(() => {
-    if (userPos) {
-      setGarages((prev) => withDistances(prev, userPos));
-    }
+    if (userPos) setGarages((prev) => withDistances(prev, userPos));
   }, [userPos]);
 
-  // ── Geolocation ────────────────────────────────────────────────────────────
   function requestLocation() {
-    if (!navigator.geolocation) {
-      setGeoStatus("error");
-      return;
-    }
+    if (!navigator.geolocation) { setGeoStatus("error"); return; }
     setGeoStatus("loading");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGeoStatus("ok");
-        setSortByDist(true);
-      },
-      (err) => {
-        setGeoStatus(err.code === 1 ? "denied" : "error");
-      },
-      { timeout: 8000, maximumAge: 60_000 },
+      (pos) => { setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoStatus("ok"); setSortByDist(true); },
+      (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); },
+      { timeout: 8000, maximumAge: 60_000 }
     );
   }
 
   function clearLocation() {
-    setUserPos(null);
-    setGeoStatus("idle");
-    setSortByDist(false);
-    // Strip distance_km
+    setUserPos(null); setGeoStatus("idle"); setSortByDist(false);
     setGarages((prev) => prev.map(({ distance_km: _, ...g }) => g));
   }
 
-  // ── Sorted display list ────────────────────────────────────────────────────
   const displayGarages = sortByDist && userPos
     ? [...garages].sort((a, b) => {
         if (a.distance_km == null && b.distance_km == null) return 0;
@@ -119,7 +90,6 @@ function SearchContent() {
       })
     : garages;
 
-  // ── URL / helpers ──────────────────────────────────────────────────────────
   function applyFilters() {
     const params = new URLSearchParams();
     if (year)    params.set("year",    year);
@@ -129,6 +99,7 @@ function SearchContent() {
     if (city)    params.set("city",    city);
     router.push(`/rechercher?${params}`);
     fetchGarages();
+    setSidebarOpen(false);
   }
 
   function clearAll() {
@@ -137,28 +108,22 @@ function SearchContent() {
     router.push("/rechercher");
   }
 
-  const hasFilters = make || service || city || walkInOnly || minRating;
+  const hasFilters   = !!(make || service || city || walkInOnly || minRating);
+  const activeCount  = [make, service, city, walkInOnly ? "x" : "", minRating].filter(Boolean).length;
 
-  const sel = "block w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 font-medium";
-
-  // ── Geo button label ───────────────────────────────────────────────────────
-  const geoLabel = {
-    idle:    "Près de moi",
-    loading: "Localisation…",
-    ok:      "Position active",
-    denied:  "Accès refusé",
-    error:   "Erreur GPS",
-  }[geoStatus];
-
+  /* ── Render ─────────────────────────────────────────────────────────── */
   return (
-    <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+    <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
 
-      {/* ── Top search bar ──────────────────────────────────────────────────── */}
-      <div style={{ backgroundColor: "#0b1f3a" }} className="py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── SEARCH BAR ─────────────────────────────────────────────────── */}
+      <div className="bg-white" style={{ borderBottom: "1px solid #E2E8F0", boxShadow: "0 1px 4px rgba(15,23,42,0.05)" }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap gap-2 items-center">
+
+            {/* Selects */}
             <select
-              className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={year} onChange={(e) => setYear(e.target.value)}
             >
               <option value="">Année</option>
@@ -166,7 +131,8 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}
             >
               <option value="">Marque</option>
@@ -174,7 +140,8 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}
             >
               <option value="">Modèle</option>
@@ -182,142 +149,139 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 font-medium focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={service} onChange={(e) => setService(e.target.value)}
             >
-              <option value="">Prestation</option>
-              {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <option value="">Service</option>
+              {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
             </select>
 
             <button
               onClick={applyFilters}
-              className="px-5 py-2 rounded-lg text-sm font-bold text-white transition hover:opacity-90"
-              style={{ backgroundColor: "#f97316" }}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
+              style={{ background: "#f97316", boxShadow: "0 2px 8px rgba(5,150,222,0.25)" }}
             >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
               Rechercher
             </button>
 
+            {/* Mobile filter toggle */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-colors"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: activeCount ? "#fff4ed" : "white" }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+              </svg>
+              Filtres {activeCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-white text-xs font-black" style={{ background: "#f97316" }}>{activeCount}</span>}
+            </button>
+
+            {/* Active vehicle chip */}
             {(year || make || model) && (
-              <span className="text-xs font-semibold px-3 py-2 rounded-lg" style={{ backgroundColor: "rgba(249,115,22,0.2)", color: "#fb923c" }}>
-                🚗 {year} {make} {model}
-              </span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold"
+                style={{ background: "#fff4ed", color: "#f97316", border: "1px solid #fed7aa" }}>
+                🚗 {[year, make, model].filter(Boolean).join(" ")}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-7">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex gap-6">
 
-          {/* ── Sidebar ───────────────────────────────────────────────────── */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
+          {/* ── SIDEBAR ──────────────────────────────────────────────────── */}
+          {/* Desktop sidebar */}
+          <aside className="hidden lg:block w-64 flex-shrink-0 space-y-4">
 
-            {/* Localisation card */}
-            <div
-              className="rounded-2xl border overflow-hidden mb-4"
-              style={
-                geoStatus === "ok"
-                  ? { backgroundColor: "#f0fdf4", borderColor: "#86efac" }
-                  : { backgroundColor: "white", borderColor: "#e2e8f0", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }
-              }
-            >
+            {/* Location */}
+            <div className="bg-white rounded-2xl overflow-hidden"
+              style={{ border: `1px solid ${geoStatus === "ok" ? "#86EFAC" : "#e2e8f0"}`, boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid #e2e8f0" }}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#f97316" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Localisation</p>
+              </div>
               <div className="p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Localisation</p>
-
                 {geoStatus !== "ok" ? (
                   <>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                    <p className="text-xs mb-3 leading-relaxed" style={{ color: "#94a3b8" }}>
                       Affichez les garages les plus proches de vous en premier.
                     </p>
                     <button
                       onClick={requestLocation}
                       disabled={geoStatus === "loading"}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold border transition-all disabled:opacity-60"
-                      style={{ backgroundColor: "#0b1f3a", color: "white", borderColor: "#0b1f3a" }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                      style={{ background: "#f97316" }}
                     >
-                      <span>{geoStatus === "loading" ? "⏳" : "📍"}</span>
-                      {geoLabel}
+                      {geoStatus === "loading"
+                        ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Localisation…</>
+                        : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg> Me localiser</>
+                      }
                     </button>
-                    {(geoStatus === "denied") && (
-                      <p className="text-xs text-red-500 mt-2">
-                        Accès à la position refusé. Autorisez la localisation dans les paramètres de votre navigateur.
-                      </p>
-                    )}
-                    {geoStatus === "error" && (
-                      <p className="text-xs text-red-500 mt-2">Impossible d'obtenir votre position.</p>
-                    )}
+                    {geoStatus === "denied" && <p className="text-xs text-red-500 mt-2">Localisation refusée dans le navigateur.</p>}
                   </>
                 ) : (
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-green-500 font-bold">📍</span>
-                      <span className="text-sm font-bold text-green-700">Position détectée</span>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#DCFCE7", color: "#16A34A" }}>✓</span>
+                      <span className="text-sm font-bold" style={{ color: "#16A34A" }}>Position détectée</span>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer mb-3">
-                      <input
-                        type="checkbox"
-                        checked={sortByDist}
-                        onChange={(e) => setSortByDist(e.target.checked)}
-                        className="w-4 h-4 rounded"
-                        style={{ accentColor: "#16a34a" }}
-                      />
-                      <span className="text-sm font-medium text-gray-700">Trier par distance</span>
+                      <input type="checkbox" checked={sortByDist} onChange={(e) => setSortByDist(e.target.checked)}
+                        className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
+                      <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Trier par distance</span>
                     </label>
-                    <button
-                      onClick={clearLocation}
-                      className="text-xs text-gray-400 hover:text-gray-600 underline"
-                    >
-                      Désactiver la localisation
+                    <button onClick={clearLocation} className="text-xs underline" style={{ color: "#94a3b8" }}>
+                      Désactiver
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Filters card */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between" style={{ backgroundColor: "#0b1f3a" }}>
-                <span className="font-bold text-white text-sm">Filtres</span>
+            {/* Filters */}
+            <div className="bg-white rounded-2xl overflow-hidden"
+              style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid #e2e8f0" }}>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Filtres</p>
                 {hasFilters && (
-                  <button onClick={clearAll} className="text-xs text-orange-300 hover:text-orange-200 font-semibold">
-                    Effacer tout
+                  <button onClick={clearAll} className="text-xs font-bold" style={{ color: "#f97316" }}>
+                    Tout effacer
                   </button>
                 )}
               </div>
-
-              <div className="p-5 space-y-5">
+              <div className="p-4 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Prestation</label>
-                  <select className={sel} value={service} onChange={(e) => setService(e.target.value)}>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>PRESTATION</label>
+                  <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                     <option value="">Toutes</option>
                     {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Ville</label>
-                  <select className={sel} value={city} onChange={(e) => setCity(e.target.value)}>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>VILLE</label>
+                  <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
                     <option value="">Toutes les villes</option>
                     {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Options</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>OPTIONS</label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={walkInOnly}
-                      onChange={(e) => setWalkInOnly(e.target.checked)}
-                      className="w-4 h-4 rounded"
-                      style={{ accentColor: "#f97316" }}
-                    />
-                    <span className="text-sm font-medium text-gray-700">Sans rendez-vous</span>
+                    <input type="checkbox" checked={walkInOnly} onChange={(e) => setWalkInOnly(e.target.checked)}
+                      className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
+                    <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Sans rendez-vous</span>
                   </label>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Note minimale</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>NOTE MINIMALE</label>
                   <div className="flex gap-1.5">
                     {["", "3", "4", "4.5"].map((r) => (
                       <button
@@ -325,112 +289,105 @@ function SearchContent() {
                         onClick={() => setMinRating(r)}
                         className="flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all"
                         style={minRating === r
-                          ? { backgroundColor: "#f97316", color: "white", borderColor: "#f97316" }
-                          : { backgroundColor: "white", color: "#64748b", borderColor: "#e2e8f0" }
+                          ? { background: "#f97316", color: "white", borderColor: "#f97316" }
+                          : { background: "white", color: "#475569", borderColor: "#e2e8f0" }
                         }
                       >
-                        {r ? `${r}★+` : "Tous"}
+                        {r ? `${r}★` : "Tous"}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                <button
-                  onClick={applyFilters}
-                  className="w-full py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
-                  style={{ backgroundColor: "#0b1f3a" }}
-                >
+                <button onClick={applyFilters} className="btn-primary w-full py-2.5">
                   Appliquer
                 </button>
               </div>
             </div>
 
             {/* Quick service links */}
-            <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Services populaires</p>
-              <div className="space-y-1">
-                {SERVICE_CATEGORIES.slice(0, 7).map((s) => (
+            <div className="bg-white rounded-2xl overflow-hidden"
+              style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #e2e8f0" }}>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Services populaires</p>
+              </div>
+              <div className="p-3 space-y-0.5">
+                {SERVICE_CATEGORIES.slice(0, 8).map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => setService(s.id)}
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition hover:bg-orange-50 font-medium"
-                    style={service === s.id ? { backgroundColor: "#fff7ed", color: "#c2410c" } : { color: "#475569" }}
+                    onClick={() => { setService(s.id); fetchGarages(); }}
+                    className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                    style={service === s.id
+                      ? { background: "#fff4ed", color: "#f97316" }
+                      : { color: "#475569" }
+                    }
                   >
                     <span>{s.icon}</span>
                     <span>{s.name}</span>
+                    {service === s.id && <span className="ml-auto text-xs">✓</span>}
                   </button>
                 ))}
               </div>
             </div>
           </aside>
 
-          {/* ── Results ───────────────────────────────────────────────────── */}
+          {/* ── RESULTS ──────────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
 
-            {/* Header */}
+            {/* Results header */}
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-black" style={{ color: "#0b1f3a" }}>
                   {selectedService ? `${selectedService.icon} ${selectedService.name}` : "Tous les garages"}
-                  {city && <span className="text-gray-500 font-semibold"> — {city}</span>}
+                  {city && <span style={{ color: "#94a3b8" }}> — {city}</span>}
                 </h1>
-                <p className="text-gray-500 text-sm mt-0.5">
+                <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>
                   {loading ? "Recherche en cours…" : (
                     <>
-                      <span className="font-bold text-gray-900">{total}</span>{" "}
+                      <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
                       garage{total !== 1 ? "s" : ""} trouvé{total !== 1 ? "s" : ""}
-                      {make && <span> · Compatible <strong>{make} {model}</strong></span>}
-                      {sortByDist && userPos && <span> · <span className="text-green-600 font-semibold">triés par distance</span></span>}
+                      {make && <span> · Compatible <strong style={{ color: "#f97316" }}>{make} {model}</strong></span>}
+                      {sortByDist && userPos && <span style={{ color: "#00A884" }}> · triés par distance</span>}
                     </>
                   )}
                 </p>
               </div>
 
-              {/* Active chips */}
+              {/* Active filter chips */}
               {hasFilters && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {make && (
-                    <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>
-                      🚗 {make}
-                    </span>
-                  )}
-                  {model && (
-                    <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>
-                      {model}
-                    </span>
+                    <span className="badge badge-blue">🚗 {make} {model}</span>
                   )}
                   {selectedService && (
-                    <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-                      {selectedService.icon} {selectedService.name}
-                    </span>
+                    <span className="badge badge-blue">{selectedService.icon} {selectedService.name}</span>
                   )}
-                  {city && (
-                    <span className="text-xs px-3 py-1.5 rounded-full font-semibold bg-gray-100 text-gray-700">
-                      📍 {city}
-                    </span>
-                  )}
+                  {city && <span className="badge badge-gray">📍 {city}</span>}
+                  {walkInOnly && <span className="badge badge-green">Sans RDV</span>}
+                  {minRating && <span className="badge badge-blue">{minRating}★+</span>}
                 </div>
               )}
             </div>
 
-            {/* Grid */}
+            {/* Cards — vertical list like Doctolib */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-200 h-64 animate-pulse" />
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl h-40 animate-pulse" style={{ border: "1px solid #e2e8f0" }} />
                 ))}
               </div>
             ) : displayGarages.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 text-center py-20 px-8">
+              <div className="bg-white rounded-2xl text-center py-20 px-8" style={{ border: "1px solid #e2e8f0" }}>
                 <div className="text-5xl mb-4">🔍</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun garage trouvé</h3>
-                <p className="text-gray-500 mb-6">Essayez de modifier vos filtres ou d'élargir votre zone de recherche.</p>
-                <button onClick={clearAll} className="px-6 py-3 rounded-xl font-bold text-white" style={{ backgroundColor: "#f97316" }}>
+                <h3 className="text-xl font-black mb-2" style={{ color: "#0b1f3a" }}>Aucun garage trouvé</h3>
+                <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
+                  Essayez de modifier vos filtres ou d'élargir votre zone de recherche.
+                </p>
+                <button onClick={clearAll} className="btn-primary px-8 py-3">
                   Voir tous les garages
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-4">
                 {displayGarages.map((garage) => (
                   <GarageCard
                     key={garage.id}
@@ -444,6 +401,61 @@ function SearchContent() {
           </div>
         </div>
       </div>
+
+      {/* ── MOBILE SIDEBAR DRAWER ─────────────────────────────────────── */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto p-5">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-black" style={{ color: "#0b1f3a" }}>Filtres</h2>
+              <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl" style={{ background: "#f8fafc" }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#475569" }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>PRESTATION</label>
+                <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>VILLE</label>
+                <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={walkInOnly} onChange={(e) => setWalkInOnly(e.target.checked)} className="w-4 h-4" style={{ accentColor: "#f97316" }} />
+                  <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Sans rendez-vous seulement</span>
+                </label>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>NOTE MINIMALE</label>
+                <div className="flex gap-2">
+                  {["", "3", "4", "4.5"].map((r) => (
+                    <button key={r} onClick={() => setMinRating(r)}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all"
+                      style={minRating === r ? { background: "#f97316", color: "white", borderColor: "#f97316" } : { color: "#475569", borderColor: "#e2e8f0" }}>
+                      {r ? `${r}★` : "Tous"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={clearAll} className="btn-outline flex-1 py-3">Effacer</button>
+                <button onClick={applyFilters} className="btn-primary flex-1 py-3">Appliquer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -452,7 +464,13 @@ export default function RechercherPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <p className="text-gray-400 text-sm">Chargement…</p>
+        <div className="flex items-center gap-3" style={{ color: "#94a3b8" }}>
+          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <p className="text-sm font-semibold">Chargement…</p>
+        </div>
       </div>
     }>
       <SearchContent />

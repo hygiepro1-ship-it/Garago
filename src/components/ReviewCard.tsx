@@ -20,7 +20,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ background: "#fff4ed", color: "#f97316" }}>
           {review.user.name?.[0]?.toUpperCase() ?? "A"}
         </div>
         <div className="flex-1">
@@ -40,7 +40,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
             </span>
             {review.service && (
-              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{review.service}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#fff4ed", color: "#f97316" }}>{review.service}</span>
             )}
           </div>
           {review.title && (
@@ -50,8 +50,8 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             <p className="text-gray-600 text-sm mt-1 leading-relaxed">{review.comment}</p>
           )}
           {review.ownerReply && (
-            <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
-              <p className="text-xs font-semibold text-blue-700 mb-1">Réponse du garage</p>
+            <div className="mt-3 rounded-lg p-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: "#f97316" }}>Réponse du garage</p>
               <p className="text-sm text-gray-700">{review.ownerReply}</p>
             </div>
           )}

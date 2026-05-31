@@ -72,7 +72,7 @@ function isToday(dateStr: string): boolean {
 function statusStyle(status: string) {
   const map: Record<string, { bg: string; text: string; border: string }> = {
     PENDING:   { bg: "bg-amber-50",  text: "text-amber-700",  border: "border-amber-200" },
-    CONFIRMED: { bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-200"  },
+    CONFIRMED: { bg: "bg-orange-50",  text: "text-orange-700", border: "border-orange-200" },
     COMPLETED: { bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" },
     CANCELLED: { bg: "bg-red-50",    text: "text-red-600",    border: "border-red-200"   },
   };

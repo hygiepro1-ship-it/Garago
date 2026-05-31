@@ -3,6 +3,19 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+// Simple French offensive words filter (case-insensitive partial match)
+const OFFENSIVE_WORDS = [
+  "merde", "putain", "connard", "connasse", "salaud", "salope",
+  "enculé", "encule", "nique", "fdp", "va te", "imbécile", "idiot",
+  "crisse", "tabarnak", "ostie", "estie", "câlisse", "calice",
+  "fuck", "shit", "bitch", "bastard", "asshole",
+];
+
+function containsOffensiveContent(text: string): boolean {
+  const lower = text.toLowerCase();
+  return OFFENSIVE_WORDS.some((word) => lower.includes(word));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,6 +37,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Vous avez déjà laissé un avis pour ce garage" }, { status: 409 });
     }
 
+    // Auto-moderation: hide if comment or title contains offensive content
+    const textToCheck = `${title ?? ""} ${comment ?? ""}`;
+    const isHidden = containsOffensiveContent(textToCheck);
+
     const review = await prisma.review.create({
       data: {
         garageId,
@@ -35,6 +52,7 @@ export async function POST(req: NextRequest) {
         vehicleMake,
         vehicleModel,
         vehicleYear: vehicleYear ? parseInt(vehicleYear) : null,
+        isHidden,
       },
       include: { user: { select: { name: true, image: true } } },
     });

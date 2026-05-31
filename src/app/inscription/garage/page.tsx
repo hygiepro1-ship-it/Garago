@@ -190,11 +190,12 @@ export default function InscriptionGaragePage() {
       {/* Top bar */}
       <div style={{ backgroundColor: "#0b1f3a" }} className="py-4 px-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: "#f97316" }}>G</div>
-            <span className="text-white font-black text-base">Garago</span>
+          <Link href="/" className="inline-flex">
+            <div className="bg-white rounded-xl px-2 py-0.5">
+              <img src="/logo-garago.png" alt="Garago" className="h-8 w-auto object-contain" />
+            </div>
           </Link>
-          <span className="text-blue-300 text-sm">
+          <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             Déjà inscrit ? <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">Se connecter</Link>
           </span>
         </div>
@@ -354,7 +355,7 @@ export default function InscriptionGaragePage() {
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
                       <span className="text-lg mt-0.5">{item.icon}</span>
-                      <span className="text-blue-200 text-sm leading-relaxed">{item.text}</span>
+                      <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{item.text}</span>
                     </div>
                   ))}
                 </div>

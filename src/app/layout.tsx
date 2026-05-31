@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "Garago — Comparez les garages, réservez au meilleur prix",
@@ -35,9 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <Providers>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>
     </html>

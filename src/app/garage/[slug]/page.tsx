@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
@@ -13,8 +13,11 @@ import { formatPriceRange, getDayName } from "@/lib/utils";
 export default function GarageProfilePage() {
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
-  const [garage, setGarage] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [garage, setGarage]     = useState<any>(null);
+  const [loading, setLoading]   = useState(true);
+  const [isFav, setIsFav]       = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   // Review form
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -26,9 +29,37 @@ export default function GarageProfilePage() {
 
   useEffect(() => {
     fetch(`/api/garages/${slug}`)
-      .then((r) => r.json())
-      .then((d) => { setGarage(d); setLoading(false); });
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) {
+          setGarage({ error: d.error ?? "Erreur serveur" });
+        } else {
+          setGarage(d);
+        }
+        setLoading(false);
+      })
+      .catch(() => { setGarage({ error: "Erreur réseau" }); setLoading(false); });
   }, [slug]);
+
+  useEffect(() => {
+    if (!session?.user || !garage?.id) return;
+    fetch("/api/favorites")
+      .then(r => r.json())
+      .then((favs: any[]) => setIsFav(favs.some(f => f.garageId === garage.id)));
+  }, [session, garage?.id]);
+
+  async function toggleFav() {
+    if (!session?.user) return;
+    setFavLoading(true);
+    if (isFav) {
+      await fetch(`/api/favorites/${garage.id}`, { method: "DELETE" });
+      setIsFav(false);
+    } else {
+      await fetch("/api/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ garageId: garage.id }) });
+      setIsFav(true);
+    }
+    setFavLoading(false);
+  }
 
   async function submitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +102,7 @@ export default function GarageProfilePage() {
       <div className="max-w-5xl mx-auto px-4 py-20 text-center">
         <div className="text-5xl mb-4">🔧</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Garage introuvable</h1>
-        <Link href="/rechercher" className="text-blue-600 hover:underline">← Retour à la recherche</Link>
+        <Link href="/rechercher" className="hover:underline" style={{ color: "#f97316" }}>← Retour à la recherche</Link>
       </div>
     );
   }
@@ -79,7 +110,8 @@ export default function GarageProfilePage() {
   const acceptedBrands = garage.brands?.filter((b: any) => b.accepts) ?? [];
   const refusedBrands = garage.brands?.filter((b: any) => !b.accepts) ?? [];
   const servicesByCategory = garage.services?.reduce((acc: any, s: any) => {
-    const cat = s.category.name;
+    const cat = s.category?.name;
+    if (!cat) return acc;
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(s);
     return acc;
@@ -87,17 +119,33 @@ export default function GarageProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link href="/rechercher" className="text-blue-600 hover:underline text-sm mb-6 inline-block">
-        ← Retour aux résultats
-      </Link>
+      <button
+        onClick={() => router.back()}
+        className="inline-flex items-center gap-2 text-sm font-semibold mb-6 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+        style={{ color: "#0b1f3a" }}
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Retour
+      </button>
 
       {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-        <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600" />
+        {garage.coverUrl
+          ? <div className="h-32 bg-cover" style={{
+              backgroundImage: `url(${garage.coverUrl})`,
+              backgroundPosition: garage.coverPosition ?? "center",
+            }} />
+          : <div className="h-32" style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }} />
+        }
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-4xl">
-              {garage.logoUrl ? <img src={garage.logoUrl} alt={garage.name} className="w-16 h-16 object-cover rounded-xl" /> : "🔧"}
+            <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden">
+              {garage.logoUrl
+                ? <img src={garage.logoUrl} alt={garage.name} className="w-full h-full object-cover"
+                    style={{ objectPosition: garage.logoPosition ?? "center" }} />
+                : "🔧"}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between flex-wrap gap-2">
@@ -105,9 +153,24 @@ export default function GarageProfilePage() {
                   <h1 className="text-2xl font-extrabold text-gray-900">{garage.name}</h1>
                   <p className="text-gray-500">📍 {garage.address}, {garage.city}, {garage.province} {garage.postalCode}</p>
                 </div>
-                {garage.subscriptionStatus === "TRIAL" && (
-                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">Période d'essai</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {garage.subscriptionStatus === "TRIAL" && (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">Période d'essai</span>
+                  )}
+                  {session?.user && (
+                    <button
+                      onClick={toggleFav}
+                      disabled={favLoading}
+                      title={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-semibold transition-all disabled:opacity-50"
+                      style={isFav
+                        ? { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }
+                        : { background: "#fff", borderColor: "#e5e7eb", color: "#6b7280" }}
+                    >
+                      {isFav ? "♥ Favori" : "♡ Favori"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -115,7 +178,10 @@ export default function GarageProfilePage() {
           {/* Rating + badges */}
           <div className="flex flex-wrap items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-yellow-400 text-lg">{"★".repeat(Math.round(garage.avgRating ?? 0))}{"☆".repeat(5 - Math.round(garage.avgRating ?? 0))}</span>
+              {(() => {
+                const stars = Math.min(5, Math.max(0, Math.round(Number(garage.avgRating) || 0)));
+                return <span className="text-yellow-400 text-lg">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>;
+              })()}
               <span className="font-bold text-gray-900">{garage.avgRating ?? 0}</span>
               <span className="text-gray-500 text-sm">({garage.reviewCount ?? 0} avis)</span>
             </div>
@@ -125,17 +191,12 @@ export default function GarageProfilePage() {
 
           {/* Contact */}
           <div className="flex flex-wrap gap-3">
-            <a href={`tel:${garage.phone}`} className="flex items-center gap-2 bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-blue-800 transition-colors text-sm">
+            <a href={`tel:${garage.phone}`} className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm" style={{ background: "#f97316" }}>
               📞 {garage.phone}
             </a>
             {garage.email && (
               <a href={`mailto:${garage.email}`} className="flex items-center gap-2 border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm">
                 ✉️ {garage.email}
-              </a>
-            )}
-            {garage.website && (
-              <a href={garage.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm">
-                🌐 Site web
               </a>
             )}
           </div>
@@ -172,7 +233,7 @@ export default function GarageProfilePage() {
                             {s.description && <p className="text-xs text-gray-500">{s.description}</p>}
                             {s.durationMin && <p className="text-xs text-gray-400">⏱ ~{s.durationMin} min</p>}
                           </div>
-                          <span className="text-sm font-semibold text-blue-700 whitespace-nowrap">
+                          <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "#f97316" }}>
                             {formatPriceRange(s.priceMin, s.priceMax)}
                           </span>
                         </div>
@@ -218,20 +279,20 @@ export default function GarageProfilePage() {
               {session && (
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="text-sm bg-blue-700 text-white px-4 py-2 rounded-xl hover:bg-blue-800 transition-colors font-medium"
+                  className="text-sm text-white px-4 py-2 rounded-xl transition-colors font-medium" style={{ background: "#f97316" }}
                 >
                   ✍️ Laisser un avis
                 </button>
               )}
               {!session && (
-                <Link href="/connexion" className="text-sm text-blue-600 hover:underline">
+                <Link href="/connexion" className="text-sm hover:underline" style={{ color: "#f97316" }}>
                   Connectez-vous pour laisser un avis
                 </Link>
               )}
             </div>
 
             {showReviewForm && (
-              <form onSubmit={submitReview} className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5 space-y-3">
+              <form onSubmit={submitReview} className="rounded-xl p-4 mb-5 space-y-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Note</label>
                   <StarRating value={reviewRating} onChange={setReviewRating} />
@@ -267,7 +328,7 @@ export default function GarageProfilePage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button type="submit" disabled={submitting} className="bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50">
+                  <button type="submit" disabled={submitting} className="text-white px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
                     {submitting ? "Envoi..." : "Publier mon avis"}
                   </button>
                   <button type="button" onClick={() => setShowReviewForm(false)} className="border border-gray-300 px-5 py-2 rounded-lg text-sm hover:bg-gray-50">
@@ -340,14 +401,24 @@ export default function GarageProfilePage() {
                 <span className="text-gray-500">Sans rendez-vous</span>
                 <span className="font-medium text-gray-900">{garage.acceptsWalkIn ? "Oui ✓" : "Non"}</span>
               </div>
-              {garage.languages && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Langues</span>
-                  <span className="font-medium text-gray-900">
-                    {JSON.parse(garage.languages).map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
-                  </span>
-                </div>
-              )}
+              {garage.languages && (() => {
+                try {
+                  const langs = typeof garage.languages === "string"
+                    ? JSON.parse(garage.languages)
+                    : garage.languages;
+                  if (!Array.isArray(langs) || langs.length === 0) return null;
+                  return (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Langues</span>
+                      <span className="font-medium text-gray-900">
+                        {langs.map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
+                      </span>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
             </div>
           </div>
         </div>
