@@ -13,16 +13,18 @@ import BrandLogo from "@/components/BrandLogo";
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "rdv";
 
 // ─── Image position helper ───────────────────────────────────────────────────
-function parseImgPos(raw: string | null | undefined): { x: number; y: number; zoom: number } {
-  const d = { x: 50, y: 50, zoom: 1 };
+function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
+  const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
   try {
     const p = JSON.parse(raw);
-    if (p && typeof p === "object" && "x" in p)
-      return { x: Number(p.x) || 50, y: Number(p.y) || 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+    if (p && typeof p === "object") {
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(1, Number(p.zoom) || 1) };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+    }
   } catch { /**/ }
-  if (raw === "top")    return { x: 50, y: 0,   zoom: 1 };
-  if (raw === "bottom") return { x: 50, y: 100, zoom: 1 };
+  if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
+  if (raw === "bottom") return { tx: 0, ty:  20, zoom: 1 };
   return d;
 }
 
@@ -186,8 +188,8 @@ export default function DashboardGaragePage() {
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
 
   // ── Image position/zoom state ──────────────────────────────────────────────
-  const [coverPos, setCoverPos] = useState({ x: 50, y: 50, zoom: 1 });
-  const [logoPos,  setLogoPos]  = useState({ x: 50, y: 50, zoom: 1 });
+  const [coverPos, setCoverPos] = useState({ tx: 0, ty: 0, zoom: 1 });
+  const [logoPos,  setLogoPos]  = useState({ tx: 0, ty: 0, zoom: 1 });
   useEffect(() => {
     if (garage) {
       setCoverPos(parseImgPos(garage.coverPosition));
@@ -195,8 +197,8 @@ export default function DashboardGaragePage() {
     }
   }, [garage]);
   // Drag refs — hold mutable state without triggering re-renders
-  const coverDrag = useRef<{ active: boolean; startX: number; startY: number; ox: number; oy: number } | null>(null);
-  const logoDrag  = useRef<{ active: boolean; startX: number; startY: number; ox: number; oy: number } | null>(null);
+  const coverDrag = useRef<{ active: boolean; startX: number; startY: number; otx: number; oty: number } | null>(null);
+  const logoDrag  = useRef<{ active: boolean; startX: number; startY: number; otx: number; oty: number } | null>(null);
 
   function handleAddressSelect(r: AddressResult) {
     setProfileData((prev: any) => ({
@@ -212,8 +214,8 @@ export default function DashboardGaragePage() {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...profileData,
-        coverPosition: JSON.stringify(coverPos),
-        logoPosition:  JSON.stringify(logoPos),
+        coverPosition: JSON.stringify({ zoom: coverPos.zoom, tx: coverPos.tx, ty: coverPos.ty }),
+        logoPosition:  JSON.stringify({ zoom: logoPos.zoom,  tx: logoPos.tx,  ty: logoPos.ty  }),
       }),
     });
     setSaving(false);
@@ -1081,7 +1083,7 @@ export default function DashboardGaragePage() {
                 onClick={!garage.coverUrl ? () => coverInputRef.current?.click() : undefined}
                 onPointerDown={garage.coverUrl ? (e) => {
                   e.currentTarget.setPointerCapture(e.pointerId);
-                  coverDrag.current = { active: true, startX: e.clientX, startY: e.clientY, ox: coverPos.x, oy: coverPos.y };
+                  coverDrag.current = { active: true, startX: e.clientX, startY: e.clientY, otx: coverPos.tx, oty: coverPos.ty };
                 } : undefined}
                 onPointerMove={garage.coverUrl ? (e) => {
                   if (!coverDrag.current?.active) return;
@@ -1090,8 +1092,8 @@ export default function DashboardGaragePage() {
                   const dy = (e.clientY - coverDrag.current.startY) / rect.height * 100;
                   setCoverPos(p => ({
                     ...p,
-                    x: Math.max(0, Math.min(100, coverDrag.current!.ox + dx)),
-                    y: Math.max(0, Math.min(100, coverDrag.current!.oy + dy)),
+                    tx: coverDrag.current!.otx + dx,
+                    ty: coverDrag.current!.oty + dy,
                   }));
                 } : undefined}
                 onPointerUp={() => { if (coverDrag.current) coverDrag.current.active = false; }}
@@ -1105,21 +1107,19 @@ export default function DashboardGaragePage() {
                       draggable={false}
                       style={{
                         position: "absolute",
-                        width: `${coverPos.zoom * 100}%`,
-                        height: `${coverPos.zoom * 100}%`,
-                        minWidth: "100%",
-                        minHeight: "100%",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
                         objectFit: "cover",
-                        left: `${coverPos.x}%`,
-                        top: `${coverPos.y}%`,
-                        transform: "translate(-50%, -50%)",
+                        transform: `translate(${coverPos.tx}%, ${coverPos.ty}%) scale(${coverPos.zoom})`,
+                        transformOrigin: "center center",
                         userSelect: "none",
                         pointerEvents: "none",
                       }}
                     />
                     <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">✋ Glisser pour repositionner</span>
-                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-mono">{Math.round(coverPos.x)}% / {Math.round(coverPos.y)}%</span>
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-mono">{Math.round(coverPos.tx)}% / {Math.round(coverPos.ty)}%</span>
                     </div>
                   </>
                 ) : (
@@ -1152,7 +1152,7 @@ export default function DashboardGaragePage() {
                       {uploadingCover ? "Téléchargement…" : "📷 Changer l'image"}
                     </button>
                     <button type="button"
-                      onClick={() => setCoverPos({ x: 50, y: 50, zoom: 1 })}
+                      onClick={() => setCoverPos({ tx: 0, ty: 0, zoom: 1 })}
                       className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
                       Réinitialiser
                     </button>
@@ -1183,7 +1183,7 @@ export default function DashboardGaragePage() {
                     onClick={!garage.logoUrl ? () => logoInputRef.current?.click() : undefined}
                     onPointerDown={garage.logoUrl ? (e) => {
                       e.currentTarget.setPointerCapture(e.pointerId);
-                      logoDrag.current = { active: true, startX: e.clientX, startY: e.clientY, ox: logoPos.x, oy: logoPos.y };
+                      logoDrag.current = { active: true, startX: e.clientX, startY: e.clientY, otx: logoPos.tx, oty: logoPos.ty };
                     } : undefined}
                     onPointerMove={garage.logoUrl ? (e) => {
                       if (!logoDrag.current?.active) return;
@@ -1192,8 +1192,8 @@ export default function DashboardGaragePage() {
                       const dy = (e.clientY - logoDrag.current.startY) / rect.height * 100;
                       setLogoPos(p => ({
                         ...p,
-                        x: Math.max(0, Math.min(100, logoDrag.current!.ox + dx)),
-                        y: Math.max(0, Math.min(100, logoDrag.current!.oy + dy)),
+                        tx: logoDrag.current!.otx + dx,
+                        ty: logoDrag.current!.oty + dy,
                       }));
                     } : undefined}
                     onPointerUp={() => { if (logoDrag.current) logoDrag.current.active = false; }}
@@ -1206,14 +1206,12 @@ export default function DashboardGaragePage() {
                         draggable={false}
                         style={{
                           position: "absolute",
-                          width: `${logoPos.zoom * 100}%`,
-                          height: `${logoPos.zoom * 100}%`,
-                          minWidth: "100%",
-                          minHeight: "100%",
-                          objectFit: "cover",
-                          left: `${logoPos.x}%`,
-                          top: `${logoPos.y}%`,
-                          transform: "translate(-50%, -50%)",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "contain",
+                          transform: `translate(${logoPos.tx}%, ${logoPos.ty}%) scale(${logoPos.zoom})`,
+                          transformOrigin: "center center",
                           userSelect: "none",
                           pointerEvents: "none",
                         }}
@@ -1252,7 +1250,7 @@ export default function DashboardGaragePage() {
                       {uploadingLogo ? "Téléchargement…" : "📷 Changer le logo"}
                     </button>
                     {garage.logoUrl && (
-                      <button type="button" onClick={() => setLogoPos({ x: 50, y: 50, zoom: 1 })}
+                      <button type="button" onClick={() => setLogoPos({ tx: 0, ty: 0, zoom: 1 })}
                         className="text-xs px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50">
                         Réinitialiser
                       </button>

@@ -10,16 +10,18 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
-function parseImgPos(raw: string | null | undefined): { x: number; y: number; zoom: number } {
-  const d = { x: 50, y: 50, zoom: 1 };
+function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
+  const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
   try {
     const p = JSON.parse(raw);
-    if (p && typeof p === "object" && "x" in p)
-      return { x: Number(p.x) || 50, y: Number(p.y) || 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+    if (p && typeof p === "object") {
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(1, Number(p.zoom) || 1) };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+    }
   } catch { /**/ }
-  if (raw === "top")    return { x: 50, y: 0,   zoom: 1 };
-  if (raw === "bottom") return { x: 50, y: 100, zoom: 1 };
+  if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
+  if (raw === "bottom") return { tx: 0, ty:  20, zoom: 1 };
   return d;
 }
 
@@ -156,14 +158,12 @@ export default function GarageProfilePage() {
               draggable={false}
               style={{
                 position: "absolute",
-                width: `${coverP.zoom * 100}%`,
-                height: `${coverP.zoom * 100}%`,
-                minWidth: "100%",
-                minHeight: "100%",
+                inset: 0,
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
-                left: `${coverP.x}%`,
-                top: `${coverP.y}%`,
-                transform: "translate(-50%, -50%)",
+                transform: `translate(${coverP.tx}%, ${coverP.ty}%) scale(${coverP.zoom})`,
+                transformOrigin: "center center",
                 userSelect: "none",
               }}
             />
@@ -181,14 +181,12 @@ export default function GarageProfilePage() {
                   draggable={false}
                   style={{
                     position: "absolute",
-                    width: `${logoP.zoom * 100}%`,
-                    height: `${logoP.zoom * 100}%`,
-                    minWidth: "100%",
-                    minHeight: "100%",
-                    objectFit: "cover",
-                    left: `${logoP.x}%`,
-                    top: `${logoP.y}%`,
-                    transform: "translate(-50%, -50%)",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    transform: `translate(${logoP.tx}%, ${logoP.ty}%) scale(${logoP.zoom})`,
+                    transformOrigin: "center center",
                     userSelect: "none",
                   }}
                 />
