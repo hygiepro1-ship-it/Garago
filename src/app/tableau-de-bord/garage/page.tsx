@@ -12,6 +12,95 @@ import BrandLogo from "@/components/BrandLogo";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
+// ─── Colour utilities ────────────────────────────────────────────────────────
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))).toString(16).padStart(2, "0");
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+const BG_PRESETS = [
+  "#ffffff","#f8fafc","#f1f5f9","#e2e8f0","#94a3b8","#64748b","#334155","#1e293b","#0f172a","#000000",
+  "#fef9c3","#fde047","#eab308","#ca8a04","#78350f",
+  "#fecdd3","#f43f5e","#e11d48","#9f1239","#4c0519",
+  "#bbf7d0","#4ade80","#16a34a","#166534","#052e16",
+  "#bfdbfe","#60a5fa","#2563eb","#1e40af","#1e3a8a",
+  "#e9d5ff","#a855f7","#7c3aed","#5b21b6","#2e1065",
+  "#fed7aa","#f97316","#ea580c","#9a3412","#431407",
+];
+
+function BgColorPicker({ value, onChange, onClose }: {
+  value: string | null;
+  onChange: (c: string | null) => void;
+  onClose: () => void;
+}) {
+  const [hex, setHex] = useState(value ?? "");
+  const nativeRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { setHex(value ?? ""); }, [value]);
+
+  return (
+    <div className="border border-gray-200 rounded-xl p-3 bg-white shadow-lg space-y-3 z-10 relative">
+      {/* Preset swatches */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">Couleurs rapides</p>
+        <div className="grid grid-cols-10 gap-1">
+          {BG_PRESETS.map(c => (
+            <button key={c} type="button" title={c}
+              onClick={() => { onChange(c); setHex(c); }}
+              className={`w-6 h-6 rounded-md transition-all hover:scale-110 border-2 ${value === c ? "border-orange-500 scale-110" : "border-transparent hover:border-gray-300"}`}
+              style={{ background: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Hue strip — click to pick */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">Teinte personnalisée</p>
+        <div
+          className="h-7 rounded-lg cursor-crosshair border border-gray-200 select-none"
+          style={{ background: "linear-gradient(to right,hsl(0,70%,55%),hsl(30,70%,55%),hsl(60,70%,55%),hsl(90,70%,55%),hsl(120,70%,55%),hsl(150,70%,55%),hsl(180,70%,55%),hsl(210,70%,55%),hsl(240,70%,55%),hsl(270,70%,55%),hsl(300,70%,55%),hsl(330,70%,55%),hsl(360,70%,55%))" }}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const color = hslToHex(Math.round(ratio * 360), 70, 55);
+            onChange(color); setHex(color);
+          }}
+        />
+      </div>
+
+      {/* Preview + hex + native fallback */}
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg border border-gray-200 flex-shrink-0 shadow-sm"
+          style={{ background: value ?? "linear-gradient(135deg,#ccc 50%,#fff 50%)" }} />
+        <input type="text" placeholder="#rrggbb"
+          className="flex-1 text-xs font-mono border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
+          value={hex}
+          onChange={e => { setHex(e.target.value); if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value); }}
+        />
+        <input ref={nativeRef} type="color" className="hidden"
+          value={value ?? "#000000"}
+          onChange={e => { onChange(e.target.value); setHex(e.target.value); }} />
+        <button type="button" title="Ouvrir la palette complète du système"
+          onClick={() => nativeRef.current?.click()}
+          className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 font-medium whitespace-nowrap">
+          Palette…
+        </button>
+        <button type="button" onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 font-bold px-1">✕</button>
+      </div>
+
+      {/* Reset */}
+      <button type="button" onClick={() => { onChange(null); setHex(""); onClose(); }}
+        className="w-full text-xs py-1.5 rounded-lg border border-dashed border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
+        ↺ Fond automatique (image floutée)
+      </button>
+    </div>
+  );
+}
+
 // ─── Image position helper ───────────────────────────────────────────────────
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
@@ -192,8 +281,10 @@ export default function DashboardGaragePage() {
   const [coverPos, setCoverPos]         = useState({ tx: 0, ty: 0, zoom: 1 });
   const [logoPos,  setLogoPos]          = useState({ tx: 0, ty: 0, zoom: 1 });
   // null = auto (blurred image); string = custom hex/rgb color
-  const [coverBgColor, setCoverBgColor] = useState<string | null>(null);
-  const [logoBgColor,  setLogoBgColor]  = useState<string | null>(null);
+  const [coverBgColor, setCoverBgColor]         = useState<string | null>(null);
+  const [logoBgColor,  setLogoBgColor]          = useState<string | null>(null);
+  const [showCoverColorPicker, setShowCoverColorPicker] = useState(false);
+  const [showLogoColorPicker,  setShowLogoColorPicker]  = useState(false);
   useEffect(() => {
     if (garage) {
       const cp = parseImgPos(garage.coverPosition);
@@ -1153,31 +1244,36 @@ export default function DashboardGaragePage() {
                     />
                     <span className="text-xs text-gray-500 w-10 text-right font-mono">{Math.round(coverPos.zoom * 100)}%</span>
                   </div>
-                  {/* Background color */}
+                  {/* Background color toggle */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-16 flex-shrink-0">🖼 Fond</span>
-                    <button type="button" title="Fond automatique (couleurs de l'image)"
-                      onClick={() => setCoverBgColor(null)}
-                      className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-colors ${coverBgColor === null ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
-                      Auto
+                    <button type="button"
+                      onClick={() => setShowCoverColorPicker(v => !v)}
+                      className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium">
+                      <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                        style={{ background: coverBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
+                      {coverBgColor ?? "Auto"}
                     </button>
-                    <label className="cursor-pointer" title="Choisir une couleur">
-                      <div className="w-7 h-7 rounded-lg border-2 border-gray-300 overflow-hidden relative cursor-pointer shadow-sm">
-                        <div className="absolute inset-0" style={{ background: coverBgColor ?? "linear-gradient(135deg,#888 50%,#fff 50%)" }} />
-                        <input type="color" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                          value={coverBgColor ?? "#000000"}
-                          onChange={e => setCoverBgColor(e.target.value)} />
-                      </div>
-                    </label>
+                    {coverBgColor && (
+                      <button type="button" onClick={() => { setCoverBgColor(null); setShowCoverColorPicker(false); }}
+                        className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                    )}
                     <button type="button" title="Pipette — choisir une couleur à l'écran"
                       onClick={async () => {
                         if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur (Chrome/Edge requis)."); return; }
-                        try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); } catch { /**/ }
+                        try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
                       }}
                       className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                       🔬 Pipette
                     </button>
                   </div>
+                  {showCoverColorPicker && (
+                    <BgColorPicker
+                      value={coverBgColor}
+                      onChange={setCoverBgColor}
+                      onClose={() => setShowCoverColorPicker(false)}
+                    />
+                  )}
                   <div className="flex items-center gap-2">
                     <button type="button"
                       onClick={() => coverInputRef.current?.click()}
@@ -1270,7 +1366,7 @@ export default function DashboardGaragePage() {
 
                   {/* Zoom slider for logo */}
                   {garage.logoUrl && (
-                    <div className="mt-2 w-24 space-y-1.5">
+                    <div className="mt-2 w-24 space-y-1.5 relative">
                       <input
                         type="range" min="0.2" max="3" step="0.01"
                         value={logoPos.zoom}
@@ -1278,30 +1374,37 @@ export default function DashboardGaragePage() {
                         className="w-full accent-orange-500 cursor-pointer"
                       />
                       <p className="text-xs text-gray-400 text-center font-mono">{Math.round(logoPos.zoom * 100)}%</p>
-                      {/* Background color controls */}
+                      {/* Background colour toggle */}
                       <div className="flex items-center gap-1 pt-0.5">
-                        <button type="button" title="Fond automatique"
-                          onClick={() => setLogoBgColor(null)}
-                          className={`text-xs px-1.5 py-0.5 rounded font-semibold border transition-colors flex-1 ${logoBgColor === null ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-400 border-gray-200 hover:bg-gray-50"}`}>
-                          Auto
+                        <button type="button"
+                          onClick={() => setShowLogoColorPicker(v => !v)}
+                          className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 flex-1 justify-center">
+                          <div className="w-3.5 h-3.5 rounded border border-gray-300 flex-shrink-0"
+                            style={{ background: logoBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
+                          🖼
                         </button>
-                        <label className="cursor-pointer" title="Choisir une couleur">
-                          <div className="w-6 h-6 rounded border-2 border-gray-300 overflow-hidden relative cursor-pointer shadow-sm">
-                            <div className="absolute inset-0" style={{ background: logoBgColor ?? "linear-gradient(135deg,#888 50%,#fff 50%)" }} />
-                            <input type="color" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                              value={logoBgColor ?? "#000000"}
-                              onChange={e => setLogoBgColor(e.target.value)} />
-                          </div>
-                        </label>
+                        {logoBgColor && (
+                          <button type="button" onClick={() => { setLogoBgColor(null); setShowLogoColorPicker(false); }}
+                            className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                        )}
                         <button type="button" title="Pipette"
                           onClick={async () => {
-                            if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur."); return; }
-                            try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); } catch { /**/ }
+                            if (!("EyeDropper" in window)) { alert("Pipette non disponible."); return; }
+                            try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
                           }}
                           className="text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500">
                           🔬
                         </button>
                       </div>
+                      {showLogoColorPicker && (
+                        <div className="absolute left-0 top-full mt-1 z-20 w-72">
+                          <BgColorPicker
+                            value={logoBgColor}
+                            onChange={setLogoBgColor}
+                            onClose={() => setShowLogoColorPicker(false)}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
