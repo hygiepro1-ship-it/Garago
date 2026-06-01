@@ -19,8 +19,8 @@ function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; 
   try {
     const p = JSON.parse(raw);
     if (p && typeof p === "object") {
-      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(1, Number(p.zoom) || 1) };
-      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1) };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1) };
     }
   } catch { /**/ }
   if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
@@ -1127,7 +1127,7 @@ export default function DashboardGaragePage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 w-16 flex-shrink-0">🔍 Zoom</span>
                     <input
-                      type="range" min="1" max="3" step="0.01"
+                      type="range" min="0.2" max="3" step="0.01"
                       value={coverPos.zoom}
                       onChange={e => setCoverPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
                       className="flex-1 accent-orange-500 h-2 cursor-pointer"
@@ -1215,7 +1215,7 @@ export default function DashboardGaragePage() {
                   {garage.logoUrl && (
                     <div className="mt-2 w-24 space-y-0.5">
                       <input
-                        type="range" min="1" max="3" step="0.01"
+                        type="range" min="0.2" max="3" step="0.01"
                         value={logoPos.zoom}
                         onChange={e => setLogoPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
                         className="w-full accent-orange-500 cursor-pointer"

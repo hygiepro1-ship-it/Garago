@@ -16,8 +16,8 @@ function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; 
   try {
     const p = JSON.parse(raw);
     if (p && typeof p === "object") {
-      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(1, Number(p.zoom) || 1) };
-      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1) };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1) };
     }
   } catch { /**/ }
   if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
