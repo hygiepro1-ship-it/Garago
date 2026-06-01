@@ -10,6 +10,19 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
+function parseImgPos(raw: string | null | undefined): { x: number; y: number; zoom: number } {
+  const d = { x: 50, y: 50, zoom: 1 };
+  if (!raw) return d;
+  try {
+    const p = JSON.parse(raw);
+    if (p && typeof p === "object" && "x" in p)
+      return { x: Number(p.x) || 50, y: Number(p.y) || 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+  } catch { /**/ }
+  if (raw === "top")    return { x: 50, y: 0,   zoom: 1 };
+  if (raw === "bottom") return { x: 50, y: 100, zoom: 1 };
+  return d;
+}
+
 export default function GarageProfilePage() {
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
@@ -107,6 +120,9 @@ export default function GarageProfilePage() {
     );
   }
 
+  const coverP = parseImgPos(garage.coverPosition);
+  const logoP  = parseImgPos(garage.logoPosition);
+
   const acceptedBrands = garage.brands?.filter((b: any) => b.accepts) ?? [];
   const refusedBrands = garage.brands?.filter((b: any) => !b.accepts) ?? [];
   const servicesByCategory = garage.services?.reduce((acc: any, s: any) => {
@@ -132,20 +148,51 @@ export default function GarageProfilePage() {
 
       {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-        {garage.coverUrl
-          ? <div className="h-32 bg-cover" style={{
-              backgroundImage: `url(${garage.coverUrl})`,
-              backgroundPosition: garage.coverPosition ?? "center",
-            }} />
-          : <div className="h-32" style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }} />
-        }
+        {garage.coverUrl ? (
+          <div className="h-32 relative overflow-hidden">
+            <img
+              src={garage.coverUrl}
+              alt=""
+              draggable={false}
+              style={{
+                position: "absolute",
+                width: `${coverP.zoom * 100}%`,
+                height: `${coverP.zoom * 100}%`,
+                minWidth: "100%",
+                minHeight: "100%",
+                objectFit: "cover",
+                left: `${coverP.x}%`,
+                top: `${coverP.y}%`,
+                transform: "translate(-50%, -50%)",
+                userSelect: "none",
+              }}
+            />
+          </div>
+        ) : (
+          <div className="h-32" style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }} />
+        )}
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden">
-              {garage.logoUrl
-                ? <img src={garage.logoUrl} alt={garage.name} className="w-full h-full object-cover"
-                    style={{ objectPosition: garage.logoPosition ?? "center" }} />
-                : "🔧"}
+            <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative">
+              {garage.logoUrl ? (
+                <img
+                  src={garage.logoUrl}
+                  alt={garage.name}
+                  draggable={false}
+                  style={{
+                    position: "absolute",
+                    width: `${logoP.zoom * 100}%`,
+                    height: `${logoP.zoom * 100}%`,
+                    minWidth: "100%",
+                    minHeight: "100%",
+                    objectFit: "cover",
+                    left: `${logoP.x}%`,
+                    top: `${logoP.y}%`,
+                    transform: "translate(-50%, -50%)",
+                    userSelect: "none",
+                  }}
+                />
+              ) : "🔧"}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between flex-wrap gap-2">

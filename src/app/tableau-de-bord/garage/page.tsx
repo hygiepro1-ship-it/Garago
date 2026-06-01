@@ -12,6 +12,20 @@ import BrandLogo from "@/components/BrandLogo";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "rdv";
 
+// ─── Image position helper ───────────────────────────────────────────────────
+function parseImgPos(raw: string | null | undefined): { x: number; y: number; zoom: number } {
+  const d = { x: 50, y: 50, zoom: 1 };
+  if (!raw) return d;
+  try {
+    const p = JSON.parse(raw);
+    if (p && typeof p === "object" && "x" in p)
+      return { x: Number(p.x) || 50, y: Number(p.y) || 50, zoom: Math.max(1, Number(p.zoom) || 1) };
+  } catch { /**/ }
+  if (raw === "top")    return { x: 50, y: 0,   zoom: 1 };
+  if (raw === "bottom") return { x: 50, y: 100, zoom: 1 };
+  return d;
+}
+
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -171,6 +185,19 @@ export default function DashboardGaragePage() {
   const [profileData, setProfileData] = useState<any>({});
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
 
+  // ── Image position/zoom state ──────────────────────────────────────────────
+  const [coverPos, setCoverPos] = useState({ x: 50, y: 50, zoom: 1 });
+  const [logoPos,  setLogoPos]  = useState({ x: 50, y: 50, zoom: 1 });
+  useEffect(() => {
+    if (garage) {
+      setCoverPos(parseImgPos(garage.coverPosition));
+      setLogoPos(parseImgPos(garage.logoPosition));
+    }
+  }, [garage]);
+  // Drag refs — hold mutable state without triggering re-renders
+  const coverDrag = useRef<{ active: boolean; startX: number; startY: number; ox: number; oy: number } | null>(null);
+  const logoDrag  = useRef<{ active: boolean; startX: number; startY: number; ox: number; oy: number } | null>(null);
+
   function handleAddressSelect(r: AddressResult) {
     setProfileData((prev: any) => ({
       ...prev, address: r.streetAddress, city: r.city,
@@ -183,7 +210,11 @@ export default function DashboardGaragePage() {
     setSaving(true);
     await fetch("/api/garage/profile", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profileData),
+      body: JSON.stringify({
+        ...profileData,
+        coverPosition: JSON.stringify(coverPos),
+        logoPosition:  JSON.stringify(logoPos),
+      }),
     });
     setSaving(false);
     setSuccess("Profil sauvegardé ✓");
@@ -1043,93 +1074,192 @@ export default function DashboardGaragePage() {
             {/* Cover image */}
             <div className="mb-8">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Image de couverture</label>
-              {/* Preview */}
-              <div className="relative h-36 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 cursor-pointer hover:border-orange-400 transition-colors group mb-2"
-                onClick={() => coverInputRef.current?.click()}>
-                {garage.coverUrl
-                  ? <img src={garage.coverUrl} alt="Cover" className="w-full h-full object-cover"
-                      style={{ objectPosition: profileData.coverPosition ?? "center" }} />
-                  : <div className="w-full h-full flex flex-col items-center justify-center" style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }}>
-                      <span className="text-white/60 text-sm">Cliquez pour télécharger une image de couverture</span>
-                    </div>
-                }
-                <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">{uploadingCover ? "Téléchargement…" : "📷 Changer la couverture"}</span>
-                </div>
-              </div>
-              <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, "cover"); e.target.value = ""; }} />
 
-              {/* Position picker — only if image uploaded */}
+              {/* Draggable preview */}
+              <div
+                className={`relative h-36 rounded-xl overflow-hidden border-2 border-dashed mb-3 transition-colors group select-none ${garage.coverUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
+                onClick={!garage.coverUrl ? () => coverInputRef.current?.click() : undefined}
+                onPointerDown={garage.coverUrl ? (e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  coverDrag.current = { active: true, startX: e.clientX, startY: e.clientY, ox: coverPos.x, oy: coverPos.y };
+                } : undefined}
+                onPointerMove={garage.coverUrl ? (e) => {
+                  if (!coverDrag.current?.active) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const dx = (e.clientX - coverDrag.current.startX) / rect.width  * 100;
+                  const dy = (e.clientY - coverDrag.current.startY) / rect.height * 100;
+                  setCoverPos(p => ({
+                    ...p,
+                    x: Math.max(0, Math.min(100, coverDrag.current!.ox + dx)),
+                    y: Math.max(0, Math.min(100, coverDrag.current!.oy + dy)),
+                  }));
+                } : undefined}
+                onPointerUp={() => { if (coverDrag.current) coverDrag.current.active = false; }}
+                onPointerCancel={() => { if (coverDrag.current) coverDrag.current.active = false; }}
+              >
+                {garage.coverUrl ? (
+                  <>
+                    <img
+                      src={garage.coverUrl}
+                      alt="Cover"
+                      draggable={false}
+                      style={{
+                        position: "absolute",
+                        width: `${coverPos.zoom * 100}%`,
+                        height: `${coverPos.zoom * 100}%`,
+                        minWidth: "100%",
+                        minHeight: "100%",
+                        objectFit: "cover",
+                        left: `${coverPos.x}%`,
+                        top: `${coverPos.y}%`,
+                        transform: "translate(-50%, -50%)",
+                        userSelect: "none",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">✋ Glisser pour repositionner</span>
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-mono">{Math.round(coverPos.x)}% / {Math.round(coverPos.y)}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center"
+                    style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }}>
+                    <span className="text-white/60 text-sm">Cliquez pour télécharger une image de couverture</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
               {garage.coverUrl && (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs font-semibold text-gray-500">Position :</span>
-                  {([
-                    { value: "top",    label: "⬆ Haut"   },
-                    { value: "center", label: "⬛ Centre" },
-                    { value: "bottom", label: "⬇ Bas"    },
-                  ] as const).map(opt => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setProfileData((p: any) => ({ ...p, coverPosition: opt.value }))}
-                      className="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all"
-                      style={(profileData.coverPosition ?? "center") === opt.value
-                        ? { background: "#f97316", borderColor: "#f97316", color: "white" }
-                        : { background: "white", borderColor: "#e2e8f0", color: "#64748b" }}>
-                      {opt.label}
+                <div className="space-y-2">
+                  {/* Zoom slider */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">🔍 Zoom</span>
+                    <input
+                      type="range" min="1" max="3" step="0.01"
+                      value={coverPos.zoom}
+                      onChange={e => setCoverPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
+                      className="flex-1 accent-orange-500 h-2 cursor-pointer"
+                    />
+                    <span className="text-xs text-gray-500 w-10 text-right font-mono">{Math.round(coverPos.zoom * 100)}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="text-xs px-3 py-1.5 rounded-lg font-semibold border"
+                      style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
+                      {uploadingCover ? "Téléchargement…" : "📷 Changer l'image"}
                     </button>
-                  ))}
-                  <span className="text-xs text-gray-400 ml-1">Cliquez sur Sauvegarder pour appliquer</span>
+                    <button type="button"
+                      onClick={() => setCoverPos({ x: 50, y: 50, zoom: 1 })}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+                      Réinitialiser
+                    </button>
+                    <span className="text-xs text-gray-400 ml-1">Sauvegardez pour appliquer</span>
+                  </div>
                 </div>
               )}
-              <p className="text-xs text-gray-400 mt-1.5">Recommandé : 1200×400 px, JPG ou PNG.</p>
+              {!garage.coverUrl && (
+                <button type="button" onClick={() => coverInputRef.current?.click()}
+                  className="text-sm px-4 py-2 rounded-xl font-semibold border"
+                  style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
+                  {uploadingCover ? "Téléchargement…" : "📷 Télécharger une couverture"}
+                </button>
+              )}
+              <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, "cover"); e.target.value = ""; }} />
+              <p className="text-xs text-gray-400 mt-2">Recommandé : 1200×400 px, JPG ou PNG.</p>
             </div>
 
             {/* Logo */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Logo du garage</label>
               <div className="flex items-start gap-4">
-                {/* Preview */}
+                {/* Draggable Preview */}
                 <div className="flex-shrink-0">
-                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 cursor-pointer hover:border-orange-400 transition-colors group"
-                    onClick={() => logoInputRef.current?.click()}>
-                    {garage.logoUrl
-                      ? <img src={garage.logoUrl} alt="Logo" className="w-full h-full object-cover"
-                          style={{ objectPosition: profileData.logoPosition ?? "center" }} />
-                      : <div className="w-full h-full bg-gray-50 flex items-center justify-center text-3xl">🔧</div>
-                    }
-                    <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded-2xl">
-                      <span className="text-white text-xs font-semibold">{uploadingLogo ? "…" : "📷"}</span>
-                    </div>
+                  <div
+                    className={`relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed transition-colors group select-none ${garage.logoUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
+                    onClick={!garage.logoUrl ? () => logoInputRef.current?.click() : undefined}
+                    onPointerDown={garage.logoUrl ? (e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      logoDrag.current = { active: true, startX: e.clientX, startY: e.clientY, ox: logoPos.x, oy: logoPos.y };
+                    } : undefined}
+                    onPointerMove={garage.logoUrl ? (e) => {
+                      if (!logoDrag.current?.active) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const dx = (e.clientX - logoDrag.current.startX) / rect.width  * 100;
+                      const dy = (e.clientY - logoDrag.current.startY) / rect.height * 100;
+                      setLogoPos(p => ({
+                        ...p,
+                        x: Math.max(0, Math.min(100, logoDrag.current!.ox + dx)),
+                        y: Math.max(0, Math.min(100, logoDrag.current!.oy + dy)),
+                      }));
+                    } : undefined}
+                    onPointerUp={() => { if (logoDrag.current) logoDrag.current.active = false; }}
+                    onPointerCancel={() => { if (logoDrag.current) logoDrag.current.active = false; }}
+                  >
+                    {garage.logoUrl ? (
+                      <img
+                        src={garage.logoUrl}
+                        alt="Logo"
+                        draggable={false}
+                        style={{
+                          position: "absolute",
+                          width: `${logoPos.zoom * 100}%`,
+                          height: `${logoPos.zoom * 100}%`,
+                          minWidth: "100%",
+                          minHeight: "100%",
+                          objectFit: "cover",
+                          left: `${logoPos.x}%`,
+                          top: `${logoPos.y}%`,
+                          transform: "translate(-50%, -50%)",
+                          userSelect: "none",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-50 flex items-center justify-center text-3xl">🔧</div>
+                    )}
                   </div>
-                  {/* Position picker for logo */}
+
+                  {/* Zoom slider for logo */}
                   {garage.logoUrl && (
-                    <div className="flex gap-1 mt-2">
-                      {([
-                        { value: "top",    label: "⬆" },
-                        { value: "center", label: "⬛" },
-                        { value: "bottom", label: "⬇" },
-                      ] as const).map(opt => (
-                        <button key={opt.value} type="button"
-                          onClick={() => setProfileData((p: any) => ({ ...p, logoPosition: opt.value }))}
-                          className="flex-1 text-xs py-1 rounded-lg font-bold border transition-all"
-                          style={(profileData.logoPosition ?? "center") === opt.value
-                            ? { background: "#f97316", borderColor: "#f97316", color: "white" }
-                            : { background: "white", borderColor: "#e2e8f0", color: "#64748b" }}>
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="mt-2 w-24 space-y-0.5">
+                      <input
+                        type="range" min="1" max="3" step="0.01"
+                        value={logoPos.zoom}
+                        onChange={e => setLogoPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
+                        className="w-full accent-orange-500 cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-400 text-center font-mono">{Math.round(logoPos.zoom * 100)}%</p>
                     </div>
                   )}
                 </div>
+
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">Votre logo apparaît sur votre profil public à côté de votre nom.</p>
-                  <button type="button" onClick={() => logoInputRef.current?.click()}
-                    className="text-sm px-4 py-2 rounded-xl font-semibold border"
-                    style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                    {uploadingLogo ? "Téléchargement…" : "📷 Changer le logo"}
-                  </button>
+                  <p className="text-sm text-gray-600 mb-3">Votre logo apparaît sur votre profil public à côté de votre nom.</p>
                   {garage.logoUrl && (
-                    <p className="text-xs text-gray-400 mt-2">Ajustez la position ⬆ ⬛ ⬇ puis sauvegardez.</p>
+                    <p className="text-xs text-gray-500 mb-2">
+                      ✋ <strong>Glisser</strong> le logo pour le repositionner<br />
+                      🔍 <strong>Curseur</strong> pour zoomer / dézoomer
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => logoInputRef.current?.click()}
+                      className="text-sm px-4 py-2 rounded-xl font-semibold border"
+                      style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
+                      {uploadingLogo ? "Téléchargement…" : "📷 Changer le logo"}
+                    </button>
+                    {garage.logoUrl && (
+                      <button type="button" onClick={() => setLogoPos({ x: 50, y: 50, zoom: 1 })}
+                        className="text-xs px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50">
+                        Réinitialiser
+                      </button>
+                    )}
+                  </div>
+                  {garage.logoUrl && (
+                    <p className="text-xs text-gray-400 mt-2">Cliquez sur <strong>Sauvegarder le profil</strong> pour appliquer.</p>
                   )}
                 </div>
               </div>
