@@ -12,26 +12,6 @@ import BrandLogo from "@/components/BrandLogo";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
-// ─── Extract dominant colour from an img element via Canvas ─────────────────
-function extractDominantColor(img: HTMLImageElement, fallback = "#0f172a"): string {
-  try {
-    const SIZE = 48;
-    const canvas = document.createElement("canvas");
-    canvas.width = SIZE; canvas.height = SIZE;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return fallback;
-    ctx.drawImage(img, 0, 0, SIZE, SIZE);
-    const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
-    let r = 0, g = 0, b = 0, n = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] < 32) continue; // skip transparent pixels
-      r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
-    }
-    if (!n) return fallback;
-    return `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`;
-  } catch { return fallback; }
-}
-
 // ─── Image position helper ───────────────────────────────────────────────────
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
   const d = { tx: 0, ty: 0, zoom: 1 };
@@ -210,8 +190,6 @@ export default function DashboardGaragePage() {
   // ── Image position/zoom state ──────────────────────────────────────────────
   const [coverPos, setCoverPos] = useState({ tx: 0, ty: 0, zoom: 1 });
   const [logoPos,  setLogoPos]  = useState({ tx: 0, ty: 0, zoom: 1 });
-  const [coverBg,  setCoverBg]  = useState("#0f172a");
-  const [logoBg,   setLogoBg]   = useState("#f1f5f9");
   useEffect(() => {
     if (garage) {
       setCoverPos(parseImgPos(garage.coverPosition));
@@ -1092,7 +1070,6 @@ export default function DashboardGaragePage() {
               {/* Draggable preview */}
               <div
                 className={`relative h-36 rounded-xl overflow-hidden border-2 border-dashed mb-3 transition-colors group select-none ${garage.coverUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
-                style={garage.coverUrl ? { background: coverBg } : undefined}
                 onClick={!garage.coverUrl ? () => coverInputRef.current?.click() : undefined}
                 onPointerDown={garage.coverUrl ? (e) => {
                   e.currentTarget.setPointerCapture(e.pointerId);
@@ -1114,12 +1091,17 @@ export default function DashboardGaragePage() {
               >
                 {garage.coverUrl ? (
                   <>
+                    {/* Blurred background — same image, perfectly matching colours */}
+                    <div style={{
+                      position: "absolute", inset: "-20px",
+                      backgroundImage: `url(${garage.coverUrl})`,
+                      backgroundSize: "cover", backgroundPosition: "center",
+                      filter: "blur(18px) brightness(0.85)",
+                    }} />
                     <img
                       src={garage.coverUrl}
                       alt="Cover"
                       draggable={false}
-                      crossOrigin="anonymous"
-                      onLoad={(e) => setCoverBg(extractDominantColor(e.currentTarget))}
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -1195,7 +1177,6 @@ export default function DashboardGaragePage() {
                 <div className="flex-shrink-0">
                   <div
                     className={`relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed transition-colors group select-none ${garage.logoUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
-                    style={garage.logoUrl ? { background: logoBg } : undefined}
                     onClick={!garage.logoUrl ? () => logoInputRef.current?.click() : undefined}
                     onPointerDown={garage.logoUrl ? (e) => {
                       e.currentTarget.setPointerCapture(e.pointerId);
@@ -1216,12 +1197,17 @@ export default function DashboardGaragePage() {
                     onPointerCancel={() => { if (logoDrag.current) logoDrag.current.active = false; }}
                   >
                     {garage.logoUrl ? (
+                      {/* Blurred background */}
+                      <div style={{
+                        position: "absolute", inset: "-10px",
+                        backgroundImage: `url(${garage.logoUrl})`,
+                        backgroundSize: "cover", backgroundPosition: "center",
+                        filter: "blur(12px)",
+                      }} />
                       <img
                         src={garage.logoUrl}
                         alt="Logo"
                         draggable={false}
-                        crossOrigin="anonymous"
-                        onLoad={(e) => setLogoBg(extractDominantColor(e.currentTarget, "#f1f5f9"))}
                         style={{
                           position: "absolute",
                           inset: 0,
