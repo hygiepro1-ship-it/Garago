@@ -10,6 +10,26 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
+// ─── Extract dominant colour from an img element via Canvas ─────────────────
+function extractDominantColor(img: HTMLImageElement, fallback = "#0f172a"): string {
+  try {
+    const SIZE = 48;
+    const canvas = document.createElement("canvas");
+    canvas.width = SIZE; canvas.height = SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return fallback;
+    ctx.drawImage(img, 0, 0, SIZE, SIZE);
+    const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 32) continue;
+      r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+    }
+    if (!n) return fallback;
+    return `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`;
+  } catch { return fallback; }
+}
+
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
   const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
@@ -33,6 +53,8 @@ export default function GarageProfilePage() {
   const [loading, setLoading]   = useState(true);
   const [isFav, setIsFav]       = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [coverBg, setCoverBg]   = useState("#0f172a");
+  const [logoBg,  setLogoBg]    = useState("#f1f5f9");
 
   // Review form
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -151,11 +173,13 @@ export default function GarageProfilePage() {
       {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
         {garage.coverUrl ? (
-          <div className="h-32 relative overflow-hidden" style={{ background: "#0f172a" }}>
+          <div className="h-32 relative overflow-hidden" style={{ background: coverBg }}>
             <img
               src={garage.coverUrl}
               alt=""
               draggable={false}
+              crossOrigin="anonymous"
+              onLoad={(e) => setCoverBg(extractDominantColor(e.currentTarget))}
               style={{
                 position: "absolute",
                 inset: 0,
@@ -173,12 +197,14 @@ export default function GarageProfilePage() {
         )}
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative">
+            <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative" style={{ background: logoBg }}>
               {garage.logoUrl ? (
                 <img
                   src={garage.logoUrl}
                   alt={garage.name}
                   draggable={false}
+                  crossOrigin="anonymous"
+                  onLoad={(e) => setLogoBg(extractDominantColor(e.currentTarget, "#f1f5f9"))}
                   style={{
                     position: "absolute",
                     inset: 0,
