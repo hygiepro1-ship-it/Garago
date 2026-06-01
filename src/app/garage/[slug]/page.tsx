@@ -151,7 +151,7 @@ export default function GarageProfilePage() {
       {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
         {garage.coverUrl ? (
-          <div className="h-32 relative overflow-hidden">
+          <div className="h-32 relative overflow-hidden" style={{ background: "#0f172a" }}>
             <img
               src={garage.coverUrl}
               alt=""
@@ -161,7 +161,7 @@ export default function GarageProfilePage() {
                 inset: 0,
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: "contain",
                 transform: `translate(${coverP.tx}%, ${coverP.ty}%) scale(${coverP.zoom})`,
                 transformOrigin: "center center",
                 userSelect: "none",

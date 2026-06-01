@@ -1070,6 +1070,7 @@ export default function DashboardGaragePage() {
               {/* Draggable preview */}
               <div
                 className={`relative h-36 rounded-xl overflow-hidden border-2 border-dashed mb-3 transition-colors group select-none ${garage.coverUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
+                style={garage.coverUrl ? { background: "#0f172a" } : undefined}
                 onClick={!garage.coverUrl ? () => coverInputRef.current?.click() : undefined}
                 onPointerDown={garage.coverUrl ? (e) => {
                   e.currentTarget.setPointerCapture(e.pointerId);
@@ -1100,7 +1101,7 @@ export default function DashboardGaragePage() {
                         inset: 0,
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        objectFit: "contain",
                         transform: `translate(${coverPos.tx}%, ${coverPos.ty}%) scale(${coverPos.zoom})`,
                         transformOrigin: "center center",
                         userSelect: "none",
@@ -1170,6 +1171,7 @@ export default function DashboardGaragePage() {
                 <div className="flex-shrink-0">
                   <div
                     className={`relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed transition-colors group select-none ${garage.logoUrl ? "border-orange-300 cursor-grab active:cursor-grabbing" : "border-gray-300 hover:border-orange-400 cursor-pointer"}`}
+                    style={garage.logoUrl ? { background: "#f1f5f9" } : undefined}
                     onClick={!garage.logoUrl ? () => logoInputRef.current?.click() : undefined}
                     onPointerDown={garage.logoUrl ? (e) => {
                       e.currentTarget.setPointerCapture(e.pointerId);
