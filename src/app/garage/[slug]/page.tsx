@@ -10,14 +10,15 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 
-function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
+function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
   try {
     const p = JSON.parse(raw);
     if (p && typeof p === "object") {
-      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1) };
-      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1) };
+      const color = typeof p.color === "string" && p.color ? p.color : undefined;
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1), color };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1), color };
     }
   } catch { /**/ }
   if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
@@ -152,13 +153,17 @@ export default function GarageProfilePage() {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
         {garage.coverUrl ? (
           <div className="h-32 relative overflow-hidden">
-            {/* Blurred background — exact same image, colours always match */}
-            <div style={{
-              position: "absolute", inset: "-20px",
-              backgroundImage: `url(${garage.coverUrl})`,
-              backgroundSize: "cover", backgroundPosition: "center",
-              filter: "blur(18px) brightness(0.85)",
-            }} />
+            {/* Background layer — solid colour or blurred image */}
+            {coverP.color ? (
+              <div style={{ position: "absolute", inset: 0, background: coverP.color }} />
+            ) : (
+              <div style={{
+                position: "absolute", inset: "-20px",
+                backgroundImage: `url(${garage.coverUrl})`,
+                backgroundSize: "cover", backgroundPosition: "center",
+                filter: "blur(18px) brightness(0.85)",
+              }} />
+            )}
             <img
               src={garage.coverUrl}
               alt=""
@@ -183,13 +188,17 @@ export default function GarageProfilePage() {
             <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative bg-gray-100">
               {garage.logoUrl ? (
                 <>
-                  {/* Blurred background */}
-                  <div style={{
-                    position: "absolute", inset: "-10px",
-                    backgroundImage: `url(${garage.logoUrl})`,
-                    backgroundSize: "cover", backgroundPosition: "center",
-                    filter: "blur(12px)",
-                  }} />
+                  {/* Background layer */}
+                  {logoP.color ? (
+                    <div style={{ position: "absolute", inset: 0, background: logoP.color }} />
+                  ) : (
+                    <div style={{
+                      position: "absolute", inset: "-10px",
+                      backgroundImage: `url(${garage.logoUrl})`,
+                      backgroundSize: "cover", backgroundPosition: "center",
+                      filter: "blur(12px)",
+                    }} />
+                  )}
                   <img
                   src={garage.logoUrl}
                   alt={garage.name}

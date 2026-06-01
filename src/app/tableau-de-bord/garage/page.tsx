@@ -13,14 +13,15 @@ import BrandLogo from "@/components/BrandLogo";
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
 // ─── Image position helper ───────────────────────────────────────────────────
-function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
+function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
   try {
     const p = JSON.parse(raw);
     if (p && typeof p === "object") {
-      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1) };
-      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1) };
+      const color = typeof p.color === "string" && p.color ? p.color : undefined;
+      if ("tx" in p) return { tx: Number(p.tx) || 0, ty: Number(p.ty) || 0, zoom: Math.max(0.1, Number(p.zoom) || 1), color };
+      if ("x"  in p) return { tx: (Number(p.x) || 50) - 50, ty: (Number(p.y) || 50) - 50, zoom: Math.max(0.1, Number(p.zoom) || 1), color };
     }
   } catch { /**/ }
   if (raw === "top")    return { tx: 0, ty: -20, zoom: 1 };
@@ -188,12 +189,19 @@ export default function DashboardGaragePage() {
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
 
   // ── Image position/zoom state ──────────────────────────────────────────────
-  const [coverPos, setCoverPos] = useState({ tx: 0, ty: 0, zoom: 1 });
-  const [logoPos,  setLogoPos]  = useState({ tx: 0, ty: 0, zoom: 1 });
+  const [coverPos, setCoverPos]         = useState({ tx: 0, ty: 0, zoom: 1 });
+  const [logoPos,  setLogoPos]          = useState({ tx: 0, ty: 0, zoom: 1 });
+  // null = auto (blurred image); string = custom hex/rgb color
+  const [coverBgColor, setCoverBgColor] = useState<string | null>(null);
+  const [logoBgColor,  setLogoBgColor]  = useState<string | null>(null);
   useEffect(() => {
     if (garage) {
-      setCoverPos(parseImgPos(garage.coverPosition));
-      setLogoPos(parseImgPos(garage.logoPosition));
+      const cp = parseImgPos(garage.coverPosition);
+      const lp = parseImgPos(garage.logoPosition);
+      setCoverPos(cp);
+      setLogoPos(lp);
+      setCoverBgColor(cp.color ?? null);
+      setLogoBgColor(lp.color ?? null);
     }
   }, [garage]);
   // Drag refs — hold mutable state without triggering re-renders
@@ -214,8 +222,8 @@ export default function DashboardGaragePage() {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...profileData,
-        coverPosition: JSON.stringify({ zoom: coverPos.zoom, tx: coverPos.tx, ty: coverPos.ty }),
-        logoPosition:  JSON.stringify({ zoom: logoPos.zoom,  tx: logoPos.tx,  ty: logoPos.ty  }),
+        coverPosition: JSON.stringify({ zoom: coverPos.zoom, tx: coverPos.tx, ty: coverPos.ty, ...(coverBgColor ? { color: coverBgColor } : {}) }),
+        logoPosition:  JSON.stringify({ zoom: logoPos.zoom,  tx: logoPos.tx,  ty: logoPos.ty,  ...(logoBgColor  ? { color: logoBgColor  } : {}) }),
       }),
     });
     setSaving(false);
@@ -1091,13 +1099,17 @@ export default function DashboardGaragePage() {
               >
                 {garage.coverUrl ? (
                   <>
-                    {/* Blurred background — same image, perfectly matching colours */}
-                    <div style={{
-                      position: "absolute", inset: "-20px",
-                      backgroundImage: `url(${garage.coverUrl})`,
-                      backgroundSize: "cover", backgroundPosition: "center",
-                      filter: "blur(18px) brightness(0.85)",
-                    }} />
+                    {/* Background layer — blurred or solid */}
+                    {coverBgColor === null ? (
+                      <div style={{
+                        position: "absolute", inset: "-20px",
+                        backgroundImage: `url(${garage.coverUrl})`,
+                        backgroundSize: "cover", backgroundPosition: "center",
+                        filter: "blur(18px) brightness(0.85)",
+                      }} />
+                    ) : (
+                      <div style={{ position: "absolute", inset: 0, background: coverBgColor }} />
+                    )}
                     <img
                       src={garage.coverUrl}
                       alt="Cover"
@@ -1140,6 +1152,31 @@ export default function DashboardGaragePage() {
                       className="flex-1 accent-orange-500 h-2 cursor-pointer"
                     />
                     <span className="text-xs text-gray-500 w-10 text-right font-mono">{Math.round(coverPos.zoom * 100)}%</span>
+                  </div>
+                  {/* Background color */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">🖼 Fond</span>
+                    <button type="button" title="Fond automatique (couleurs de l'image)"
+                      onClick={() => setCoverBgColor(null)}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-colors ${coverBgColor === null ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
+                      Auto
+                    </button>
+                    <label className="cursor-pointer" title="Choisir une couleur">
+                      <div className="w-7 h-7 rounded-lg border-2 border-gray-300 overflow-hidden relative cursor-pointer shadow-sm">
+                        <div className="absolute inset-0" style={{ background: coverBgColor ?? "linear-gradient(135deg,#888 50%,#fff 50%)" }} />
+                        <input type="color" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                          value={coverBgColor ?? "#000000"}
+                          onChange={e => setCoverBgColor(e.target.value)} />
+                      </div>
+                    </label>
+                    <button type="button" title="Pipette — choisir une couleur à l'écran"
+                      onClick={async () => {
+                        if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur (Chrome/Edge requis)."); return; }
+                        try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); } catch { /**/ }
+                      }}
+                      className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
+                      🔬 Pipette
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button"
@@ -1197,29 +1234,35 @@ export default function DashboardGaragePage() {
                     onPointerCancel={() => { if (logoDrag.current) logoDrag.current.active = false; }}
                   >
                     {garage.logoUrl ? (
-                      {/* Blurred background */}
-                      <div style={{
-                        position: "absolute", inset: "-10px",
-                        backgroundImage: `url(${garage.logoUrl})`,
-                        backgroundSize: "cover", backgroundPosition: "center",
-                        filter: "blur(12px)",
-                      }} />
-                      <img
-                        src={garage.logoUrl}
-                        alt="Logo"
-                        draggable={false}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                          transform: `translate(${logoPos.tx}%, ${logoPos.ty}%) scale(${logoPos.zoom})`,
-                          transformOrigin: "center center",
-                          userSelect: "none",
-                          pointerEvents: "none",
-                        }}
-                      />
+                      <>
+                        {/* Background layer — blurred or solid */}
+                        {logoBgColor === null ? (
+                          <div style={{
+                            position: "absolute", inset: "-10px",
+                            backgroundImage: `url(${garage.logoUrl})`,
+                            backgroundSize: "cover", backgroundPosition: "center",
+                            filter: "blur(12px)",
+                          }} />
+                        ) : (
+                          <div style={{ position: "absolute", inset: 0, background: logoBgColor }} />
+                        )}
+                        <img
+                          src={garage.logoUrl}
+                          alt="Logo"
+                          draggable={false}
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            transform: `translate(${logoPos.tx}%, ${logoPos.ty}%) scale(${logoPos.zoom})`,
+                            transformOrigin: "center center",
+                            userSelect: "none",
+                            pointerEvents: "none",
+                          }}
+                        />
+                      </>
                     ) : (
                       <div className="w-full h-full bg-gray-50 flex items-center justify-center text-3xl">🔧</div>
                     )}
@@ -1227,7 +1270,7 @@ export default function DashboardGaragePage() {
 
                   {/* Zoom slider for logo */}
                   {garage.logoUrl && (
-                    <div className="mt-2 w-24 space-y-0.5">
+                    <div className="mt-2 w-24 space-y-1.5">
                       <input
                         type="range" min="0.2" max="3" step="0.01"
                         value={logoPos.zoom}
@@ -1235,6 +1278,30 @@ export default function DashboardGaragePage() {
                         className="w-full accent-orange-500 cursor-pointer"
                       />
                       <p className="text-xs text-gray-400 text-center font-mono">{Math.round(logoPos.zoom * 100)}%</p>
+                      {/* Background color controls */}
+                      <div className="flex items-center gap-1 pt-0.5">
+                        <button type="button" title="Fond automatique"
+                          onClick={() => setLogoBgColor(null)}
+                          className={`text-xs px-1.5 py-0.5 rounded font-semibold border transition-colors flex-1 ${logoBgColor === null ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-400 border-gray-200 hover:bg-gray-50"}`}>
+                          Auto
+                        </button>
+                        <label className="cursor-pointer" title="Choisir une couleur">
+                          <div className="w-6 h-6 rounded border-2 border-gray-300 overflow-hidden relative cursor-pointer shadow-sm">
+                            <div className="absolute inset-0" style={{ background: logoBgColor ?? "linear-gradient(135deg,#888 50%,#fff 50%)" }} />
+                            <input type="color" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                              value={logoBgColor ?? "#000000"}
+                              onChange={e => setLogoBgColor(e.target.value)} />
+                          </div>
+                        </label>
+                        <button type="button" title="Pipette"
+                          onClick={async () => {
+                            if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur."); return; }
+                            try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); } catch { /**/ }
+                          }}
+                          className="text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500">
+                          🔬
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
