@@ -10,7 +10,7 @@ import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
 
-type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "rdv";
+type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
 // ─── Image position helper ───────────────────────────────────────────────────
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number } {
@@ -285,7 +285,7 @@ export default function DashboardGaragePage() {
 
   // ── RDV / Calendar ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeTab === "rdv" && !rdvLoaded && garage) {
+    if (activeTab === "apercu" && !rdvLoaded && garage) {
       const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
       Promise.all([
         fetch("/api/garage/appointments").then(r => r.json()),
@@ -412,12 +412,11 @@ export default function DashboardGaragePage() {
     && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "apercu",   label: "Aperçu",        icon: "📊" },
-    { id: "rdv",      label: "Rendez-vous",   icon: "📅" },
-    { id: "services", label: "Services",       icon: "🔧" },
-    { id: "marques",  label: "Marques",        icon: "🚗" },
-    { id: "horaires", label: "Horaires",       icon: "🕐" },
-    { id: "profil",   label: "Profil",         icon: "⚙️" },
+    { id: "apercu",   label: "Aperçu",    icon: "📊" },
+    { id: "services", label: "Services",  icon: "🔧" },
+    { id: "marques",  label: "Marques",   icon: "🚗" },
+    { id: "horaires", label: "Horaires",  icon: "🕐" },
+    { id: "profil",   label: "Profil",    icon: "⚙️" },
   ];
 
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400";
@@ -522,108 +521,7 @@ export default function DashboardGaragePage() {
             </div>
           </div>
 
-          {/* Reviews with reply + moderation */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-lg">Avis clients</h3>
-              <span className="text-sm text-gray-400">{reviews.length} avis</span>
-            </div>
-
-            {reviews.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!</p>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((r: any) => (
-                  <div key={r.id} className={`rounded-xl border p-4 transition-all ${r.isHidden ? "opacity-60 bg-gray-50" : "bg-white border-gray-200"}`}
-                    style={r.isHidden ? { border: "1px solid #e2e8f0" } : {}}>
-                    {/* Review header */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                          style={{ background: "#fff4ed", color: "#f97316" }}>
-                          {(r.user?.name ?? "?")[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-sm text-gray-900">{r.user?.name ?? "Anonyme"}</span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-400 text-xs">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {r.isHidden && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-200 text-gray-500">Masqué</span>
-                        )}
-                        <button
-                          onClick={() => toggleHideReview(r.id, r.isHidden)}
-                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
-                          style={r.isHidden
-                            ? { background: "#f0fdf4", borderColor: "#86efac", color: "#15803d" }
-                            : { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                          {r.isHidden ? "👁 Afficher" : "🚫 Masquer"}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (replyingTo === r.id) { setReplyingTo(null); setReplyText(""); }
-                            else { setReplyingTo(r.id); setReplyText(r.ownerReply ?? ""); }
-                          }}
-                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
-                          style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                          {r.ownerReply ? "✏️ Modifier" : "💬 Répondre"}
-                        </button>
-                      </div>
-                    </div>
-
-                    {r.title && <p className="text-sm font-semibold text-gray-800 mb-1">{r.title}</p>}
-                    {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
-
-                    {/* Existing reply */}
-                    {r.ownerReply && replyingTo !== r.id && (
-                      <div className="mt-3 rounded-lg p-3 text-sm" style={{ background: "#fff4ed", borderLeft: "3px solid #f97316" }}>
-                        <p className="text-xs font-bold text-orange-600 mb-1">Votre réponse :</p>
-                        <p className="text-gray-700">{r.ownerReply}</p>
-                      </div>
-                    )}
-
-                    {/* Reply form */}
-                    {replyingTo === r.id && (
-                      <div className="mt-3 space-y-2">
-                        <textarea
-                          className={`${inputClass} min-h-[80px]`}
-                          value={replyText}
-                          onChange={e => setReplyText(e.target.value)}
-                          placeholder="Rédigez votre réponse publique…"
-                        />
-                        <div className="flex gap-2">
-                          <button onClick={() => saveReply(r.id)} disabled={savingReply}
-                            className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
-                            style={{ background: "#f97316" }}>
-                            {savingReply ? "Envoi…" : "Publier la réponse"}
-                          </button>
-                          {r.ownerReply && (
-                            <button onClick={() => { setReplyText(""); saveReply(r.id); }}
-                              className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
-                              Supprimer la réponse
-                            </button>
-                          )}
-                          <button onClick={() => { setReplyingTo(null); setReplyText(""); }}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                            Annuler
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ══ RENDEZ-VOUS (Calendar view) ════════════════════════════════════ */}
-      {activeTab === "rdv" && (
-        <div className="space-y-4">
+          {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
           {/* Calendar header */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #f1f5f9" }}>
@@ -648,21 +546,17 @@ export default function DashboardGaragePage() {
                 </button>
               </div>
             </div>
-
             {/* Day-of-week headers */}
             <div className="grid grid-cols-7 text-center" style={{ borderBottom: "1px solid #f1f5f9" }}>
               {DAY_ABBR_FR.map((d) => (
                 <div key={d} className="py-2 text-xs font-bold text-gray-400">{d}</div>
               ))}
             </div>
-
             {/* Calendar grid */}
             <div className="grid grid-cols-7">
-              {/* Empty leading cells */}
               {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} className="h-16 border-r border-b border-gray-50" />
               ))}
-              {/* Day cells */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const dayStr = toDateStr(day);
@@ -671,7 +565,6 @@ export default function DashboardGaragePage() {
                 const apptCount  = apptCountForDay(dayStr);
                 const blockCount = blockCountForDay(dayStr);
                 const colIndex = (firstDayOfWeek + i) % 7;
-
                 return (
                   <button key={day}
                     onClick={() => setSelectedDay(isSelected ? null : dayStr)}
@@ -918,6 +811,103 @@ export default function DashboardGaragePage() {
                       </div>
                     );
                   })}
+              </div>
+            )}
+          </div>
+
+          {/* Reviews with reply + moderation */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-lg">Avis clients</h3>
+              <span className="text-sm text-gray-400">{reviews.length} avis</span>
+            </div>
+
+            {reviews.length === 0 ? (
+              <p className="text-gray-400 text-sm">Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!</p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((r: any) => (
+                  <div key={r.id} className={`rounded-xl border p-4 transition-all ${r.isHidden ? "opacity-60 bg-gray-50" : "bg-white border-gray-200"}`}
+                    style={r.isHidden ? { border: "1px solid #e2e8f0" } : {}}>
+                    {/* Review header */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                          style={{ background: "#fff4ed", color: "#f97316" }}>
+                          {(r.user?.name ?? "?")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-sm text-gray-900">{r.user?.name ?? "Anonyme"}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-yellow-400 text-xs">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {r.isHidden && (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-200 text-gray-500">Masqué</span>
+                        )}
+                        <button
+                          onClick={() => toggleHideReview(r.id, r.isHidden)}
+                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
+                          style={r.isHidden
+                            ? { background: "#f0fdf4", borderColor: "#86efac", color: "#15803d" }
+                            : { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
+                          {r.isHidden ? "👁 Afficher" : "🚫 Masquer"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (replyingTo === r.id) { setReplyingTo(null); setReplyText(""); }
+                            else { setReplyingTo(r.id); setReplyText(r.ownerReply ?? ""); }
+                          }}
+                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
+                          style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
+                          {r.ownerReply ? "✏️ Modifier" : "💬 Répondre"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {r.title && <p className="text-sm font-semibold text-gray-800 mb-1">{r.title}</p>}
+                    {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+
+                    {/* Existing reply */}
+                    {r.ownerReply && replyingTo !== r.id && (
+                      <div className="mt-3 rounded-lg p-3 text-sm" style={{ background: "#fff4ed", borderLeft: "3px solid #f97316" }}>
+                        <p className="text-xs font-bold text-orange-600 mb-1">Votre réponse :</p>
+                        <p className="text-gray-700">{r.ownerReply}</p>
+                      </div>
+                    )}
+
+                    {/* Reply form */}
+                    {replyingTo === r.id && (
+                      <div className="mt-3 space-y-2">
+                        <textarea
+                          className={`${inputClass} min-h-[80px]`}
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder="Rédigez votre réponse publique…"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => saveReply(r.id)} disabled={savingReply}
+                            className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                            style={{ background: "#f97316" }}>
+                            {savingReply ? "Envoi…" : "Publier la réponse"}
+                          </button>
+                          {r.ownerReply && (
+                            <button onClick={() => { setReplyText(""); saveReply(r.id); }}
+                              className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
+                              Supprimer la réponse
+                            </button>
+                          )}
+                          <button onClick={() => { setReplyingTo(null); setReplyText(""); }}
+                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
