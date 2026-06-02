@@ -39,6 +39,39 @@ function baseLayout(body: string) {
 </body></html>`;
 }
 
+// ── Email verification code ───────────────────────────────────────────────────
+
+export async function sendVerificationCode(to: string, code: string) {
+  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith("re_VOTRE")) {
+    console.log(`[DEV] Code de vérification pour ${to} : ${code}`);
+    return;
+  }
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vérification de votre courriel 🔐</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur Garago ! Voici votre code de vérification :</p>
+
+    <div style="text-align:center;margin:32px 0">
+      <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
+        <span style="font-size:44px;font-weight:900;letter-spacing:12px;color:#ffffff;font-family:monospace">${code}</span>
+      </div>
+    </div>
+
+    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">Ce code est valide pendant <strong>15 minutes</strong>.</p>
+    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé ce code, ignorez simplement ce message.</p>
+
+    <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0">
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `${code} — Code de vérification Garago`,
+    html:    baseLayout(body),
+  });
+}
+
 // ── Confirmation email ────────────────────────────────────────────────────────
 
 export async function sendBookingConfirmation(params: {

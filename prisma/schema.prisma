@@ -48,11 +48,12 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?
-  role          String    @default("DRIVER")
-  phone         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  password         String?
+  role             String    @default("DRIVER")
+  phone            String?
+  marketingConsent Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   accounts     Account[]
   sessions     Session[]
@@ -256,6 +257,16 @@ model MaintenanceReminder {
 }
 
 // ── Rendez-vous ────────────────────────────────────────────────────────────
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
 
 model Suggestion {
   id          String   @id @default(cuid())

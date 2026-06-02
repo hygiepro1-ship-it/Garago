@@ -19,11 +19,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      name, email, password, role, phone,
+      firstName, lastName, name: nameRaw, email, password, role, phone,
+      marketingConsent,
       garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
       garageLat, garageLng,
-      referredByCode, // Code de parrainage entré lors de l'inscription
+      referredByCode,
     } = body;
+
+    // Accept either firstName+lastName (new) or name (legacy)
+    const name = firstName && lastName
+      ? `${firstName.trim()} ${lastName.trim()}`
+      : nameRaw ?? "";
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
@@ -45,7 +51,7 @@ export async function POST(req: NextRequest) {
     const hashed = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, role: role ?? "DRIVER", phone },
+      data: { name, email, password: hashed, role: role ?? "DRIVER", phone, marketingConsent: !!marketingConsent },
     });
 
     if (role === "GARAGE_OWNER" && garageName) {
