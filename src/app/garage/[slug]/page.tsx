@@ -184,8 +184,8 @@ export default function GarageProfilePage() {
           <div className="h-32" style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }} />
         )}
         <div className="px-6 pb-6">
-          <div className="flex items-end gap-4 -mt-10 mb-4">
-            <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative bg-gray-100">
+          <div className="flex items-end gap-4 mb-4">
+            <div className="w-20 h-20 -mt-10 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-4xl overflow-hidden relative bg-gray-100">
               {garage.logoUrl ? (
                 <>
                   {/* Background layer */}
