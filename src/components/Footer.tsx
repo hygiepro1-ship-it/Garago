@@ -99,6 +99,7 @@ export default function Footer() {
             <span className="cursor-pointer hover:text-white transition-colors">Confidentialité</span>
             <span className="cursor-pointer hover:text-white transition-colors">Conditions</span>
             <Link href="/tarifs" className="hover:text-white transition-colors">Tarifs</Link>
+            <Link href="/suggestions" className="hover:text-white transition-colors">💡 Suggestions</Link>
             <span style={{ color: "#f97316" }}>Fait avec ❤️ au Québec</span>
           </div>
         </div>

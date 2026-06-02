@@ -69,7 +69,9 @@ model Garage {
   ownerId     String  @unique
   name        String
   slug        String  @unique
-  description String?
+  description       String?
+  descriptionDraft  String?   // awaiting admin approval
+  descriptionStatus String    @default("APPROVED") // APPROVED | PENDING | REJECTED
   address     String
   city        String
   province    String  @default("QC")
@@ -254,6 +256,16 @@ model MaintenanceReminder {
 }
 
 // ── Rendez-vous ────────────────────────────────────────────────────────────
+
+model Suggestion {
+  id          String   @id @default(cuid())
+  content     String
+  authorName  String?
+  authorEmail String?
+  status      String   @default("PENDING") // PENDING | READ | DONE
+  adminNote   String?
+  createdAt   DateTime @default(now())
+}
 
 model Appointment {
   id       String @id @default(cuid())

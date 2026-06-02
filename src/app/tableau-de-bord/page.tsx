@@ -13,7 +13,9 @@ export default function TableauDeBordPage() {
       router.replace("/connexion");
     } else if (status === "authenticated") {
       const role = (session?.user as any)?.role;
-      router.replace(role === "GARAGE_OWNER" ? "/tableau-de-bord/garage" : "/tableau-de-bord/conducteur");
+      if (role === "ADMIN") router.replace("/tableau-de-bord/admin");
+      else if (role === "GARAGE_OWNER") router.replace("/tableau-de-bord/garage");
+      else router.replace("/tableau-de-bord/conducteur");
     }
   }, [status, session, router]);
 

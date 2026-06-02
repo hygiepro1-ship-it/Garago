@@ -1455,8 +1455,26 @@ export default function DashboardGaragePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-semibold text-gray-700">Description</label>
+                  {profileData.descriptionStatus === "PENDING" && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e" }}>
+                      ⏳ En attente de validation
+                    </span>
+                  )}
+                  {profileData.descriptionStatus === "REJECTED" && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                      ✗ Description refusée — modifiez-la et sauvegardez
+                    </span>
+                  )}
+                </div>
                 <textarea className={`${inputClass} min-h-[100px]`} value={profileData.description ?? ""} onChange={(e) => setProfileData({ ...profileData, description: e.target.value })} placeholder="Décrivez votre garage, votre expertise..." />
+                {profileData.descriptionStatus === "PENDING" && profileData.descriptionDraft && (
+                  <p className="text-xs mt-1" style={{ color: "#78350f" }}>
+                    Votre modification est en cours de révision et sera affichée publiquement une fois approuvée.
+                  </p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">Texte descriptif uniquement — les liens, courriels, numéros de téléphone et mentions ne sont pas autorisés.</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
