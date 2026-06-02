@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
     }
 
-    // Rate-limit : max 3 tentatives en 15 min
+    // Rate-limit : max 3 envois en 15 min par adresse
     const recent = await prisma.emailVerificationCode.count({
       where: { email, createdAt: { gt: new Date(Date.now() - 15 * 60 * 1000) } },
     });
@@ -30,11 +30,22 @@ export async function POST(req: NextRequest) {
 
     await prisma.emailVerificationCode.create({ data: { email, code, expiresAt } });
 
-    await sendVerificationCode(email, code);
+    // Envoyer le courriel — non-fatal : si l'envoi échoue (Resend non configuré,
+    // domaine non vérifié, etc.) on retourne quand même ok et on logue l'erreur.
+    // En dev sans RESEND_API_KEY, le code s'affiche dans la console serveur.
+    try {
+      await sendVerificationCode(email, code);
+    } catch (emailErr) {
+      console.error("[verify-email/send] Échec d'envoi du courriel :", emailErr);
+      // En développement, afficher le code directement pour faciliter les tests
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[DEV] Code de vérification pour ${email} : ${code}`);
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    console.error("[verify-email/send] Erreur :", err);
+    return NextResponse.json({ error: "Erreur lors de la génération du code." }, { status: 500 });
   }
 }
