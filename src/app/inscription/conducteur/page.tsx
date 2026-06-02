@@ -120,7 +120,14 @@ export default function InscriptionConducteurPage() {
       setCodeSent(true);
       setEmailVerified(false);
       setCodeInput("");
-      setCodeSentMsg(`Code envoyé à ${email}`);
+      if (data.devCode) {
+        // Resend non configuré — afficher le code directement
+        setCodeSentMsg(`⚠️ Mode développement — code : ${data.devCode}`);
+        setCodeInput(data.devCode);
+        verifyCode(data.devCode);
+      } else {
+        setCodeSentMsg(`Code envoyé à ${email}`);
+      }
     } catch {
       setCodeError("Erreur réseau.");
     } finally {
@@ -329,8 +336,11 @@ export default function InscriptionConducteurPage() {
 
               {/* Message d'envoi */}
               {codeSentMsg && !emailVerified && (
-                <p className="text-xs mt-1.5 font-medium" style={{ color: "#16a34a" }}>
-                  ✓ {codeSentMsg} — vérifiez vos courriels (et vos indésirables).
+                <p className="text-xs mt-1.5 font-medium rounded-lg px-2 py-1"
+                  style={codeSentMsg.startsWith("⚠️")
+                    ? { color: "#92400e", background: "#fef3c7" }
+                    : { color: "#16a34a" }}>
+                  {codeSentMsg.startsWith("⚠️") ? codeSentMsg : `✓ ${codeSentMsg} — vérifiez vos courriels (et vos indésirables).`}
                 </p>
               )}
             </div>

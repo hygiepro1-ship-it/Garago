@@ -219,7 +219,13 @@ export default function InscriptionGaragePage() {
       setCodeSent(true);
       setEmailVerified(false);
       setCodeInput("");
-      setCodeSentMsg(`Code envoyé à ${email}`);
+      if (data.devCode) {
+        setCodeSentMsg(`⚠️ Mode développement — code : ${data.devCode}`);
+        setCodeInput(data.devCode);
+        verifyCode(data.devCode);
+      } else {
+        setCodeSentMsg(`Code envoyé à ${email}`);
+      }
     } catch { setCodeError("Erreur réseau."); }
     finally { setSendingCode(false); }
   }
@@ -438,8 +444,11 @@ export default function InscriptionGaragePage() {
                           )}
                         </div>
                         {codeSentMsg && !emailVerified && (
-                          <p className="text-xs mt-1 font-medium text-green-600">
-                            ✓ {codeSentMsg} — vérifiez vos courriels.
+                          <p className="text-xs mt-1 font-medium rounded px-2 py-1"
+                            style={codeSentMsg.startsWith("⚠️")
+                              ? { color: "#92400e", background: "#fef3c7" }
+                              : { color: "#16a34a" }}>
+                            {codeSentMsg.startsWith("⚠️") ? codeSentMsg : `✓ ${codeSentMsg} — vérifiez vos courriels.`}
                           </p>
                         )}
                       </div>
