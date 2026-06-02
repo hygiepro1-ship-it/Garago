@@ -1,33 +1,37 @@
 "use client";
 
 import Link from "next/link";
-
-const DRIVER_LINKS = [
-  { label: "Rechercher un garage",  href: "/rechercher" },
-  { label: "Vidange d'huile",       href: "/rechercher?service=oil" },
-  { label: "Pneus d'hiver",         href: "/rechercher?service=tires-winter" },
-  { label: "Freins",                href: "/rechercher?service=brakes" },
-  { label: "Climatisation",         href: "/rechercher?service=ac" },
-  { label: "Mon espace conducteur", href: "/tableau-de-bord/conducteur" },
-];
-
-const GARAGE_LINKS = [
-  { label: "Inscrire mon garage",   href: "/inscription/garage" },
-  { label: "Voir les tarifs",       href: "/tarifs" },
-  { label: "Tableau de bord",       href: "/tableau-de-bord/garage" },
-  { label: "Connexion",             href: "/connexion" },
-];
-
-const SERVICE_LINKS = [
-  { label: "🛢️  Vidange d'huile",   href: "/rechercher?service=oil" },
-  { label: "❄️  Pneus d'hiver",     href: "/rechercher?service=tires-winter" },
-  { label: "🔴  Freins",            href: "/rechercher?service=brakes" },
-  { label: "💨  Climatisation",     href: "/rechercher?service=ac" },
-  { label: "⚡  Diagnostic élec.", href: "/rechercher?service=electrical" },
-  { label: "🔍  Inspection",        href: "/rechercher?service=inspection" },
-];
+import { useLang } from "@/contexts/LanguageContext";
 
 export default function Footer() {
+  const { t } = useLang();
+  const f = t.footer;
+
+  const DRIVER_LINKS = [
+    { label: f.findGarage,  href: "/rechercher" },
+    { label: f.oilChange,   href: "/rechercher?service=oil" },
+    { label: f.winterTires, href: "/rechercher?service=tires-winter" },
+    { label: f.brakes,      href: "/rechercher?service=brakes" },
+    { label: f.ac,          href: "/rechercher?service=ac" },
+    { label: f.myAccount,   href: "/tableau-de-bord/conducteur" },
+  ];
+
+  const GARAGE_LINKS = [
+    { label: f.registerFree, href: "/inscription/garage" },
+    { label: f.pricing,      href: "/tarifs" },
+    { label: f.dashboard,    href: "/tableau-de-bord/garage" },
+    { label: f.signIn,       href: "/connexion" },
+  ];
+
+  const SERVICE_LINKS = [
+    { label: `🛢️  ${f.oilChange}`,   href: "/rechercher?service=oil" },
+    { label: `❄️  ${f.winterTires}`, href: "/rechercher?service=tires-winter" },
+    { label: `🔴  ${f.brakes}`,      href: "/rechercher?service=brakes" },
+    { label: `💨  ${f.ac}`,          href: "/rechercher?service=ac" },
+    { label: `⚡  ${f.diagnostic}`,  href: "/rechercher?service=electrical" },
+    { label: `🔍  ${f.autoService}`, href: "/rechercher?service=inspection" },
+  ];
+
   return (
     <footer style={{ background: "#071428", color: "#475569" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
@@ -41,8 +45,7 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
-              La plateforme de référence pour trouver, comparer et réserver un garage au Québec.
-              Prix affichés, avis vérifiés, réservation en ligne.
+              {f.tagline}
             </p>
             <div className="flex items-center gap-2 mt-5 px-3 py-2.5 rounded-xl"
               style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.15)" }}>
@@ -54,7 +57,7 @@ export default function Footer() {
 
           {/* Conducteurs */}
           <div>
-            <h4 className="font-black text-white text-sm mb-4">Conducteurs</h4>
+            <h4 className="font-black text-white text-sm mb-4">{f.drivers}</h4>
             <ul className="space-y-2.5 text-sm">
               {DRIVER_LINKS.map((l) => (
                 <li key={l.href}>
@@ -66,7 +69,7 @@ export default function Footer() {
 
           {/* Garages */}
           <div>
-            <h4 className="font-black text-white text-sm mb-4">Garages</h4>
+            <h4 className="font-black text-white text-sm mb-4">{f.garages}</h4>
             <ul className="space-y-2.5 text-sm">
               {GARAGE_LINKS.map((l) => (
                 <li key={l.href}>
@@ -78,7 +81,7 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="font-black text-white text-sm mb-4">Services populaires</h4>
+            <h4 className="font-black text-white text-sm mb-4">{f.popularServices}</h4>
             <ul className="space-y-2.5 text-sm">
               {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
@@ -93,14 +96,14 @@ export default function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
-            © {new Date().getFullYear()} Garago Technologies Inc. Tous droits réservés.
+            © {new Date().getFullYear()} Garago Technologies Inc. {f.rights}
           </p>
           <div className="flex items-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
-            <span className="cursor-pointer hover:text-white transition-colors">Confidentialité</span>
-            <span className="cursor-pointer hover:text-white transition-colors">Conditions</span>
-            <Link href="/tarifs" className="hover:text-white transition-colors">Tarifs</Link>
+            <span className="cursor-pointer hover:text-white transition-colors">{f.privacy}</span>
+            <span className="cursor-pointer hover:text-white transition-colors">{f.terms}</span>
+            <Link href="/tarifs" className="hover:text-white transition-colors">{f.pricing}</Link>
             <Link href="/suggestions" className="hover:text-white transition-colors">💡 Suggestions</Link>
-            <span style={{ color: "#f97316" }}>Fait avec ❤️ au Québec</span>
+            <span style={{ color: "#f97316" }}>{f.madeWith}</span>
           </div>
         </div>
       </div>

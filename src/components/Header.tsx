@@ -35,8 +35,8 @@ export default function Header() {
   }
 
   const NAV = [
-    { label: "Trouver un garage", href: "/rechercher" },
-    { label: "Tarifs",            href: "/tarifs" },
+    { label: t.nav.findGarage, href: "/rechercher" },
+    { label: t.nav.pricing,    href: "/tarifs" },
   ];
 
   return (
@@ -98,17 +98,17 @@ export default function Header() {
               <Link href="/connexion"
                 className="hidden md:block text-sm font-bold px-4 py-2 rounded-lg transition-colors"
                 style={{ color: "rgba(255,255,255,0.65)" }}>
-                Connexion
+                {t.nav.signIn}
               </Link>
               <Link href="/inscription/conducteur"
                 className="text-sm font-bold px-4 py-2 rounded-lg text-white"
                 style={{ background: "#f97316", boxShadow: "0 2px 10px rgba(249,115,22,0.4)" }}>
-                S'inscrire
+                {t.nav.signUp}
               </Link>
               <Link href="/inscription/garage"
                 className="hidden lg:flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-lg border transition-colors"
                 style={{ color: "rgba(255,255,255,0.6)", borderColor: "rgba(255,255,255,0.15)" }}>
-                🔧 Mon garage
+                🔧 {t.nav.registerGarage}
               </Link>
             </div>
           ) : (
@@ -133,7 +133,7 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50 animate-slide-down"
                   style={{ boxShadow: "0 12px 40px rgba(11,31,58,0.18)", border: "1px solid #e2e8f0" }}>
                   <div className="px-4 py-3 border-b border-gray-100 mb-1">
-                    <p className="text-xs font-semibold text-gray-400">Connecté en tant que</p>
+                    <p className="text-xs font-semibold text-gray-400">{t.nav.signedInAs}</p>
                     <p className="text-sm font-bold truncate" style={{ color: "#0b1f3a" }}>{session.user?.name}</p>
                     <p className="text-xs text-gray-400 truncate">{session.user?.email}</p>
                   </div>
@@ -142,12 +142,12 @@ export default function Header() {
                     onClick={() => setUserOpen(false)}>
                     <span className="w-6 h-6 flex items-center justify-center rounded-lg text-xs"
                       style={{ background: "#fff4ed", color: "#f97316" }}>📊</span>
-                    Tableau de bord
+                    {t.nav.dashboard}
                   </Link>
                   <button onClick={() => signOut({ callbackUrl: "/" })}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
                     <span className="w-6 h-6 flex items-center justify-center rounded-lg text-xs bg-red-50">↩</span>
-                    Déconnexion
+                    {t.nav.signOut}
                   </button>
                 </div>
               )}
@@ -183,20 +183,20 @@ export default function Header() {
                   <Link href="/connexion"
                     className="block px-4 py-3 text-sm font-bold text-center rounded-xl border"
                     style={{ color: "#f97316", borderColor: "#f97316" }}
-                    onClick={() => setMenuOpen(false)}>Connexion</Link>
+                    onClick={() => setMenuOpen(false)}>{t.nav.signIn}</Link>
                   <Link href="/inscription/conducteur"
                     className="block px-4 py-3 text-sm font-bold text-center rounded-xl text-white"
                     style={{ background: "#f97316" }}
-                    onClick={() => setMenuOpen(false)}>S'inscrire gratuitement</Link>
+                    onClick={() => setMenuOpen(false)}>{t.nav.signUp}</Link>
                   <Link href="/inscription/garage"
                     className="block px-4 py-3 text-sm font-semibold text-center rounded-xl"
                     style={{ color: "rgba(255,255,255,0.5)" }}
-                    onClick={() => setMenuOpen(false)}>🔧 Inscrire mon garage</Link>
+                    onClick={() => setMenuOpen(false)}>🔧 {t.nav.registerGarage}</Link>
                 </>
               ) : (
                 <button onClick={() => signOut({ callbackUrl: "/" })}
                   className="w-full px-4 py-3 text-sm font-semibold text-center text-red-400">
-                  Déconnexion
+                  {t.nav.signOut}
                 </button>
               )}
             </div>
