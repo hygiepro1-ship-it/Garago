@@ -289,14 +289,14 @@ export default function DashboardConducteurPage() {
               return (
                 <div className="border border-gray-200 rounded-xl p-4 space-y-2 bg-white">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{appt.garage.name}</p>
+                    <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs">→</span></p>
                       <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
                       {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">🔧 {appt.serviceName}</p>}
                       {(appt.vehicleMake || appt.vehicleYear) && (
                         <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
                       )}
-                    </div>
+                    </Link>
                     <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
                   </div>
                   {appt.completionNote && (
@@ -569,13 +569,59 @@ export default function DashboardConducteurPage() {
                   <p className="text-sm">{d.noVehicles}</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {vehicles.map(v => (
-                    <div key={v.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                      <p className="font-semibold text-gray-900">{v.year} {v.make} {v.model}</p>
-                      <Link href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`} className="text-sm font-medium hover:underline" style={{ color: "#f97316" }}>{d.findGarage}</Link>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {vehicles.map(v => {
+                    const imgKey  = process.env.NEXT_PUBLIC_IMAGIN_KEY;
+                    const makeFmt = v.make.toLowerCase().replace(/\s+/g, "-");
+                    const modFmt  = v.model.toLowerCase().replace(/\s+/g, "-");
+                    const imgSrc  = imgKey
+                      ? `https://cdn.imagin.studio/getimage?customer=${imgKey}&make=${makeFmt}&modelFamily=${modFmt}&zoomType=fullscreen&angle=23&width=600`
+                      : null;
+                    return (
+                      <div key={v.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+                        {/* Zone image */}
+                        <div className="relative h-36 flex items-center justify-center overflow-hidden"
+                          style={{ background: "linear-gradient(135deg, #0b1f3a 0%, #1e3a5f 100%)" }}>
+                          {imgSrc ? (
+                            <img
+                              src={imgSrc}
+                              alt={`${v.year} ${v.make} ${v.model}`}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = "none";
+                                const fb = target.nextElementSibling as HTMLElement | null;
+                                if (fb) fb.style.display = "flex";
+                              }}
+                            />
+                          ) : null}
+                          {/* Fallback si pas de clé ou image manquante */}
+                          <div
+                            className="absolute inset-0 flex-col items-center justify-center"
+                            style={{ display: imgSrc ? "none" : "flex" }}
+                          >
+                            <span className="text-5xl mb-1">🚗</span>
+                            <span className="text-xs text-white/50">{v.make}</span>
+                          </div>
+                          {/* Badge année */}
+                          <span className="absolute top-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(249,115,22,0.9)", color: "#fff" }}>{v.year}</span>
+                        </div>
+                        {/* Infos + actions */}
+                        <div className="px-4 py-3 flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">{v.make} {v.model}</p>
+                            <p className="text-xs text-gray-400">{v.year}</p>
+                          </div>
+                          <Link
+                            href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
+                            style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
+                          >{d.findGarage}</Link>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
