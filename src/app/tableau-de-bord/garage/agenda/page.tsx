@@ -395,6 +395,7 @@ export default function AgendaPage() {
                       onToggle={() => setExpandedId(expandedId === ap.id ? null : ap.id)}
                       onStatus={changeStatus}
                       onReschedule={openReschedule}
+                      onComplete={openComplete}
                       actionId={actionId}
                       a={a}
                     />
