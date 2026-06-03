@@ -13,7 +13,6 @@ export async function GET(
         services: {
           include: { category: true },
           where: { active: true },
-          orderBy: { category: { sortOrder: "asc" } },
         },
         brands: { orderBy: { brand: "asc" } },
         availability: { orderBy: { dayOfWeek: "asc" } },
@@ -38,8 +37,14 @@ export async function GET(
         ? garage.reviews.reduce((s, r) => s + r.rating, 0) / garage.reviews.length
         : 0;
 
+    // Sort services by category sortOrder in JS (avoids relation-level orderBy issues)
+    const services = [...garage.services].sort(
+      (a, b) => (a.category?.sortOrder ?? 0) - (b.category?.sortOrder ?? 0)
+    );
+
     return NextResponse.json({
       ...garage,
+      services,
       avgRating: Math.round(avgRating * 10) / 10,
       reviewCount: garage._count.reviews,
     });
