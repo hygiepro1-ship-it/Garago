@@ -1510,19 +1510,6 @@ export default function DashboardGaragePage() {
                 </label>
               </div>
 
-              {/* Mobile agenda shortcut */}
-              <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
-                <span className="text-2xl">📱</span>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">Agenda mobile</p>
-                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">Gérez vos rendez-vous depuis votre téléphone — confirmez ou annulez en un tap.</p>
-                  <a href="/tableau-de-bord/garage/agenda"
-                    className="inline-flex items-center gap-1.5 mt-2 text-xs px-3 py-1.5 rounded-lg text-white font-semibold" style={{ background: "#f97316" }}>
-                    📅 Ouvrir l'agenda →
-                  </a>
-                </div>
-              </div>
-
               <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
                 {saving ? d.saving : d.save}
               </button>
