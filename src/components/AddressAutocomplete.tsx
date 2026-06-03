@@ -196,7 +196,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
           maxLength={7}
           autoComplete="postal-code"
           className={`${inputBase} pr-8`}
-          style={{ fontSize: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}
+          style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
         />
         {postalOk && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">✓</span>
@@ -227,7 +227,6 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
           autoComplete="off"
           spellCheck={false}
           className={`${inputBase} pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
-          style={{ fontSize: 16 }}
         />
         {loading && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">●●●</span>
