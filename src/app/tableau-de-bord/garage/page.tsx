@@ -542,7 +542,7 @@ export default function DashboardGaragePage() {
             {garage.subscriptionStatus === "ACTIVE" && (
               <span className="bg-green-400 text-green-900 text-xs font-bold px-3 py-1 rounded-full">Abonnement actif ✓</span>
             )}
-            <Link href={`/garage/${garage.slug}`} target="_blank"
+            <Link href={`/garage/${garage.slug}?from=dashboard`}
               className="bg-white/20 border border-white/30 text-white text-sm px-4 py-2 rounded-xl hover:bg-white/30 transition-colors">
               Voir mon profil →
             </Link>
