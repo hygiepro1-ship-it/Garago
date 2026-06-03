@@ -623,6 +623,15 @@ export default function DashboardGaragePage() {
             </div>
           </div>
 
+          {/* Suggestion link */}
+          <Link
+            href="/suggestions"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl border-2 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ borderColor: "#f97316", color: "#f97316", background: "rgba(249,115,22,0.05)" }}
+          >
+            {d.suggestionLink}
+          </Link>
+
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
           {/* Calendar header */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">

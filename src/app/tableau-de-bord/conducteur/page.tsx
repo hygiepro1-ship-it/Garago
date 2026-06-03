@@ -394,6 +394,14 @@ export default function DashboardConducteurPage() {
             <h3 className="font-bold mb-1">{d.loyalty}</h3>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.loyaltySub}</p>
           </div>
+
+          <Link
+            href="/suggestions"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl border-2 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ borderColor: "#f97316", color: "#f97316", background: "rgba(249,115,22,0.05)" }}
+          >
+            {d.suggestionLink}
+          </Link>
         </div>
       </div>
     </div>

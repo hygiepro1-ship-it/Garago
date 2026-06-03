@@ -236,6 +236,7 @@ export const translations = {
       addToHome:       "Astuce : ouvrez ce lien sur votre téléphone et ajoutez-le à votre écran d'accueil.",
       save:            "Sauvegarder le profil",
       saving:          "Sauvegarde…",
+      suggestionLink:  "💡 Faire une suggestion",
     },
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -440,6 +441,7 @@ export const translations = {
       choosePlanSub:   "Démarrez avec 30 jours gratuits — aucune carte requise. Passez au Pro quand vous voulez.",
       toDashboard:     "Accéder à mon tableau de bord →",
       billingNote:     "La facturation du plan Pro commence après les 30 jours d'essai gratuit. Résiliez à tout moment.",
+      suggestionLink:  "💡 Faire une suggestion",
     },
 
     // ── Espace conducteur ─────────────────────────────────────────────────
@@ -486,6 +488,7 @@ export const translations = {
       inspection:      "Inspection mécanique",
       loyalty:         "Programme fidélité",
       loyaltySub:      "Bientôt disponible — Gagnez des points à chaque visite chez nos garages partenaires!",
+      suggestionLink:  "💡 Faire une suggestion",
     },
 
     // ── Commun ────────────────────────────────────────────────────────────
@@ -801,6 +804,7 @@ export const translations = {
       addToHome:       "Tip: open this link on your phone and add it to your home screen.",
       save:            "Save profile",
       saving:          "Saving…",
+      suggestionLink:  "💡 Make a suggestion",
     },
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -1005,6 +1009,7 @@ export const translations = {
       choosePlanSub:   "Start with 30 days free — no card required. Upgrade to Pro whenever you're ready.",
       toDashboard:     "Go to my dashboard →",
       billingNote:     "Pro plan billing starts after the 30-day free trial. Cancel anytime.",
+      suggestionLink:  "💡 Make a suggestion",
     },
 
     // ── Driver dashboard ──────────────────────────────────────────────────
@@ -1051,6 +1056,7 @@ export const translations = {
       inspection:      "Mechanical inspection",
       loyalty:         "Loyalty program",
       loyaltySub:      "Coming soon — Earn points at every visit to our partner garages!",
+      suggestionLink:  "💡 Make a suggestion",
     },
 
     // ── Commun ────────────────────────────────────────────────────────────
