@@ -170,16 +170,6 @@ export default function InscriptionGaragePage() {
   const [garageLat, setGarageLat]             = useState<number | null>(null);
   const [garageLng, setGarageLng]             = useState<number | null>(null);
   const [referredByCode, setReferredByCode]   = useState("");
-  const [addressConfirmed, setAddressConfirmed] = useState(false);
-
-  function handleAddressSelect(r: AddressResult) {
-    setGarageAddress(r.streetAddress);
-    setGarageCity(r.city);
-    setGaragePostalCode(r.postalCode);
-    setGarageLat(r.lat);
-    setGarageLng(r.lng);
-    setAddressConfirmed(true);
-  }
 
   // Step 2 — Services + marques exclues
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
