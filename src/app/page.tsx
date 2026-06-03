@@ -38,8 +38,13 @@ export default function HomePage() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
 
-  // Statistiques réelles depuis la DB
-  const [liveStats, setLiveStats] = useState<{ garages: string; reviews: string; avgRating: string } | null>(null);
+  // Statistiques réelles depuis la DB (null = sous le seuil, ne pas afficher)
+  const [liveStats, setLiveStats] = useState<{
+    garages:   string | null;
+    reviews:   string | null;
+    avgRating: string | null;
+    cities:    string | null;
+  } | null>(null);
   useEffect(() => {
     fetch("/api/stats/homepage")
       .then(r => r.ok ? r.json() : null)
@@ -199,28 +204,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="bg-white" style={{ borderBottom: "1px solid #e2e8f0" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {h.stats.map((s, i) => {
-              // Remplacer les 3 premières stats par les vraies données DB
-              let value = s.value;
-              if (liveStats) {
-                if (i === 0) value = liveStats.garages;   // garages partenaires
-                if (i === 1) value = liveStats.reviews;    // avis vérifiés
-                if (i === 2) value = liveStats.avgRating;  // note moyenne
-              }
-              return (
-                <div key={s.label}>
-                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{value}</p>
-                  <p className="text-xs font-semibold mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Stats bar — n'affiche une stat live que si elle dépasse son seuil */}
+      {(() => {
+        // Construire la liste des stats visibles
+        const items: { value: string; label: string }[] = [];
+        if (liveStats?.garages)   items.push({ value: liveStats.garages,   label: h.stats[0].label });
+        if (liveStats?.reviews)   items.push({ value: liveStats.reviews,   label: h.stats[1].label });
+        if (liveStats?.avgRating) items.push({ value: liveStats.avgRating, label: h.stats[2].label });
+        // "< 2 min" toujours affiché
+        items.push({ value: h.stats[3].value, label: h.stats[3].label });
+
+        return (
+          <section className="bg-white" style={{ borderBottom: "1px solid #e2e8f0" }}>
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+              <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-center">
+                {items.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl font-black" style={{ color: "#f97316" }}>{s.value}</p>
+                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Services */}
       <section className="bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>

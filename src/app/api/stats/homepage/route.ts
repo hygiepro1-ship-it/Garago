@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+// Seuils minimaux avant d'afficher une stat
+const THRESHOLDS = { garages: 30, reviews: 50, cities: 2 } as const;
+
 // Arrondit au multiple de 50 inférieur, minimum 100
 function roundStat(n: number): number {
   return Math.max(100, Math.floor(n / 50) * 50);
@@ -30,9 +33,10 @@ export async function GET() {
   const cityCount    = cityRows.length;
 
   return NextResponse.json({
-    garages:    `${fmtNum(roundStat(garageCount))}+`,
-    reviews:    `${fmtNum(roundStat(totalReviews))}+`,
-    avgRating:  avgRating ? `${Number(avgRating).toFixed(1)} / 5` : "— / 5",
-    cities:     `${fmtNum(roundStat(cityCount))}+`,
+    // null = sous le seuil → le front ne doit pas afficher la stat
+    garages:   garageCount  >= THRESHOLDS.garages  ? `${fmtNum(roundStat(garageCount))}+`  : null,
+    reviews:   totalReviews >= THRESHOLDS.reviews  ? `${fmtNum(roundStat(totalReviews))}+` : null,
+    avgRating: avgRating != null                   ? `${Number(avgRating).toFixed(1)} / 5`  : null,
+    cities:    cityCount    >= THRESHOLDS.cities   ? `${fmtNum(roundStat(cityCount))}+`    : null,
   });
 }

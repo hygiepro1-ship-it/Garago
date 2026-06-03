@@ -1,11 +1,21 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function Footer() {
   const { t } = useLang();
   const f = t.footer;
+
+  // Stats live (null = sous le seuil, ne pas afficher)
+  const [liveReviews, setLiveReviews] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/stats/homepage")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.reviews) setLiveReviews(d.reviews); })
+      .catch(() => {});
+  }, []);
 
   const DRIVER_LINKS = [
     { label: f.findGarage,  href: "/rechercher" },
@@ -51,7 +61,11 @@ export default function Footer() {
               style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.15)" }}>
               <span style={{ color: "#f59e0b" }}>★★★★★</span>
               <span className="text-white font-black text-sm">4.7/5</span>
-              <span className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>— 8 000+ avis</span>
+              {liveReviews && (
+                <span className="text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
+                  — {liveReviews} avis
+                </span>
+              )}
             </div>
           </div>
 

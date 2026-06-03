@@ -8,11 +8,17 @@ export default function TarifsPage() {
   const { t } = useLang();
   const p = t.pricing;
 
-  const [liveStats, setLiveStats] = useState<{ garages: string; reviews: string; cities: string } | null>(null);
+  const [liveStats, setLiveStats] = useState<{
+    garages: string | null;
+    reviews: string | null;
+    cities:  string | null;
+  } | null>(null);
   useEffect(() => {
     fetch("/api/stats/homepage")
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setLiveStats({ garages: d.garages, reviews: d.reviews, cities: d.cities }); })
+      .then(d => {
+        if (d) setLiveStats({ garages: d.garages ?? null, reviews: d.reviews ?? null, cities: d.cities ?? null });
+      })
       .catch(() => {});
   }, []);
 
@@ -51,20 +57,26 @@ export default function TarifsPage() {
               {p.heroSeePlans}
             </a>
           </div>
-          {liveStats && (
-            <div className="flex flex-wrap justify-center gap-8 mt-10">
-              {([
-                { value: liveStats.garages, label: p.heroStatLabels[0] },
-                { value: liveStats.reviews, label: p.heroStatLabels[1] },
-                { value: liveStats.cities,  label: p.heroStatLabels[2] },
-              ]).map((s) => (
-                <div key={s.label} className="text-center">
-                  <div className="text-3xl font-black text-white">{s.value}</div>
-                  <div className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {liveStats && (() => {
+            // N'afficher que les stats qui dépassent leur seuil (non-null)
+            const visibleStats = [
+              liveStats.garages ? { value: liveStats.garages, label: p.heroStatLabels[0] } : null,
+              liveStats.reviews ? { value: liveStats.reviews, label: p.heroStatLabels[1] } : null,
+              liveStats.cities  ? { value: liveStats.cities,  label: p.heroStatLabels[2] } : null,
+            ].filter((s): s is { value: string; label: string } => s !== null);
+
+            if (visibleStats.length === 0) return null;
+            return (
+              <div className="flex flex-wrap justify-center gap-8 mt-10">
+                {visibleStats.map((s) => (
+                  <div key={s.label} className="text-center">
+                    <div className="text-3xl font-black text-white">{s.value}</div>
+                    <div className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
