@@ -41,19 +41,23 @@ export async function POST(req: NextRequest) {
       emailError = emailErr?.message ?? "Erreur inconnue";
     }
 
-    // En développement OU si le courriel n'a pas pu être envoyé :
-    // renvoyer le code dans la réponse pour permettre les tests.
     const isDev = process.env.NODE_ENV !== "production";
     const resendNotConfigured =
       !process.env.RESEND_API_KEY ||
       process.env.RESEND_API_KEY.startsWith("re_VOTRE");
 
-    if (isDev || resendNotConfigured || !emailSent) {
-      // En production avec Resend configuré mais qui échoue, on signale l'erreur
-      if (!isDev && !resendNotConfigured && !emailSent) {
-        console.error("[verify-email/send] Resend configuré mais envoi échoué :", emailError);
-      }
+    // En développement OU Resend non configuré → retourner le code pour les tests
+    if (isDev || resendNotConfigured) {
       return NextResponse.json({ ok: true, devCode: code });
+    }
+
+    // En production avec Resend configuré mais envoi échoué → erreur explicite
+    if (!emailSent) {
+      console.error("[verify-email/send] Resend configuré mais envoi échoué :", emailError);
+      return NextResponse.json(
+        { error: "Impossible d'envoyer le code de vérification. Vérifiez votre adresse courriel et réessayez." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ ok: true });
