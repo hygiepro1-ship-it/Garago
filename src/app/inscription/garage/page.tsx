@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
-import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -570,24 +569,30 @@ export default function InscriptionGaragePage() {
                         <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garageName}</label>
                         <input type="text" required className={inputClass} placeholder="Garage Tremblay & Fils" value={garageName} onChange={(e) => setGarageName(e.target.value)} />
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          {r.garageAddressLabel}
-                        </label>
-                        <AddressAutocomplete
-                          onSelect={handleAddressSelect}
-                          placeholder="Ex : 1234 Rue Saint-Denis, Montréal"
-                          inputClass={inputClass}
-                        />
-                        {addressConfirmed && garageCity && (
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageAddress}</span>
-                            <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageCity}</span>
-                            {garagePostalCode && <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garagePostalCode}</span>}
-                            <span className="px-2 py-1 rounded-md font-semibold text-green-700 bg-green-50">{r.addressVerified}</span>
-                          </div>
-                        )}
-                        <input type="hidden" required value={garageCity} onChange={() => {}} />
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Code postal</label>
+                          <input
+                            type="text"
+                            required
+                            className={inputClass}
+                            placeholder="H2X 1X1"
+                            maxLength={7}
+                            value={garagePostalCode}
+                            onChange={(e) => setGaragePostalCode(e.target.value.toUpperCase())}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garageAddressLabel}</label>
+                          <input
+                            type="text"
+                            required
+                            className={inputClass}
+                            placeholder="1234 Rue Saint-Denis, Montréal"
+                            value={garageAddress}
+                            onChange={(e) => setGarageAddress(e.target.value)}
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garagePhone}</label>

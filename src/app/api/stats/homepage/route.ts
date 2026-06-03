@@ -36,7 +36,7 @@ export async function GET() {
     // null = sous le seuil → le front ne doit pas afficher la stat
     garages:   garageCount  >= THRESHOLDS.garages  ? `${fmtNum(roundStat(garageCount))}+`  : null,
     reviews:   totalReviews >= THRESHOLDS.reviews  ? `${fmtNum(roundStat(totalReviews))}+` : null,
-    avgRating: avgRating != null                   ? `${Number(avgRating).toFixed(1)} / 5`  : null,
+    avgRating: avgRating != null && totalReviews >= THRESHOLDS.reviews ? `${Number(avgRating).toFixed(1)} / 5`  : null,
     cities:    cityCount    >= THRESHOLDS.cities   ? `${fmtNum(roundStat(cityCount))}+`    : null,
   });
 }

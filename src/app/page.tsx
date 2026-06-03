@@ -211,8 +211,10 @@ export default function HomePage() {
         if (liveStats?.garages)   items.push({ value: liveStats.garages,   label: h.stats[0].label });
         if (liveStats?.reviews)   items.push({ value: liveStats.reviews,   label: h.stats[1].label });
         if (liveStats?.avgRating) items.push({ value: liveStats.avgRating, label: h.stats[2].label });
-        // "< 2 min" toujours affiché
-        items.push({ value: h.stats[3].value, label: h.stats[3].label });
+        // "< 2 min" uniquement si au moins une autre métrique est visible
+        if (items.length > 0) items.push({ value: h.stats[3].value, label: h.stats[3].label });
+
+        if (items.length === 0) return null;
 
         return (
           <section className="bg-white" style={{ borderBottom: "1px solid #e2e8f0" }}>
