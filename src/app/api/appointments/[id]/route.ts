@@ -12,7 +12,7 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { id } = await params;
-  const { status, notes } = await req.json();
+  const { status, notes, date, startTime, endTime } = await req.json();
 
   const appt = await prisma.appointment.findUnique({
     where: { id },
@@ -28,8 +28,11 @@ export async function PATCH(
   const updated = await prisma.appointment.update({
     where: { id },
     data: {
-      ...(status ? { status } : {}),
-      ...(notes !== undefined ? { notes } : {}),
+      ...(status                ? { status }    : {}),
+      ...(notes !== undefined   ? { notes }     : {}),
+      ...(date                  ? { date }      : {}),
+      ...(startTime             ? { startTime } : {}),
+      ...(endTime               ? { endTime }   : {}),
     },
   });
 

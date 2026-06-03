@@ -95,6 +95,13 @@ export default function AgendaPage() {
   const [saving,       setSaving]       = useState(false);
   const [actionId,     setActionId]     = useState<string | null>(null);
 
+  // Reprogrammation
+  const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null);
+  const [newDate,        setNewDate]        = useState("");
+  const [newStart,       setNewStart]       = useState("");
+  const [newEnd,         setNewEnd]         = useState("");
+  const [rescheduling,   setRescheduling]   = useState(false);
+
   const emptyForm = {
     customerName: "", customerPhone: "", customerEmail: "",
     vehicleMake: "", vehicleModel: "", vehicleYear: "",
@@ -126,6 +133,43 @@ export default function AgendaPage() {
   function navigate(delta: number) {
     setExpandedId(null);
     setSelectedDate(prev => addDays(prev, delta));
+  }
+
+  function openReschedule(appt: Appointment) {
+    setRescheduleAppt(appt);
+    setNewDate(appt.date);
+    setNewStart(appt.startTime);
+    setNewEnd(appt.endTime);
+  }
+
+  async function submitReschedule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rescheduleAppt) return;
+    setRescheduling(true);
+    try {
+      const res = await fetch(`/api/appointments/${rescheduleAppt.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: newDate, startTime: newStart, endTime: newEnd }),
+      });
+      if (res.ok) {
+        // Si le RDV est déplacé vers une autre journée, le retirer de la liste actuelle
+        if (newDate !== selectedDate) {
+          setAppointments(prev => prev.filter(ap => ap.id !== rescheduleAppt.id));
+        } else {
+          setAppointments(prev =>
+            prev.map(ap => ap.id === rescheduleAppt.id
+              ? { ...ap, date: newDate, startTime: newStart, endTime: newEnd }
+              : ap
+            ).sort((x, y) => x.startTime.localeCompare(y.startTime))
+          );
+        }
+        setRescheduleAppt(null);
+        setExpandedId(null);
+      }
+    } finally {
+      setRescheduling(false);
+    }
   }
 
   async function changeStatus(id: string, newStatus: string) {
@@ -300,6 +344,7 @@ export default function AgendaPage() {
                   expanded={expandedId === ap.id}
                   onToggle={() => setExpandedId(expandedId === ap.id ? null : ap.id)}
                   onStatus={changeStatus}
+                  onReschedule={openReschedule}
                   actionId={actionId}
                   a={a}
                 />
@@ -316,6 +361,7 @@ export default function AgendaPage() {
                       expanded={expandedId === ap.id}
                       onToggle={() => setExpandedId(expandedId === ap.id ? null : ap.id)}
                       onStatus={changeStatus}
+                      onReschedule={openReschedule}
                       actionId={actionId}
                       a={a}
                     />
@@ -348,6 +394,88 @@ export default function AgendaPage() {
             {a.newAppt}
           </button>
         </div>
+
+        {/* ── Modal reprogrammation ───────────────────────────────────────── */}
+        {rescheduleAppt && (
+          <div className="fixed inset-0 z-40 flex flex-col justify-end">
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+              onClick={() => setRescheduleAppt(null)}
+            />
+            <div
+              className="relative bg-white rounded-t-3xl"
+              style={{
+                maxHeight: "80dvh", overflowY: "auto",
+                boxShadow: "0 -4px 40px rgba(0,0,0,0.2)",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <h2 className="font-black text-gray-900 text-lg">📅 Déplacer le rendez-vous</h2>
+                  <p className="text-xs text-gray-400">{rescheduleAppt.customerName}</p>
+                </div>
+                <button
+                  onClick={() => setRescheduleAppt(null)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg font-bold"
+                  style={{ touchAction: "manipulation" }}
+                >×</button>
+              </div>
+              <form onSubmit={submitReschedule} className="px-5 py-5 space-y-4 pb-6">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nouvelle date</label>
+                  <input
+                    required
+                    type="date"
+                    style={inputStyle}
+                    value={newDate}
+                    onChange={e => setNewDate(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Heure début</label>
+                    <input
+                      required
+                      type="time"
+                      style={inputStyle}
+                      value={newStart}
+                      onChange={e => setNewStart(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Heure fin</label>
+                    <input
+                      required
+                      type="time"
+                      style={inputStyle}
+                      value={newEnd}
+                      onChange={e => setNewEnd(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="pt-1 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRescheduleAppt(null)}
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 border border-gray-200 bg-gray-50"
+                    style={{ touchAction: "manipulation" }}
+                  >Annuler</button>
+                  <button
+                    type="submit"
+                    disabled={rescheduling}
+                    className="flex-1 py-3.5 rounded-2xl font-black text-white active:scale-95 transition-transform disabled:opacity-60"
+                    style={{ backgroundColor: "#f97316", touchAction: "manipulation" }}
+                  >{rescheduling ? "…" : "Confirmer"}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* ── Formulaire slide-up ──────────────────────────────────────────── */}
         {showForm && (
@@ -518,12 +646,13 @@ export default function AgendaPage() {
 // ── Carte RDV ─────────────────────────────────────────────────────────────────
 
 function ApptCard({
-  appt, expanded, onToggle, onStatus, actionId, a,
+  appt, expanded, onToggle, onStatus, onReschedule, actionId, a,
 }: {
   appt: Appointment;
   expanded: boolean;
   onToggle: () => void;
   onStatus: (id: string, s: string) => Promise<void>;
+  onReschedule: (appt: Appointment) => void;
   actionId: string | null;
   a: ReturnType<typeof useLang>["t"]["agenda"];
 }) {
@@ -648,6 +777,14 @@ function ApptCard({
                   bg="#16a34a" active="#15803d"
                   loading={actionId === appt.id + "COMPLETED"}
                   onClick={() => onStatus(appt.id, "COMPLETED")}
+                />
+              )}
+              {appt.status !== "COMPLETED" && (
+                <TapBtn
+                  label="📅 Déplacer"
+                  bg="#7c3aed" active="#6d28d9"
+                  loading={false}
+                  onClick={() => onReschedule(appt)}
                 />
               )}
               {appt.status !== "COMPLETED" && (
