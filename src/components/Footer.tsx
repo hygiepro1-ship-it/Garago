@@ -101,6 +101,7 @@ export default function Footer() {
           <div className="flex items-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
             <span className="cursor-pointer hover:text-white transition-colors">{f.privacy}</span>
             <span className="cursor-pointer hover:text-white transition-colors">{f.terms}</span>
+            <Link href="/faq" className="hover:text-white transition-colors">{f.faq}</Link>
             <Link href="/tarifs" className="hover:text-white transition-colors">{f.pricing}</Link>
             <Link href="/suggestions" className="hover:text-white transition-colors">💡 Suggestions</Link>
           </div>

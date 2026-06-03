@@ -278,6 +278,16 @@ model Suggestion {
   createdAt   DateTime @default(now())
 }
 
+model SupportQuestion {
+  id          String   @id @default(cuid())
+  type        String   // "DRIVER" | "GARAGE"
+  question    String
+  authorName  String?
+  authorEmail String?
+  status      String   @default("PENDING") // PENDING | ANSWERED | CLOSED
+  createdAt   DateTime @default(now())
+}
+
 model Appointment {
   id       String @id @default(cuid())
   garageId String
