@@ -569,11 +569,12 @@ export default function InscriptionGaragePage() {
                         <input type="text" required className={inputClass} placeholder="Garage Tremblay & Fils" value={garageName} onChange={(e) => setGarageName(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garageAddressLabel}</label>
                         <AddressAutocomplete
                           onSelect={handleAddressSelect}
                           placeholder="Ex : 1234 Rue Saint-Denis, Montréal"
                           inputClass={inputClass}
+                          postalLabel="Code postal"
+                          addressLabel={r.garageAddressLabel}
                         />
                         {garageCity && (
                           <div className="mt-2 flex flex-wrap gap-2 text-xs">

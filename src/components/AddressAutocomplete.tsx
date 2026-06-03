@@ -17,6 +17,8 @@ interface Props {
   initialValue?: string;
   placeholder?: string;
   inputClass?: string;
+  postalLabel?: string;
+  addressLabel?: string;
 }
 
 const PROVINCE_CODES: Record<string, string> = {
@@ -57,7 +59,7 @@ function parsePhoton(feature: any): AddressResult {
   };
 }
 
-export default function AddressAutocomplete({ onSelect, initialValue = "", inputClass = "" }: Props) {
+export default function AddressAutocomplete({ onSelect, initialValue = "", inputClass = "", postalLabel, addressLabel }: Props) {
   const [postal, setPostal]         = useState("");
   const [postalOk, setPostalOk]     = useState(false);
   const [postalErr, setPostalErr]   = useState("");
@@ -184,38 +186,47 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
   const inputBase = inputClass || "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 transition";
 
   return (
-    <div ref={containerRef} className="space-y-2">
+    <div ref={containerRef} className="space-y-3">
 
-      {/* ── Étape 1 : Code postal ── */}
-      <div className="relative">
-        <input
-          type="text"
-          value={postal}
-          onChange={handlePostalChange}
-          placeholder="Code postal  (ex : H2X 1Y5)"
-          maxLength={7}
-          autoComplete="postal-code"
-          className={`${inputBase} pr-8`}
-          style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-        />
-        {postalOk && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">✓</span>
+      {/* ── Case 1 : Code postal ── */}
+      <div>
+        {postalLabel && (
+          <label className="block text-sm font-semibold text-gray-700 mb-1">{postalLabel}</label>
+        )}
+        <div className="relative">
+          <input
+            type="text"
+            value={postal}
+            onChange={handlePostalChange}
+            placeholder="Ex : H2X 1Y5"
+            maxLength={7}
+            autoComplete="postal-code"
+            className={`${inputBase} pr-8`}
+            style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+          />
+          {postalOk && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 font-bold text-sm">✓</span>
+          )}
+          {postalErr && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 text-sm">✗</span>
+          )}
+        </div>
+        {postalCenter && (
+          <p className="text-xs text-green-600 pl-1 mt-1">
+            📍 {[postalCenter.district, postalCenter.city, postalCenter.province].filter(Boolean).join(", ")}
+          </p>
         )}
         {postalErr && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 text-sm">✗</span>
+          <p className="text-xs text-red-500 pl-1 mt-1">{postalErr}</p>
         )}
       </div>
-      {postalCenter && (
-        <p className="text-xs text-green-600 pl-1 -mt-1">
-          📍 {[postalCenter.district, postalCenter.city, postalCenter.province].filter(Boolean).join(", ")}
-        </p>
-      )}
-      {postalErr && (
-        <p className="text-xs text-red-500 pl-1 -mt-1">{postalErr}</p>
-      )}
 
-      {/* ── Étape 2 : Numéro et rue ── */}
-      <div className="relative">
+      {/* ── Case 2 : Numéro et rue ── */}
+      <div>
+        {addressLabel && (
+          <label className="block text-sm font-semibold text-gray-700 mb-1">{addressLabel}</label>
+        )}
+        <div className="relative">
         <input
           type="text"
           value={street}
@@ -267,6 +278,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
             })}
           </ul>
         )}
+        </div>
       </div>
     </div>
   );
