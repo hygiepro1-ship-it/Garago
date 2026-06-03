@@ -7,6 +7,80 @@ import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
 
+// ── Carte véhicule avec vraie photo Wikipedia ─────────────────────────────────
+function VehicleCard({ v, findGarageLabel }: { v: any; findGarageLabel: string }) {
+  const [imgUrl,    setImgUrl]    = useState<string | null>(null);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    // Nettoie le nom du modèle pour correspondre aux titres Wikipedia
+    const modelClean = (v.model as string)
+      .replace(/\s*(Classic|Limited|Sport|XLE|XSE|Touring|EX|LX|SE|LE|XL|SL|SV|SR|SR5|TRD|Pro|Crew|Quad|Double|King|Regular|Cab)\b.*/i, "")
+      .trim();
+    const term = `${v.make}_${modelClean}`.replace(/\s+/g, "_");
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}?redirect=true`)
+      .then(r => r.json())
+      .then(data => {
+        const url = data.originalimage?.source ?? data.thumbnail?.source ?? null;
+        setImgUrl(url);
+      })
+      .catch(() => setImgFailed(true));
+  }, [v.make, v.model]);
+
+  const brandAccent: Record<string, string> = {
+    "Toyota": "#eb0a1e", "Honda": "#cc0000", "Ford": "#003087",
+    "Chevrolet": "#d4a017", "GMC": "#c8102e", "Dodge": "#c8102e",
+    "Ram": "#b22222", "Jeep": "#4a7c3f", "Nissan": "#c3002f",
+    "Hyundai": "#002c5f", "Kia": "#bb162b", "Mazda": "#910000",
+    "Subaru": "#003c8f", "Volkswagen": "#001e50", "BMW": "#1c69d4",
+    "Mercedes-Benz": "#9a9a9a", "Audi": "#bb0a14", "Lexus": "#8b0000",
+    "Acura": "#cc0000", "Infiniti": "#8a8a8a", "Cadillac": "#9a7d4f",
+    "Tesla": "#cc0000", "Porsche": "#c00", "Volvo": "#1c6bba",
+    "Mitsubishi": "#c8102e", "Buick": "#4a6fa5",
+  };
+  const accent = brandAccent[v.make] ?? "#f97316";
+  const showFallback = !imgUrl || imgFailed;
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+      {/* Zone image */}
+      <div className="relative h-40 overflow-hidden flex items-center justify-center"
+        style={{ background: showFallback ? `linear-gradient(135deg, #0b1f3a 0%, ${accent}55 100%)` : "#f0f0f0" }}>
+        {imgUrl && !imgFailed ? (
+          <img
+            src={imgUrl}
+            alt={`${v.year} ${v.make} ${v.model}`}
+            className="w-full h-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center opacity-60">
+            <span className="text-5xl mb-1">🚗</span>
+            <span className="text-xs text-white font-semibold">{v.make}</span>
+          </div>
+        )}
+        {/* Badges overlay */}
+        <span className="absolute top-2 left-3 text-xs font-bold px-2 py-0.5 rounded-full"
+          style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>{v.year}</span>
+        <span className="absolute top-2 right-3 text-xs font-bold px-2 py-0.5 rounded-full"
+          style={{ background: accent, color: "#fff" }}>{v.make}</span>
+      </div>
+      {/* Infos + actions */}
+      <div className="px-4 py-3 flex items-center justify-between gap-2">
+        <div>
+          <p className="font-bold text-gray-900 text-sm">{v.make} {v.model}</p>
+          <p className="text-xs text-gray-400">{v.year}</p>
+        </div>
+        <Link
+          href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0"
+          style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
+        >{findGarageLabel}</Link>
+      </div>
+    </div>
+  );
+}
+
 type Tab = "rdv" | "vehicules" | "favoris" | "rappels" | "preferences";
 
 interface ClientAppt {
@@ -570,124 +644,9 @@ export default function DashboardConducteurPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {vehicles.map(v => {
-                    // Couleur + catégorie selon la marque
-                    const brandMeta: Record<string, { color: string; accent: string }> = {
-                      "Toyota":         { color: "#1a1a2e", accent: "#eb0a1e" },
-                      "Honda":          { color: "#1a1a2e", accent: "#cc0000" },
-                      "Ford":           { color: "#003087", accent: "#003087" },
-                      "Chevrolet":      { color: "#1a1a2e", accent: "#d4a017" },
-                      "GMC":            { color: "#1c2b39", accent: "#c8102e" },
-                      "Dodge":          { color: "#1a1a2e", accent: "#c8102e" },
-                      "Ram":            { color: "#1c2237", accent: "#b22222" },
-                      "Jeep":           { color: "#1a2a1a", accent: "#4a7c3f" },
-                      "Chrysler":       { color: "#1a1a2e", accent: "#c8102e" },
-                      "Nissan":         { color: "#1a1a2e", accent: "#c3002f" },
-                      "Hyundai":        { color: "#002c5f", accent: "#002c5f" },
-                      "Kia":            { color: "#05141f", accent: "#bb162b" },
-                      "Mazda":          { color: "#1a1a2e", accent: "#910000" },
-                      "Subaru":         { color: "#003c8f", accent: "#003c8f" },
-                      "Volkswagen":     { color: "#001e50", accent: "#001e50" },
-                      "BMW":            { color: "#1a1a2e", accent: "#1c69d4" },
-                      "Mercedes-Benz":  { color: "#1a1a2e", accent: "#9a9a9a" },
-                      "Audi":           { color: "#1a1a2e", accent: "#bb0a14" },
-                      "Lexus":          { color: "#1a1a2e", accent: "#8b0000" },
-                      "Acura":          { color: "#1a1a2e", accent: "#cc0000" },
-                      "Infiniti":       { color: "#1a1a2e", accent: "#8a8a8a" },
-                      "Cadillac":       { color: "#0a0a0a", accent: "#9a7d4f" },
-                      "Lincoln":        { color: "#1a1a2e", accent: "#7a7a7a" },
-                      "Buick":          { color: "#1c2b3a", accent: "#4a6fa5" },
-                      "Volvo":          { color: "#003057", accent: "#1c6bba" },
-                      "Porsche":        { color: "#1a1a2e", accent: "#c00" },
-                      "Mitsubishi":     { color: "#1a1a2e", accent: "#c8102e" },
-                      "Tesla":          { color: "#0a0a0a", accent: "#cc0000" },
-                      "Mini":           { color: "#1a1a2e", accent: "#c8102e" },
-                      "Land Rover":     { color: "#1a2a1a", accent: "#005a28" },
-                      "Jaguar":         { color: "#0a1628", accent: "#8b6914" },
-                      "Fiat":           { color: "#1a1a2e", accent: "#cc0000" },
-                    };
-                    // Catégorie par modèle pour choisir la silhouette SVG
-                    const truckModels  = ["F-150","F-250","F-350","Silverado","Sierra","Ram 1500","Ram 1500 Classic","Ranger","Colorado","Tacoma","Tundra","Ridgeline","Titan","Maverick","Canyon","Frontier"];
-                    const suvModels    = ["RAV4","CR-V","Escape","Equinox","Rogue","Tucson","Sportage","CX-5","Forester","Outback","Tiguan","Compass","Cherokee","Grand Cherokee","Wrangler","4Runner","Highlander","Pilot","Explorer","Edge","Blazer","Traverse","Pathfinder","Murano","Santa Fe","Sorento","Telluride","Palisade","Atlas","Crosstrek","Ascent","Odyssey","Sienna","Town & Country","Grand Caravan","Pacifica","Transit","E-Series"];
-                    const model = v.model ?? "";
-                    const isT   = truckModels.some(m => model.toLowerCase().includes(m.toLowerCase()));
-                    const isSUV = !isT && suvModels.some(m => model.toLowerCase().includes(m.toLowerCase()));
-                    const meta  = brandMeta[v.make] ?? { color: "#0b1f3a", accent: "#f97316" };
-
-                    // SVGs silhouette selon catégorie
-                    const SedanSVG = () => (
-                      <svg viewBox="0 0 220 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full opacity-90">
-                        <ellipse cx="110" cy="72" rx="100" ry="5" fill="black" fillOpacity="0.3"/>
-                        <path d="M10 52 Q15 52 20 48 L55 28 Q70 18 90 16 L135 16 Q155 16 168 26 L198 48 Q204 52 210 52 L210 60 Q210 64 206 64 L175 64 Q172 56 162 56 Q152 56 149 64 L71 64 Q68 56 58 56 Q48 56 45 64 L14 64 Q10 64 10 60 Z" fill="white" fillOpacity="0.15"/>
-                        <path d="M22 48 L55 30 Q70 20 90 18 L135 18 Q153 18 165 27 L196 48 Z" fill="white" fillOpacity="0.12"/>
-                        <path d="M58 30 L62 18 L100 16 L100 30 Z" fill="white" fillOpacity="0.15"/>
-                        <path d="M100 16 L140 16 L136 30 L100 30 Z" fill="white" fillOpacity="0.15"/>
-                        <circle cx="58" cy="60" r="10" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="58" cy="60" r="5" fill="white" fillOpacity="0.4"/>
-                        <circle cx="162" cy="60" r="10" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="162" cy="60" r="5" fill="white" fillOpacity="0.4"/>
-                        <path d="M196 48 L204 50 Q210 52 210 58 L210 60 L198 60 L196 48 Z" fill="white" fillOpacity="0.25"/>
-                        <path d="M10 58 L24 58 L22 48 L10 52 Z" fill="white" fillOpacity="0.25"/>
-                      </svg>
-                    );
-                    const SuvSVG = () => (
-                      <svg viewBox="0 0 220 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full opacity-90">
-                        <ellipse cx="110" cy="77" rx="100" ry="5" fill="black" fillOpacity="0.3"/>
-                        <path d="M12 54 L12 38 Q12 34 16 32 L40 22 Q58 12 80 10 L148 10 Q168 10 182 22 L202 34 Q208 38 208 44 L208 62 Q208 66 204 66 L176 66 Q173 58 162 58 Q151 58 148 66 L72 66 Q69 58 58 58 Q47 58 44 66 L16 66 Q12 66 12 62 Z" fill="white" fillOpacity="0.15"/>
-                        <rect x="40" y="11" width="56" height="26" rx="2" fill="white" fillOpacity="0.15"/>
-                        <rect x="100" y="11" width="55" height="26" rx="2" fill="white" fillOpacity="0.15"/>
-                        <circle cx="58" cy="62" r="10" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="58" cy="62" r="5" fill="white" fillOpacity="0.4"/>
-                        <circle cx="162" cy="62" r="10" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="162" cy="62" r="5" fill="white" fillOpacity="0.4"/>
-                        <path d="M200 34 L208 38 L208 54 L196 54 Z" fill="white" fillOpacity="0.25"/>
-                        <path d="M12 38 L24 38 L24 54 L12 54 Z" fill="white" fillOpacity="0.25"/>
-                      </svg>
-                    );
-                    const TruckSVG = () => (
-                      <svg viewBox="0 0 240 90" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full opacity-90">
-                        <ellipse cx="120" cy="80" rx="110" ry="6" fill="black" fillOpacity="0.3"/>
-                        <path d="M10 56 L10 38 Q10 34 14 32 L40 20 Q55 12 75 11 L118 11 L118 62 L70 62 Q67 54 56 54 Q45 54 42 62 L14 62 Q10 62 10 58 Z" fill="white" fillOpacity="0.15"/>
-                        <rect x="118" y="11" width="100" height="51" rx="3" fill="white" fillOpacity="0.1"/>
-                        <rect x="42" y="13" width="50" height="24" rx="2" fill="white" fillOpacity="0.18"/>
-                        <path d="M215 11 L228 11 Q234 11 234 20 L234 44 Q234 52 226 54 L216 56 L218 34 Q218 20 215 11 Z" fill="white" fillOpacity="0.2"/>
-                        <circle cx="56" cy="64" r="11" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="56" cy="64" r="5" fill="white" fillOpacity="0.4"/>
-                        <circle cx="178" cy="64" r="11" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="178" cy="64" r="5" fill="white" fillOpacity="0.4"/>
-                        <circle cx="200" cy="64" r="11" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1" strokeOpacity="0.5"/>
-                        <circle cx="200" cy="64" r="5" fill="white" fillOpacity="0.4"/>
-                      </svg>
-                    );
-
-                    return (
-                      <div key={v.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                        {/* Zone image */}
-                        <div className="relative h-36 flex items-center justify-center overflow-hidden px-4 pb-2 pt-4"
-                          style={{ background: `linear-gradient(135deg, ${meta.color} 0%, ${meta.accent}55 100%)` }}>
-                          {isT ? <TruckSVG /> : isSUV ? <SuvSVG /> : <SedanSVG />}
-                          {/* Badge année */}
-                          <span className="absolute top-2 left-3 text-xs font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(0,0,0,0.45)", color: "#fff" }}>{v.year}</span>
-                          {/* Badge marque */}
-                          <span className="absolute top-2 right-3 text-xs font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: meta.accent, color: "#fff" }}>{v.make}</span>
-                        </div>
-                        {/* Infos + actions */}
-                        <div className="px-4 py-3 flex items-center justify-between gap-2">
-                          <div>
-                            <p className="font-bold text-gray-900 text-sm">{v.make} {v.model}</p>
-                            <p className="text-xs text-gray-400">{v.year} · {isT ? "Camionnette" : isSUV ? "VUS" : "Berline / Coupé"}</p>
-                          </div>
-                          <Link
-                            href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
-                            style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
-                          >{d.findGarage}</Link>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {vehicles.map(v => (
+                    <VehicleCard key={v.id} v={v} findGarageLabel={d.findGarage} />
+                  ))}
                 </div>
               )}
             </div>

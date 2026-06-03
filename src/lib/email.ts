@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 // Lazy — avoids build-time crash when RESEND_API_KEY is not set
 function getResend() { return new Resend(process.env.RESEND_API_KEY); }
-const FROM = process.env.EMAIL_FROM ?? "Garago <noreply@garago.ca>";
+const FROM = process.env.EMAIL_FROM ?? "Garago <support@garagopro.ca>";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
