@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady } from "@/lib/email";
+import { sendVehicleReadySMS } from "@/lib/sms";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -54,16 +55,41 @@ export async function PATCH(
     include: { garage: true },
   });
 
-  // Email "véhicule prêt" quand le garage marque COMPLETED
-  if (status === "COMPLETED" && updated.customerEmail) {
-    sendVehicleReady({
-      to:            updated.customerEmail,
-      customerName:  updated.customerName,
-      garageName:    updated.garage.name,
-      garageAddress: [updated.garage.address, updated.garage.city].filter(Boolean).join(", "),
-      garagePhone:   updated.garage.phone,
-      completionNote: completionNote ?? updated.completionNote,
-    }).catch(console.error);
+  // Notifications "véhicule prêt" quand le garage marque COMPLETED
+  if (status === "COMPLETED") {
+    const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
+    const note = completionNote ?? updated.completionNote;
+
+    // Récupère la préférence du client lié (si compte Garago)
+    const userPref = updated.userId
+      ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { notifPref: true, phone: true } })
+      : null;
+    const notifPref = userPref?.notifPref ?? "EMAIL";
+
+    // Email (si EMAIL ou BOTH)
+    if (updated.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+      sendVehicleReady({
+        to:            updated.customerEmail,
+        customerName:  updated.customerName,
+        garageName:    updated.garage.name,
+        garageAddress,
+        garagePhone:   updated.garage.phone,
+        completionNote: note,
+      }).catch(console.error);
+    }
+
+    // SMS (si SMS ou BOTH)
+    const smsPhone = updated.customerPhone || userPref?.phone;
+    if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
+      sendVehicleReadySMS({
+        to:            smsPhone,
+        customerName:  updated.customerName,
+        garageName:    updated.garage.name,
+        garageAddress,
+        garagePhone:   updated.garage.phone,
+        completionNote: note,
+      }).catch(console.error);
+    }
   }
 
   return NextResponse.json(updated);

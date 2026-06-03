@@ -7,7 +7,7 @@ import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
 
-type Tab = "rdv" | "vehicules" | "favoris" | "rappels";
+type Tab = "rdv" | "vehicules" | "favoris" | "rappels" | "preferences";
 
 interface ClientAppt {
   id: string;
@@ -67,6 +67,14 @@ export default function DashboardConducteurPage() {
   const [favorites, setFavorites]     = useState<any[]>([]);
   const [favsLoaded, setFavsLoaded]   = useState(false);
 
+  // ── Préférences de notification ───────────────────────────────────────────
+  const [notifPref,      setNotifPref]      = useState<"EMAIL"|"SMS"|"BOTH">("EMAIL");
+  const [notifPhone,     setNotifPhone]     = useState("");
+  const [prefLoaded,     setPrefLoaded]     = useState(false);
+  const [prefSaving,     setPrefSaving]     = useState(false);
+  const [prefSaved,      setPrefSaved]      = useState(false);
+  const [prefErr,        setPrefErr]        = useState("");
+
   // ── Reminders ─────────────────────────────────────────────────────────────
   const [reminders, setReminders]       = useState<any[]>([]);
   const [remindersLoaded, setRemindersLoaded] = useState(false);
@@ -88,6 +96,13 @@ export default function DashboardConducteurPage() {
   }, [status, router]);
 
   useEffect(() => {
+    if (tab === "preferences" && !prefLoaded && status === "authenticated") {
+      fetch("/api/user/profile").then(r => r.json()).then(d => {
+        if (d.notifPref) setNotifPref(d.notifPref as "EMAIL"|"SMS"|"BOTH");
+        if (d.phone)     setNotifPhone(d.phone);
+        setPrefLoaded(true);
+      });
+    }
     if (tab === "favoris" && !favsLoaded && status === "authenticated") {
       fetch("/api/favorites").then(r => r.json()).then(d => { setFavorites(Array.isArray(d) ? d : []); setFavsLoaded(true); });
     }
@@ -136,6 +151,20 @@ export default function DashboardConducteurPage() {
       body: JSON.stringify({ status: "CANCELLED" }),
     });
     if (res.ok) setAppts(prev => prev.map(a => a.id === id ? { ...a, status: "CANCELLED" } : a));
+  }
+
+  async function savePreferences(e: React.FormEvent) {
+    e.preventDefault();
+    setPrefSaving(true); setPrefErr(""); setPrefSaved(false);
+    const res = await fetch("/api/user/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notifPref, phone: notifPhone || undefined }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setPrefErr(data.error ?? "Erreur"); }
+    else { setPrefSaved(true); setTimeout(() => setPrefSaved(false), 3000); }
+    setPrefSaving(false);
   }
 
   async function addVehicle(e: React.FormEvent) {
@@ -207,7 +236,8 @@ export default function DashboardConducteurPage() {
               { id: "rdv",       label: "📅 Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : "") },
               { id: "vehicules", label: d.vehicles },
               { id: "favoris",   label: d.favorites },
-              { id: "rappels",   label: d.reminders + (pending.length ? ` (${pending.length})` : "") },
+              { id: "rappels",     label: d.reminders + (pending.length ? ` (${pending.length})` : "") },
+              { id: "preferences", label: "⚙️ Préférences" },
             ] as { id: Tab; label: string }[]).map(tb => (
               <button
                 key={tb.id}
@@ -351,6 +381,88 @@ export default function DashboardConducteurPage() {
               </div>
             );
           })()}
+
+          {/* ── Préférences de notification ── */}
+          {tab === "preferences" && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-1">⚙️ Préférences de notification</h2>
+              <p className="text-sm text-gray-400 mb-6">Choisissez comment vous souhaitez être informé de vos rendez-vous.</p>
+
+              {!prefLoaded ? (
+                <p className="text-gray-400 text-sm text-center py-8">{t.common.loading}</p>
+              ) : (
+                <form onSubmit={savePreferences} className="space-y-6">
+                  {/* Choix du mode */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {([
+                      { value: "EMAIL", icon: "📧", label: "Courriel", desc: "Confirmation et rappels par email" },
+                      { value: "SMS",   icon: "📱", label: "SMS",      desc: "Messages texte sur votre téléphone" },
+                      { value: "BOTH",  icon: "🔔", label: "Les deux", desc: "Courriel + SMS pour ne rien manquer" },
+                    ] as { value: "EMAIL"|"SMS"|"BOTH"; icon: string; label: string; desc: string }[]).map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setNotifPref(opt.value)}
+                        className="text-left p-4 rounded-xl border-2 transition-all"
+                        style={notifPref === opt.value
+                          ? { borderColor: "#f97316", background: "#fff7ed" }
+                          : { borderColor: "#e5e7eb", background: "#fff" }}
+                      >
+                        <div className="text-2xl mb-2">{opt.icon}</div>
+                        <p className="font-bold text-gray-900 text-sm">{opt.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
+                        {notifPref === opt.value && (
+                          <span className="mt-2 inline-block text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#f97316", color: "#fff" }}>✓ Sélectionné</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Numéro de téléphone (requis si SMS ou BOTH) */}
+                  {(notifPref === "SMS" || notifPref === "BOTH") && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Numéro de téléphone <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="Ex : 514-555-1234"
+                        className={inputClass}
+                        value={notifPhone}
+                        onChange={e => setNotifPhone(e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Numéro canadien utilisé uniquement pour les notifications Garago.</p>
+                    </div>
+                  )}
+
+                  {prefErr && (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{prefErr}</p>
+                  )}
+                  {prefSaved && (
+                    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">✅ Préférences sauvegardées !</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={prefSaving}
+                    className="w-full py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50 transition-opacity"
+                    style={{ background: "#f97316" }}
+                  >
+                    {prefSaving ? "Sauvegarde…" : "Sauvegarder mes préférences"}
+                  </button>
+
+                  {/* Info Twilio */}
+                  {(notifPref === "SMS" || notifPref === "BOTH") && (
+                    <div className="rounded-xl p-4 text-xs text-blue-800" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                      <p className="font-semibold mb-1">📱 À propos des SMS</p>
+                      <p>Les notifications par SMS seront disponibles très prochainement. En attendant, vos confirmations seront envoyées par courriel.</p>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
+          )}
 
           {/* ── Véhicules ── */}
           {tab === "vehicules" && (

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
+import { sendBookingConfirmationSMS } from "@/lib/sms";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -54,10 +55,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ce créneau vient d'être réservé. Veuillez en choisir un autre." }, { status: 409 });
   }
 
+  const sessionUserId = (session?.user as any)?.id ?? null;
+
+  // Récupère les préférences de notification du client connecté
+  const userPref = sessionUserId
+    ? await prisma.user.findUnique({ where: { id: sessionUserId }, select: { notifPref: true, phone: true } })
+    : null;
+  const notifPref = userPref?.notifPref ?? "EMAIL";
+
   const appt = await prisma.appointment.create({
     data: {
       garageId,
-      userId: (session?.user as any)?.id ?? null,
+      userId: sessionUserId,
       customerName,
       customerPhone,
       customerEmail: customerEmail || null,
@@ -74,19 +83,35 @@ export async function POST(req: NextRequest) {
     include: { garage: true },
   });
 
-  // 1. Email de confirmation au client
-  if (appt.customerEmail) {
+  const garageAddress = [appt.garage.address, appt.garage.city].filter(Boolean).join(", ");
+
+  // 1a. Email de confirmation au client (si EMAIL ou BOTH)
+  if (appt.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
     sendBookingConfirmation({
       to:            appt.customerEmail,
       customerName:  appt.customerName,
       garageName:    appt.garage.name,
       garagePhone:   appt.garage.phone,
-      garageAddress: [appt.garage.address, appt.garage.city].filter(Boolean).join(", "),
+      garageAddress,
       date:          appt.date,
       startTime:     appt.startTime,
       endTime:       appt.endTime,
       serviceName:   appt.serviceName,
       appointmentId: appt.id,
+    }).catch(console.error);
+  }
+
+  // 1b. SMS de confirmation au client (si SMS ou BOTH)
+  const smsPhone = appt.customerPhone || userPref?.phone;
+  if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
+    sendBookingConfirmationSMS({
+      to:           smsPhone,
+      customerName: appt.customerName,
+      garageName:   appt.garage.name,
+      garagePhone:  appt.garage.phone,
+      date:         appt.date,
+      startTime:    appt.startTime,
+      serviceName:  appt.serviceName,
     }).catch(console.error);
   }
 
