@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendBookingConfirmation } from "@/lib/email";
+import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 
 // POST /api/appointments — client booking (online)
 export async function POST(req: NextRequest) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     include: { garage: true },
   });
 
-  // Send confirmation email if customer provided an address
+  // 1. Email de confirmation au client
   if (appt.customerEmail) {
     sendBookingConfirmation({
       to:            appt.customerEmail,
@@ -71,6 +71,25 @@ export async function POST(req: NextRequest) {
       startTime:     appt.startTime,
       endTime:       appt.endTime,
       serviceName:   appt.serviceName,
+      appointmentId: appt.id,
+    }).catch(console.error);
+  }
+
+  // 2. Notification au garage
+  if (appt.garage.email) {
+    sendGarageNewAppointment({
+      to:            appt.garage.email,
+      garageName:    appt.garage.name,
+      customerName:  appt.customerName,
+      customerPhone: appt.customerPhone,
+      customerEmail: appt.customerEmail,
+      vehicleYear:   appt.vehicleYear,
+      vehicleMake:   appt.vehicleMake,
+      vehicleModel:  appt.vehicleModel,
+      serviceName:   appt.serviceName,
+      date:          appt.date,
+      startTime:     appt.startTime,
+      endTime:       appt.endTime,
       appointmentId: appt.id,
     }).catch(console.error);
   }

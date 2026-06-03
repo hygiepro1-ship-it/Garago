@@ -119,6 +119,58 @@ export async function sendBookingConfirmation(params: {
   });
 }
 
+// ── Notification garage — nouveau RDV ────────────────────────────────────────
+
+export async function sendGarageNewAppointment(params: {
+  to:            string;
+  garageName:    string;
+  customerName:  string;
+  customerPhone: string;
+  customerEmail: string | null;
+  vehicleYear:   number | null;
+  vehicleMake:   string | null;
+  vehicleModel:  string | null;
+  serviceName:   string | null;
+  date:          string;
+  startTime:     string;
+  endTime:       string;
+  appointmentId: string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const vehicle = [params.vehicleYear, params.vehicleMake, params.vehicleModel].filter(Boolean).join(" ");
+  const dashUrl = `${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/tableau-de-bord/garage`;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">🔔 Nouveau rendez-vous en ligne !</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un client vient de réserver via Garago. Voici les détails :</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        <p style="margin:0 0 10px;font-size:14px"><strong>👤 Client :</strong> ${params.customerName}</p>
+        <p style="margin:0 0 10px;font-size:14px"><strong>📞 Téléphone :</strong> <a href="tel:${params.customerPhone}" style="color:#f97316">${params.customerPhone}</a></p>
+        ${params.customerEmail ? `<p style="margin:0 0 10px;font-size:14px"><strong>✉️ Courriel :</strong> ${params.customerEmail}</p>` : ""}
+        ${vehicle ? `<p style="margin:0 0 10px;font-size:14px"><strong>🚗 Véhicule :</strong> ${vehicle}</p>` : ""}
+        ${params.serviceName ? `<p style="margin:0 0 10px;font-size:14px"><strong>🔧 Service :</strong> ${params.serviceName}</p>` : ""}
+        <p style="margin:0 0 10px;font-size:14px"><strong>📅 Date :</strong> ${fmtDateFr(params.date)}</p>
+        <p style="margin:0;font-size:14px"><strong>🕐 Heure :</strong> ${params.startTime} – ${params.endTime}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Confirmez ou gérez ce rendez-vous depuis votre tableau de bord :</p>
+    <a href="${dashUrl}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+      📊 Ouvrir mon tableau de bord
+    </a>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      params.to,
+    subject: `🔔 Nouveau RDV — ${params.customerName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
+    html:    baseLayout(body),
+  });
+}
+
 // ── Reminder email (24h before) ───────────────────────────────────────────────
 
 export async function sendBookingReminder(params: {
