@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLang } from "@/contexts/LanguageContext";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
@@ -136,6 +137,8 @@ const PLANS = [
 
 export default function InscriptionGaragePage() {
   const router = useRouter();
+  const { t } = useLang();
+  const r = t.register;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -259,9 +262,9 @@ export default function InscriptionGaragePage() {
     e.preventDefault();
     setError("");
 
-    if (!emailVerified) { setError("Veuillez vérifier votre adresse courriel."); return; }
-    if (password !== confirmPwd) { setError("Les mots de passe ne correspondent pas."); return; }
-    if (!acceptTerms) { setError("Vous devez accepter les conditions d'utilisation."); return; }
+    if (!emailVerified) { setError(r.emailNotVerified); return; }
+    if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
+    if (!acceptTerms) { setError(r.termsRequired); return; }
 
     setLoading(true);
 
@@ -337,7 +340,7 @@ export default function InscriptionGaragePage() {
             </div>
           </Link>
           <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Déjà inscrit ? <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">Se connecter</Link>
+            {r.alreadyAccount} <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">{r.signIn}</Link>
           </span>
         </div>
       </div>
@@ -347,9 +350,9 @@ export default function InscriptionGaragePage() {
         {/* Progress steps */}
         <div className="flex items-center justify-center gap-0 mb-10">
           {[
-            { num: 1, label: "Compte & garage" },
-            { num: 2, label: "Services & marques" },
-            { num: 3, label: "Votre formule" },
+            { num: 1, label: r.gStep1 },
+            { num: 2, label: r.gStep2 },
+            { num: 3, label: r.gStep3 },
           ].map((s, i) => (
             <div key={s.num} className="flex items-center">
               <div className="flex flex-col items-center">
@@ -380,8 +383,8 @@ export default function InscriptionGaragePage() {
             {/* Form */}
             <div className="lg:col-span-3">
               <div className="bg-white rounded-2xl border border-gray-200 p-8" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-                <h1 className="text-2xl font-black text-gray-900 mb-1">Créez votre profil garage</h1>
-                <p className="text-gray-500 text-sm mb-6">30 jours d'essai gratuit — aucune carte de crédit requise</p>
+                <h1 className="text-2xl font-black text-gray-900 mb-1">{r.garageProfileTitle}</h1>
+                <p className="text-gray-500 text-sm mb-6">{r.garageProfileSub}</p>
 
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
@@ -389,18 +392,18 @@ export default function InscriptionGaragePage() {
 
                 <form onSubmit={handleStep1} className="space-y-4">
                   <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Vos informations</p>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{r.yourInfo}</p>
                     <div className="space-y-3">
 
                       {/* Prénom + Nom */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Prénom</label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">{r.firstNameLabel}</label>
                           <input type="text" required className={inputClass} placeholder="Jean"
                             value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Nom de famille</label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">{r.lastNameLabel}</label>
                           <input type="text" required className={inputClass} placeholder="Tremblay"
                             value={lastName} onChange={(e) => setLastName(e.target.value)} />
                         </div>
@@ -408,7 +411,7 @@ export default function InscriptionGaragePage() {
 
                       {/* Courriel + envoi code */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Courriel</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">{r.email}</label>
                         <div className="flex gap-2">
                           <input
                             type="email" required
@@ -431,7 +434,7 @@ export default function InscriptionGaragePage() {
                               disabled={sendingCode || !email}
                               className="flex-shrink-0 text-xs px-3 rounded-xl font-semibold text-white transition-opacity disabled:opacity-50"
                               style={{ background: "#0b1f3a" }}>
-                              {sendingCode ? "…" : codeSent ? "Renvoyer" : "Envoyer le code"}
+                              {sendingCode ? "…" : codeSent ? r.resendCode : r.sendCode}
                             </button>
                           )}
                           {emailVerified && (
@@ -439,7 +442,7 @@ export default function InscriptionGaragePage() {
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
-                              Vérifié
+                              {r.emailVerified}
                             </div>
                           )}
                         </div>
@@ -456,7 +459,7 @@ export default function InscriptionGaragePage() {
                       {/* Saisie du code */}
                       {codeSent && !emailVerified && (
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Code de vérification</label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">{r.codeLabel}</label>
                           <div className="flex items-center gap-3">
                             <CodeInput value={codeInput} onChange={handleCodeChange} disabled={verifyingCode} />
                             {verifyingCode && (
@@ -467,13 +470,13 @@ export default function InscriptionGaragePage() {
                             )}
                           </div>
                           {codeError && <p className="text-xs mt-1 text-red-600 font-medium">{codeError}</p>}
-                          <p className="text-xs mt-1 text-gray-400">Code à 6 chiffres — valide 15 minutes.</p>
+                          <p className="text-xs mt-1 text-gray-400">{r.codeHint}</p>
                         </div>
                       )}
 
                       {/* Téléphone */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Téléphone</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">{r.phone}</label>
                         <input type="tel" required className={inputClass} placeholder="(514) 555-1234"
                           value={phone}
                           onChange={(e) => setPhone(formatPhone(e.target.value))} />
@@ -482,7 +485,7 @@ export default function InscriptionGaragePage() {
                       {/* Mot de passe */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">{r.password}</label>
                           <div className="relative">
                             <input type={showPwd ? "text" : "password"} required minLength={8}
                               className={`${inputClass} pr-9`} placeholder="Min. 8 caractères"
@@ -500,7 +503,7 @@ export default function InscriptionGaragePage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-1">Confirmer</label>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">{r.confirmLabel}</label>
                           <div className="relative">
                             <input type={showConfirm ? "text" : "password"} required
                               className={`${inputClass} pr-9 ${
@@ -561,15 +564,15 @@ export default function InscriptionGaragePage() {
                   </div>
 
                   <div className="border-t border-gray-100 pt-4">
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Votre garage</p>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{r.step2}</p>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nom du garage</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garageName}</label>
                         <input type="text" required className={inputClass} placeholder="Garage Tremblay & Fils" value={garageName} onChange={(e) => setGarageName(e.target.value)} />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Adresse du garage
+                          {r.garageAddressLabel}
                         </label>
                         <AddressAutocomplete
                           onSelect={handleAddressSelect}
@@ -581,13 +584,13 @@ export default function InscriptionGaragePage() {
                             <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageAddress}</span>
                             <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garageCity}</span>
                             {garagePostalCode && <span className="px-2 py-1 rounded-md font-medium text-gray-600 bg-gray-100">{garagePostalCode}</span>}
-                            <span className="px-2 py-1 rounded-md font-semibold text-green-700 bg-green-50">Adresse vérifiée ✓</span>
+                            <span className="px-2 py-1 rounded-md font-semibold text-green-700 bg-green-50">{r.addressVerified}</span>
                           </div>
                         )}
                         <input type="hidden" required value={garageCity} onChange={() => {}} />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Téléphone du garage <span className="text-gray-400 font-normal">(optionnel)</span></label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">{r.garagePhone}</label>
                         <input type="tel" className={inputClass} placeholder="(514) 555-5678"
                           value={garagePhone}
                           onChange={(e) => setGaragePhone(formatPhone(e.target.value))} />
@@ -598,7 +601,7 @@ export default function InscriptionGaragePage() {
                   {/* ── Code de parrainage ── */}
                   <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50 p-4">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Code de parrainage <span className="text-gray-400 font-normal">(optionnel)</span>
+                      {r.referralCode}
                     </label>
                     <input
                       type="text"
@@ -610,7 +613,7 @@ export default function InscriptionGaragePage() {
                       style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
                     />
                     <p className="mt-1.5 text-xs text-orange-700">
-                      🎁 Un garage vous a référé ? Entrez son code et obtenez <strong>10 % de réduction sur votre premier paiement</strong>.
+                      {r.referralHint} <strong>{r.referralDiscount}</strong>.
                     </p>
                   </div>
 
@@ -620,7 +623,7 @@ export default function InscriptionGaragePage() {
                     className="w-full py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90 disabled:opacity-60"
                     style={{ backgroundColor: "#f97316" }}
                   >
-                    {loading ? "Création en cours..." : "Continuer →"}
+                    {loading ? r.creating : r.next}
                   </button>
                 </form>
               </div>
@@ -675,15 +678,15 @@ export default function InscriptionGaragePage() {
         {step === 2 && (
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Configurez votre garage en 2 minutes</h2>
-              <p className="text-gray-500">Indiquez vos spécialités et les marques que vous ne traitez pas. Vous pourrez tout modifier après.</p>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">{r.configureTitle}</h2>
+              <p className="text-gray-500">{r.configureSub}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Services */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                <h3 className="font-black text-gray-900 mb-1">Services offerts</h3>
-                <p className="text-xs text-gray-500 mb-4">Cochez ce que votre garage fait — les clients filtreront par ces services</p>
+                <h3 className="font-black text-gray-900 mb-1">{r.servicesOffered}</h3>
+                <p className="text-xs text-gray-500 mb-4">{r.servicesSub}</p>
                 <div className="grid grid-cols-1 gap-2 max-h-[420px] overflow-y-auto pr-1">
                   {SERVICE_CATEGORIES.map((cat) => {
                     const active = selectedServices.includes(cat.id);
@@ -720,8 +723,8 @@ export default function InscriptionGaragePage() {
 
               {/* Excluded brands */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                <h3 className="font-black text-gray-900 mb-1">Marques non traitées</h3>
-                <p className="text-xs text-gray-500 mb-4">Sélectionnez les marques que vous <strong>refusez ou ne traitez pas</strong>. Les clients le sauront dès la recherche.</p>
+                <h3 className="font-black text-gray-900 mb-1">{r.excludedBrands}</h3>
+                <p className="text-xs text-gray-500 mb-4">{r.excludedBrandsSub}</p>
                 <div className="flex flex-wrap gap-2 max-h-[380px] overflow-y-auto">
                   {VEHICLE_MAKES.map((brand) => {
                     const excluded = excludedBrands.includes(brand);
@@ -756,7 +759,7 @@ export default function InscriptionGaragePage() {
                 onClick={() => setStep(1)}
                 className="px-6 py-3 rounded-xl border border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
               >
-                ← Retour
+                {r.back}
               </button>
               <button
                 onClick={handleStep2}
@@ -764,13 +767,13 @@ export default function InscriptionGaragePage() {
                 className="flex-1 py-3 rounded-xl font-black text-white transition-all hover:opacity-90 disabled:opacity-60"
                 style={{ backgroundColor: "#f97316" }}
               >
-                {savingConfig ? "Sauvegarde..." : "Continuer →"}
+                {savingConfig ? t.common.save + "…" : r.next}
               </button>
               <button
                 onClick={() => setStep(3)}
                 className="px-6 py-3 rounded-xl border border-gray-200 text-gray-400 font-medium hover:text-gray-600 transition-colors text-sm"
               >
-                Passer
+                {r.skip}
               </button>
             </div>
           </div>
@@ -782,10 +785,10 @@ export default function InscriptionGaragePage() {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4"
                 style={{ backgroundColor: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#16a34a" }}>
-                ✓ Votre garage est créé et configuré!
+                {r.garageCreated}
               </div>
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Choisissez votre formule</h2>
-              <p className="text-gray-500">Démarrez avec 30 jours gratuits — aucune carte requise. Passez au Pro quand vous voulez.</p>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">{r.choosePlan}</h2>
+              <p className="text-gray-500">{r.choosePlanSub}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
@@ -839,19 +842,19 @@ export default function InscriptionGaragePage() {
 
             <div className="flex gap-4">
               <button onClick={() => setStep(2)} className="px-6 py-3 rounded-xl border border-gray-300 text-gray-600 font-semibold hover:bg-gray-50 transition-colors">
-                ← Retour
+                {r.back}
               </button>
               <button
                 onClick={() => router.push("/tableau-de-bord/garage")}
                 className="flex-1 py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90"
                 style={{ backgroundColor: "#f97316" }}
               >
-                Accéder à mon tableau de bord →
+                {r.toDashboard}
               </button>
             </div>
 
             <p className="text-center text-xs text-gray-400 mt-4">
-              La facturation du plan Pro commence après les 30 jours d'essai gratuit. Résiliez à tout moment.
+              {r.billingNote}
             </p>
           </div>
         )}

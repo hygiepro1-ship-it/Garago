@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface BookingWidgetProps {
   garageId:     string;
@@ -19,6 +20,8 @@ const DAYS_FR   = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
 export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services }: BookingWidgetProps) {
   const { data: session } = useSession();
+  const { t } = useLang();
+  const b = t.booking;
 
   const [step, setStep]           = useState<Step>("service");
   const [service, setService]     = useState("");
@@ -175,18 +178,18 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
       <div className="bg-white rounded-2xl border border-gray-200 p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
         <div className="text-center mb-5">
           <div className="text-5xl mb-3">✅</div>
-          <h3 className="text-lg font-bold text-gray-900 mb-1">Demande envoyée !</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{b.requestSent}</h3>
           <p className="text-gray-500 text-sm">
-            <strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> à <strong>{selectedSlot}</strong>
+            <strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> {b.at} <strong>{selectedSlot}</strong>
           </p>
           {email && (
-            <p className="text-gray-400 text-xs mt-2">Une confirmation a été envoyée à <strong>{email}</strong></p>
+            <p className="text-gray-400 text-xs mt-2">{b.confirmSentTo} <strong>{email}</strong></p>
           )}
         </div>
 
         {/* Calendar integration */}
         <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Ajouter à votre calendrier</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{b.addToCalendar}</p>
           <div className="flex flex-col gap-2">
             <a
               href={gcalUrl}
@@ -194,14 +197,14 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-colors"
             >
-              <span className="text-base">📅</span> Google Calendar
+              <span className="text-base">📅</span> {b.googleCal}
             </a>
             {icsUrl && (
               <a
                 href={icsUrl}
                 className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-400 transition-colors"
               >
-                <span className="text-base">🍎</span> Apple Calendrier / iCal
+                <span className="text-base">🍎</span> {b.appleCal}
               </a>
             )}
             <a
@@ -210,10 +213,10 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-colors"
             >
-              <span className="text-base">📧</span> Outlook Calendar
+              <span className="text-base">📧</span> {b.outlookCal}
             </a>
             {icsUrl && (
-              <p className="text-xs text-gray-400 text-center mt-1">Le fichier .ics fonctionne aussi sur Android et tout autre calendrier</p>
+              <p className="text-xs text-gray-400 text-center mt-1">{b.icsNote}</p>
             )}
           </div>
         </div>
@@ -222,7 +225,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
           onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); setAppointmentId(null); }}
           className="mt-4 w-full text-center text-sm text-orange-500 hover:underline"
         >
-          Prendre un autre rendez-vous
+          {b.anotherAppt}
         </button>
       </div>
     );
@@ -232,14 +235,14 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
       {/* Header */}
       <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Prendre rendez-vous</p>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{b.title}</p>
         <p className="text-sm font-semibold text-gray-700">{garageName}</p>
       </div>
 
       {/* Progress */}
       <div className="flex border-b border-gray-100">
         {(["service","date","slot","info"] as Step[]).map((s, i) => {
-          const labels = ["Service","Date","Horaire","Infos"];
+          const labels = [b.service, b.date, b.slot, b.infoStep];
           const done = ["service","date","slot","info"].indexOf(step) > i;
           const active = step === s;
           return (
@@ -263,29 +266,29 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         {/* ── Step 1: Service ─────────────────────────────────────── */}
         {step === "service" && (
           <div>
-            <p className="text-sm font-semibold text-gray-700 mb-3">Quel service souhaitez-vous ?</p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">{b.whatService}</p>
             <div className="space-y-2">
-              {services.length > 0 ? services.map((s, i) => (
+              {services.length > 0 ? services.map((sv, i) => (
                 <button
                   key={i}
-                  onClick={() => { setService(s.category.name); setStep("date"); }}
+                  onClick={() => { setService(sv.category.name); setStep("date"); }}
                   className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all font-medium ${
-                    service === s.category.name
+                    service === sv.category.name
                       ? "border-orange-400 bg-orange-50 text-orange-700"
                       : "border-gray-200 hover:border-orange-300 text-gray-700"
                   }`}
                 >
-                  {s.category.name}
+                  {sv.category.name}
                 </button>
               )) : (
-                <p className="text-gray-400 text-sm">Aucun service configuré</p>
+                <p className="text-gray-400 text-sm">{b.noServices}</p>
               )}
             </div>
             <button
               onClick={() => { setService(""); setStep("date"); }}
               className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
             >
-              Continuer sans choisir un service
+              {b.continueWithout}
             </button>
           </div>
         )}
@@ -352,23 +355,23 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             )}
             {!loadingSlots && closedDay && (
               <div className="mt-4 text-center">
-                <p className="text-gray-500 text-sm">Ce garage est fermé ce jour-là.</p>
+                <p className="text-gray-500 text-sm">{b.closedDay}</p>
                 <button onClick={() => setStep("date")} className="mt-3 text-sm text-orange-500 hover:underline">
-                  Choisir une autre date
+                  {b.chooseAnotherDate}
                 </button>
               </div>
             )}
             {!loadingSlots && !closedDay && slots.length === 0 && (
               <div className="mt-4 text-center">
-                <p className="text-gray-500 text-sm">Aucun créneau disponible pour cette date.</p>
+                <p className="text-gray-500 text-sm">{b.noSlots}</p>
                 <button onClick={() => setStep("date")} className="mt-3 text-sm text-orange-500 hover:underline">
-                  Choisir une autre date
+                  {b.chooseAnotherDate}
                 </button>
               </div>
             )}
             {!loadingSlots && slots.length > 0 && (
               <>
-                <p className="text-xs text-gray-400 mb-3">Sélectionnez un créneau disponible</p>
+                <p className="text-xs text-gray-400 mb-3">{b.selectSlot}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {slots.map(s => (
                     <button
@@ -399,22 +402,22 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Nom complet *</label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">{b.fullName}</label>
               <input className={inputCls} value={name} onChange={e=>setName(e.target.value)} placeholder="Jean Tremblay" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">{b.phone}</label>
               <input className={inputCls} type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(514) 555-0100" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel</label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">{b.email}</label>
               <input className={inputCls} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jean@exemple.com" />
             </div>
 
             {/* Véhicule — dropdown si l'utilisateur en a, sinon champs libres */}
             {userVehicles.length > 0 ? (
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Véhicule</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">{b.vehicle}</label>
                 <select
                   className={inputCls}
                   value={selectedVehicleId}
@@ -426,7 +429,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                     if (v) { setVehicleYear(String(v.year)); setVehicleMake(v.make); setVehicleModel(v.model); }
                   }}
                 >
-                  <option value="">— Aucun véhicule —</option>
+                  <option value="">{b.noVehicle}</option>
                   {userVehicles.map(v => (
                     <option key={v.id} value={v.id}>{v.year} {v.make} {v.model}</option>
                   ))}
@@ -435,15 +438,15 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Année</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{b.year}</label>
                   <input className={inputCls} value={vehicleYear} onChange={e=>setVehicleYear(e.target.value)} placeholder="2020" maxLength={4} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{b.make}</label>
                   <input className={inputCls} value={vehicleMake} onChange={e=>setVehicleMake(e.target.value)} placeholder="Toyota" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{b.model}</label>
                   <input className={inputCls} value={vehicleModel} onChange={e=>setVehicleModel(e.target.value)} placeholder="Camry" />
                 </div>
               </div>
@@ -459,10 +462,10 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               className="w-full py-3 rounded-xl font-bold text-white text-sm transition hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ backgroundColor: "#f97316" }}
             >
-              {submitting ? "Envoi en cours…" : "Confirmer le rendez-vous →"}
+              {submitting ? b.submitting : b.confirm}
             </button>
             <p className="text-xs text-center text-gray-400">
-              Le garage confirmera votre demande par téléphone ou courriel.
+              {b.garageConfirm}
             </p>
           </div>
         )}
@@ -479,7 +482,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             }}
             className="text-xs text-gray-400 hover:text-gray-600"
           >
-            ← Retour
+            {b.back}
           </button>
         </div>
       )}

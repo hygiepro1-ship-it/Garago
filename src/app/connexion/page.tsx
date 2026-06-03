@@ -4,9 +4,12 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLang } from "@/contexts/LanguageContext";
 
 export default function ConnexionPage() {
   const router = useRouter();
+  const { t } = useLang();
+  const a = t.auth;
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
@@ -18,7 +21,7 @@ export default function ConnexionPage() {
     setLoading(true); setError("");
     const res = await signIn("credentials", { email, password, redirect: false });
     if (res?.error) {
-      setError("Courriel ou mot de passe invalide.");
+      setError(a.invalidCreds);
       setLoading(false);
     } else {
       const session = await fetch("/api/auth/session").then((r) => r.json());
@@ -44,19 +47,19 @@ export default function ConnexionPage() {
           </Link>
 
           <h2 className="text-3xl font-black text-white leading-snug mb-4">
-            Bienvenue sur<br />votre espace<br />
+            {a.welcomeTitle.split("Garago.")[0]}<br />
             <span style={{ color: "#f97316" }}>Garago.</span>
           </h2>
           <p className="text-sm leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Retrouvez vos garages favoris, gérez vos rendez-vous et accédez à votre historique d'entretien.
+            {a.welcomeSub}
           </p>
 
           <div className="space-y-4">
             {[
-              { icon: "🔒", text: "Connexion sécurisée" },
-              { icon: "📅", text: "Historique de vos rendez-vous" },
-              { icon: "❤️", text: "Garages favoris enregistrés" },
-              { icon: "🔔", text: "Rappels d'entretien personnalisés" },
+              { icon: "🔒", text: a.secureLogin },
+              { icon: "📅", text: a.appointmentHistory },
+              { icon: "❤️", text: a.savedFavorites },
+              { icon: "🔔", text: a.customReminders },
             ].map((f) => (
               <div key={f.text} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -92,11 +95,11 @@ export default function ConnexionPage() {
             </Link>
           </div>
 
-          <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>Connexion</h1>
+          <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>{a.signIn}</h1>
           <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
-            Pas encore de compte ?{" "}
+            {a.noAccount}{" "}
             <Link href="/inscription/conducteur" className="font-bold" style={{ color: "#f97316" }}>
-              S'inscrire gratuitement
+              {a.signUpFree}
             </Link>
           </p>
 
@@ -109,21 +112,21 @@ export default function ConnexionPage() {
             )}
 
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Adresse courriel</label>
-              <input type="email" required className="garago-input" placeholder="vous@exemple.com"
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{a.email}</label>
+              <input type="email" required className="garago-input" placeholder={a.emailPlaceholder}
                 value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>Mot de passe</label>
+                <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{a.password}</label>
                 <button type="button" className="text-xs font-semibold" style={{ color: "#f97316" }}>
-                  Mot de passe oublié ?
+                  {a.forgotPwd}
                 </button>
               </div>
               <div className="relative">
                 <input type={showPwd ? "text" : "password"} required className="garago-input pr-10"
-                  placeholder="Votre mot de passe"
+                  placeholder={a.pwdPlaceholder}
                   value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPwd(!showPwd)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -144,18 +147,18 @@ export default function ConnexionPage() {
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg> Connexion…
+                    </svg> {a.signingIn}
                   </span>
-                : "Se connecter"
+                : a.signInBtn
               }
             </button>
           </form>
 
           <div className="mt-8 pt-6 text-center" style={{ borderTop: "1px solid #e2e8f0" }}>
             <p className="text-sm" style={{ color: "#94a3b8" }}>
-              Propriétaire d'un garage ?{" "}
+              {a.garageOwner}{" "}
               <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
-                Inscrire mon garage →
+                {a.registerGarage} →
               </Link>
             </p>
           </div>

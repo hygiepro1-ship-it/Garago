@@ -9,6 +9,7 @@ import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
+import { useLang } from "@/contexts/LanguageContext";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
 
@@ -134,6 +135,8 @@ const DAY_ABBR_FR = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
 
 // ─── Component ──────────────────────────────────────────────────────────────
 export default function DashboardGaragePage() {
+  const { t } = useLang();
+  const d = t.dash;
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("apercu");
@@ -420,7 +423,7 @@ export default function DashboardGaragePage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20 text-gray-500">Chargement de votre tableau de bord...</div>;
+    return <div className="flex items-center justify-center py-20 text-gray-500">{d.loading}</div>;
   }
 
   async function updateApptStatus(id: string, newStatus: string) {
@@ -511,11 +514,11 @@ export default function DashboardGaragePage() {
     && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "apercu",   label: "Aperçu",    icon: "📊" },
-    { id: "services", label: "Services",  icon: "🔧" },
-    { id: "marques",  label: "Marques",   icon: "🚗" },
-    { id: "horaires", label: "Horaires",  icon: "🕐" },
-    { id: "profil",   label: "Profil",    icon: "⚙️" },
+    { id: "apercu",   label: d.overview,  icon: "📊" },
+    { id: "services", label: d.services,  icon: "🔧" },
+    { id: "marques",  label: d.brands,    icon: "🚗" },
+    { id: "horaires", label: d.hours,     icon: "🕐" },
+    { id: "profil",   label: d.profile,   icon: "⚙️" },
   ];
 
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400";
@@ -1018,11 +1021,11 @@ export default function DashboardGaragePage() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">Services offerts</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{d.services}</h2>
               <p className="text-gray-500 text-sm">Cochez les services que vous offrez et ajoutez vos prix</p>
             </div>
             <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-              {saving ? "Sauvegarde..." : "Sauvegarder"}
+              {saving ? d.saving : t.common.save}
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1068,12 +1071,12 @@ export default function DashboardGaragePage() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">Marques de véhicules</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{d.brands}</h2>
               <p className="text-gray-500 text-sm mt-0.5">Cliquez ✓ pour accepter, ✗ pour refuser.</p>
             </div>
             <button onClick={saveBrands} disabled={saving}
               className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex-shrink-0" style={{ background: "#f97316" }}>
-              {saving ? "Sauvegarde..." : "Sauvegarder"}
+              {saving ? d.saving : t.common.save}
             </button>
           </div>
           <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-5 pb-4 border-b border-gray-100">
@@ -1126,11 +1129,11 @@ export default function DashboardGaragePage() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">Horaires d'ouverture</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{d.hours}</h2>
               <p className="text-gray-500 text-sm">Configurez vos heures d'ouverture pour chaque jour</p>
             </div>
             <button onClick={saveHoraires} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-              {saving ? "Sauvegarde..." : "Sauvegarder"}
+              {saving ? d.saving : t.common.save}
             </button>
           </div>
           <div className="space-y-3 mt-5">
@@ -1512,7 +1515,7 @@ export default function DashboardGaragePage() {
               </div>
 
               <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-                {saving ? "Sauvegarde..." : "Sauvegarder le profil"}
+                {saving ? d.saving : d.save}
               </button>
             </form>
           </div>

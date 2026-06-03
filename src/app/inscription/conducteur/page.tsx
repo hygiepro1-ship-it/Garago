@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLang } from "@/contexts/LanguageContext";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,8 @@ function CodeInput({
 
 export default function InscriptionConducteurPage() {
   const router = useRouter();
+  const { t } = useLang();
+  const r = t.register;
 
   const [firstName,   setFirstName]   = useState("");
   const [lastName,    setLastName]    = useState("");
@@ -168,9 +171,9 @@ export default function InscriptionConducteurPage() {
     e.preventDefault();
     setError("");
 
-    if (!emailVerified) { setError("Veuillez vérifier votre adresse courriel."); return; }
-    if (password !== confirmPwd) { setError("Les mots de passe ne correspondent pas."); return; }
-    if (!acceptTerms) { setError("Vous devez accepter les conditions d'utilisation."); return; }
+    if (!emailVerified) { setError(r.emailNotVerified); return; }
+    if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
+    if (!acceptTerms) { setError(r.termsRequired); return; }
 
     setLoading(true);
     const res = await fetch("/api/register", {
@@ -266,10 +269,10 @@ export default function InscriptionConducteurPage() {
             </Link>
           </div>
 
-          <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>Créer mon compte</h1>
+          <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>{r.titleDriver}</h1>
           <p className="text-sm mb-7" style={{ color: "#94a3b8" }}>
-            Déjà un compte ?{" "}
-            <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>Se connecter</Link>
+            {r.alreadyAccount}{" "}
+            <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>{r.signIn}</Link>
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -283,12 +286,12 @@ export default function InscriptionConducteurPage() {
             {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Prénom</label>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.firstName}</label>
                 <input type="text" required className="garago-input" placeholder="Marie"
                   value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Nom de famille</label>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.lastName}</label>
                 <input type="text" required className="garago-input" placeholder="Tremblay"
                   value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
@@ -297,7 +300,7 @@ export default function InscriptionConducteurPage() {
             {/* Courriel + bouton d'envoi */}
             <div>
               <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
-                Adresse courriel
+                {r.email}
               </label>
               <div className="flex gap-2">
                 <input
@@ -321,7 +324,7 @@ export default function InscriptionConducteurPage() {
                     disabled={sendingCode || !email}
                     className="flex-shrink-0 text-xs px-3 py-2 rounded-xl font-semibold text-white transition-opacity disabled:opacity-50"
                     style={{ background: "#0b1f3a" }}>
-                    {sendingCode ? "…" : codeSent ? "Renvoyer" : "Envoyer le code"}
+                    {sendingCode ? "…" : codeSent ? "Renvoyer" : r.sendCode}
                   </button>
                 )}
                 {emailVerified && (
@@ -329,7 +332,7 @@ export default function InscriptionConducteurPage() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    Vérifié
+                    {r.emailVerified}
                   </div>
                 )}
               </div>
@@ -349,7 +352,7 @@ export default function InscriptionConducteurPage() {
             {codeSent && !emailVerified && (
               <div>
                 <label className="block text-sm font-bold mb-2" style={{ color: "#0b1f3a" }}>
-                  Code de vérification
+                  {r.codeLabel}
                 </label>
                 <div className="flex items-center gap-3">
                   <CodeInput value={codeInput} onChange={handleCodeChange} disabled={verifyingCode} />
@@ -381,7 +384,7 @@ export default function InscriptionConducteurPage() {
 
             {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Mot de passe</label>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.password}</label>
               <div className="relative">
                 <input type={showPwd ? "text" : "password"} required minLength={8}
                   className="garago-input pr-10" placeholder="Minimum 8 caractères"
@@ -409,7 +412,7 @@ export default function InscriptionConducteurPage() {
             {/* Confirmation mot de passe */}
             <div>
               <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
-                Confirmer le mot de passe
+                {r.confirmPassword}
               </label>
               <div className="relative">
                 <input type={showConfirm ? "text" : "password"} required
@@ -428,7 +431,7 @@ export default function InscriptionConducteurPage() {
                 </button>
               </div>
               {confirmPwd.length > 0 && confirmPwd !== password && (
-                <p className="text-xs mt-1 text-red-500 font-medium">Les mots de passe ne correspondent pas.</p>
+                <p className="text-xs mt-1 text-red-500 font-medium">{r.pwdMismatch}.</p>
               )}
               {confirmPwd.length > 0 && confirmPwd === password && (
                 <p className="text-xs mt-1 text-green-600 font-medium">✓ Les mots de passe correspondent.</p>
@@ -483,18 +486,18 @@ export default function InscriptionConducteurPage() {
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg> Création…
+                    </svg> {r.creating}
                   </span>
-                : "Créer mon compte gratuitement"
+                : r.createAccount
               }
             </button>
           </form>
 
           <div className="mt-6 pt-6 text-center" style={{ borderTop: "1px solid #e2e8f0" }}>
             <p className="text-sm" style={{ color: "#94a3b8" }}>
-              Propriétaire d'un garage ?{" "}
+              {t.auth.garageOwner}{" "}
               <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
-                Inscrire mon garage →
+                {r.registerGarage} →
               </Link>
             </p>
           </div>

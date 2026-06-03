@@ -6,6 +6,7 @@ import GarageCard from "@/components/GarageCard";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { garageDistance, formatDistance } from "@/lib/geo";
+import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
 
@@ -17,6 +18,8 @@ function withDistances(garages: any[], pos: UserPos | null): any[] {
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useLang();
+  const s = t.search;
 
   const [garages, setGarages] = useState<any[]>([]);
   const [total,   setTotal]   = useState(0);
@@ -126,7 +129,7 @@ function SearchContent() {
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={year} onChange={(e) => setYear(e.target.value)}
             >
-              <option value="">Année</option>
+              <option value="">{s.year}</option>
               {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
 
@@ -135,7 +138,7 @@ function SearchContent() {
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}
             >
-              <option value="">Marque</option>
+              <option value="">{s.make}</option>
               {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
 
@@ -144,7 +147,7 @@ function SearchContent() {
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}
             >
-              <option value="">Modèle</option>
+              <option value="">{s.model}</option>
               {models.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
 
@@ -153,8 +156,8 @@ function SearchContent() {
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={service} onChange={(e) => setService(e.target.value)}
             >
-              <option value="">Service</option>
-              {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+              <option value="">{s.service}</option>
+              {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
             </select>
 
             <button
@@ -165,7 +168,7 @@ function SearchContent() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
-              Rechercher
+              {s.searchBtn}
             </button>
 
             {/* Mobile filter toggle */}
@@ -177,7 +180,7 @@ function SearchContent() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
               </svg>
-              Filtres {activeCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-white text-xs font-black" style={{ background: "#f97316" }}>{activeCount}</span>}
+              {s.filters} {activeCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-white text-xs font-black" style={{ background: "#f97316" }}>{activeCount}</span>}
             </button>
 
             {/* Active vehicle chip */}
@@ -206,7 +209,7 @@ function SearchContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Localisation</p>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>{s.location}</p>
               </div>
               <div className="p-4">
                 {geoStatus !== "ok" ? (
@@ -221,25 +224,25 @@ function SearchContent() {
                       style={{ background: "#f97316" }}
                     >
                       {geoStatus === "loading"
-                        ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Localisation…</>
-                        : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg> Me localiser</>
+                        ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> {s.locating}</>
+                        : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg> {s.locateMe}</>
                       }
                     </button>
-                    {geoStatus === "denied" && <p className="text-xs text-red-500 mt-2">Localisation refusée dans le navigateur.</p>}
+                    {geoStatus === "denied" && <p className="text-xs text-red-500 mt-2">{s.locDenied}</p>}
                   </>
                 ) : (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#DCFCE7", color: "#16A34A" }}>✓</span>
-                      <span className="text-sm font-bold" style={{ color: "#16A34A" }}>Position détectée</span>
+                      <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{s.locationDetected}</span>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer mb-3">
                       <input type="checkbox" checked={sortByDist} onChange={(e) => setSortByDist(e.target.checked)}
                         className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
-                      <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Trier par distance</span>
+                      <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>{s.sortByDist}</span>
                     </label>
                     <button onClick={clearLocation} className="text-xs underline" style={{ color: "#94a3b8" }}>
-                      Désactiver
+                      {s.disable}
                     </button>
                   </div>
                 )}
@@ -250,38 +253,38 @@ function SearchContent() {
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
               <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid #e2e8f0" }}>
-                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Filtres</p>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>{s.filters}</p>
                 {hasFilters && (
                   <button onClick={clearAll} className="text-xs font-bold" style={{ color: "#f97316" }}>
-                    Tout effacer
+                    {s.clearAll}
                   </button>
                 )}
               </div>
               <div className="p-4 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>PRESTATION</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
                   <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
-                    <option value="">Toutes</option>
-                    {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+                    <option value="">{s.allServices}</option>
+                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>VILLE</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.cityLabel}</label>
                   <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
-                    <option value="">Toutes les villes</option>
+                    <option value="">{s.allCities}</option>
                     {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>OPTIONS</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.options}</label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={walkInOnly} onChange={(e) => setWalkInOnly(e.target.checked)}
                       className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
-                    <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Sans rendez-vous</span>
+                    <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>{s.walkIn}</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>NOTE MINIMALE</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.minRating}</label>
                   <div className="flex gap-1.5">
                     {["", "3", "4", "4.5"].map((r) => (
                       <button
@@ -293,13 +296,13 @@ function SearchContent() {
                           : { background: "white", color: "#475569", borderColor: "#e2e8f0" }
                         }
                       >
-                        {r ? `${r}★` : "Tous"}
+                        {r ? `${r}★` : s.all}
                       </button>
                     ))}
                   </div>
                 </div>
                 <button onClick={applyFilters} className="btn-primary w-full py-2.5">
-                  Appliquer
+                  {s.apply}
                 </button>
               </div>
             </div>
@@ -308,7 +311,7 @@ function SearchContent() {
             <div className="bg-white rounded-2xl overflow-hidden"
               style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
               <div className="px-4 py-3" style={{ borderBottom: "1px solid #e2e8f0" }}>
-                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>Services populaires</p>
+                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>{s.popularServices}</p>
               </div>
               <div className="p-3 space-y-0.5">
                 {SERVICE_CATEGORIES.slice(0, 8).map((s) => (
@@ -337,16 +340,16 @@ function SearchContent() {
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
               <div>
                 <h1 className="text-xl font-black" style={{ color: "#0b1f3a" }}>
-                  {selectedService ? `${selectedService.icon} ${selectedService.name}` : "Tous les garages"}
+                  {selectedService ? `${selectedService.icon} ${selectedService.name}` : s.allGarages}
                   {city && <span style={{ color: "#94a3b8" }}> — {city}</span>}
                 </h1>
                 <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>
-                  {loading ? "Recherche en cours…" : (
+                  {loading ? s.searching : (
                     <>
                       <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
-                      garage{total !== 1 ? "s" : ""} trouvé{total !== 1 ? "s" : ""}
-                      {make && <span> · Compatible <strong style={{ color: "#f97316" }}>{make} {model}</strong></span>}
-                      {sortByDist && userPos && <span style={{ color: "#00A884" }}> · triés par distance</span>}
+                      {total !== 1 ? s.garagesFound : s.garageFound}
+                      {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{make} {model}</strong></span>}
+                      {sortByDist && userPos && <span style={{ color: "#00A884" }}> · {s.sortedByDist}</span>}
                     </>
                   )}
                 </p>
@@ -378,12 +381,12 @@ function SearchContent() {
             ) : displayGarages.length === 0 ? (
               <div className="bg-white rounded-2xl text-center py-20 px-8" style={{ border: "1px solid #e2e8f0" }}>
                 <div className="text-5xl mb-4">🔍</div>
-                <h3 className="text-xl font-black mb-2" style={{ color: "#0b1f3a" }}>Aucun garage trouvé</h3>
+                <h3 className="text-xl font-black mb-2" style={{ color: "#0b1f3a" }}>{s.noGarageFound}</h3>
                 <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-                  Essayez de modifier vos filtres ou d'élargir votre zone de recherche.
+                  {s.noGarageFoundSub}
                 </p>
                 <button onClick={clearAll} className="btn-primary px-8 py-3">
-                  Voir tous les garages
+                  {s.seeAll}
                 </button>
               </div>
             ) : (
@@ -408,7 +411,7 @@ function SearchContent() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto p-5">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-black" style={{ color: "#0b1f3a" }}>Filtres</h2>
+              <h2 className="text-lg font-black" style={{ color: "#0b1f3a" }}>{s.filters}</h2>
               <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl" style={{ background: "#f8fafc" }}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#475569" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
@@ -417,40 +420,40 @@ function SearchContent() {
             </div>
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>PRESTATION</label>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
                 <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+                  <option value="">{s.allServices}</option>
+                  {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>VILLE</label>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.cityLabel}</label>
                 <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
-                  <option value="">Toutes</option>
+                  <option value="">{s.allCities}</option>
                   {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={walkInOnly} onChange={(e) => setWalkInOnly(e.target.checked)} className="w-4 h-4" style={{ accentColor: "#f97316" }} />
-                  <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>Sans rendez-vous seulement</span>
+                  <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>{s.walkInOnly}</span>
                 </label>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>NOTE MINIMALE</label>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.minRating}</label>
                 <div className="flex gap-2">
                   {["", "3", "4", "4.5"].map((r) => (
                     <button key={r} onClick={() => setMinRating(r)}
                       className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all"
                       style={minRating === r ? { background: "#f97316", color: "white", borderColor: "#f97316" } : { color: "#475569", borderColor: "#e2e8f0" }}>
-                      {r ? `${r}★` : "Tous"}
+                      {r ? `${r}★` : s.all}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
-                <button onClick={clearAll} className="btn-outline flex-1 py-3">Effacer</button>
-                <button onClick={applyFilters} className="btn-primary flex-1 py-3">Appliquer</button>
+                <button onClick={clearAll} className="btn-outline flex-1 py-3">{s.clearAll}</button>
+                <button onClick={applyFilters} className="btn-primary flex-1 py-3">{s.apply}</button>
               </div>
             </div>
           </div>
@@ -477,3 +480,4 @@ export default function RechercherPage() {
     </Suspense>
   );
 }
+

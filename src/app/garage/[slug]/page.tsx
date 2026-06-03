@@ -9,6 +9,7 @@ import StarRating from "@/components/StarRating";
 import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
+import { useLang } from "@/contexts/LanguageContext";
 
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
@@ -30,6 +31,8 @@ export default function GarageProfilePage() {
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
   const router = useRouter();
+  const { t } = useLang();
+  const g = t.garage;
   const [garage, setGarage]     = useState<any>(null);
   const [loading, setLoading]   = useState(true);
   const [isFav, setIsFav]       = useState(false);
@@ -117,8 +120,8 @@ export default function GarageProfilePage() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-20 text-center">
         <div className="text-5xl mb-4">🔧</div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Garage introuvable</h1>
-        <Link href="/rechercher" className="hover:underline" style={{ color: "#f97316" }}>← Retour à la recherche</Link>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{g.notFound}</h1>
+        <Link href="/rechercher" className="hover:underline" style={{ color: "#f97316" }}>{g.backToSearch}</Link>
       </div>
     );
   }
@@ -146,7 +149,7 @@ export default function GarageProfilePage() {
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Retour
+        {g.back}
       </button>
 
       {/* Header */}
@@ -225,7 +228,7 @@ export default function GarageProfilePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {garage.subscriptionStatus === "TRIAL" && (
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">Période d'essai</span>
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">{g.trial}</span>
                   )}
                   {session?.user && (
                     <button
@@ -237,7 +240,7 @@ export default function GarageProfilePage() {
                         ? { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }
                         : { background: "#fff", borderColor: "#e5e7eb", color: "#6b7280" }}
                     >
-                      {isFav ? "♥ Favori" : "♡ Favori"}
+                      {isFav ? `♥ ${g.favourite}` : `♡ ${g.favourite}`}
                     </button>
                   )}
                 </div>
@@ -253,10 +256,10 @@ export default function GarageProfilePage() {
                 return <span className="text-yellow-400 text-lg">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>;
               })()}
               <span className="font-bold text-gray-900">{garage.avgRating ?? 0}</span>
-              <span className="text-gray-500 text-sm">({garage.reviewCount ?? 0} avis)</span>
+              <span className="text-gray-500 text-sm">({garage.reviewCount ?? 0} {g.reviewsCount})</span>
             </div>
-            {garage.acceptsWalkIn && <span className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium">Sans rendez-vous</span>}
-            {garage.appointmentOnly && <span className="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-medium">Sur rendez-vous</span>}
+            {garage.acceptsWalkIn && <span className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium">{g.walkIn}</span>}
+            {garage.appointmentOnly && <span className="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-medium">{g.byAppt}</span>}
           </div>
 
           {/* Contact */}
@@ -279,7 +282,7 @@ export default function GarageProfilePage() {
           {/* Description */}
           {garage.description && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-3">À propos</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-3">{g.about}</h2>
               <p className="text-gray-600 leading-relaxed">{garage.description}</p>
             </div>
           )}
@@ -287,7 +290,7 @@ export default function GarageProfilePage() {
           {/* Services */}
           {Object.keys(servicesByCategory).length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-4">Services offerts</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-4">{g.servicesOffered}</h2>
               <div className="space-y-4">
                 {Object.entries(servicesByCategory).map(([cat, svcs]: [string, any]) => (
                   <div key={cat}>
@@ -318,10 +321,10 @@ export default function GarageProfilePage() {
           {/* Brands */}
           {acceptedBrands.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-4">Marques de véhicules</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-4">{g.vehicleBrands}</h2>
               {acceptedBrands.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-sm font-semibold text-green-700 mb-2">✓ Acceptées</p>
+                  <p className="text-sm font-semibold text-green-700 mb-2">{g.accepted}</p>
                   <div className="flex flex-wrap gap-2">
                     {acceptedBrands.map((b: any) => (
                       <span key={b.brand} className="text-sm bg-green-50 text-green-800 border border-green-200 px-3 py-1 rounded-full">{b.brand}</span>
@@ -331,7 +334,7 @@ export default function GarageProfilePage() {
               )}
               {refusedBrands.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-red-600 mb-2">✗ Non acceptées</p>
+                  <p className="text-sm font-semibold text-red-600 mb-2">{g.refused}</p>
                   <div className="flex flex-wrap gap-2">
                     {refusedBrands.map((b: any) => (
                       <span key={b.brand} className="text-sm bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-full">{b.brand}</span>
@@ -345,18 +348,18 @@ export default function GarageProfilePage() {
           {/* Reviews */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-bold text-gray-900 text-lg">Avis clients ({garage.reviewCount ?? 0})</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{g.reviews} ({garage.reviewCount ?? 0})</h2>
               {session && (
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
                   className="text-sm text-white px-4 py-2 rounded-xl transition-colors font-medium" style={{ background: "#f97316" }}
                 >
-                  ✍️ Laisser un avis
+                  {g.leaveReview}
                 </button>
               )}
               {!session && (
                 <Link href="/connexion" className="text-sm hover:underline" style={{ color: "#f97316" }}>
-                  Connectez-vous pour laisser un avis
+                  {g.signInToReview}
                 </Link>
               )}
             </div>
@@ -364,52 +367,52 @@ export default function GarageProfilePage() {
             {showReviewForm && (
               <form onSubmit={submitReview} className="rounded-xl p-4 mb-5 space-y-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Note</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{g.ratingLabel}</label>
                   <StarRating value={reviewRating} onChange={setReviewRating} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Service utilisé</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{g.serviceUsed}</label>
                   <select
                     className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     value={reviewService}
                     onChange={(e) => setReviewService(e.target.value)}
                   >
-                    <option value="">Choisir un service</option>
-                    {SERVICE_CATEGORIES.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                    <option value="">{g.chooseService}</option>
+                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.name}>{sc.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Titre</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{g.titleLabel}</label>
                   <input
                     type="text"
                     className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
-                    placeholder="Résumé de votre expérience"
+                    placeholder={g.titlePlaceholder}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Commentaire</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{g.commentLabel}</label>
                   <textarea
                     className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm min-h-[80px]"
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="Décrivez votre expérience..."
+                    placeholder={g.commentPlaceholder}
                   />
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" disabled={submitting} className="text-white px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-                    {submitting ? "Envoi..." : "Publier mon avis"}
+                    {submitting ? g.submitting : g.submitReview}
                   </button>
                   <button type="button" onClick={() => setShowReviewForm(false)} className="border border-gray-300 px-5 py-2 rounded-lg text-sm hover:bg-gray-50">
-                    Annuler
+                    {t.common.cancel}
                   </button>
                 </div>
               </form>
             )}
 
             {garage.reviews?.length === 0 ? (
-              <p className="text-gray-500 text-sm">Aucun avis pour l'instant. Soyez le premier!</p>
+              <p className="text-gray-500 text-sm">{g.noReviews}</p>
             ) : (
               <div className="space-y-4">
                 {garage.reviews?.map((review: any) => (
@@ -435,13 +438,13 @@ export default function GarageProfilePage() {
           {/* Horaires */}
           {garage.availability?.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h3 className="font-bold text-gray-900 mb-3">🕐 Horaires</h3>
+              <h3 className="font-bold text-gray-900 mb-3">{g.hoursTitle}</h3>
               <div className="space-y-1.5">
                 {garage.availability.map((a: any) => (
                   <div key={a.dayOfWeek} className="flex justify-between text-sm">
                     <span className="text-gray-600 font-medium">{getDayName(a.dayOfWeek)}</span>
                     {a.isClosed ? (
-                      <span className="text-red-500">Fermé</span>
+                      <span className="text-red-500">{g.closed}</span>
                     ) : (
                       <span className="text-gray-900">{a.openTime} – {a.closeTime}</span>
                     )}
@@ -453,23 +456,23 @@ export default function GarageProfilePage() {
 
           {/* Infos */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <h3 className="font-bold text-gray-900 mb-3">ℹ️ Informations</h3>
+            <h3 className="font-bold text-gray-900 mb-3">{g.infoTitle}</h3>
             <div className="space-y-2 text-sm">
               {garage.yearFounded && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Fondé en</span>
+                  <span className="text-gray-500">{g.founded}</span>
                   <span className="font-medium text-gray-900">{garage.yearFounded}</span>
                 </div>
               )}
               {garage.employeeCount && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Employés</span>
+                  <span className="text-gray-500">{g.employees}</span>
                   <span className="font-medium text-gray-900">{garage.employeeCount}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-500">Sans rendez-vous</span>
-                <span className="font-medium text-gray-900">{garage.acceptsWalkIn ? "Oui ✓" : "Non"}</span>
+                <span className="text-gray-500">{g.walkIn}</span>
+                <span className="font-medium text-gray-900">{garage.acceptsWalkIn ? g.walkInYes : g.walkInNo}</span>
               </div>
               {garage.languages && (() => {
                 try {
@@ -479,7 +482,7 @@ export default function GarageProfilePage() {
                   if (!Array.isArray(langs) || langs.length === 0) return null;
                   return (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Langues</span>
+                      <span className="text-gray-500">{g.languages}</span>
                       <span className="font-medium text-gray-900">
                         {langs.map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
                       </span>
