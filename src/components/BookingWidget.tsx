@@ -36,12 +36,14 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [closedDay, setClosedDay] = useState(false);
 
-  const [name, setName]           = useState(session?.user?.name ?? "");
+  const [name, setName]           = useState("");
   const [phone, setPhone]         = useState("");
-  const [email, setEmail]         = useState(session?.user?.email ?? "");
+  const [email, setEmail]         = useState("");
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
+  const [userVehicles, setUserVehicles] = useState<{ id: string; year: number; make: string; model: string; isDefault: boolean }[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState("");
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
@@ -52,10 +54,27 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     setCalMonth(d);
   }, []);
 
-  // Update name/email when session loads
+  // Fetch user profile (name, email, phone, vehicles) when authenticated
   useEffect(() => {
-    if (session?.user?.name && !name)  setName(session.user.name);
-    if (session?.user?.email && !email) setEmail(session.user.email);
+    if (!session?.user) return;
+    fetch("/api/user/profile")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        if (data.name)  setName(data.name);
+        if (data.email) setEmail(data.email);
+        if (data.phone) setPhone(data.phone);
+        if (Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+          setUserVehicles(data.vehicles);
+          // Pre-select default vehicle (or first one)
+          const def = data.vehicles.find((v: any) => v.isDefault) ?? data.vehicles[0];
+          setSelectedVehicleId(def.id);
+          setVehicleYear(String(def.year));
+          setVehicleMake(def.make);
+          setVehicleModel(def.model);
+        }
+      })
+      .catch(() => {});
   }, [session]);
 
   // Fetch slots when date changes
@@ -385,26 +404,50 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
-              <input className={inputCls} type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="514 555-0100" />
+              <input className={inputCls} type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(514) 555-0100" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel</label>
               <input className={inputCls} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jean@exemple.com" />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+
+            {/* Véhicule — dropdown si l'utilisateur en a, sinon champs libres */}
+            {userVehicles.length > 0 ? (
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Année</label>
-                <input className={inputCls} value={vehicleYear} onChange={e=>setVehicleYear(e.target.value)} placeholder="2020" maxLength={4} />
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Véhicule</label>
+                <select
+                  className={inputCls}
+                  value={selectedVehicleId}
+                  onChange={e => {
+                    const id = e.target.value;
+                    setSelectedVehicleId(id);
+                    if (!id) { setVehicleYear(""); setVehicleMake(""); setVehicleModel(""); return; }
+                    const v = userVehicles.find(v => v.id === id);
+                    if (v) { setVehicleYear(String(v.year)); setVehicleMake(v.make); setVehicleModel(v.model); }
+                  }}
+                >
+                  <option value="">— Aucun véhicule —</option>
+                  {userVehicles.map(v => (
+                    <option key={v.id} value={v.id}>{v.year} {v.make} {v.model}</option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
-                <input className={inputCls} value={vehicleMake} onChange={e=>setVehicleMake(e.target.value)} placeholder="Toyota" />
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Année</label>
+                  <input className={inputCls} value={vehicleYear} onChange={e=>setVehicleYear(e.target.value)} placeholder="2020" maxLength={4} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                  <input className={inputCls} value={vehicleMake} onChange={e=>setVehicleMake(e.target.value)} placeholder="Toyota" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                  <input className={inputCls} value={vehicleModel} onChange={e=>setVehicleModel(e.target.value)} placeholder="Camry" />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
-                <input className={inputCls} value={vehicleModel} onChange={e=>setVehicleModel(e.target.value)} placeholder="Camry" />
-              </div>
-            </div>
+            )}
 
             {error && (
               <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
