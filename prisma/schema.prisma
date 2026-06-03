@@ -314,8 +314,9 @@ model Appointment {
   // Gestion
   status        String  @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
   source        String  @default("ONLINE")  // ONLINE | MANUAL
-  notes         String?
-  reminderSent  Boolean @default(false)
+  notes          String?
+  completionNote String? // Note du garage au client quand véhicule terminé
+  reminderSent   Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

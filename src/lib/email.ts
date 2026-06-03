@@ -171,6 +171,50 @@ export async function sendGarageNewAppointment(params: {
   });
 }
 
+// ── Véhicule prêt ─────────────────────────────────────────────────────────────
+
+export async function sendVehicleReady(params: {
+  to:            string;
+  customerName:  string;
+  garageName:    string;
+  garageAddress: string;
+  garagePhone:   string;
+  completionNote?: string | null;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const noteBlock = params.completionNote ? `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.05em">Note du garage</p>
+      <p style="margin:0;font-size:14px;color:#166534;line-height:1.6">${params.completionNote}</p>
+    </div>
+  ` : "";
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre véhicule est prêt ! 🎉</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre véhicule est prêt à être récupéré.</p>
+
+    ${noteBlock}
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🏪 Garage :</strong> ${params.garageName}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>📍 Adresse :</strong> ${params.garageAddress}</p>
+        <p style="margin:0;font-size:14px"><strong>📞 Téléphone :</strong> <a href="tel:${params.garagePhone}" style="color:#f97316">${params.garagePhone}</a></p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      params.to,
+    subject: `✅ Votre véhicule est prêt — ${params.garageName}`,
+    html:    baseLayout(body),
+  });
+}
+
 // ── Reminder email (24h before) ───────────────────────────────────────────────
 
 export async function sendBookingReminder(params: {

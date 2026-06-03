@@ -7,7 +7,22 @@ import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
 
-type Tab = "vehicules" | "favoris" | "rappels";
+type Tab = "rdv" | "vehicules" | "favoris" | "rappels";
+
+interface ClientAppt {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  source: string;
+  serviceName?: string;
+  vehicleYear?: number;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  completionNote?: string;
+  garage: { name: string; address: string; city: string; phone: string; slug: string };
+}
 
 const PRESET_REMINDERS = [
   "Vidange d'huile", "Pneus d'hiver", "Pneus d'été", "Freins",
@@ -26,7 +41,17 @@ export default function DashboardConducteurPage() {
   const router = useRouter();
   const { t } = useLang();
   const d = t.driver;
-  const [tab, setTab] = useState<Tab>("vehicules");
+  const [tab, setTab] = useState<Tab>("rdv");
+
+  // ── Appointments ──────────────────────────────────────────────────────────
+  const [appts,       setAppts]       = useState<ClientAppt[]>([]);
+  const [apptsLoaded, setApptsLoaded] = useState(false);
+  const [rescheduleId,   setRescheduleId]   = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleStart,setRescheduleStart]= useState("");
+  const [rescheduleEnd,  setRescheduleEnd]  = useState("");
+  const [rescheduling,   setRescheduling]   = useState(false);
+  const [rescheduleErr,  setRescheduleErr]  = useState("");
 
   // ── Vehicles ──────────────────────────────────────────────────────────────
   const [vehicles, setVehicles]       = useState<any[]>([]);
@@ -58,6 +83,7 @@ export default function DashboardConducteurPage() {
     if (status === "unauthenticated") router.push("/connexion");
     if (status === "authenticated") {
       fetch("/api/vehicles").then(r => r.json()).then(d => { if (Array.isArray(d)) setVehicles(d); });
+      fetch("/api/appointments").then(r => r.json()).then(d => { if (Array.isArray(d)) { setAppts(d); setApptsLoaded(true); } });
     }
   }, [status, router]);
 
@@ -69,6 +95,48 @@ export default function DashboardConducteurPage() {
       fetch("/api/reminders").then(r => r.json()).then(d => { setReminders(Array.isArray(d) ? d : []); setRemindersLoaded(true); });
     }
   }, [tab, status, favsLoaded, remindersLoaded]);
+
+  function canModify(appt: ClientAppt) {
+    if (appt.source !== "ONLINE") return false;
+    if (appt.status === "CANCELLED" || appt.status === "COMPLETED") return false;
+    const dt = new Date(`${appt.date}T${appt.startTime}:00`);
+    return (dt.getTime() - Date.now()) > 24 * 3600 * 1000;
+  }
+
+  function openReschedule(appt: ClientAppt) {
+    setRescheduleId(appt.id);
+    setRescheduleDate(appt.date);
+    setRescheduleStart(appt.startTime);
+    setRescheduleEnd(appt.endTime);
+    setRescheduleErr("");
+  }
+
+  async function submitReschedule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rescheduleId) return;
+    setRescheduling(true); setRescheduleErr("");
+    try {
+      const res = await fetch(`/api/appointments/${rescheduleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: rescheduleDate, startTime: rescheduleStart, endTime: rescheduleEnd }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setRescheduleErr(data.error ?? "Erreur"); return; }
+      setAppts(prev => prev.map(a => a.id === rescheduleId ? { ...a, date: rescheduleDate, startTime: rescheduleStart, endTime: rescheduleEnd } : a));
+      setRescheduleId(null);
+    } finally { setRescheduling(false); }
+  }
+
+  async function cancelAppt(id: string) {
+    if (!confirm("Confirmer l'annulation de ce rendez-vous ?")) return;
+    const res = await fetch(`/api/appointments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    });
+    if (res.ok) setAppts(prev => prev.map(a => a.id === id ? { ...a, status: "CANCELLED" } : a));
+  }
 
   async function addVehicle(e: React.FormEvent) {
     e.preventDefault();
@@ -134,8 +202,9 @@ export default function DashboardConducteurPage() {
         <div className="md:col-span-2 space-y-4">
 
           {/* Tabs */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {([
+              { id: "rdv",       label: "📅 Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : "") },
               { id: "vehicules", label: d.vehicles },
               { id: "favoris",   label: d.favorites },
               { id: "rappels",   label: d.reminders + (pending.length ? ` (${pending.length})` : "") },
@@ -150,6 +219,138 @@ export default function DashboardConducteurPage() {
               </button>
             ))}
           </div>
+
+          {/* ── Rendez-vous ── */}
+          {tab === "rdv" && (() => {
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10);
+            const upcoming  = appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr);
+            const active    = appts.filter(a => a.status === "CONFIRMED" && a.date === todayStr);
+            const past      = appts.filter(a => a.status === "COMPLETED" || (a.date < todayStr && a.status !== "CANCELLED"));
+            const cancelled = appts.filter(a => a.status === "CANCELLED");
+
+            const statusBadge: Record<string, { label: string; color: string; bg: string }> = {
+              PENDING:   { label: "En attente",  color: "#d97706", bg: "#fffbeb" },
+              CONFIRMED: { label: "Confirmé",    color: "#2563eb", bg: "#eff6ff" },
+              COMPLETED: { label: "Terminé",     color: "#16a34a", bg: "#f0fdf4" },
+              CANCELLED: { label: "Annulé",      color: "#dc2626", bg: "#fef2f2" },
+            };
+
+            function ApptRow({ appt }: { appt: ClientAppt }) {
+              const s = statusBadge[appt.status] ?? statusBadge.PENDING;
+              const modifiable = canModify(appt);
+              return (
+                <div className="border border-gray-200 rounded-xl p-4 space-y-2 bg-white">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm">{appt.garage.name}</p>
+                      <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
+                      {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">🔧 {appt.serviceName}</p>}
+                      {(appt.vehicleMake || appt.vehicleYear) && (
+                        <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
+                      )}
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
+                  </div>
+                  {appt.completionNote && (
+                    <div className="rounded-lg px-3 py-2.5 text-xs" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" }}>
+                      <p className="font-semibold mb-1">📋 Note du garage</p>
+                      <p className="leading-relaxed">{appt.completionNote}</p>
+                    </div>
+                  )}
+                  {!modifiable && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
+                    <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
+                      ⚠️ Pour modifier, appelez le garage : <a href={`tel:${appt.garage.phone}`} className="font-semibold underline">{appt.garage.phone}</a>
+                    </p>
+                  )}
+                  {modifiable && (
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => openReschedule(appt)}
+                        className="text-xs px-3 py-2 rounded-lg font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                      >✏️ Modifier</button>
+                      <button
+                        onClick={() => cancelAppt(appt.id)}
+                        className="text-xs px-3 py-2 rounded-lg font-semibold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                      >✕ Annuler</button>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {!apptsLoaded ? (
+                  <p className="text-gray-400 text-sm text-center py-8">{t.common.loading}</p>
+                ) : appts.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+                    <div className="text-4xl mb-3">📅</div>
+                    <p className="font-bold text-gray-700 mb-1">Aucun rendez-vous</p>
+                    <p className="text-sm text-gray-400 mb-4">Vos réservations en ligne apparaîtront ici.</p>
+                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>Trouver un garage →</Link>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-5">
+                    {upcoming.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">À venir ({upcoming.length})</p>
+                        <div className="space-y-3">{upcoming.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                      </div>
+                    )}
+                    {active.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3">Aujourd'hui</p>
+                        <div className="space-y-3">{active.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                      </div>
+                    )}
+                    {past.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Passés</p>
+                        <div className="space-y-3">{past.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                      </div>
+                    )}
+                    {cancelled.length > 0 && (
+                      <div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Annulés</p>
+                        <div className="space-y-3 opacity-60">{cancelled.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Modal modifier RDV */}
+                {rescheduleId && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+                      <h3 className="font-black text-gray-900 text-lg mb-4">✏️ Modifier le rendez-vous</h3>
+                      <form onSubmit={submitReschedule} className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">Nouvelle date</label>
+                          <input type="date" required className={inputClass} value={rescheduleDate} min={new Date(Date.now() + 25*3600000).toISOString().slice(0,10)} onChange={e => setRescheduleDate(e.target.value)} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Heure début</label>
+                            <input type="time" required className={inputClass} value={rescheduleStart} onChange={e => setRescheduleStart(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Heure fin</label>
+                            <input type="time" required className={inputClass} value={rescheduleEnd} onChange={e => setRescheduleEnd(e.target.value)} />
+                          </div>
+                        </div>
+                        {rescheduleErr && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{rescheduleErr}</p>}
+                        <div className="flex gap-2 pt-1">
+                          <button type="button" onClick={() => setRescheduleId(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">Annuler</button>
+                          <button type="submit" disabled={rescheduling} className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ background: "#f97316" }}>{rescheduling ? "…" : "Confirmer"}</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── Véhicules ── */}
           {tab === "vehicules" && (

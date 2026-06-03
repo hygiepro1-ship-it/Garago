@@ -95,6 +95,11 @@ export default function AgendaPage() {
   const [saving,       setSaving]       = useState(false);
   const [actionId,     setActionId]     = useState<string | null>(null);
 
+  // Completion modal
+  const [completeAppt,   setCompleteAppt]   = useState<Appointment | null>(null);
+  const [completeNote,   setCompleteNote]   = useState("");
+  const [completing,     setCompleting]     = useState(false);
+
   // Reprogrammation
   const [rescheduleAppt, setRescheduleAppt] = useState<Appointment | null>(null);
   const [newDate,        setNewDate]        = useState("");
@@ -133,6 +138,33 @@ export default function AgendaPage() {
   function navigate(delta: number) {
     setExpandedId(null);
     setSelectedDate(prev => addDays(prev, delta));
+  }
+
+  function openComplete(appt: Appointment) {
+    setCompleteAppt(appt);
+    setCompleteNote("");
+  }
+
+  async function submitComplete(e: React.FormEvent) {
+    e.preventDefault();
+    if (!completeAppt) return;
+    setCompleting(true);
+    try {
+      const res = await fetch(`/api/appointments/${completeAppt.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "COMPLETED", completionNote: completeNote || null }),
+      });
+      if (res.ok) {
+        setAppointments(prev =>
+          prev.map(ap => ap.id === completeAppt.id ? { ...ap, status: "COMPLETED" } : ap)
+        );
+        setCompleteAppt(null);
+        setExpandedId(null);
+      }
+    } finally {
+      setCompleting(false);
+    }
   }
 
   function openReschedule(appt: Appointment) {
@@ -345,6 +377,7 @@ export default function AgendaPage() {
                   onToggle={() => setExpandedId(expandedId === ap.id ? null : ap.id)}
                   onStatus={changeStatus}
                   onReschedule={openReschedule}
+                  onComplete={openComplete}
                   actionId={actionId}
                   a={a}
                 />
@@ -394,6 +427,69 @@ export default function AgendaPage() {
             {a.newAppt}
           </button>
         </div>
+
+        {/* ── Modal terminer RDV ──────────────────────────────────────────── */}
+        {completeAppt && (
+          <div className="fixed inset-0 z-40 flex flex-col justify-end">
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+              onClick={() => setCompleteAppt(null)}
+            />
+            <div
+              className="relative bg-white rounded-t-3xl"
+              style={{
+                maxHeight: "80dvh", overflowY: "auto",
+                boxShadow: "0 -4px 40px rgba(0,0,0,0.2)",
+                paddingBottom: "env(safe-area-inset-bottom)",
+              }}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 bg-gray-200 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div>
+                  <h2 className="font-black text-gray-900 text-lg">✅ Terminer le rendez-vous</h2>
+                  <p className="text-xs text-gray-400">{completeAppt.customerName} · {completeAppt.startTime}</p>
+                </div>
+                <button
+                  onClick={() => setCompleteAppt(null)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg font-bold"
+                  style={{ touchAction: "manipulation" }}
+                >×</button>
+              </div>
+              <form onSubmit={submitComplete} className="px-5 py-5 space-y-4 pb-6">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                    Note pour le client <span className="text-gray-300 font-normal normal-case">(optionnel)</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    style={inputStyle}
+                    placeholder="Ex : Vidange complétée, huile 5W-30. Les plaquettes avant seront à remplacer d'ici 6 mois."
+                    value={completeNote}
+                    onChange={e => setCompleteNote(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Cette note sera envoyée par courriel au client avec l'adresse du garage.</p>
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setCompleteAppt(null)}
+                    className="flex-1 py-3.5 rounded-2xl font-bold text-gray-600 border border-gray-200 bg-gray-50"
+                    style={{ touchAction: "manipulation" }}
+                  >Annuler</button>
+                  <button
+                    type="submit"
+                    disabled={completing}
+                    className="flex-1 py-3.5 rounded-2xl font-black text-white active:scale-95 transition-transform disabled:opacity-60"
+                    style={{ backgroundColor: "#16a34a", touchAction: "manipulation" }}
+                  >{completing ? "…" : "✅ Confirmer"}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* ── Modal reprogrammation ───────────────────────────────────────── */}
         {rescheduleAppt && (
@@ -646,13 +742,14 @@ export default function AgendaPage() {
 // ── Carte RDV ─────────────────────────────────────────────────────────────────
 
 function ApptCard({
-  appt, expanded, onToggle, onStatus, onReschedule, actionId, a,
+  appt, expanded, onToggle, onStatus, onReschedule, onComplete, actionId, a,
 }: {
   appt: Appointment;
   expanded: boolean;
   onToggle: () => void;
   onStatus: (id: string, s: string) => Promise<void>;
   onReschedule: (appt: Appointment) => void;
+  onComplete: (appt: Appointment) => void;
   actionId: string | null;
   a: ReturnType<typeof useLang>["t"]["agenda"];
 }) {
@@ -773,10 +870,10 @@ function ApptCard({
               )}
               {(appt.status === "PENDING" || appt.status === "CONFIRMED") && (
                 <TapBtn
-                  label={a.complete}
+                  label="✅ Terminer"
                   bg="#16a34a" active="#15803d"
-                  loading={actionId === appt.id + "COMPLETED"}
-                  onClick={() => onStatus(appt.id, "COMPLETED")}
+                  loading={false}
+                  onClick={() => onComplete(appt)}
                 />
               )}
               {appt.status !== "COMPLETED" && (

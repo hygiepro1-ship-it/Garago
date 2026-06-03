@@ -4,6 +4,21 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 
+// GET /api/appointments — liste des RDV du client connecté
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  const userId = (session.user as any)?.id;
+  const appts = await prisma.appointment.findMany({
+    where:   { userId },
+    include: { garage: { select: { name: true, address: true, city: true, phone: true, slug: true } } },
+    orderBy: [{ date: "desc" }, { startTime: "desc" }],
+  });
+
+  return NextResponse.json(appts);
+}
+
 // POST /api/appointments — client booking (online)
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
