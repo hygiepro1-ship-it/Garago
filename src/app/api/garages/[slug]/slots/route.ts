@@ -8,7 +8,8 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const date = req.nextUrl.searchParams.get("date");
+  const date      = req.nextUrl.searchParams.get("date");
+  const excludeId = req.nextUrl.searchParams.get("excludeId"); // RDV en cours de déplacement
   if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });
 
   const garage = await prisma.garage.findUnique({
@@ -29,12 +30,13 @@ export async function GET(
   // Generate 30-min slots between openTime and closeTime
   const slots = generateSlots(avail.openTime, avail.closeTime, 60);
 
-  // Fetch already-booked slots for this date
+  // Fetch already-booked slots for this date (exclut le RDV en cours de déplacement)
   const booked = await prisma.appointment.findMany({
     where: {
       garageId: garage.id,
       date,
       status: { not: "CANCELLED" },
+      ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: { startTime: true },
   });

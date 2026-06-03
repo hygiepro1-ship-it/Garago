@@ -46,12 +46,14 @@ export default function DashboardConducteurPage() {
   // ── Appointments ──────────────────────────────────────────────────────────
   const [appts,       setAppts]       = useState<ClientAppt[]>([]);
   const [apptsLoaded, setApptsLoaded] = useState(false);
-  const [rescheduleId,   setRescheduleId]   = useState<string | null>(null);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleStart,setRescheduleStart]= useState("");
-  const [rescheduleEnd,  setRescheduleEnd]  = useState("");
-  const [rescheduling,   setRescheduling]   = useState(false);
-  const [rescheduleErr,  setRescheduleErr]  = useState("");
+  const [rescheduleAppt,  setRescheduleAppt]  = useState<ClientAppt | null>(null);
+  const [rescheduleDate,  setRescheduleDate]  = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<string[]>([]);
+  const [slotsLoading,    setSlotsLoading]    = useState(false);
+  const [slotsClosed,     setSlotsClosed]     = useState(false);
+  const [rescheduleSlot,  setRescheduleSlot]  = useState("");
+  const [rescheduling,    setRescheduling]    = useState(false);
+  const [rescheduleErr,   setRescheduleErr]   = useState("");
 
   // ── Vehicles ──────────────────────────────────────────────────────────────
   const [vehicles, setVehicles]       = useState<any[]>([]);
@@ -119,27 +121,42 @@ export default function DashboardConducteurPage() {
   }
 
   function openReschedule(appt: ClientAppt) {
-    setRescheduleId(appt.id);
-    setRescheduleDate(appt.date);
-    setRescheduleStart(appt.startTime);
-    setRescheduleEnd(appt.endTime);
+    setRescheduleAppt(appt);
+    setRescheduleDate("");
+    setRescheduleSlots([]);
+    setRescheduleSlot("");
+    setSlotsClosed(false);
     setRescheduleErr("");
+  }
+
+  async function fetchSlots(date: string) {
+    if (!rescheduleAppt) return;
+    setSlotsLoading(true); setRescheduleSlots([]); setRescheduleSlot(""); setSlotsClosed(false);
+    const res = await fetch(`/api/garages/${rescheduleAppt.garage.slug}/slots?date=${date}&excludeId=${rescheduleAppt.id}`);
+    const data = await res.json();
+    if (data.closed) { setSlotsClosed(true); }
+    else { setRescheduleSlots(data.slots ?? []); }
+    setSlotsLoading(false);
   }
 
   async function submitReschedule(e: React.FormEvent) {
     e.preventDefault();
-    if (!rescheduleId) return;
+    if (!rescheduleAppt || !rescheduleSlot) return;
     setRescheduling(true); setRescheduleErr("");
+    // Calcule endTime (+60 min)
+    const [h, m] = rescheduleSlot.split(":").map(Number);
+    const endMin = h * 60 + m + 60;
+    const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
     try {
-      const res = await fetch(`/api/appointments/${rescheduleId}`, {
+      const res = await fetch(`/api/appointments/${rescheduleAppt.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: rescheduleDate, startTime: rescheduleStart, endTime: rescheduleEnd }),
+        body: JSON.stringify({ date: rescheduleDate, startTime: rescheduleSlot, endTime }),
       });
       const data = await res.json();
       if (!res.ok) { setRescheduleErr(data.error ?? "Erreur"); return; }
-      setAppts(prev => prev.map(a => a.id === rescheduleId ? { ...a, date: rescheduleDate, startTime: rescheduleStart, endTime: rescheduleEnd } : a));
-      setRescheduleId(null);
+      setAppts(prev => prev.map(a => a.id === rescheduleAppt.id ? { ...a, date: rescheduleDate, startTime: rescheduleSlot, endTime } : a));
+      setRescheduleAppt(null);
     } finally { setRescheduling(false); }
   }
 
@@ -349,30 +366,74 @@ export default function DashboardConducteurPage() {
                   </div>
                 )}
 
-                {/* Modal modifier RDV */}
-                {rescheduleId && (
+                {/* Modal modifier RDV — créneaux disponibles */}
+                {rescheduleAppt && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
-                      <h3 className="font-black text-gray-900 text-lg mb-4">✏️ Modifier le rendez-vous</h3>
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                      <h3 className="font-black text-gray-900 text-lg mb-1">✏️ Modifier le rendez-vous</h3>
+                      <p className="text-xs text-gray-400 mb-4">{rescheduleAppt.garage.name}</p>
                       <form onSubmit={submitReschedule} className="space-y-4">
+                        {/* Sélection de la date */}
                         <div>
                           <label className="block text-xs font-semibold text-gray-500 mb-1">Nouvelle date</label>
-                          <input type="date" required className={inputClass} value={rescheduleDate} min={new Date(Date.now() + 25*3600000).toISOString().slice(0,10)} onChange={e => setRescheduleDate(e.target.value)} />
+                          <input
+                            type="date"
+                            required
+                            className={inputClass}
+                            value={rescheduleDate}
+                            min={new Date(Date.now() + 25 * 3600000).toISOString().slice(0, 10)}
+                            onChange={e => {
+                              setRescheduleDate(e.target.value);
+                              if (e.target.value) fetchSlots(e.target.value);
+                            }}
+                          />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+
+                        {/* Créneaux disponibles */}
+                        {rescheduleDate && (
                           <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Heure début</label>
-                            <input type="time" required className={inputClass} value={rescheduleStart} onChange={e => setRescheduleStart(e.target.value)} />
+                            <label className="block text-xs font-semibold text-gray-500 mb-2">Choisir un créneau</label>
+                            {slotsLoading ? (
+                              <p className="text-xs text-gray-400 text-center py-3">Chargement des créneaux…</p>
+                            ) : slotsClosed ? (
+                              <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                                🚫 Le garage est fermé ce jour-là. Choisissez une autre date.
+                              </div>
+                            ) : rescheduleSlots.length === 0 ? (
+                              <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fffbeb", color: "#92400e" }}>
+                                ⚠️ Aucun créneau disponible ce jour-là. Essayez une autre date.
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-3 gap-2">
+                                {rescheduleSlots.map(slot => (
+                                  <button
+                                    key={slot}
+                                    type="button"
+                                    onClick={() => setRescheduleSlot(slot)}
+                                    className="py-2 rounded-xl text-sm font-bold border-2 transition-all"
+                                    style={rescheduleSlot === slot
+                                      ? { borderColor: "#f97316", background: "#f97316", color: "#fff" }
+                                      : { borderColor: "#e5e7eb", background: "#fff", color: "#374151" }}
+                                  >
+                                    {slot}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Heure fin</label>
-                            <input type="time" required className={inputClass} value={rescheduleEnd} onChange={e => setRescheduleEnd(e.target.value)} />
-                          </div>
-                        </div>
+                        )}
+
                         {rescheduleErr && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{rescheduleErr}</p>}
                         <div className="flex gap-2 pt-1">
-                          <button type="button" onClick={() => setRescheduleId(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">Annuler</button>
-                          <button type="submit" disabled={rescheduling} className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-50" style={{ background: "#f97316" }}>{rescheduling ? "…" : "Confirmer"}</button>
+                          <button type="button" onClick={() => setRescheduleAppt(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">Annuler</button>
+                          <button
+                            type="submit"
+                            disabled={rescheduling || !rescheduleSlot}
+                            className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-40"
+                            style={{ background: "#f97316" }}
+                          >
+                            {rescheduling ? "…" : "Confirmer"}
+                          </button>
                         </div>
                       </form>
                     </div>
