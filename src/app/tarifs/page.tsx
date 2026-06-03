@@ -1,11 +1,20 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function TarifsPage() {
   const { t } = useLang();
   const p = t.pricing;
+
+  const [liveStats, setLiveStats] = useState<{ garages: string; reviews: string; cities: string } | null>(null);
+  useEffect(() => {
+    fetch("/api/stats/homepage")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setLiveStats({ garages: d.garages, reviews: d.reviews, cities: d.cities }); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
@@ -42,14 +51,20 @@ export default function TarifsPage() {
               {p.heroSeePlans}
             </a>
           </div>
-          <div className="flex flex-wrap justify-center gap-8 mt-10">
-            {p.heroStats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl font-black text-white">{s.value}</div>
-                <div className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+          {liveStats && (
+            <div className="flex flex-wrap justify-center gap-8 mt-10">
+              {([
+                { value: liveStats.garages, label: p.heroStatLabels[0] },
+                { value: liveStats.reviews, label: p.heroStatLabels[1] },
+                { value: liveStats.cities,  label: p.heroStatLabels[2] },
+              ]).map((s) => (
+                <div key={s.label} className="text-center">
+                  <div className="text-3xl font-black text-white">{s.value}</div>
+                  <div className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

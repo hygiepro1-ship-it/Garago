@@ -12,20 +12,27 @@ function fmtNum(n: number): string {
 }
 
 export async function GET() {
-  const [garageCount, reviewAgg] = await Promise.all([
+  const [garageCount, reviewAgg, cityRows] = await Promise.all([
     prisma.garage.count(),
     prisma.review.aggregate({
       _count: { id: true },
       _avg:   { rating: true },
     }),
+    prisma.garage.findMany({
+      distinct: ["city"],
+      select:   { city: true },
+      where:    { city: { not: "" } },
+    }),
   ]);
 
   const totalReviews = reviewAgg._count.id;
   const avgRating    = reviewAgg._avg.rating;
+  const cityCount    = cityRows.length;
 
   return NextResponse.json({
     garages:    `${fmtNum(roundStat(garageCount))}+`,
     reviews:    `${fmtNum(roundStat(totalReviews))}+`,
     avgRating:  avgRating ? `${Number(avgRating).toFixed(1)} / 5` : "— / 5",
+    cities:     `${fmtNum(roundStat(cityCount))}+`,
   });
 }
