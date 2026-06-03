@@ -103,7 +103,6 @@ export default function Footer() {
             <span className="cursor-pointer hover:text-white transition-colors">{f.terms}</span>
             <Link href="/tarifs" className="hover:text-white transition-colors">{f.pricing}</Link>
             <Link href="/suggestions" className="hover:text-white transition-colors">💡 Suggestions</Link>
-            <span style={{ color: "#f97316" }}>{f.madeWith}</span>
           </div>
         </div>
       </div>
