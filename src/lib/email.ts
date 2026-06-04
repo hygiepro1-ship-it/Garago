@@ -256,3 +256,45 @@ export async function sendBookingReminder(params: {
     html:    baseLayout(body),
   });
 }
+
+// ── Nouvelle suggestion ───────────────────────────────────────────────────────
+
+export async function sendAdminNewSuggestion(params: {
+  content:     string;
+  authorName:  string | null;
+  authorEmail: string | null;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const from    = params.authorName  || "Anonyme";
+  const contact = params.authorEmail || "aucun courriel fourni";
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">💡 Nouvelle suggestion reçue</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un utilisateur vient de soumettre une suggestion sur Garago.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        <p style="margin:0 0 10px;font-size:14px"><strong>👤 De :</strong> ${from}</p>
+        <p style="margin:0 0 16px;font-size:14px"><strong>✉️ Contact :</strong> ${contact}</p>
+        <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #e5e7eb">
+          <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${params.content}</p>
+        </div>
+      </td></tr>
+    </table>
+
+    <a href="${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/tableau-de-bord/admin"
+       style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+      📊 Voir dans le tableau de bord admin
+    </a>
+  `;
+
+  await getResend().emails.send({
+    from,
+    to:      adminEmail,
+    subject: `💡 Nouvelle suggestion — ${from}`,
+    html:    baseLayout(body),
+  });
+}

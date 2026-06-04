@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { sendAdminNewSuggestion } from "@/lib/email";
 
 // Validate: no URLs, emails, phone numbers in suggestion content
 function validateContent(text: string): string | null {
@@ -24,6 +25,13 @@ export async function POST(req: NextRequest) {
       authorEmail: authorEmail?.trim() || null,
     },
   });
+
+  // Notification email à l'admin
+  sendAdminNewSuggestion({
+    content:     suggestion.content,
+    authorName:  suggestion.authorName,
+    authorEmail: suggestion.authorEmail,
+  }).catch(console.error);
 
   return NextResponse.json(suggestion, { status: 201 });
 }
