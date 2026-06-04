@@ -1,22 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
+
+// Simple math captcha — 2 random numbers 1–9
+function newCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
+  return { a, b, answer: String(a + b) };
+}
 
 export default function SuggestionsPage() {
   const { t } = useLang();
   const s = t.suggestions;
-  const [form, setForm]     = useState({ content: "", authorName: "", authorEmail: "" });
+  const { data: session } = useSession();
+
+  const [form, setForm]       = useState({ content: "", authorName: "", authorEmail: "", _hp: "" });
   const [sending, setSending] = useState(false);
-  const [done, setDone]     = useState(false);
-  const [error, setError]   = useState("");
+  const [done, setDone]       = useState(false);
+  const [error, setError]     = useState("");
+  const [captcha, setCaptcha] = useState(newCaptcha);
+  const [captchaVal, setCaptchaVal] = useState("");
+  const [captchaErr, setCaptchaErr] = useState(false);
+
+  // Pre-fill email from verified session
+  useEffect(() => {
+    if (session?.user?.email) {
+      setForm(f => ({ ...f, authorEmail: f.authorEmail || session.user!.email! }));
+    }
+    if (session?.user?.name) {
+      setForm(f => ({ ...f, authorName: f.authorName || session.user!.name! }));
+    }
+  }, [session]);
 
   const MAX = 2000;
+
+  function resetForm() {
+    setDone(false);
+    setForm({ content: "", authorName: session?.user?.name ?? "", authorEmail: session?.user?.email ?? "", _hp: "" });
+    setCaptcha(newCaptcha());
+    setCaptchaVal("");
+    setCaptchaErr(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setCaptchaErr(false);
+
+    // Captcha check (client-side guard)
+    if (captchaVal.trim() !== captcha.answer) {
+      setCaptchaErr(true);
+      setCaptcha(newCaptcha());
+      setCaptchaVal("");
+      return;
+    }
+
     if (!form.content.trim()) { setError(s.errorEmpty); return; }
     setSending(true);
     try {
@@ -54,7 +95,7 @@ export default function SuggestionsPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-2">{s.successTitle}</h2>
             <p className="text-gray-500 text-sm mb-6">{s.successSub}</p>
             <div className="flex justify-center gap-3">
-              <button onClick={() => { setDone(false); setForm({ content: "", authorName: "", authorEmail: "" }); }}
+              <button onClick={resetForm}
                 className="text-sm px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">
                 {s.sendAnother}
               </button>
@@ -66,6 +107,20 @@ export default function SuggestionsPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Honeypot — hidden from real users, visible to bots */}
+            <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
+              <label>Ne remplissez pas ce champ</label>
+              <input
+                type="text"
+                name="website"
+                autoComplete="off"
+                tabIndex={-1}
+                value={form._hp}
+                onChange={e => setForm(f => ({ ...f, _hp: e.target.value }))}
+              />
+            </div>
+
             {/* Content */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -98,7 +153,12 @@ export default function SuggestionsPage() {
                     onChange={e => setForm(f => ({ ...f, authorName: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">{s.emailLabel}</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    {s.emailLabel}
+                    {session?.user?.email && (
+                      <span className="ml-1 text-green-600 font-normal">✓ vérifié</span>
+                    )}
+                  </label>
                   <input type="email" maxLength={200}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-400 transition-colors"
                     placeholder={s.emailPlaceholder}
@@ -108,13 +168,38 @@ export default function SuggestionsPage() {
               </div>
             </div>
 
+            {/* Math captcha */}
+            <div className="border-t border-gray-100 pt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Vérification anti-robot <span style={{ color: "#f97316" }}>*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 font-mono font-bold text-gray-900 text-lg select-none flex-shrink-0">
+                  {captcha.a} + {captcha.b} = ?
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  required
+                  className={`w-20 border rounded-xl px-3 py-2.5 text-center text-lg font-bold focus:outline-none transition-colors ${captchaErr ? "border-red-400 bg-red-50 text-red-700" : "border-gray-200 focus:border-orange-400"}`}
+                  placeholder="?"
+                  value={captchaVal}
+                  onChange={e => { setCaptchaVal(e.target.value); setCaptchaErr(false); }}
+                />
+                {captchaErr && (
+                  <p className="text-xs text-red-600 font-medium">Réponse incorrecte — réessayez</p>
+                )}
+              </div>
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={sending || !form.content.trim()}
+            <button type="submit" disabled={sending || !form.content.trim() || !captchaVal.trim()}
               className="w-full text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity"
               style={{ background: "#f97316" }}>
               {sending ? s.sending : s.submit}

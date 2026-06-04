@@ -268,8 +268,8 @@ export async function sendAdminNewSuggestion(params: {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
 
-  const from    = params.authorName  || "Anonyme";
-  const contact = params.authorEmail || "aucun courriel fourni";
+  const authorDisplay = params.authorName  || "Anonyme";
+  const contact       = params.authorEmail || "aucun courriel fourni";
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">💡 Nouvelle suggestion reçue</h2>
@@ -277,7 +277,7 @@ export async function sendAdminNewSuggestion(params: {
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
       <tr><td>
-        <p style="margin:0 0 10px;font-size:14px"><strong>👤 De :</strong> ${from}</p>
+        <p style="margin:0 0 10px;font-size:14px"><strong>👤 De :</strong> ${authorDisplay}</p>
         <p style="margin:0 0 16px;font-size:14px"><strong>✉️ Contact :</strong> ${contact}</p>
         <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #e5e7eb">
           <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${params.content}</p>
@@ -292,9 +292,9 @@ export async function sendAdminNewSuggestion(params: {
   `;
 
   await getResend().emails.send({
-    from,
+    from:    FROM,
     to:      adminEmail,
-    subject: `💡 Nouvelle suggestion — ${from}`,
+    subject: `💡 Nouvelle suggestion — ${authorDisplay}`,
     html:    baseLayout(body),
   });
 }
