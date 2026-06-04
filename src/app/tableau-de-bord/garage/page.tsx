@@ -159,6 +159,15 @@ export default function DashboardGaragePage() {
   const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
   const [rdvLoaded, setRdvLoaded] = useState(false);
 
+  // ── Reschedule modal state ─────────────────────────────────────────────
+  const [rescheduleAppt, setRescheduleAppt] = useState<any>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<string[]>([]);
+  const [rescheduleSlot, setRescheduleSlot] = useState("");
+  const [slotsLoading, setSlotsLoading]     = useState(false);
+  const [slotsClosed, setSlotsClosed]       = useState(false);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+
   // Calendar nav
   const today = new Date();
   const [calYear, setCalYear]   = useState(today.getFullYear());
@@ -478,6 +487,44 @@ export default function DashboardGaragePage() {
   async function deleteBlockSlot(id: string) {
     const res = await fetch(`/api/blocked-slots/${id}`, { method: "DELETE" });
     if (res.ok) setBlockedSlots(prev => prev.filter(s => s.id !== id));
+  }
+
+  async function fetchGarageSlots(date: string, excludeId: string) {
+    if (!garage?.slug || !date) return;
+    setSlotsLoading(true);
+    setRescheduleSlots([]);
+    setRescheduleSlot("");
+    setSlotsClosed(false);
+    const res = await fetch(`/api/garages/${garage.slug}/slots?date=${date}&excludeId=${excludeId}`);
+    const data = await res.json();
+    setSlotsLoading(false);
+    if (data.closed) { setSlotsClosed(true); return; }
+    setRescheduleSlots(data.slots ?? []);
+  }
+
+  async function submitReschedule() {
+    if (!rescheduleAppt || !rescheduleSlot || !rescheduleDate) return;
+    setRescheduleLoading(true);
+    const [h, m] = rescheduleSlot.split(":").map(Number);
+    const totalEnd = h * 60 + m + 60;
+    const endTime = `${String(Math.floor(totalEnd / 60)).padStart(2, "0")}:${String(totalEnd % 60).padStart(2, "0")}`;
+    const res = await fetch(`/api/appointments/${rescheduleAppt.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: rescheduleDate, startTime: rescheduleSlot, endTime }),
+    });
+    if (res.ok) {
+      setAppointments(prev => prev.map(a => a.id === rescheduleAppt.id
+        ? { ...a, date: rescheduleDate, startTime: rescheduleSlot, endTime }
+        : a
+      ));
+      setSuccess("Rendez-vous déplacé ✓");
+      setTimeout(() => setSuccess(""), 3000);
+    }
+    setRescheduleAppt(null);
+    setRescheduleDate("");
+    setRescheduleSlot("");
+    setRescheduleLoading(false);
   }
 
   // ── Calendar helpers ────────────────────────────────────────────────────
@@ -906,19 +953,58 @@ export default function DashboardGaragePage() {
                     const dateObj = new Date(a.date + "T12:00:00");
                     const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
                     return (
-                      <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50">
-                        <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px]">
-                          <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
-                          <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
-                          <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
+                      <div key={a.id} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px] flex-shrink-0">
+                            <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
+                            <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
+                            <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                            {(a.vehicleMake || a.vehicleModel) && (
+                              <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
+                            )}
+                          </div>
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                            {sc.label}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                          <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-1.5 pl-[76px]">
+                          {a.status === "PENDING" && (
+                            <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold hover:bg-green-100 transition-colors">
+                              ✓ Confirmer
+                            </button>
+                          )}
+                          {a.status === "CONFIRMED" && (
+                            <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold hover:bg-purple-100 transition-colors">
+                              ✓ Terminé
+                            </button>
+                          )}
+                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
+                            <button onClick={() => {
+                              setRescheduleAppt(a);
+                              setRescheduleDate(a.date);
+                              fetchGarageSlots(a.date, a.id);
+                            }}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
+                              📅 Déplacer
+                            </button>
+                          )}
+                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
+                            <button onClick={async () => {
+                              if (!window.confirm("Annuler ce rendez-vous ?")) return;
+                              await updateApptStatus(a.id, "CANCELLED");
+                            }}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
+                              ✗ Annuler
+                            </button>
+                          )}
                         </div>
-                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
-                          {sc.label}
-                        </span>
                       </div>
                     );
                   })}
@@ -1163,6 +1249,92 @@ export default function DashboardGaragePage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL RESCHEDULE ════════════════════════════════════════════════ */}
+      {rescheduleAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(11,31,58,0.55)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setRescheduleAppt(null); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <div>
+                <h3 className="font-bold text-gray-900">Déplacer le rendez-vous</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{rescheduleAppt.customerName} · {rescheduleAppt.serviceName || "—"}</p>
+              </div>
+              <button onClick={() => setRescheduleAppt(null)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors font-bold text-lg">
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Date picker */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nouvelle date</label>
+                <input
+                  type="date"
+                  className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  value={rescheduleDate}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={e => {
+                    setRescheduleDate(e.target.value);
+                    if (e.target.value) fetchGarageSlots(e.target.value, rescheduleAppt.id);
+                  }}
+                />
+              </div>
+
+              {/* Slots */}
+              {rescheduleDate && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Créneau disponible</label>
+                  {slotsLoading ? (
+                    <p className="text-sm text-gray-400 text-center py-3">Chargement des disponibilités…</p>
+                  ) : slotsClosed ? (
+                    <div className="text-center py-4 rounded-xl" style={{ background: "#fef2f2" }}>
+                      <p className="text-sm font-semibold text-red-700">🔒 Fermé ce jour</p>
+                      <p className="text-xs text-red-500 mt-1">Choisissez une autre date</p>
+                    </div>
+                  ) : rescheduleSlots.length === 0 ? (
+                    <div className="text-center py-4 rounded-xl bg-gray-50">
+                      <p className="text-sm text-gray-500">Aucun créneau disponible ce jour</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {rescheduleSlots.map(slot => (
+                        <button key={slot} type="button"
+                          onClick={() => setRescheduleSlot(slot === rescheduleSlot ? "" : slot)}
+                          className="py-2 rounded-xl text-sm font-semibold border-2 transition-all"
+                          style={slot === rescheduleSlot
+                            ? { background: "#f97316", borderColor: "#f97316", color: "#fff" }
+                            : { background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button type="button" onClick={() => setRescheduleAppt(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                Annuler
+              </button>
+              <button type="button"
+                disabled={!rescheduleSlot || !rescheduleDate || rescheduleLoading}
+                onClick={submitReschedule}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+                style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)" }}>
+                {rescheduleLoading ? "Déplacement…" : "Confirmer le déplacement"}
+              </button>
+            </div>
           </div>
         </div>
       )}
