@@ -106,10 +106,10 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
             </div>
 
             {highlightedSvc && (
-              <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
                 style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
                 <span className="text-xs font-semibold" style={{ color: "#92400e" }}>{c.startingFrom}</span>
-                <span className="text-lg font-black" style={{ color: "#f97316" }}>
+                <span className="text-xs font-black" style={{ color: "#f97316" }}>
                   {highlightedSvc.priceMin ? `${highlightedSvc.priceMin} $` : c.onQuote}
                 </span>
               </div>
