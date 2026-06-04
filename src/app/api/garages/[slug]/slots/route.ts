@@ -27,10 +27,38 @@ export async function GET(
     return NextResponse.json({ slots: [], closed: true });
   }
 
-  // Generate 30-min slots between openTime and closeTime
+  // Generate slots between openTime and closeTime
   const slots = generateSlots(avail.openTime, avail.closeTime, 60);
 
-  // Fetch already-booked slots for this date (exclut le RDV en cours de déplacement)
+  // ── Créneaux bloqués par le garagiste ────────────────────────────────────
+  const blockedSlots = await prisma.blockedSlot.findMany({
+    where: { garageId: garage.id, date },
+  });
+
+  // Journée entière bloquée → fermé
+  if (blockedSlots.some(b => b.allDay)) {
+    return NextResponse.json({ slots: [], closed: true });
+  }
+
+  // Créneaux partiellement bloqués : on marque chaque slot qui chevauche un bloc
+  const blockedTimes = new Set<string>();
+  for (const block of blockedSlots) {
+    if (!block.startTime || !block.endTime) continue;
+    const [bh, bm] = block.startTime.split(":").map(Number);
+    const [eh, em] = block.endTime.split(":").map(Number);
+    const blockStart = bh * 60 + bm;
+    const blockEnd   = eh * 60 + em;
+    for (const slot of slots) {
+      const [sh, sm] = slot.split(":").map(Number);
+      const slotStart = sh * 60 + sm;
+      const slotEnd   = slotStart + 60; // durée d'un créneau
+      if (slotStart < blockEnd && slotEnd > blockStart) {
+        blockedTimes.add(slot);
+      }
+    }
+  }
+
+  // ── RDV déjà pris ────────────────────────────────────────────────────────
   const booked = await prisma.appointment.findMany({
     where: {
       garageId: garage.id,
@@ -42,17 +70,18 @@ export async function GET(
   });
   const bookedTimes = new Set(booked.map((b) => b.startTime));
 
-  // Filter out past slots if today
+  // ── Filtre final ──────────────────────────────────────────────────────────
   const now = new Date();
   const isToday = date === now.toISOString().slice(0, 10);
 
   const available = slots.filter((s) => {
-    if (bookedTimes.has(s)) return false;
+    if (bookedTimes.has(s))  return false; // déjà réservé
+    if (blockedTimes.has(s)) return false; // bloqué par le garagiste
     if (isToday) {
       const [h, m] = s.split(":").map(Number);
       const slotMinutes = h * 60 + m;
-      const nowMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
-      if (slotMinutes <= nowMinutes) return false;
+      const nowMinutes  = now.getHours() * 60 + now.getMinutes() + 30;
+      if (slotMinutes <= nowMinutes) return false; // passé
     }
     return true;
   });
