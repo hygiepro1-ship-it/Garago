@@ -7,69 +7,217 @@ import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
 
-// ── Carte véhicule avec vraie photo Wikipedia ─────────────────────────────────
+// ── Couleurs de marque ────────────────────────────────────────────────────────
+const BRAND_COLOR: Record<string, string> = {
+  "Toyota":"#cc0000","Honda":"#cc0000","Ford":"#1560bd","Chevrolet":"#c8a200",
+  "GMC":"#c8102e","Dodge":"#c8102e","Ram":"#b22222","Jeep":"#3a6b35",
+  "Chrysler":"#c8102e","Nissan":"#c3002f","Hyundai":"#002c5f","Kia":"#bb162b",
+  "Mazda":"#910000","Subaru":"#0041a8","Volkswagen":"#001e50","BMW":"#1c69d4",
+  "Mercedes-Benz":"#7a7a7a","Audi":"#bb0a14","Lexus":"#8b0000","Acura":"#cc0000",
+  "Infiniti":"#5a5a5a","Cadillac":"#9a7d4f","Lincoln":"#6a6a6a","Buick":"#4a6fa5",
+  "Volvo":"#1c6bba","Porsche":"#cc0000","Mitsubishi":"#c8102e","Tesla":"#cc0000",
+  "Mini":"#c8102e","Land Rover":"#005a28","Jaguar":"#8b6914",
+};
+const TRUCK_MODELS = ["F-150","F-250","F-350","Silverado","Sierra","Ram 1500","Ram 1500 Classic","Ranger","Colorado","Tacoma","Tundra","Ridgeline","Titan","Maverick","Canyon","Frontier","F150","F250","F350"];
+const SUV_MODELS   = ["RAV4","CR-V","Escape","Equinox","Rogue","Tucson","Sportage","CX-5","Forester","Outback","Tiguan","Compass","Cherokee","Grand Cherokee","Wrangler","4Runner","Highlander","Pilot","Explorer","Edge","Blazer","Traverse","Pathfinder","Murano","Santa Fe","Sorento","Telluride","Palisade","Atlas","Crosstrek","Ascent","Odyssey","Sienna","Pacifica","Expedition","Suburban","Tahoe","Yukon","Durango","Navigator","Escalade","QX60","QX80","GX","LX","MDX","RDX","RX","NX","GLE","GLC","X5","X3","Q7","Q5","Cayenne","Macan"];
+
+// ── Illustration 3D SVG ────────────────────────────────────────────────────────
+function Car3D({ color, type }: { color: string; type: "sedan"|"suv"|"truck" }) {
+  const g = `c${color.replace(/\W/g,"")}${type}`;
+  const spokes = [0,60,120,180,240,300];
+
+  const Wheel = ({ cx, cy, rx=30, ry=19 }: { cx:number; cy:number; rx?:number; ry?:number }) => (
+    <g>
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#111"/>
+      <ellipse cx={cx} cy={cy} rx={rx*0.72} ry={ry*0.72} fill="#222"/>
+      {spokes.map(a => (
+        <line key={a}
+          x1={cx + rx*0.35*Math.cos(a*Math.PI/180)} y1={cy + ry*0.35*Math.sin(a*Math.PI/180)}
+          x2={cx + rx*0.68*Math.cos(a*Math.PI/180)} y2={cy + ry*0.68*Math.sin(a*Math.PI/180)}
+          stroke="#777" strokeWidth="2.5" strokeLinecap="round"/>
+      ))}
+      <ellipse cx={cx} cy={cy} rx={rx*0.22} ry={ry*0.22} fill="#666"/>
+      <ellipse cx={cx} cy={cy} rx={rx*0.1}  ry={ry*0.1}  fill="#bbb"/>
+    </g>
+  );
+
+  const Defs = () => (
+    <defs>
+      <linearGradient id={`${g}body`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#fff" stopOpacity="0.22"/>
+        <stop offset="60%"  stopColor="#000" stopOpacity="0"/>
+        <stop offset="100%" stopColor="#000" stopOpacity="0.28"/>
+      </linearGradient>
+      <linearGradient id={`${g}roof`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#fff" stopOpacity="0.45"/>
+        <stop offset="100%" stopColor="#000" stopOpacity="0.1"/>
+      </linearGradient>
+      <linearGradient id={`${g}front`} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stopColor="#fff" stopOpacity="0.35"/>
+        <stop offset="100%" stopColor="#000" stopOpacity="0.05"/>
+      </linearGradient>
+      <linearGradient id={`${g}glass`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#a8d8ff" stopOpacity="0.75"/>
+        <stop offset="100%" stopColor="#4a9fd4" stopOpacity="0.45"/>
+      </linearGradient>
+    </defs>
+  );
+
+  if (type === "truck") return (
+    <svg viewBox="0 0 360 195" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <Defs/>
+      <ellipse cx="178" cy="183" rx="158" ry="9" fill="#000" fillOpacity="0.18"/>
+      {/* Bed */}
+      <path d="M 190,115 L 190,155 L 330,155 L 330,115 Z" fill={color}/>
+      <path d="M 190,115 L 190,155 L 330,155 L 330,115 Z" fill={`url(#${g}body)`}/>
+      {/* Bed top rail */}
+      <path d="M 190,115 L 330,115 L 338,108 L 198,108 Z" fill={color}/>
+      <path d="M 190,115 L 330,115 L 338,108 L 198,108 Z" fill={`url(#${g}roof)`}/>
+      {/* Bed side top */}
+      <path d="M 330,115 L 338,108 L 338,148 L 330,155 Z" fill={color} style={{filter:`brightness(0.8)`}}/>
+      {/* Cab body */}
+      <path d="M 46,155 L 46,110 L 70,90 L 80,68 L 190,68 L 190,155 Z" fill={color}/>
+      <path d="M 46,155 L 46,110 L 70,90 L 80,68 L 190,68 L 190,155 Z" fill={`url(#${g}body)`}/>
+      {/* Cab roof */}
+      <path d="M 80,68 L 190,68 L 198,76 L 88,76 Z" fill={color}/>
+      <path d="M 80,68 L 190,68 L 198,76 L 88,76 Z" fill={`url(#${g}roof)`}/>
+      {/* Front face */}
+      <path d="M 46,110 L 46,155 L 60,155 L 60,110 Z" fill={color}/>
+      <path d="M 46,110 L 46,155 L 60,155 L 60,110 Z" fill={`url(#${g}front)`}/>
+      {/* Windshield */}
+      <path d="M 78,88 L 85,70 L 175,70 L 175,88 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.45)" strokeWidth="1.5"/>
+      {/* Rear cab window */}
+      <path d="M 182,88 L 182,70 L 190,70 L 190,88 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
+      {/* Belt line */}
+      <line x1="74" y1="89" x2="190" y2="89" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
+      {/* Tailgate */}
+      <path d="M 326,115 L 330,115 L 330,155 L 326,155 Z" fill="rgba(255,255,255,0.15)"/>
+      {/* Headlight */}
+      <rect x="47" y="105" width="13" height="14" rx="2" fill="rgba(255,255,210,0.9)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+      <rect x="47" y="121" width="13" height="6"  rx="1" fill="rgba(255,150,0,0.8)"/>
+      {/* Taillight */}
+      <rect x="327" y="118" width="7" height="18" rx="2" fill="rgba(220,30,30,0.9)" stroke="rgba(255,100,100,0.4)" strokeWidth="1"/>
+      {/* Grille */}
+      <rect x="47" y="128" width="13" height="14" rx="1" fill="rgba(0,0,0,0.55)"/>
+      {[131,135,139].map(y => <line key={y} x1="48" y1={y} x2="59" y2={y} stroke="rgba(180,180,180,0.5)" strokeWidth="0.8"/>)}
+      {/* Door line */}
+      <line x1="155" y1="89" x2="155" y2="155" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5"/>
+      {/* Trim */}
+      <path d="M 46,143 L 190,143 L 190,148 L 46,148 Z" fill="rgba(255,255,255,0.1)"/>
+      <Wheel cx={98}  cy={159} rx={32} ry={20}/>
+      <Wheel cx={282} cy={159} rx={32} ry={20}/>
+    </svg>
+  );
+
+  if (type === "suv") return (
+    <svg viewBox="0 0 340 195" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <Defs/>
+      <ellipse cx="170" cy="183" rx="148" ry="9" fill="#000" fillOpacity="0.18"/>
+      {/* Body */}
+      <path d="M 44,155 L 44,108 L 66,85 L 80,58 L 252,58 L 272,80 L 288,108 L 288,155 Z" fill={color}/>
+      <path d="M 44,155 L 44,108 L 66,85 L 80,58 L 252,58 L 272,80 L 288,108 L 288,155 Z" fill={`url(#${g}body)`}/>
+      {/* Roof */}
+      <path d="M 80,58 L 252,58 L 262,66 L 90,66 Z" fill={color}/>
+      <path d="M 80,58 L 252,58 L 262,66 L 90,66 Z" fill={`url(#${g}roof)`}/>
+      {/* Front face */}
+      <path d="M 44,108 L 44,155 L 58,155 L 58,108 Z" fill={color}/>
+      <path d="M 44,108 L 44,155 L 58,155 L 58,108 Z" fill={`url(#${g}front)`}/>
+      {/* Windshield */}
+      <path d="M 72,83 L 84,60 L 172,60 L 166,83 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+      {/* Front window */}
+      <path d="M 166,83 L 172,60 L 220,60 L 220,83 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
+      {/* Rear window */}
+      <path d="M 220,83 L 220,60 L 252,60 L 268,74 L 265,83 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
+      {/* Belt line */}
+      <line x1="69" y1="84" x2="268" y2="84" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
+      {/* Door lines */}
+      <line x1="178" y1="84" x2="178" y2="155" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5"/>
+      {/* Headlights */}
+      <rect x="45" y="103" width="13" height="16" rx="2" fill="rgba(255,255,210,0.9)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+      <rect x="45" y="121" width="13" height="6"  rx="1" fill="rgba(255,150,0,0.8)"/>
+      {/* Taillights */}
+      <rect x="281" y="108" width="8" height="22" rx="2" fill="rgba(220,30,30,0.9)" stroke="rgba(255,100,100,0.4)" strokeWidth="1"/>
+      <rect x="281" y="132" width="8" height="6"  rx="1" fill="rgba(255,200,0,0.6)"/>
+      {/* Grille */}
+      <rect x="45" y="128" width="13" height="16" rx="1" fill="rgba(0,0,0,0.55)"/>
+      {[131,135,139,143].map(y => <line key={y} x1="46" y1={y} x2="57" y2={y} stroke="rgba(180,180,180,0.5)" strokeWidth="0.8"/>)}
+      {/* Trim */}
+      <path d="M 44,143 L 288,143 L 288,148 L 44,148 Z" fill="rgba(255,255,255,0.1)"/>
+      {/* Roof rack */}
+      <rect x="105" y="56" width="120" height="3" rx="1.5" fill="rgba(255,255,255,0.25)"/>
+      <Wheel cx={100} cy={159} rx={33} ry={21}/>
+      <Wheel cx={240} cy={159} rx={33} ry={21}/>
+    </svg>
+  );
+
+  // Sedan (default)
+  return (
+    <svg viewBox="0 0 340 195" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <Defs/>
+      <ellipse cx="170" cy="181" rx="148" ry="9" fill="#000" fillOpacity="0.18"/>
+      {/* Body */}
+      <path d="M 46,152 L 46,112 L 106,94 L 116,64 L 238,64 L 262,94 L 288,112 L 288,152 Z" fill={color}/>
+      <path d="M 46,152 L 46,112 L 106,94 L 116,64 L 238,64 L 262,94 L 288,112 L 288,152 Z" fill={`url(#${g}body)`}/>
+      {/* Roof top */}
+      <path d="M 116,64 L 238,64 L 248,72 L 126,72 Z" fill={color}/>
+      <path d="M 116,64 L 238,64 L 248,72 L 126,72 Z" fill={`url(#${g}roof)`}/>
+      {/* Front face */}
+      <path d="M 46,112 L 46,152 L 60,152 L 60,112 Z" fill={color}/>
+      <path d="M 46,112 L 46,152 L 60,152 L 60,112 Z" fill={`url(#${g}front)`}/>
+      {/* Windshield */}
+      <path d="M 112,92 L 120,66 L 174,66 L 167,92 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+      {/* Front side window */}
+      <path d="M 167,92 L 174,66 L 214,66 L 214,92 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
+      {/* Rear side window */}
+      <path d="M 214,92 L 214,66 L 238,66 L 254,78 L 252,92 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.4)" strokeWidth="1"/>
+      {/* Rear windshield sliver */}
+      <path d="M 252,92 L 254,78 L 262,94 Z" fill={`url(#${g}glass)`} stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
+      {/* Belt line */}
+      <line x1="109" y1="93" x2="263" y2="93" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
+      {/* Door line */}
+      <line x1="180" y1="93" x2="180" y2="152" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5"/>
+      {/* Trim */}
+      <path d="M 46,140 L 288,140 L 288,146 L 46,146 Z" fill="rgba(255,255,255,0.1)"/>
+      {/* Headlights */}
+      <rect x="47" y="107" width="13" height="15" rx="2" fill="rgba(255,255,210,0.9)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/>
+      <rect x="47" y="124" width="13" height="5"  rx="1" fill="rgba(255,150,0,0.8)"/>
+      {/* Taillights */}
+      <rect x="280" y="110" width="8" height="18" rx="2" fill="rgba(220,30,30,0.9)" stroke="rgba(255,100,100,0.4)" strokeWidth="1"/>
+      <rect x="280" y="130" width="8" height="6"  rx="1" fill="rgba(255,200,0,0.6)"/>
+      {/* Grille */}
+      <rect x="47" y="130" width="13" height="12" rx="1" fill="rgba(0,0,0,0.55)"/>
+      {[133,137,140].map(y => <line key={y} x1="48" y1={y} x2="59" y2={y} stroke="rgba(180,180,180,0.5)" strokeWidth="0.8"/>)}
+      <Wheel cx={102} cy={157} rx={32} ry={20}/>
+      <Wheel cx={244} cy={157} rx={32} ry={20}/>
+    </svg>
+  );
+}
+
+// ── Carte véhicule 3D ─────────────────────────────────────────────────────────
 function VehicleCard({ v, findGarageLabel }: { v: any; findGarageLabel: string }) {
-  const [imgUrl,    setImgUrl]    = useState<string | null>(null);
-  const [imgFailed, setImgFailed] = useState(false);
-
-  useEffect(() => {
-    // Nettoie le nom du modèle pour correspondre aux titres Wikipedia
-    const modelClean = (v.model as string)
-      .replace(/\s*(Classic|Limited|Sport|XLE|XSE|Touring|EX|LX|SE|LE|XL|SL|SV|SR|SR5|TRD|Pro|Crew|Quad|Double|King|Regular|Cab)\b.*/i, "")
-      .trim();
-    const term = `${v.make}_${modelClean}`.replace(/\s+/g, "_");
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}?redirect=true`)
-      .then(r => r.json())
-      .then(data => {
-        const url = data.originalimage?.source ?? data.thumbnail?.source ?? null;
-        setImgUrl(url);
-      })
-      .catch(() => setImgFailed(true));
-  }, [v.make, v.model]);
-
-  const brandAccent: Record<string, string> = {
-    "Toyota": "#eb0a1e", "Honda": "#cc0000", "Ford": "#003087",
-    "Chevrolet": "#d4a017", "GMC": "#c8102e", "Dodge": "#c8102e",
-    "Ram": "#b22222", "Jeep": "#4a7c3f", "Nissan": "#c3002f",
-    "Hyundai": "#002c5f", "Kia": "#bb162b", "Mazda": "#910000",
-    "Subaru": "#003c8f", "Volkswagen": "#001e50", "BMW": "#1c69d4",
-    "Mercedes-Benz": "#9a9a9a", "Audi": "#bb0a14", "Lexus": "#8b0000",
-    "Acura": "#cc0000", "Infiniti": "#8a8a8a", "Cadillac": "#9a7d4f",
-    "Tesla": "#cc0000", "Porsche": "#c00", "Volvo": "#1c6bba",
-    "Mitsubishi": "#c8102e", "Buick": "#4a6fa5",
-  };
-  const accent = brandAccent[v.make] ?? "#f97316";
-  const showFallback = !imgUrl || imgFailed;
+  const color  = BRAND_COLOR[v.make] ?? "#1e3a5f";
+  const model  = (v.model ?? "") as string;
+  const isT    = TRUCK_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
+  const isSUV  = !isT && SUV_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
+  const carType: "sedan"|"suv"|"truck" = isT ? "truck" : isSUV ? "suv" : "sedan";
+  const typeLabel = isT ? "Camionnette" : isSUV ? "VUS" : "Berline / Coupé";
 
   return (
     <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-      {/* Zone image */}
-      <div className="relative h-40 overflow-hidden flex items-center justify-center"
-        style={{ background: showFallback ? `linear-gradient(135deg, #0b1f3a 0%, ${accent}55 100%)` : "#f0f0f0" }}>
-        {imgUrl && !imgFailed ? (
-          <img
-            src={imgUrl}
-            alt={`${v.year} ${v.make} ${v.model}`}
-            className="w-full h-full object-cover"
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center opacity-60">
-            <span className="text-5xl mb-1">🚗</span>
-            <span className="text-xs text-white font-semibold">{v.make}</span>
-          </div>
-        )}
-        {/* Badges overlay */}
+      {/* Zone 3D */}
+      <div className="relative h-44 flex items-center justify-center px-2 pt-2 pb-1"
+        style={{ background: "linear-gradient(160deg, #0d1b2e 0%, #1a2f4a 100%)" }}>
+        <Car3D color={color} type={carType}/>
         <span className="absolute top-2 left-3 text-xs font-bold px-2 py-0.5 rounded-full"
           style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>{v.year}</span>
         <span className="absolute top-2 right-3 text-xs font-bold px-2 py-0.5 rounded-full"
-          style={{ background: accent, color: "#fff" }}>{v.make}</span>
+          style={{ background: color, color: "#fff" }}>{v.make}</span>
       </div>
-      {/* Infos + actions */}
+      {/* Infos */}
       <div className="px-4 py-3 flex items-center justify-between gap-2">
         <div>
           <p className="font-bold text-gray-900 text-sm">{v.make} {v.model}</p>
-          <p className="text-xs text-gray-400">{v.year}</p>
+          <p className="text-xs text-gray-400">{v.year} · {typeLabel}</p>
         </div>
         <Link
           href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
