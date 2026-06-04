@@ -172,7 +172,8 @@ export default function DashboardGaragePage() {
   const today = new Date();
   const [calYear, setCalYear]   = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth()); // 0-based
-  const [selectedDay, setSelectedDay] = useState<string | null>(null); // "YYYY-MM-DD"
+  const [selectedDays, setSelectedDays] = useState<string[]>([]); // "YYYY-MM-DD"[]
+  const lastClickedDay = useRef<string | null>(null);
 
   // Manual RDV form
   const [showManualForm, setShowManualForm] = useState(false);
@@ -427,7 +428,7 @@ export default function DashboardGaragePage() {
     if (m < 0)  { m = 11; y--; }
     setCalMonth(m);
     setCalYear(y);
-    setSelectedDay(null);
+    setSelectedDays([]);
     setRdvLoaded(false); // reload data for new month
   }
 
@@ -447,8 +448,8 @@ export default function DashboardGaragePage() {
   async function saveManualRdv(e: React.FormEvent) {
     e.preventDefault();
     setSavingRdv(true);
-    // Ensure selectedDay is used as date if manualForm.date not set
-    const formData = { ...manualForm, date: manualForm.date || selectedDay || "" };
+    // Ensure selectedDays[0] is used as date if manualForm.date not set
+    const formData = { ...manualForm, date: manualForm.date || selectedDays[0] || "" };
     const res = await fetch("/api/garage/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -487,6 +488,81 @@ export default function DashboardGaragePage() {
   async function deleteBlockSlot(id: string) {
     const res = await fetch(`/api/blocked-slots/${id}`, { method: "DELETE" });
     if (res.ok) setBlockedSlots(prev => prev.filter(s => s.id !== id));
+  }
+
+  // ── Multi-day selection helpers ───────────────────────────────────────────
+  function getAllDaysInRange(from: string, to: string): string[] {
+    const a = new Date(from + "T12:00:00");
+    const b = new Date(to   + "T12:00:00");
+    const [start, end] = a <= b ? [a, b] : [b, a];
+    const days: string[] = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      days.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+  }
+
+  function toggleDay(dayStr: string, e: React.MouseEvent) {
+    if (e.shiftKey && lastClickedDay.current) {
+      const range = getAllDaysInRange(lastClickedDay.current, dayStr);
+      setSelectedDays(prev => {
+        const set = new Set(prev);
+        range.forEach(d => set.add(d));
+        return Array.from(set).sort();
+      });
+    } else if (e.ctrlKey || e.metaKey) {
+      setSelectedDays(prev =>
+        prev.includes(dayStr) ? prev.filter(d => d !== dayStr) : [...prev, dayStr].sort()
+      );
+    } else {
+      // Simple click: deselect if sole selection, otherwise select only this
+      setSelectedDays(prev => prev.length === 1 && prev[0] === dayStr ? [] : [dayStr]);
+    }
+    lastClickedDay.current = dayStr;
+  }
+
+  async function saveBulkBlock(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingBlock(true);
+    for (const date of selectedDays) {
+      const res = await fetch("/api/blocked-slots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...blockForm, date }),
+      });
+      if (res.ok) {
+        const slot = await res.json();
+        setBlockedSlots(prev => [...prev, slot]);
+      }
+    }
+    setShowBlockForm(false);
+    setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
+    setSavingBlock(false);
+    setSuccess(`Créneaux bloqués pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
+    setTimeout(() => setSuccess(""), 3000);
+  }
+
+  async function saveBulkManualRdv(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingRdv(true);
+    for (const date of selectedDays) {
+      const res = await fetch("/api/garage/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...manualForm, date }),
+      });
+      if (res.ok) {
+        const appt = await res.json();
+        setAppointments(prev => [appt, ...prev]);
+      }
+    }
+    setShowManualForm(false);
+    setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", date:"", startTime:"", notes:"" });
+    setSavingRdv(false);
+    setSuccess(`Rendez-vous ajoutés pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
+    setTimeout(() => setSuccess(""), 3000);
   }
 
   async function fetchGarageSlots(date: string, excludeId: string) {
@@ -542,8 +618,11 @@ export default function DashboardGaragePage() {
     return blockedSlots.filter(s => s.date === dayStr).length;
   }
 
+  // Single-day helpers (used when exactly 1 day is selected)
+  const selectedDay  = selectedDays.length === 1 ? selectedDays[0] : null;
   const selectedDayAppts  = selectedDay ? appointments.filter(a => a.date === selectedDay) : [];
   const selectedDayBlocks = selectedDay ? blockedSlots.filter(s => s.date === selectedDay) : [];
+  const isMultiSelect = selectedDays.length > 1;
 
   const statusColors: Record<string, { bg: string; color: string; label: string }> = {
     PENDING:   { bg: "#fef3c7", color: "#92400e", label: "En attente" },
@@ -694,7 +773,7 @@ export default function DashboardGaragePage() {
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
                   ←
                 </button>
-                <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDay(null); setRdvLoaded(false); }}
+                <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
                   className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                   Aujourd'hui
                 </button>
@@ -719,17 +798,18 @@ export default function DashboardGaragePage() {
                 const day = i + 1;
                 const dayStr = toDateStr(day);
                 const isToday = dayStr === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-                const isSelected = dayStr === selectedDay;
+                const isSelected = selectedDays.includes(dayStr);
                 const apptCount  = apptCountForDay(dayStr);
                 const blockCount = blockCountForDay(dayStr);
                 const colIndex = (firstDayOfWeek + i) % 7;
                 return (
                   <button key={day}
-                    onClick={() => setSelectedDay(isSelected ? null : dayStr)}
+                    onClick={(e) => toggleDay(dayStr, e)}
+                    title="Clic = sélectionner · Ctrl+clic = ajouter · Maj+clic = plage"
                     className={`h-16 flex flex-col items-start p-1.5 text-left transition-colors border-b border-gray-100 ${colIndex < 6 ? "border-r" : ""} ${isSelected ? "bg-orange-50" : "hover:bg-gray-50"}`}
                   >
-                    <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-orange-600" : "text-gray-700"}`}
-                      style={isToday ? { background: "#f97316" } : {}}>
+                    <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-white" : "text-gray-700"}`}
+                      style={isToday && !isSelected ? { background: "#f97316" } : isSelected ? { background: "#f97316", outline: "2px solid #ea580c", outlineOffset: "1px" } : {}}>
                       {day}
                     </span>
                     <div className="flex flex-wrap gap-0.5">
@@ -753,30 +833,50 @@ export default function DashboardGaragePage() {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV — rendez-vous</span>
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>🔒 créneau bloqué</span>
+            <span className="text-gray-400 ml-auto hidden sm:inline">
+              Clic = 1 jour &nbsp;·&nbsp; <kbd className="bg-gray-100 px-1 rounded">Ctrl</kbd>+clic = ajouter &nbsp;·&nbsp; <kbd className="bg-gray-100 px-1 rounded">Maj</kbd>+clic = plage
+            </span>
+            {selectedDays.length > 0 && (
+              <button onClick={() => setSelectedDays([])}
+                className="ml-auto sm:ml-0 text-gray-400 hover:text-gray-600 font-semibold underline">
+                Effacer sélection ({selectedDays.length})
+              </button>
+            )}
           </div>
 
-          {/* Selected day detail */}
-          {selectedDay && (
+          {/* Selected day(s) detail */}
+          {selectedDays.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <h3 className="font-bold text-gray-900">
-                  {new Date(selectedDay + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
-                </h3>
-                <div className="flex gap-2">
+                {isMultiSelect ? (
+                  <div>
+                    <h3 className="font-bold text-gray-900">
+                      {selectedDays.length} jours sélectionnés
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {selectedDays.map(d => new Date(d + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" })).join(" · ")}
+                    </p>
+                  </div>
+                ) : (
+                  <h3 className="font-bold text-gray-900">
+                    {new Date(selectedDay! + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
+                  </h3>
+                )}
+                <div className="flex gap-2 flex-wrap">
                   <button
-                    onClick={() => { setManualForm(f => ({ ...f, date: selectedDay })); setShowManualForm(true); setShowBlockForm(false); }}
+                    onClick={() => { setManualForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowManualForm(true); setShowBlockForm(false); }}
                     className="text-white text-sm px-4 py-2 rounded-xl font-semibold"
                     style={{ background: "#f97316" }}>
-                    + Nouveau RDV
+                    {isMultiSelect ? `+ RDV sur ${selectedDays.length} jours` : "+ Nouveau RDV"}
                   </button>
                   <button
-                    onClick={() => { setBlockForm(f => ({ ...f, date: selectedDay })); setShowBlockForm(true); setShowManualForm(false); }}
+                    onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
                     className="text-sm px-4 py-2 rounded-xl font-semibold border"
                     style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                    🔒 Bloquer ce créneau
+                    {isMultiSelect ? `🔒 Bloquer ${selectedDays.length} jours` : "🔒 Bloquer ce créneau"}
                   </button>
                 </div>
               </div>
@@ -788,7 +888,7 @@ export default function DashboardGaragePage() {
                     <h4 className="font-semibold text-gray-900 text-sm">Nouveau rendez-vous</h4>
                     <button onClick={() => setShowManualForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                   </div>
-                  <form onSubmit={saveManualRdv} className="space-y-3">
+                  <form onSubmit={isMultiSelect ? saveBulkManualRdv : saveManualRdv} className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Nom du client *</label>
@@ -838,7 +938,7 @@ export default function DashboardGaragePage() {
                     <h4 className="font-semibold text-gray-900 text-sm">🔒 Bloquer un créneau</h4>
                     <button onClick={() => setShowBlockForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                   </div>
-                  <form onSubmit={saveBlockSlot} className="space-y-3">
+                  <form onSubmit={isMultiSelect ? saveBulkBlock : saveBlockSlot} className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
                       <input type="checkbox" checked={blockForm.allDay}
                         onChange={e => setBlockForm(f => ({ ...f, allDay: e.target.checked }))}
@@ -865,7 +965,7 @@ export default function DashboardGaragePage() {
                       <button type="submit" disabled={savingBlock}
                         className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
                         style={{ background: "#dc2626" }}>
-                        {savingBlock ? "Blocage…" : "Bloquer le créneau"}
+                        {savingBlock ? "Blocage…" : isMultiSelect ? `Bloquer ${selectedDays.length} jours` : "Bloquer le créneau"}
                       </button>
                       <button type="button" onClick={() => setShowBlockForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">Annuler</button>
                     </div>
@@ -873,8 +973,69 @@ export default function DashboardGaragePage() {
                 </div>
               )}
 
-              {/* Appointments for selected day */}
-              {selectedDayAppts.length > 0 && (
+              {/* Multi-day summary */}
+              {isMultiSelect && !showManualForm && !showBlockForm && (() => {
+                const multiAppts  = appointments.filter(a => selectedDays.includes(a.date));
+                const multiBlocks = blockedSlots.filter(s => selectedDays.includes(s.date));
+                return (
+                  <div className="space-y-4">
+                    {multiAppts.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Rendez-vous sur ces jours ({multiAppts.length})</p>
+                        <div className="space-y-2">
+                          {multiAppts
+                            .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+                            .map(a => {
+                              const sc = statusColors[a.status] ?? statusColors.PENDING;
+                              const dFr = new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                              return (
+                                <div key={a.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                  <div className="text-center min-w-[70px]">
+                                    <p className="text-xs text-gray-400 font-medium capitalize">{dFr}</p>
+                                    <p className="text-sm font-extrabold text-orange-500">{a.startTime}</p>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                                    <p className="text-xs text-gray-500">{a.serviceName || "—"}</p>
+                                  </div>
+                                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                    {multiBlocks.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Créneaux bloqués sur ces jours ({multiBlocks.length})</p>
+                        <div className="space-y-2">
+                          {multiBlocks
+                            .sort((a, b) => a.date.localeCompare(b.date))
+                            .map(s => {
+                              const dFr = new Date(s.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                              return (
+                                <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+                                  <span className="text-red-500">🔒</span>
+                                  <div className="flex-1">
+                                    <p className="text-xs font-semibold text-red-800">{dFr} — {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
+                                    {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
+                                  </div>
+                                  <button onClick={() => deleteBlockSlot(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">Retirer</button>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                    {multiAppts.length === 0 && multiBlocks.length === 0 && (
+                      <p className="text-gray-400 text-sm text-center py-4">Aucun événement sur ces {selectedDays.length} jours.</p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Single-day: appointments */}
+              {!isMultiSelect && selectedDayAppts.length > 0 && (
                 <div className="space-y-3 mb-4">
                   <p className="text-sm font-semibold text-gray-700">Rendez-vous ({selectedDayAppts.length})</p>
                   {selectedDayAppts.map(a => {
@@ -907,8 +1068,8 @@ export default function DashboardGaragePage() {
                 </div>
               )}
 
-              {/* Blocked slots for selected day */}
-              {selectedDayBlocks.length > 0 && (
+              {/* Single-day: blocked slots */}
+              {!isMultiSelect && selectedDayBlocks.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-semibold text-gray-700">Créneaux bloqués</p>
                   {selectedDayBlocks.map(s => (
@@ -929,7 +1090,7 @@ export default function DashboardGaragePage() {
                 </div>
               )}
 
-              {selectedDayAppts.length === 0 && selectedDayBlocks.length === 0 && !showManualForm && !showBlockForm && (
+              {!isMultiSelect && selectedDayAppts.length === 0 && selectedDayBlocks.length === 0 && !showManualForm && !showBlockForm && (
                 <p className="text-gray-400 text-sm text-center py-4">Aucun événement ce jour.</p>
               )}
             </div>
