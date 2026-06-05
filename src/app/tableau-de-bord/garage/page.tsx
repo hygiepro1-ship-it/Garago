@@ -173,7 +173,6 @@ export default function DashboardGaragePage() {
   const [calYear, setCalYear]   = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth()); // 0-based
   const [selectedDays, setSelectedDays] = useState<string[]>([]); // "YYYY-MM-DD"[]
-  const [multiSelectMode, setMultiSelectMode] = useState(false);
   const lastClickedDay = useRef<string | null>(null);
 
   // Manual RDV form
@@ -506,24 +505,21 @@ export default function DashboardGaragePage() {
   }
 
   function toggleDay(dayStr: string, e: React.MouseEvent) {
-    if (multiSelectMode || e.shiftKey || e.ctrlKey || e.metaKey) {
-      if (e.shiftKey && lastClickedDay.current) {
-        // Shift: select range
-        const range = getAllDaysInRange(lastClickedDay.current, dayStr);
-        setSelectedDays(prev => {
-          const set = new Set(prev);
-          range.forEach(d => set.add(d));
-          return Array.from(set).sort();
-        });
-      } else {
-        // Ctrl / Cmd / multiSelectMode: toggle individual day
-        setSelectedDays(prev =>
-          prev.includes(dayStr) ? prev.filter(d => d !== dayStr) : [...prev, dayStr].sort()
-        );
-      }
+    if (e.shiftKey && lastClickedDay.current) {
+      // Maj+clic: sélectionner une plage de jours
+      const range = getAllDaysInRange(lastClickedDay.current, dayStr);
+      setSelectedDays(prev => {
+        const set = new Set(prev);
+        range.forEach(d => set.add(d));
+        return Array.from(set).sort();
+      });
     } else {
-      // Simple click (normal mode): deselect if sole selection, otherwise select only this
-      setSelectedDays(prev => prev.length === 1 && prev[0] === dayStr ? [] : [dayStr]);
+      // Clic simple : toggle (ajoute si absent, retire si présent)
+      setSelectedDays(prev =>
+        prev.includes(dayStr)
+          ? prev.filter(d => d !== dayStr)
+          : [...prev, dayStr].sort()
+      );
     }
     lastClickedDay.current = dayStr;
   }
@@ -771,21 +767,9 @@ export default function DashboardGaragePage() {
                 <h2 className="font-bold text-gray-900 text-lg">
                   {MONTH_NAMES_FR[calMonth]} {calYear}
                 </h2>
-                <p className="text-gray-500 text-sm">Cliquez sur un jour pour voir les détails</p>
+                <p className="text-gray-500 text-sm">Cliquez pour sélectionner · recliquez pour désélectionner · <kbd className="bg-gray-100 px-1 rounded text-xs">Maj</kbd>+clic pour une plage</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => {
-                    setMultiSelectMode(v => {
-                      if (v) setSelectedDays([]); // désélectionner tout en quittant le mode
-                      return !v;
-                    });
-                  }}
-                  title="Sélectionner plusieurs jours pour effectuer la même action"
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-semibold transition-all ${multiSelectMode ? "text-white border-transparent" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
-                  style={multiSelectMode ? { background: "#f97316", borderColor: "#f97316" } : {}}>
-                  {multiSelectMode ? `✓ Multi (${selectedDays.length})` : "☐ Multi-jours"}
-                </button>
                 <button onClick={() => changeMonth(-1)}
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
                   ←
@@ -853,15 +837,10 @@ export default function DashboardGaragePage() {
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV — rendez-vous</span>
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>🔒 créneau bloqué</span>
-            {multiSelectMode && (
-              <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fff4ed", color: "#c2410c" }}>
-                Mode multi-jours actif — cliquez les jours à sélectionner
-              </span>
-            )}
-            {selectedDays.length > 1 && (
-              <button onClick={() => { setSelectedDays([]); }}
+            {selectedDays.length > 0 && (
+              <button onClick={() => setSelectedDays([])}
                 className="ml-auto text-gray-400 hover:text-gray-600 font-semibold underline">
-                Effacer ({selectedDays.length} jours)
+                Tout désélectionner ({selectedDays.length})
               </button>
             )}
           </div>
