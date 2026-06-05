@@ -78,6 +78,29 @@ export async function sendBookingReminderSMS(params: {
   await sendSMS(params.to, msg);
 }
 
+// ── Rendez-vous déplacé ───────────────────────────────────────────────────────
+
+export async function sendRescheduleSMS(params: {
+  to:          string;
+  customerName:string;
+  garageName:  string;
+  garagePhone: string;
+  date:        string;
+  startTime:   string;
+  serviceName: string | null;
+}) {
+  const dateStr = new Date(params.date + "T12:00:00").toLocaleDateString("fr-CA", {
+    weekday: "long", day: "numeric", month: "long",
+  });
+  const service = params.serviceName ? ` · ${params.serviceName}` : "";
+  const msg =
+    `[Garago] Votre RDV a été déplacé 📅\n` +
+    `${params.garageName}${service}\n` +
+    `Nouvel horaire : ${dateStr} à ${params.startTime}\n` +
+    `Questions ? ${params.garagePhone}`;
+  await sendSMS(params.to, msg);
+}
+
 // ── Véhicule prêt ─────────────────────────────────────────────────────────────
 
 export async function sendVehicleReadySMS(params: {

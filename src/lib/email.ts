@@ -257,6 +257,47 @@ export async function sendBookingReminder(params: {
   });
 }
 
+// ── Rendez-vous déplacé ───────────────────────────────────────────────────────
+
+export async function sendRescheduleNotification(params: {
+  to:           string;
+  customerName: string;
+  garageName:   string;
+  garagePhone:  string;
+  garageAddress:string;
+  date:         string;
+  startTime:    string;
+  endTime:      string;
+  serviceName:  string | null;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre rendez-vous a été déplacé 📅</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, le garage a modifié l'horaire de votre rendez-vous.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        ${params.serviceName ? `<p style="margin:0 0 8px;font-size:14px"><strong>🔧 Service :</strong> ${params.serviceName}</p>` : ""}
+        <p style="margin:0 0 8px;font-size:14px"><strong>📅 Nouvelle date :</strong> ${fmtDateFr(params.date)}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🕐 Nouvel horaire :</strong> ${params.startTime} – ${params.endTime}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🏪 Garage :</strong> ${params.garageName}</p>
+        <p style="margin:0;font-size:14px"><strong>📍 Adresse :</strong> ${params.garageAddress}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Des questions ou vous souhaitez annuler ? Contactez le garage :</p>
+    <a href="tel:${params.garagePhone}" style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">📞 ${params.garagePhone}</a>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      params.to,
+    subject: `📅 RDV déplacé — ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
+    html:    baseLayout(body),
+  });
+}
+
 // ── Nouvelle suggestion ───────────────────────────────────────────────────────
 
 export async function sendAdminNewSuggestion(params: {

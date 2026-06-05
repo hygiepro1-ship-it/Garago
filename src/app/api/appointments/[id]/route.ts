@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendVehicleReady } from "@/lib/email";
-import { sendVehicleReadySMS } from "@/lib/sms";
+import { sendVehicleReady, sendRescheduleNotification } from "@/lib/email";
+import { sendVehicleReadySMS, sendRescheduleSMS } from "@/lib/sms";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -55,7 +55,45 @@ export async function PATCH(
     include: { garage: true },
   });
 
-  // Notifications "véhicule prêt" quand le garage marque COMPLETED
+  // ── Notification "déplacement" quand le garage change la date/heure ──────────
+  const isReschedule = isGarageOwner && !!(date || startTime);
+  if (isReschedule) {
+    const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
+
+    const userPref = updated.userId
+      ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { notifPref: true, phone: true } })
+      : null;
+    const notifPref = userPref?.notifPref ?? "EMAIL";
+
+    if (updated.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+      sendRescheduleNotification({
+        to:           updated.customerEmail,
+        customerName: updated.customerName,
+        garageName:   updated.garage.name,
+        garagePhone:  updated.garage.phone,
+        garageAddress,
+        date:         updated.date,
+        startTime:    updated.startTime,
+        endTime:      updated.endTime,
+        serviceName:  updated.serviceName,
+      }).catch(console.error);
+    }
+
+    const smsPhone = updated.customerPhone || userPref?.phone;
+    if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
+      sendRescheduleSMS({
+        to:          smsPhone,
+        customerName:updated.customerName,
+        garageName:  updated.garage.name,
+        garagePhone: updated.garage.phone,
+        date:        updated.date,
+        startTime:   updated.startTime,
+        serviceName: updated.serviceName,
+      }).catch(console.error);
+    }
+  }
+
+  // ── Notifications "véhicule prêt" quand le garage marque COMPLETED
   if (status === "COMPLETED") {
     const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
     const note = completionNote ?? updated.completionNote;
