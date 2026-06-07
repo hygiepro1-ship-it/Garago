@@ -282,11 +282,6 @@ export default function GarageProfilePage() {
             <a href={`tel:${garage.phone}`} className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm" style={{ background: "#f97316" }}>
               📞 {garage.phone}
             </a>
-            {garage.email && (
-              <a href={`mailto:${garage.email}`} className="flex items-center gap-2 border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm">
-                ✉️ {garage.email}
-              </a>
-            )}
           </div>
         </div>
       </div>
