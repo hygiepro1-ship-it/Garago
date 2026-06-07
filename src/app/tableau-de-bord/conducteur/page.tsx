@@ -73,13 +73,25 @@ function CarImage({ make, model, year, type }: { make: string; model: string; ye
 }
 
 // ── Carte véhicule style Belair Direct ────────────────────────────────────────
-function VehicleCard({ v, findGarageLabel }: { v: any; findGarageLabel: string }) {
+function VehicleCard({ v, findGarageLabel, onDelete }: {
+  v: any;
+  findGarageLabel: string;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [deleting, setDeleting] = useState(false);
   const color   = BRAND_COLOR[v.make] ?? "#1e3a5f";
   const model   = (v.model ?? "") as string;
   const isT     = TRUCK_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
   const isSUV   = !isT && SUV_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
   const carType: "sedan"|"suv"|"truck" = isT ? "truck" : isSUV ? "suv" : "sedan";
   const typeLabel = isT ? "Camionnette" : isSUV ? "VUS" : "Berline / Coupé";
+
+  async function handleDelete() {
+    if (!window.confirm(`Retirer ${v.year} ${v.make} ${v.model} de vos véhicules ?`)) return;
+    setDeleting(true);
+    await onDelete(v.id);
+    setDeleting(false);
+  }
 
   return (
     <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -92,15 +104,26 @@ function VehicleCard({ v, findGarageLabel }: { v: any; findGarageLabel: string }
           borderRadius: "50%",
           bottom: "8%",
         }}/>
-        {/* Badges */}
+        {/* Badge année */}
         <span className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full z-10"
           style={{ background: "#f1f3f5", color: "#374151", border: "1px solid #e2e8f0" }}>
           {v.year}
         </span>
-        <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full z-10"
-          style={{ background: color, color: "#fff" }}>
-          {v.make}
-        </span>
+        {/* Badge marque + bouton retirer */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+            style={{ background: color, color: "#fff" }}>
+            {v.make}
+          </span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Retirer ce véhicule"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+            style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #e2e8f0" }}>
+            {deleting ? "…" : "×"}
+          </button>
+        </div>
         {/* Image 3D */}
         <div className="relative z-10 w-full h-36">
           <CarImage make={v.make} model={model} year={v.year} type={carType} />
@@ -271,6 +294,11 @@ export default function DashboardConducteurPage() {
       setAppts(prev => prev.map(a => a.id === rescheduleAppt.id ? { ...a, date: rescheduleDate, startTime: rescheduleSlot, endTime } : a));
       setRescheduleAppt(null);
     } finally { setRescheduling(false); }
+  }
+
+  async function deleteVehicle(id: string) {
+    const res = await fetch(`/api/vehicles?id=${id}`, { method: "DELETE" });
+    if (res.ok) setVehicles(prev => prev.filter(v => v.id !== id));
   }
 
   async function cancelAppt(id: string) {
@@ -684,7 +712,7 @@ export default function DashboardConducteurPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {vehicles.map(v => (
-                    <VehicleCard key={v.id} v={v} findGarageLabel={d.findGarage} />
+                    <VehicleCard key={v.id} v={v} findGarageLabel={d.findGarage} onDelete={deleteVehicle} />
                   ))}
                 </div>
               )}
