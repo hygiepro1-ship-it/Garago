@@ -48,7 +48,7 @@ export async function sendBookingConfirmationSMS(params: {
   });
   const service = params.serviceName ? `\nService : ${params.serviceName}` : "";
   const msg =
-    `[Garago] Demande de RDV reçue ✅\n` +
+    `[GaragoPro] Demande de RDV reçue ✅\n` +
     `${params.garageName}${service}\n` +
     `${dateStr} à ${params.startTime}\n` +
     `Le garage vous contactera pour confirmer. Questions ? ${params.garagePhone}`;
@@ -71,7 +71,7 @@ export async function sendBookingReminderSMS(params: {
   });
   const service = params.serviceName ? ` · ${params.serviceName}` : "";
   const msg =
-    `[Garago] Rappel RDV demain ⏰\n` +
+    `[GaragoPro] Rappel RDV demain ⏰\n` +
     `${params.garageName}${service}\n` +
     `${dateStr} à ${params.startTime}\n` +
     `Questions ? ${params.garagePhone}`;
@@ -94,7 +94,7 @@ export async function sendRescheduleSMS(params: {
   });
   const service = params.serviceName ? ` · ${params.serviceName}` : "";
   const msg =
-    `[Garago] Votre RDV a été déplacé 📅\n` +
+    `[GaragoPro] Votre RDV a été déplacé 📅\n` +
     `${params.garageName}${service}\n` +
     `Nouvel horaire : ${dateStr} à ${params.startTime}\n` +
     `Questions ? ${params.garagePhone}`;
@@ -113,7 +113,7 @@ export async function sendVehicleReadySMS(params: {
 }) {
   const note = params.completionNote ? `\n📋 ${params.completionNote}` : "";
   const msg =
-    `[Garago] Votre véhicule est prêt ! 🎉${note}\n` +
+    `[GaragoPro] Votre véhicule est prêt ! 🎉${note}\n` +
     `Récupérez-le au ${params.garageAddress}\n` +
     `📞 ${params.garagePhone}`;
   await sendSMS(params.to, msg);

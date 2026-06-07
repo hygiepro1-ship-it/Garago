@@ -110,7 +110,7 @@ export default function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
-            © {new Date().getFullYear()} Garago Technologies Inc. {f.rights}
+            © {new Date().getFullYear()} GaragoPro Technologies Inc. {f.rights}
           </p>
           <div className="flex items-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
             <span className="cursor-pointer hover:text-white transition-colors">{f.privacy}</span>

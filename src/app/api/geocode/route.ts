@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(url.toString(), {
-      headers: { "User-Agent": "Garago/1.0 (garago.ca)", Accept: "application/json" },
+      headers: { "User-Agent": "GaragoPro/1.0 (garagopro.ca)", Accept: "application/json" },
       next: { revalidate: 60 },
     });
     if (!res.ok) return NextResponse.json([]);

@@ -15,14 +15,14 @@ function fmtDateFr(dateStr: string) {
 function baseLayout(body: string) {
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Garago</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GaragoPro</title></head>
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
         <!-- Header -->
         <tr><td style="background:#1e3a5f;border-radius:16px 16px 0 0;padding:24px 32px">
-          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 Garago</span>
+          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 GaragoPro</span>
         </td></tr>
         <!-- Body -->
         <tr><td style="background:#fff;padding:32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
@@ -30,7 +30,7 @@ function baseLayout(body: string) {
         </td></tr>
         <!-- Footer -->
         <tr><td style="background:#f3f4f6;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:0;padding:16px 32px;text-align:center">
-          <p style="margin:0;color:#9ca3af;font-size:12px">Garago Canada — <a href="https://garago.ca" style="color:#f97316;text-decoration:none">garago.ca</a></p>
+          <p style="margin:0;color:#9ca3af;font-size:12px">GaragoPro Canada — <a href="https://garagopro.ca" style="color:#f97316;text-decoration:none">garagopro.ca</a></p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">Pour annuler ou modifier, contactez directement le garage.</p>
         </td></tr>
       </table>
@@ -49,7 +49,7 @@ export async function sendVerificationCode(to: string, code: string) {
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vérification de votre courriel 🔐</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur Garago ! Voici votre code de vérification :</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur GaragoPro ! Voici votre code de vérification :</p>
 
     <div style="text-align:center;margin:32px 0">
       <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
@@ -108,7 +108,7 @@ export async function sendBookingConfirmation(params: {
     <hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0">
     <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">Ajouter à votre calendrier</p>
     <p style="margin:0 0 16px;color:#6b7280;font-size:13px">Ne manquez pas votre rendez-vous — ajoutez-le maintenant :</p>
-    <a href="${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/api/appointments/${params.appointmentId}/ics" style="display:inline-block;background:#f3f4f6;color:#374151;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">📅 Télécharger .ics</a>
+    <a href="${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/api/appointments/${params.appointmentId}/ics" style="display:inline-block;background:#f3f4f6;color:#374151;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">📅 Télécharger .ics</a>
   `;
 
   await getResend().emails.send({
@@ -139,7 +139,7 @@ export async function sendGarageNewAppointment(params: {
   if (!process.env.RESEND_API_KEY) return;
 
   const vehicle = [params.vehicleYear, params.vehicleMake, params.vehicleModel].filter(Boolean).join(" ");
-  const dashUrl = `${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/tableau-de-bord/garage`;
+  const dashUrl = `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/tableau-de-bord/garage`;
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">🔔 Nouveau rendez-vous en ligne !</h2>
@@ -204,7 +204,7 @@ export async function sendVehicleReady(params: {
       </td></tr>
     </table>
 
-    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>
+    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur GaragoPro !</p>
   `;
 
   await getResend().emails.send({
@@ -326,7 +326,7 @@ export async function sendAdminNewSuggestion(params: {
       </td></tr>
     </table>
 
-    <a href="${process.env.NEXTAUTH_URL ?? "https://garago.ca"}/tableau-de-bord/admin"
+    <a href="${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/tableau-de-bord/admin"
        style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
       📊 Voir dans le tableau de bord admin
     </a>
