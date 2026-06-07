@@ -24,19 +24,10 @@ const SUV_MODELS   = ["RAV4","CR-V","Escape","Equinox","Rogue","Tucson","Sportag
 // ── Image 3D via imagin.studio ────────────────────────────────────────────────
 
 function buildImaginUrl(make: string, model: string): string {
-  // Normalise la marque : minuscules, espaces → tirets
-  const m = make.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-  // Premier mot du modèle (ex: "TIGUAN 2.0 TSI 4P TI" → "tiguan")
-  const mf = model.toLowerCase().split(/[\s,/-]/)[0].replace(/[^a-z0-9]/g, "");
-  return (
-    `https://cdn.imagin.studio/getImage` +
-    `?customer=img` +
-    `&make=${m}` +
-    `&modelFamily=${mf}` +
-    `&angle=34` +
-    `&width=480` +
-    `&zoomType=fullscreen`
-  );
+  // Passe par notre proxy /api/car-image pour contourner le blocage CDN
+  const m  = encodeURIComponent(make);
+  const mf = encodeURIComponent(model.split(/[\s,/]/)[0]);
+  return `/api/car-image?make=${m}&model=${mf}`;
 }
 
 // Silhouette de repli si imagin.studio ne trouve pas le modèle
