@@ -29,12 +29,23 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Notification email à l'admin
-  sendAdminNewSuggestion({
-    content:     suggestion.content,
-    authorName:  suggestion.authorName,
-    authorEmail: suggestion.authorEmail,
-  }).catch(console.error);
+  // Notification email à l'admin — await obligatoire (Vercel coupe après la réponse)
+  if (!process.env.ADMIN_EMAIL) {
+    console.error("[SUGGESTION] ADMIN_EMAIL non configuré dans les variables d'environnement Vercel.");
+  } else if (!process.env.RESEND_API_KEY) {
+    console.error("[SUGGESTION] RESEND_API_KEY non configuré.");
+  } else {
+    try {
+      await sendAdminNewSuggestion({
+        content:     suggestion.content,
+        authorName:  suggestion.authorName,
+        authorEmail: suggestion.authorEmail,
+      });
+      console.log("[SUGGESTION] Email admin envoyé à", process.env.ADMIN_EMAIL);
+    } catch (e) {
+      console.error("[SUGGESTION] Erreur envoi email admin:", e);
+    }
+  }
 
   return NextResponse.json(suggestion, { status: 201 });
 }

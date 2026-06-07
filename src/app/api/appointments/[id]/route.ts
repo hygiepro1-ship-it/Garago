@@ -80,32 +80,40 @@ export async function PATCH(
       hasGaragePhone: !!garagePhone,
     });
 
+    const reschedulePromises: Promise<void>[] = [];
+
     if (recipientEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
-      sendRescheduleNotification({
-        to:           recipientEmail,
-        customerName: updated.customerName,
-        garageName:   updated.garage.name,
-        garagePhone,
-        garageAddress,
-        date:         updated.date,
-        startTime:    updated.startTime,
-        endTime:      updated.endTime,
-        serviceName:  updated.serviceName,
-      }).catch(e => console.error("[RESCHEDULE EMAIL ERROR]", e));
+      reschedulePromises.push(
+        sendRescheduleNotification({
+          to:           recipientEmail,
+          customerName: updated.customerName,
+          garageName:   updated.garage.name,
+          garagePhone,
+          garageAddress,
+          date:         updated.date,
+          startTime:    updated.startTime,
+          endTime:      updated.endTime,
+          serviceName:  updated.serviceName,
+        }).catch(e => console.error("[RESCHEDULE EMAIL]", e))
+      );
     }
 
     const smsPhone = updated.customerPhone || userRecord?.phone || null;
     if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
-      sendRescheduleSMS({
-        to:           smsPhone,
-        customerName: updated.customerName,
-        garageName:   updated.garage.name,
-        garagePhone,
-        date:         updated.date,
-        startTime:    updated.startTime,
-        serviceName:  updated.serviceName,
-      }).catch(e => console.error("[RESCHEDULE SMS ERROR]", e));
+      reschedulePromises.push(
+        sendRescheduleSMS({
+          to:           smsPhone,
+          customerName: updated.customerName,
+          garageName:   updated.garage.name,
+          garagePhone,
+          date:         updated.date,
+          startTime:    updated.startTime,
+          serviceName:  updated.serviceName,
+        }).catch(e => console.error("[RESCHEDULE SMS]", e))
+      );
     }
+
+    await Promise.all(reschedulePromises);
   }
 
   // ── Notifications "véhicule prêt" quand le garage marque COMPLETED
@@ -124,30 +132,36 @@ export async function PATCH(
     const recipientEmail2 = updated.customerEmail || userRecord2?.email || null;
     const garagePhone2    = updated.garage.phone ?? "";
 
-    // Email (si EMAIL ou BOTH)
+    const completedPromises: Promise<void>[] = [];
+
     if (recipientEmail2 && (notifPref2 === "EMAIL" || notifPref2 === "BOTH")) {
-      sendVehicleReady({
-        to:            recipientEmail2,
-        customerName:  updated.customerName,
-        garageName:    updated.garage.name,
-        garageAddress,
-        garagePhone:   garagePhone2,
-        completionNote: note,
-      }).catch(console.error);
+      completedPromises.push(
+        sendVehicleReady({
+          to:            recipientEmail2,
+          customerName:  updated.customerName,
+          garageName:    updated.garage.name,
+          garageAddress,
+          garagePhone:   garagePhone2,
+          completionNote: note,
+        }).catch(e => console.error("[VEHICLE READY EMAIL]", e))
+      );
     }
 
-    // SMS (si SMS ou BOTH)
     const smsPhone2 = updated.customerPhone || userRecord2?.phone || null;
     if (smsPhone2 && (notifPref2 === "SMS" || notifPref2 === "BOTH")) {
-      sendVehicleReadySMS({
-        to:            smsPhone2,
-        customerName:  updated.customerName,
-        garageName:    updated.garage.name,
-        garageAddress,
-        garagePhone:   garagePhone2,
-        completionNote: note,
-      }).catch(console.error);
+      completedPromises.push(
+        sendVehicleReadySMS({
+          to:            smsPhone2,
+          customerName:  updated.customerName,
+          garageName:    updated.garage.name,
+          garageAddress,
+          garagePhone:   garagePhone2,
+          completionNote: note,
+        }).catch(e => console.error("[VEHICLE READY SMS]", e))
+      );
     }
+
+    await Promise.all(completedPromises);
   }
 
   return NextResponse.json(updated);

@@ -85,54 +85,69 @@ export async function POST(req: NextRequest) {
 
   const garageAddress = [appt.garage.address, appt.garage.city].filter(Boolean).join(", ");
 
+  // Envoyer les notifications en parallèle (await pour que Vercel ne coupe pas)
+  const notifPromises: Promise<void>[] = [];
+
   // 1a. Email de confirmation au client (si EMAIL ou BOTH)
-  if (appt.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
-    sendBookingConfirmation({
-      to:            appt.customerEmail,
-      customerName:  appt.customerName,
-      garageName:    appt.garage.name,
-      garagePhone:   appt.garage.phone,
-      garageAddress,
-      date:          appt.date,
-      startTime:     appt.startTime,
-      endTime:       appt.endTime,
-      serviceName:   appt.serviceName,
-      appointmentId: appt.id,
-    }).catch(console.error);
+  const recipientEmail = appt.customerEmail
+    || (sessionUserId ? (await prisma.user.findUnique({ where: { id: sessionUserId }, select: { email: true } }))?.email : null)
+    || null;
+
+  if (recipientEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+    notifPromises.push(
+      sendBookingConfirmation({
+        to:            recipientEmail,
+        customerName:  appt.customerName,
+        garageName:    appt.garage.name,
+        garagePhone:   appt.garage.phone ?? "",
+        garageAddress,
+        date:          appt.date,
+        startTime:     appt.startTime,
+        endTime:       appt.endTime,
+        serviceName:   appt.serviceName,
+        appointmentId: appt.id,
+      }).catch(e => console.error("[BOOKING CONFIRMATION EMAIL]", e))
+    );
   }
 
   // 1b. SMS de confirmation au client (si SMS ou BOTH)
   const smsPhone = appt.customerPhone || userPref?.phone;
   if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
-    sendBookingConfirmationSMS({
-      to:           smsPhone,
-      customerName: appt.customerName,
-      garageName:   appt.garage.name,
-      garagePhone:  appt.garage.phone,
-      date:         appt.date,
-      startTime:    appt.startTime,
-      serviceName:  appt.serviceName,
-    }).catch(console.error);
+    notifPromises.push(
+      sendBookingConfirmationSMS({
+        to:           smsPhone,
+        customerName: appt.customerName,
+        garageName:   appt.garage.name,
+        garagePhone:  appt.garage.phone ?? "",
+        date:         appt.date,
+        startTime:    appt.startTime,
+        serviceName:  appt.serviceName,
+      }).catch(e => console.error("[BOOKING CONFIRMATION SMS]", e))
+    );
   }
 
   // 2. Notification au garage
   if (appt.garage.email) {
-    sendGarageNewAppointment({
-      to:            appt.garage.email,
-      garageName:    appt.garage.name,
-      customerName:  appt.customerName,
-      customerPhone: appt.customerPhone,
-      customerEmail: appt.customerEmail,
-      vehicleYear:   appt.vehicleYear,
-      vehicleMake:   appt.vehicleMake,
-      vehicleModel:  appt.vehicleModel,
-      serviceName:   appt.serviceName,
-      date:          appt.date,
-      startTime:     appt.startTime,
-      endTime:       appt.endTime,
-      appointmentId: appt.id,
-    }).catch(console.error);
+    notifPromises.push(
+      sendGarageNewAppointment({
+        to:            appt.garage.email,
+        garageName:    appt.garage.name,
+        customerName:  appt.customerName,
+        customerPhone: appt.customerPhone,
+        customerEmail: appt.customerEmail,
+        vehicleYear:   appt.vehicleYear,
+        vehicleMake:   appt.vehicleMake,
+        vehicleModel:  appt.vehicleModel,
+        serviceName:   appt.serviceName,
+        date:          appt.date,
+        startTime:     appt.startTime,
+        endTime:       appt.endTime,
+        appointmentId: appt.id,
+      }).catch(e => console.error("[GARAGE NEW APPT EMAIL]", e))
+    );
   }
+
+  await Promise.all(notifPromises);
 
   return NextResponse.json(appt, { status: 201 });
 }
