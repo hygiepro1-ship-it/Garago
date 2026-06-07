@@ -59,37 +59,52 @@ export async function PATCH(
   const isReschedule = isGarageOwner && !!(date || startTime);
   if (isReschedule) {
     const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
+    const garagePhone   = updated.garage.phone ?? "";
 
-    const userPref = updated.userId
-      ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { notifPref: true, phone: true } })
+    // Récupère préférences + email du compte client (si RDV lié à un compte)
+    const userRecord = updated.userId
+      ? await prisma.user.findUnique({
+          where:  { id: updated.userId },
+          select: { notifPref: true, phone: true, email: true },
+        })
       : null;
-    const notifPref = userPref?.notifPref ?? "EMAIL";
 
-    if (updated.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+    const notifPref    = userRecord?.notifPref ?? "EMAIL";
+    // Priorité : email stocké dans le RDV, sinon email du compte Garago
+    const recipientEmail = updated.customerEmail || userRecord?.email || null;
+
+    console.log("[RESCHEDULE NOTIF]", {
+      apptId: updated.id,
+      recipientEmail,
+      notifPref,
+      hasGaragePhone: !!garagePhone,
+    });
+
+    if (recipientEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
       sendRescheduleNotification({
-        to:           updated.customerEmail,
+        to:           recipientEmail,
         customerName: updated.customerName,
         garageName:   updated.garage.name,
-        garagePhone:  updated.garage.phone,
+        garagePhone,
         garageAddress,
         date:         updated.date,
         startTime:    updated.startTime,
         endTime:      updated.endTime,
         serviceName:  updated.serviceName,
-      }).catch(console.error);
+      }).catch(e => console.error("[RESCHEDULE EMAIL ERROR]", e));
     }
 
-    const smsPhone = updated.customerPhone || userPref?.phone;
+    const smsPhone = updated.customerPhone || userRecord?.phone || null;
     if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
       sendRescheduleSMS({
-        to:          smsPhone,
-        customerName:updated.customerName,
-        garageName:  updated.garage.name,
-        garagePhone: updated.garage.phone,
-        date:        updated.date,
-        startTime:   updated.startTime,
-        serviceName: updated.serviceName,
-      }).catch(console.error);
+        to:           smsPhone,
+        customerName: updated.customerName,
+        garageName:   updated.garage.name,
+        garagePhone,
+        date:         updated.date,
+        startTime:    updated.startTime,
+        serviceName:  updated.serviceName,
+      }).catch(e => console.error("[RESCHEDULE SMS ERROR]", e));
     }
   }
 
@@ -98,33 +113,38 @@ export async function PATCH(
     const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
     const note = completionNote ?? updated.completionNote;
 
-    // Récupère la préférence du client lié (si compte Garago)
-    const userPref = updated.userId
-      ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { notifPref: true, phone: true } })
+    // Récupère la préférence + email du compte client
+    const userRecord2 = updated.userId
+      ? await prisma.user.findUnique({
+          where:  { id: updated.userId },
+          select: { notifPref: true, phone: true, email: true },
+        })
       : null;
-    const notifPref = userPref?.notifPref ?? "EMAIL";
+    const notifPref2     = userRecord2?.notifPref ?? "EMAIL";
+    const recipientEmail2 = updated.customerEmail || userRecord2?.email || null;
+    const garagePhone2    = updated.garage.phone ?? "";
 
     // Email (si EMAIL ou BOTH)
-    if (updated.customerEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+    if (recipientEmail2 && (notifPref2 === "EMAIL" || notifPref2 === "BOTH")) {
       sendVehicleReady({
-        to:            updated.customerEmail,
+        to:            recipientEmail2,
         customerName:  updated.customerName,
         garageName:    updated.garage.name,
         garageAddress,
-        garagePhone:   updated.garage.phone,
+        garagePhone:   garagePhone2,
         completionNote: note,
       }).catch(console.error);
     }
 
     // SMS (si SMS ou BOTH)
-    const smsPhone = updated.customerPhone || userPref?.phone;
-    if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
+    const smsPhone2 = updated.customerPhone || userRecord2?.phone || null;
+    if (smsPhone2 && (notifPref2 === "SMS" || notifPref2 === "BOTH")) {
       sendVehicleReadySMS({
-        to:            smsPhone,
+        to:            smsPhone2,
         customerName:  updated.customerName,
         garageName:    updated.garage.name,
         garageAddress,
-        garagePhone:   updated.garage.phone,
+        garagePhone:   garagePhone2,
         completionNote: note,
       }).catch(console.error);
     }
