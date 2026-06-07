@@ -23,11 +23,11 @@ const SUV_MODELS   = ["RAV4","CR-V","Escape","Equinox","Rogue","Tucson","Sportag
 
 // ── Image 3D via imagin.studio ────────────────────────────────────────────────
 
-function buildImaginUrl(make: string, model: string): string {
-  // Passe par notre proxy /api/car-image pour contourner le blocage CDN
+function buildImaginUrl(make: string, model: string, year?: number | string): string {
   const m  = encodeURIComponent(make);
   const mf = encodeURIComponent(model.split(/[\s,/]/)[0]);
-  return `/api/car-image?make=${m}&model=${mf}`;
+  const y  = year ? `&year=${year}` : "";
+  return `/api/car-image?make=${m}&model=${mf}${y}`;
 }
 
 // Silhouette de repli si imagin.studio ne trouve pas le modèle
@@ -57,9 +57,9 @@ function CarSilhouette({ type }: { type: "sedan"|"suv"|"truck" }) {
   );
 }
 
-function CarImage({ make, model, type }: { make: string; model: string; type: "sedan"|"suv"|"truck" }) {
+function CarImage({ make, model, year, type }: { make: string; model: string; year?: number | string; type: "sedan"|"suv"|"truck" }) {
   const [err, setErr] = useState(false);
-  const url = buildImaginUrl(make, model);
+  const url = buildImaginUrl(make, model, year);
   if (err) return <CarSilhouette type={type} />;
   return (
     <img
@@ -103,7 +103,7 @@ function VehicleCard({ v, findGarageLabel }: { v: any; findGarageLabel: string }
         </span>
         {/* Image 3D */}
         <div className="relative z-10 w-full h-36">
-          <CarImage make={v.make} model={model} type={carType} />
+          <CarImage make={v.make} model={model} year={v.year} type={carType} />
         </div>
       </div>
       {/* Infos */}

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const make  = req.nextUrl.searchParams.get("make")  ?? "";
   const model = req.nextUrl.searchParams.get("model") ?? "";
+  const year  = req.nextUrl.searchParams.get("year")  ?? "";
 
   // Normalise : lowercase, espaces→tirets, premier mot du modèle
   const m  = make.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -19,11 +20,14 @@ export async function GET(req: NextRequest) {
     return new NextResponse(null, { status: 400 });
   }
 
+  const yearParam = year ? `&modelYear=${year}` : "";
+
   const imaginUrl =
     `https://cdn.imagin.studio/getImage` +
     `?customer=img` +
     `&make=${m}` +
     `&modelFamily=${mf}` +
+    yearParam +
     `&angle=34` +
     `&width=480` +
     `&zoomType=fullscreen`;
