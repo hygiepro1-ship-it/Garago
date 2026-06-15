@@ -83,6 +83,7 @@ export async function PUT(req: NextRequest) {
         : null,
       acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
+      hourlyRate:      body.hourlyRate != null ? parseFloat(body.hourlyRate) : null,
       latitude:        body.latitude  != null ? parseFloat(body.latitude)  : undefined,
       longitude:       body.longitude != null ? parseFloat(body.longitude) : undefined,
       coverPosition:   body.coverPosition ?? "center",

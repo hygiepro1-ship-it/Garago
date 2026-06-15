@@ -10,6 +10,8 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
+import { getVehicleClass, estimateQuote } from "@/lib/laborTimes";
+import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
@@ -40,6 +42,14 @@ export default function GarageProfilePage() {
   const [isFav, setIsFav]       = useState(false);
   const [favLoading, setFavLoading] = useState(false);
 
+  // Devis estimatif
+  const [quoteVehicleYear, setQuoteVehicleYear] = useState("");
+  const [quoteVehicleMake, setQuoteVehicleMake] = useState("");
+  const [quoteVehicleModel, setQuoteVehicleModel] = useState("");
+  const [savedVehicles, setSavedVehicles] = useState<any[]>([]);
+  const quoteModels = quoteVehicleMake ? getModelsForMake(quoteVehicleMake) : [];
+  const quoteYears  = getYears();
+
   // Review form
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -68,6 +78,13 @@ export default function GarageProfilePage() {
       .then(r => r.json())
       .then((favs: any[]) => setIsFav(favs.some(f => f.garageId === garage.id)));
   }, [session, garage?.id]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/vehicles")
+      .then(r => r.json())
+      .then(v => { if (Array.isArray(v) && v.length > 0) { setSavedVehicles(v); const def = v[0]; setQuoteVehicleYear(String(def.year)); setQuoteVehicleMake(def.make); setQuoteVehicleModel(def.model); } });
+  }, [session]);
 
   async function toggleFav() {
     if (!session?.user) return;
@@ -312,6 +329,79 @@ export default function GarageProfilePage() {
           {Object.keys(servicesByCategory).length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-4">{g.servicesOffered}</h2>
+
+              {/* ── Calculateur de devis ── */}
+              {garage.hourlyRate && (
+                <div className="mb-6 rounded-xl p-4 space-y-3" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🧮</span>
+                    <p className="font-bold text-gray-900 text-sm">Estimez votre devis</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#f97316", color: "#fff" }}>NOUVEAU</span>
+                  </div>
+                  <p className="text-xs text-gray-500">Entrez votre véhicule pour voir des prix estimatifs. Ces montants sont approximatifs et peuvent varier selon l&apos;état réel du véhicule.</p>
+
+                  {/* Sélecteur de véhicule */}
+                  {savedVehicles.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Vos véhicules enregistrés</label>
+                      <div className="flex flex-wrap gap-2">
+                        {savedVehicles.map(v => (
+                          <button
+                            key={v.id}
+                            type="button"
+                            onClick={() => { setQuoteVehicleYear(String(v.year)); setQuoteVehicleMake(v.make); setQuoteVehicleModel(v.model); }}
+                            className="text-xs px-3 py-1.5 rounded-lg border-2 font-medium transition-all"
+                            style={quoteVehicleMake === v.make && quoteVehicleModel === v.model
+                              ? { borderColor: "#f97316", background: "#fff7ed", color: "#c2410c" }
+                              : { borderColor: "#e5e7eb", background: "#fff", color: "#374151" }}
+                          >
+                            {v.year} {v.make} {v.model}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Année</label>
+                      <select className="block w-full border border-gray-300 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                        value={quoteVehicleYear} onChange={e => setQuoteVehicleYear(e.target.value)}>
+                        <option value="">—</option>
+                        {quoteYears.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Marque</label>
+                      <select className="block w-full border border-gray-300 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                        value={quoteVehicleMake} onChange={e => { setQuoteVehicleMake(e.target.value); setQuoteVehicleModel(""); }}>
+                        <option value="">—</option>
+                        {VEHICLE_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Modèle</label>
+                      <select className="block w-full border border-gray-300 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                        value={quoteVehicleModel} onChange={e => setQuoteVehicleModel(e.target.value)} disabled={!quoteVehicleMake}>
+                        <option value="">—</option>
+                        {quoteModels.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {quoteVehicleMake && quoteVehicleModel && (() => {
+                    const cls = getVehicleClass(quoteVehicleMake, quoteVehicleModel);
+                    const classLabel: Record<string, string> = { compact: "Compacte", regular: "Berline/Coupé", suv: "VUS/Crossover", truck: "Camionnette", luxury: "Luxe/Européen" };
+                    return (
+                      <p className="text-xs text-gray-400">
+                        Catégorie détectée : <span className="font-semibold text-gray-600">{classLabel[cls]}</span>
+                        <span className="ml-2 text-gray-300">· Taux : {garage.hourlyRate}$/h</span>
+                      </p>
+                    );
+                  })()}
+                </div>
+              )}
+
               <div className="space-y-4">
                 {Object.entries(servicesByCategory).map(([cat, svcs]: [string, any]) => (
                   <div key={cat}>
@@ -320,18 +410,41 @@ export default function GarageProfilePage() {
                       {cat}
                     </h3>
                     <div className="space-y-2 pl-6">
-                      {svcs.map((s: any) => (
-                        <div key={s.id} className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-800">{s.name}</p>
-                            {s.description && <p className="text-xs text-gray-500">{s.description}</p>}
-                            {s.durationMin && <p className="text-xs text-gray-400">⏱ ~{s.durationMin} min</p>}
+                      {svcs.map((s: any) => {
+                        // Calcul du devis estimatif si taux horaire disponible et véhicule sélectionné
+                        const categorySlug = SERVICE_CATEGORIES.find(sc => sc.name === s.category?.name)?.id;
+                        const estimate = (garage.hourlyRate && quoteVehicleMake && quoteVehicleModel && categorySlug)
+                          ? estimateQuote(categorySlug, garage.hourlyRate, getVehicleClass(quoteVehicleMake, quoteVehicleModel))
+                          : null;
+                        return (
+                          <div key={s.id} className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                              {s.description && <p className="text-xs text-gray-500">{s.description}</p>}
+                              {s.durationMin && <p className="text-xs text-gray-400">⏱ ~{s.durationMin} min</p>}
+                              {estimate && (
+                                <p className="text-xs mt-0.5" style={{ color: "#9a3412" }}>
+                                  🧮 {estimate.note} · {estimate.laborHours}h MO
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              {estimate ? (
+                                <div>
+                                  <p className="text-sm font-bold" style={{ color: "#f97316" }}>
+                                    ~{estimate.totalMin}$ – {estimate.totalMax > estimate.totalMin ? `${estimate.totalMax}$` : ""}
+                                  </p>
+                                  <p className="text-xs text-gray-400">estimé</p>
+                                </div>
+                              ) : (
+                                <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "#f97316" }}>
+                                  {formatPriceRange(s.priceMin, s.priceMax)}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "#f97316" }}>
-                            {formatPriceRange(s.priceMin, s.priceMax)}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

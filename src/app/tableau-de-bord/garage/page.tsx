@@ -1841,6 +1841,30 @@ export default function DashboardGaragePage() {
                 </label>
               </div>
 
+              {/* Taux horaire */}
+              <div className="rounded-xl p-4 space-y-2" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Taux horaire main-d&apos;œuvre ($/h)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-40">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+                    <input
+                      type="number"
+                      min={40} max={250} step={5}
+                      className={inputClass + " pl-7"}
+                      placeholder="Ex : 110"
+                      value={profileData.hourlyRate ?? ""}
+                      onChange={(e) => setProfileData({ ...profileData, hourlyRate: e.target.value ? parseFloat(e.target.value) : null })}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-500">par heure</span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Permet d&apos;afficher des devis estimatifs automatiques aux clients sur votre profil public. Optionnel — vos prix saisis manuellement restent prioritaires.
+                </p>
+              </div>
+
               <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
                 {saving ? d.saving : d.save}
               </button>
