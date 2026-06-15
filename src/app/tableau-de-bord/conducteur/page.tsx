@@ -134,64 +134,103 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
         </div>
       </div>
       {/* Infos */}
-      <div className="px-4 pt-2 pb-4 border-t border-gray-100">
-        <div className="flex items-start justify-between gap-1 mt-1 mb-1">
+      <div className="border-t border-gray-100">
+
+        {/* Ligne titre + bouton fiche */}
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
           <div>
-            <p className="font-extrabold text-gray-900 text-sm">{v.make} {v.model}</p>
-            <p className="text-xs text-gray-400">{v.year} · {typeLabel}</p>
+            <p className="font-extrabold text-gray-900 text-sm leading-tight">{v.make} {v.model}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{v.year} &nbsp;·&nbsp; {typeLabel}</p>
           </div>
           {specs && (
             <button
               onClick={() => setShowSpecs(s => !s)}
-              className="text-xs px-2 py-1 rounded-lg font-semibold flex-shrink-0 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
               style={showSpecs
-                ? { background: "#0b1f3a", color: "#fff" }
-                : { background: "#f1f5f9", color: "#475569" }}
+                ? { background: "#0b1f3a", color: "#fff", borderColor: "#0b1f3a" }
+                : { background: "#fff", color: "#0b1f3a", borderColor: "#cbd5e1" }}
             >
-              {showSpecs ? "Masquer" : "📋 Fiche"}
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                <rect x="7" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                <rect x="1" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                <rect x="7" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+              </svg>
+              {showSpecs ? "Fermer" : "Fiche tech."}
             </button>
           )}
         </div>
 
-        {/* Rappel urgent (toujours visible) */}
+        {/* Bandeau rappel (toujours visible si rappels) */}
         {specs?.recallCount > 0 && (
-          <div className="mb-2 px-2 py-1.5 rounded-lg text-xs font-semibold" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
-            ⚠️ {specs.recallCount} rappel{specs.recallCount > 1 ? "s" : ""} constructeur actif{specs.recallCount > 1 ? "s" : ""}
+          <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
+            style={{ background: "#fff1f2", color: "#be123c", borderLeft: "3px solid #be123c" }}>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M8 6v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+            </svg>
+            {specs.recallCount} rappel{specs.recallCount > 1 ? "s" : ""} constructeur NHTSA actif{specs.recallCount > 1 ? "s" : ""}
           </div>
         )}
 
-        {/* Fiche technique dépliable */}
+        {/* Fiche technique — datasheet style */}
         {showSpecs && specs && (
-          <div className="mb-3 rounded-xl p-3 space-y-1.5 text-xs" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-            {specs.engine     && <div className="flex gap-2"><span className="text-gray-400 w-4">🔧</span><span className="text-gray-700">{specs.engine}{specs.hp ? ` · ${specs.hp} ch` : ""}</span></div>}
-            {specs.fuel       && <div className="flex gap-2"><span className="text-gray-400 w-4">⛽</span><span className="text-gray-700">{specs.fuel}</span></div>}
-            {specs.transmission && <div className="flex gap-2"><span className="text-gray-400 w-4">⚙️</span><span className="text-gray-700">{specs.transmission}</span></div>}
-            {specs.driveType  && <div className="flex gap-2"><span className="text-gray-400 w-4">🚗</span><span className="text-gray-700">{specs.driveType}</span></div>}
-            {specs.bodyType   && <div className="flex gap-2"><span className="text-gray-400 w-4">🏗️</span><span className="text-gray-700">{specs.bodyType}{specs.doors ? ` · ${specs.doors} portes` : ""}</span></div>}
-            {v.tireSize       && <div className="flex gap-2"><span className="text-gray-400 w-4">🛞</span><span className="text-gray-700">{v.tireSize}</span></div>}
+          <div className="mx-4 mb-3 rounded-xl overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
+            {/* En-tête fiche */}
+            <div className="px-3 py-2" style={{ background: "#0b1f3a" }}>
+              <p className="text-white text-xs font-bold tracking-widest uppercase">Fiche technique</p>
+              <p className="text-blue-200 text-xs opacity-70">{v.year} {v.make} {v.model}{v.trim ? ` — ${v.trim}` : ""}</p>
+            </div>
+
+            {/* Grille 2 colonnes */}
+            <div className="grid grid-cols-2 divide-x divide-y divide-gray-100" style={{ background: "#fff" }}>
+              {[
+                specs.engine && { label: "Moteur", value: `${specs.engine}${specs.hp ? ` — ${specs.hp} ch` : ""}` },
+                specs.fuel        && { label: "Carburant",    value: specs.fuel },
+                specs.transmission && { label: "Boîte",       value: specs.transmission },
+                specs.driveType   && { label: "Traction",     value: specs.driveType },
+                (specs.bodyType || specs.doors) && { label: "Carrosserie", value: `${specs.bodyType ?? ""}${specs.doors ? ` · ${specs.doors} portes` : ""}`.trim() },
+                v.tireSize        && { label: "Pneus d'orig.", value: v.tireSize },
+              ].filter(Boolean).map((item: any, i: number) => (
+                <div key={i} className="px-3 py-2.5">
+                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ fontSize: "9px", letterSpacing: "0.08em" }}>{item.label}</p>
+                  <p className="text-gray-900 text-xs font-semibold leading-snug">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section rappels détaillés */}
             {specs.recallCount > 0 && (
-              <div className="mt-1 pt-1.5 border-t border-red-100">
-                <p className="font-bold text-red-700 mb-1">Rappels NHTSA :</p>
+              <div className="divide-y divide-red-100" style={{ borderTop: "1px solid #fecdd3", background: "#fff1f2" }}>
                 {specs.recalls?.map((rc: any, i: number) => (
-                  <p key={i} className="text-red-600">· {rc.component}</p>
+                  <div key={i} className="px-3 py-2">
+                    <p className="text-xs font-bold text-red-700 mb-0.5">{rc.component}</p>
+                    {rc.summary && <p className="text-xs text-red-500 leading-snug line-clamp-2">{rc.summary}</p>}
+                  </div>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Pneus (si pas de fiche complète) */}
+        {/* Pneus (si pas de fiche, affichage simple) */}
         {!specs && v.tireSize && (
-          <p className="text-xs font-medium mb-2 flex items-center gap-1" style={{ color: "#166534" }}>
-            🛞 <span>{v.tireSize}</span>
-          </p>
+          <div className="mx-4 mb-2 flex items-center justify-between px-3 py-2 rounded-lg"
+            style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide" style={{ fontSize: "9px" }}>Pneus d&apos;origine</span>
+            <span className="text-xs font-bold text-green-800">{v.tireSize}</span>
+          </div>
         )}
 
-        <Link
-          href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
-          className="block text-center text-xs font-semibold px-3 py-2 rounded-xl w-full transition-colors hover:opacity-90"
-          style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
-        >{findGarageLabel}</Link>
+        {/* CTA */}
+        <div className="px-4 pb-4">
+          <Link
+            href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
+            className="block text-center text-xs font-semibold px-3 py-2 rounded-xl w-full transition-colors hover:opacity-90"
+            style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
+          >{findGarageLabel}</Link>
+        </div>
       </div>
     </div>
   );
