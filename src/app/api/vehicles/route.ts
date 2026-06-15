@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = (session.user as any).id;
-  const { year, make, model, trim, color, mileage, licensePlate } = await req.json();
+  const { year, make, model, trim, color, mileage, licensePlate, vin, tireSize } = await req.json();
 
   const count = await prisma.userVehicle.count({ where: { userId } });
   const vehicle = await prisma.userVehicle.create({
-    data: { userId, year, make, model, trim, color, mileage, licensePlate, isDefault: count === 0 },
+    data: { userId, year, make, model, trim, color, mileage, licensePlate, vin: vin || null, tireSize: tireSize || null, isDefault: count === 0 },
   });
 
   return NextResponse.json(vehicle);

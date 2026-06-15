@@ -132,7 +132,12 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
       {/* Infos */}
       <div className="px-4 pt-2 pb-4 border-t border-gray-100">
         <p className="font-extrabold text-gray-900 text-sm mt-1">{v.make} {v.model}</p>
-        <p className="text-xs text-gray-400 mb-3">{v.year} · {typeLabel}</p>
+        <p className="text-xs text-gray-400 mb-2">{v.year} · {typeLabel}</p>
+        {v.tireSize && (
+          <p className="text-xs font-medium mb-3 flex items-center gap-1" style={{ color: "#166534" }}>
+            🛞 <span>{v.tireSize}</span>
+          </p>
+        )}
         <Link
           href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
           className="block text-center text-xs font-semibold px-3 py-2 rounded-xl w-full transition-colors hover:opacity-90"
@@ -197,6 +202,11 @@ export default function DashboardConducteurPage() {
   const [year, setYear]   = useState("");
   const [make, setMake]   = useState("");
   const [model, setModel] = useState("");
+  const [trim, setTrim]   = useState("");
+  const [vin, setVin]     = useState("");
+  const [tireSize, setTireSize] = useState("");
+  const [vinLoading, setVinLoading] = useState(false);
+  const [vinError,   setVinError]   = useState("");
   const [savingVehicle, setSavingVehicle] = useState(false);
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
@@ -325,11 +335,37 @@ export default function DashboardConducteurPage() {
     setPrefSaving(false);
   }
 
+  async function lookupVin() {
+    const v = vin.trim().toUpperCase();
+    if (v.length !== 17) { setVinError("Le NIV doit contenir exactement 17 caractères."); return; }
+    setVinLoading(true); setVinError("");
+    try {
+      const res = await fetch(`/api/vin-decode?vin=${v}`);
+      const data = await res.json();
+      if (!res.ok) { setVinError(data.error ?? "NIV non reconnu."); return; }
+      if (data.year)     setYear(String(data.year));
+      if (data.make)     setMake(data.make);
+      if (data.model)    setModel(data.model);
+      if (data.trim)     setTrim(data.trim);
+      if (data.tireSize) setTireSize(data.tireSize);
+    } catch { setVinError("Erreur réseau."); }
+    finally { setVinLoading(false); }
+  }
+
   async function addVehicle(e: React.FormEvent) {
     e.preventDefault();
     setSavingVehicle(true);
-    const res = await fetch("/api/vehicles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year: parseInt(year), make, model }) });
-    if (res.ok) { const v = await res.json(); setVehicles(prev => [...prev, v]); setShowAddVehicle(false); setYear(""); setMake(""); setModel(""); }
+    const res = await fetch("/api/vehicles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ year: parseInt(year), make, model, trim: trim || null, vin: vin || null, tireSize: tireSize || null }),
+    });
+    if (res.ok) {
+      const v = await res.json();
+      setVehicles(prev => [...prev, v]);
+      setShowAddVehicle(false);
+      setYear(""); setMake(""); setModel(""); setTrim(""); setVin(""); setTireSize("");
+    }
     setSavingVehicle(false);
   }
 
@@ -675,6 +711,39 @@ export default function DashboardConducteurPage() {
               </div>
               {showAddVehicle && (
                 <form onSubmit={addVehicle} className="rounded-xl p-4 mb-4 space-y-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
+
+                  {/* Champ NIV */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                      Numéro d&apos;identification du véhicule (NIV) <span className="font-normal text-gray-400">— optionnel, auto-remplit les champs</span>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className={inputClass + " uppercase tracking-widest font-mono"}
+                        placeholder="Ex : 1HGBH41JXMN109186"
+                        maxLength={17}
+                        value={vin}
+                        onChange={e => { setVin(e.target.value.toUpperCase()); setVinError(""); }}
+                      />
+                      <button
+                        type="button"
+                        onClick={lookupVin}
+                        disabled={vinLoading || vin.length !== 17}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-40 whitespace-nowrap"
+                        style={{ background: "#0b1f3a" }}
+                      >
+                        {vinLoading ? "…" : "🔍 Rechercher"}
+                      </button>
+                    </div>
+                    {vinError && <p className="text-xs text-red-600 mt-1">{vinError}</p>}
+                    {tireSize && (
+                      <div className="mt-2 flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
+                        🛞 Pneus d&apos;origine détectés : <span className="font-bold">{tireSize}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">{d.year}</label>

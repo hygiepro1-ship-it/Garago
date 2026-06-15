@@ -235,6 +235,8 @@ model UserVehicle {
   color        String?
   mileage      Int?
   licensePlate String?
+  vin          String?
+  tireSize     String?
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
