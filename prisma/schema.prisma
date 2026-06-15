@@ -238,6 +238,7 @@ model UserVehicle {
   licensePlate String?
   vin          String?
   tireSize     String?
+  specs        String?  // JSON : engine, fuel, transmission, driveType, doors, bodyType, recalls[]
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
 

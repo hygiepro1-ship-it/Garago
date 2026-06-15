@@ -78,13 +78,17 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
   findGarageLabel: string;
   onDelete: (id: string) => Promise<void>;
 }) {
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting]     = useState(false);
+  const [showSpecs, setShowSpecs]   = useState(false);
   const color   = BRAND_COLOR[v.make] ?? "#1e3a5f";
   const model   = (v.model ?? "") as string;
   const isT     = TRUCK_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
   const isSUV   = !isT && SUV_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
   const carType: "sedan"|"suv"|"truck" = isT ? "truck" : isSUV ? "suv" : "sedan";
   const typeLabel = isT ? "Camionnette" : isSUV ? "VUS" : "Berline / Coupé";
+
+  let specs: any = null;
+  try { if (v.specs) specs = typeof v.specs === "string" ? JSON.parse(v.specs) : v.specs; } catch { /**/ }
 
   async function handleDelete() {
     if (!window.confirm(`Retirer ${v.year} ${v.make} ${v.model} de vos véhicules ?`)) return;
@@ -131,13 +135,58 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
       </div>
       {/* Infos */}
       <div className="px-4 pt-2 pb-4 border-t border-gray-100">
-        <p className="font-extrabold text-gray-900 text-sm mt-1">{v.make} {v.model}</p>
-        <p className="text-xs text-gray-400 mb-2">{v.year} · {typeLabel}</p>
-        {v.tireSize && (
-          <p className="text-xs font-medium mb-3 flex items-center gap-1" style={{ color: "#166534" }}>
+        <div className="flex items-start justify-between gap-1 mt-1 mb-1">
+          <div>
+            <p className="font-extrabold text-gray-900 text-sm">{v.make} {v.model}</p>
+            <p className="text-xs text-gray-400">{v.year} · {typeLabel}</p>
+          </div>
+          {specs && (
+            <button
+              onClick={() => setShowSpecs(s => !s)}
+              className="text-xs px-2 py-1 rounded-lg font-semibold flex-shrink-0 transition-colors"
+              style={showSpecs
+                ? { background: "#0b1f3a", color: "#fff" }
+                : { background: "#f1f5f9", color: "#475569" }}
+            >
+              {showSpecs ? "Masquer" : "📋 Fiche"}
+            </button>
+          )}
+        </div>
+
+        {/* Rappel urgent (toujours visible) */}
+        {specs?.recallCount > 0 && (
+          <div className="mb-2 px-2 py-1.5 rounded-lg text-xs font-semibold" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
+            ⚠️ {specs.recallCount} rappel{specs.recallCount > 1 ? "s" : ""} constructeur actif{specs.recallCount > 1 ? "s" : ""}
+          </div>
+        )}
+
+        {/* Fiche technique dépliable */}
+        {showSpecs && specs && (
+          <div className="mb-3 rounded-xl p-3 space-y-1.5 text-xs" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+            {specs.engine     && <div className="flex gap-2"><span className="text-gray-400 w-4">🔧</span><span className="text-gray-700">{specs.engine}{specs.hp ? ` · ${specs.hp} ch` : ""}</span></div>}
+            {specs.fuel       && <div className="flex gap-2"><span className="text-gray-400 w-4">⛽</span><span className="text-gray-700">{specs.fuel}</span></div>}
+            {specs.transmission && <div className="flex gap-2"><span className="text-gray-400 w-4">⚙️</span><span className="text-gray-700">{specs.transmission}</span></div>}
+            {specs.driveType  && <div className="flex gap-2"><span className="text-gray-400 w-4">🚗</span><span className="text-gray-700">{specs.driveType}</span></div>}
+            {specs.bodyType   && <div className="flex gap-2"><span className="text-gray-400 w-4">🏗️</span><span className="text-gray-700">{specs.bodyType}{specs.doors ? ` · ${specs.doors} portes` : ""}</span></div>}
+            {v.tireSize       && <div className="flex gap-2"><span className="text-gray-400 w-4">🛞</span><span className="text-gray-700">{v.tireSize}</span></div>}
+            {specs.recallCount > 0 && (
+              <div className="mt-1 pt-1.5 border-t border-red-100">
+                <p className="font-bold text-red-700 mb-1">Rappels NHTSA :</p>
+                {specs.recalls?.map((rc: any, i: number) => (
+                  <p key={i} className="text-red-600">· {rc.component}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pneus (si pas de fiche complète) */}
+        {!specs && v.tireSize && (
+          <p className="text-xs font-medium mb-2 flex items-center gap-1" style={{ color: "#166534" }}>
             🛞 <span>{v.tireSize}</span>
           </p>
         )}
+
         <Link
           href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
           className="block text-center text-xs font-semibold px-3 py-2 rounded-xl w-full transition-colors hover:opacity-90"
@@ -203,8 +252,9 @@ export default function DashboardConducteurPage() {
   const [make, setMake]   = useState("");
   const [model, setModel] = useState("");
   const [trim, setTrim]   = useState("");
-  const [vin, setVin]     = useState("");
+  const [vin, setVin]         = useState("");
   const [tireSize, setTireSize] = useState("");
+  const [vinSpecs, setVinSpecs] = useState<any>(null);
   const [vinLoading, setVinLoading] = useState(false);
   const [vinError,   setVinError]   = useState("");
   const [savingVehicle, setSavingVehicle] = useState(false);
@@ -338,16 +388,29 @@ export default function DashboardConducteurPage() {
   async function lookupVin() {
     const v = vin.trim().toUpperCase();
     if (v.length !== 17) { setVinError("Le NIV doit contenir exactement 17 caractères."); return; }
-    setVinLoading(true); setVinError("");
+    setVinLoading(true); setVinError(""); setVinSpecs(null);
     try {
       const res = await fetch(`/api/vin-decode?vin=${v}`);
       const data = await res.json();
       if (!res.ok) { setVinError(data.error ?? "NIV non reconnu."); return; }
-      if (data.year)     setYear(String(data.year));
-      if (data.make)     setMake(data.make);
-      if (data.model)    setModel(data.model);
-      if (data.trim)     setTrim(data.trim);
+      if (data.year)  setYear(String(data.year));
+      if (data.make)  setMake(data.make);
+      if (data.model) setModel(data.model);
+      if (data.trim)  setTrim(data.trim);
       if (data.tireSize) setTireSize(data.tireSize);
+      // Stocker les specs complètes
+      const specs = {
+        engine:       data.engine       || null,
+        hp:           data.hp           || null,
+        fuel:         data.fuel         || null,
+        transmission: data.transmission || null,
+        driveType:    data.driveType    || null,
+        bodyType:     data.bodyType     || null,
+        doors:        data.doors        || null,
+        recallCount:  data.recallCount  ?? 0,
+        recalls:      data.recalls      ?? [],
+      };
+      setVinSpecs(specs);
     } catch { setVinError("Erreur réseau."); }
     finally { setVinLoading(false); }
   }
@@ -358,13 +421,13 @@ export default function DashboardConducteurPage() {
     const res = await fetch("/api/vehicles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ year: parseInt(year), make, model, trim: trim || null, vin: vin || null, tireSize: tireSize || null }),
+      body: JSON.stringify({ year: parseInt(year), make, model, trim: trim || null, vin: vin || null, tireSize: tireSize || null, specs: vinSpecs || null }),
     });
     if (res.ok) {
       const v = await res.json();
       setVehicles(prev => [...prev, v]);
       setShowAddVehicle(false);
-      setYear(""); setMake(""); setModel(""); setTrim(""); setVin(""); setTireSize("");
+      setYear(""); setMake(""); setModel(""); setTrim(""); setVin(""); setTireSize(""); setVinSpecs(null);
     }
     setSavingVehicle(false);
   }
@@ -737,9 +800,25 @@ export default function DashboardConducteurPage() {
                       </button>
                     </div>
                     {vinError && <p className="text-xs text-red-600 mt-1">{vinError}</p>}
-                    {tireSize && (
-                      <div className="mt-2 flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
-                        🛞 Pneus d&apos;origine détectés : <span className="font-bold">{tireSize}</span>
+                    {vinSpecs && (
+                      <div className="mt-2 rounded-xl p-3 space-y-2" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+                        <p className="text-xs font-bold text-green-800">✅ Fiche technique récupérée</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-green-900">
+                          {vinSpecs.engine     && <span>🔧 {vinSpecs.engine}{vinSpecs.hp ? ` · ${vinSpecs.hp} ch` : ""}</span>}
+                          {vinSpecs.fuel       && <span>⛽ {vinSpecs.fuel}</span>}
+                          {vinSpecs.transmission && <span>⚙️ {vinSpecs.transmission}</span>}
+                          {vinSpecs.driveType  && <span>🚗 {vinSpecs.driveType}</span>}
+                          {vinSpecs.bodyType   && <span>🏗️ {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} portes` : ""}</span>}
+                          {tireSize            && <span>🛞 {tireSize}</span>}
+                        </div>
+                        {vinSpecs.recallCount > 0 && (
+                          <div className="mt-1 rounded-lg px-3 py-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+                            <p className="text-xs font-bold text-red-700">⚠️ {vinSpecs.recallCount} rappel{vinSpecs.recallCount > 1 ? "s" : ""} actif{vinSpecs.recallCount > 1 ? "s" : ""} (NHTSA)</p>
+                            {vinSpecs.recalls.slice(0, 2).map((rc: any, i: number) => (
+                              <p key={i} className="text-xs text-red-600 mt-0.5">· {rc.component}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
