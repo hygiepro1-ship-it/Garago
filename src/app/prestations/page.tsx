@@ -7,6 +7,34 @@ import { LABOR_CATALOG, estimateQuote, type VehicleClass } from "@/lib/laborTime
 
 const DEFAULT_RATE = 90;
 
+// Unsplash photo IDs — source.unsplash.com/{id}/800x450
+const SERVICE_IMAGES: Record<string, string> = {
+  "oil":          "V37iTrYZz2E",  // refill motor oil
+  "tires-winter": "lJ5_wZ2nkeI",  // tire in snow
+  "tires-summer": "yqsgL2wKEHA",  // summer tire close-up
+  "brakes":       "ii4XEyJEm_I",  // brake disc
+  "ac":           "UZUzvJEvKnI",  // mechanic under hood
+  "engine":       "eyPlv3Mxk8g",  // man working on car engine
+  "inspection":   "4eHREaM5_CA",  // car inspection in garage
+  "battery":      "cpkUK_YD_zs",  // mechanic with car battery
+  "transmission": "pbH2moaClEs",  // gear shift lever
+  "bodywork":     "pqGgKSaKTyc",  // spray gun car paint
+  "alignment":    "PNjW3W8Zfa8",  // close-up tire on car
+  "suspension":   "OOY5kdikxF8",  // wrench tightening nut
+  "electrical":   "dPt-X-KVAjA",  // OBD diagnostic laptop
+  "exhaust":      "I74mkR_3OP0",  // vehicle exhaust
+  "cooling":      "sk6fOQYIO1o",  // engine compartment open hood
+  "detailing":    "JyycY7jyJr0",  // washing car wheel with foam
+  "ev":           "EfbAELIole8",  // electric cars charging
+  "glass":        "r_ioI9YsrEc",  // windshield chip repair
+  "timing":       "6bTHShbYDhY",  // engine work
+  "clutch":       "pbH2moaClEs",  // gear shift / clutch
+  "preventive":   "GIPmXkRNsro",  // mechanic auto service
+  "bearing":      "al01Ad0f_KI",  // mechanical component
+  "fuel":         "qy27JnsH9sU",  // engine part close-up
+  "rust":         "f_ztFPZM50c",  // undercarriage inspection
+};
+
 const VEHICLE_CLASSES: {
   id: VehicleClass;
   label: string;
@@ -166,29 +194,53 @@ export default function PrestationsPage() {
                     border: "1px solid #e2e8f0",
                   }}
                 >
+                  {/* Photo */}
+                  <div
+                    className="relative overflow-hidden flex-shrink-0"
+                    style={{ height: 180, background: "linear-gradient(135deg, #1e3a5f 0%, #0b1f3a 100%)" }}
+                  >
+                    {/* Emoji fallback — always rendered, hidden under image */}
+                    <div className="absolute inset-0 flex items-center justify-center text-6xl"
+                      style={{ opacity: 0.18 }}>
+                      {cat.icon}
+                    </div>
+                    {/* Photo */}
+                    {SERVICE_IMAGES[cat.id] && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`https://source.unsplash.com/${SERVICE_IMAGES[cat.id]}/800x450`}
+                        alt={cat.name}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full"
+                        style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease" }}
+                        onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                    {/* Bottom gradient overlay */}
+                    <div
+                      className="absolute inset-x-0 bottom-0 pointer-events-none"
+                      style={{ height: 60, background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }}
+                    />
+                    {/* Service icon pill over photo */}
+                    <div
+                      className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black"
+                      style={{ background: "rgba(255,255,255,0.92)", color: "#0b1f3a", backdropFilter: "blur(4px)" }}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.name}</span>
+                    </div>
+                  </div>
+
                   {/* Card header */}
                   <div className="p-5 flex-1">
-                    <div className="flex items-start gap-3 mb-4">
-                      <span
-                        className="text-3xl flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl"
-                        style={{ background: "#f1f5f9" }}
+                    <div className="mb-4">
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: "#64748b" }}
                       >
-                        {cat.icon}
-                      </span>
-                      <div>
-                        <h2
-                          className="font-black text-sm leading-snug"
-                          style={{ color: "#0b1f3a" }}
-                        >
-                          {cat.name}
-                        </h2>
-                        <p
-                          className="text-xs mt-0.5 leading-relaxed"
-                          style={{ color: "#64748b" }}
-                        >
-                          {cat.description}
-                        </p>
-                      </div>
+                        {cat.description}
+                      </p>
                     </div>
 
                     {quote ? (
