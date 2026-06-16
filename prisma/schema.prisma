@@ -117,6 +117,21 @@ model Garage {
   photos       GaragePhoto[]
   appointments Appointment[]
   blockedSlots BlockedSlot[]
+  alerts       GarageAlert[]
+}
+
+model GarageAlert {
+  id          String   @id @default(cuid())
+  garageId    String
+  type        String   // "LOW_RATING" | "BAD_STREAK" | "ONE_STAR"
+  message     String
+  avgRating   Float?
+  reviewCount Int?
+  isRead      Boolean  @default(false)
+  emailSent   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 }
 
 model GarageService {

@@ -5,7 +5,19 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-type Tab = "descriptions" | "suggestions";
+type Tab = "alertes" | "descriptions" | "suggestions";
+
+interface GarageAlert {
+  id: string;
+  type: string;
+  message: string;
+  avgRating: number | null;
+  reviewCount: number | null;
+  isRead: boolean;
+  emailSent: boolean;
+  createdAt: string;
+  garage: { name: string; slug: string; city: string };
+}
 
 interface PendingGarage {
   id: string; name: string; slug: string; city: string;
@@ -28,9 +40,10 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }>
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [tab, setTab]               = useState<Tab>("descriptions");
+  const [tab, setTab]               = useState<Tab>("alertes");
   const [garages, setGarages]       = useState<PendingGarage[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [alerts, setAlerts]         = useState<GarageAlert[]>([]);
   const [loading, setLoading]       = useState(true);
   const [actionId, setActionId]     = useState<string | null>(null);
   const [noteEdit, setNoteEdit]     = useState<Record<string, string>>({});
@@ -53,11 +66,25 @@ export default function AdminDashboard() {
     if (r.ok) setSuggestions(await r.json());
   }, []);
 
+  const loadAlerts = useCallback(async () => {
+    const r = await fetch("/api/admin/alerts");
+    if (r.ok) setAlerts(await r.json());
+  }, []);
+
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadDescriptions(), loadSuggestions()]).finally(() => setLoading(false));
-  }, [status, loadDescriptions, loadSuggestions]);
+    Promise.all([loadDescriptions(), loadSuggestions(), loadAlerts()]).finally(() => setLoading(false));
+  }, [status, loadDescriptions, loadSuggestions, loadAlerts]);
+
+  async function markAlertsRead(ids: string[]) {
+    await fetch("/api/admin/alerts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, isRead: true }),
+    });
+    setAlerts(prev => prev.map(a => ids.includes(a.id) ? { ...a, isRead: true } : a));
+  }
 
   async function handleDescription(garageId: string, action: "approve" | "reject") {
     setActionId(garageId);
@@ -113,21 +140,137 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
         {([
-          { id: "descriptions", label: "Descriptions", icon: "📝", count: garages.length },
-          { id: "suggestions",  label: "Suggestions",  icon: "💡", count: suggestions.filter(s => s.status === "PENDING").length },
+          { id: "alertes",      label: "Alertes qualité", icon: "🚨", count: alerts.filter(a => !a.isRead).length, urgent: true },
+          { id: "descriptions", label: "Descriptions",    icon: "📝", count: garages.length, urgent: false },
+          { id: "suggestions",  label: "Suggestions",     icon: "💡", count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === t.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
             {t.icon} {t.label}
             {t.count > 0 && (
               <span className="text-xs px-1.5 py-0.5 rounded-full font-bold text-white"
-                style={{ background: "#f97316" }}>
+                style={{ background: t.urgent ? "#b91c1c" : "#f97316" }}>
                 {t.count}
               </span>
             )}
           </button>
         ))}
       </div>
+
+      {/* ── ALERTES TAB ──────────────────────────────────────────────────── */}
+      {tab === "alertes" && (() => {
+        const TYPE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+          ONE_STAR:  { label: "Avis 1 étoile",              color: "#b91c1c", bg: "#fff1f2", border: "#fecdd3" },
+          LOW_RATING:{ label: "Note moyenne sous 3/5",      color: "#92400e", bg: "#fffbeb", border: "#fde68a" },
+          BAD_STREAK:{ label: "Série de mauvais avis",      color: "#7c2d12", bg: "#fff7ed", border: "#fdba74" },
+        };
+        const unread = alerts.filter(a => !a.isRead);
+        const read   = alerts.filter(a => a.isRead);
+
+        return (
+          <div className="space-y-4">
+            {/* Actions groupées */}
+            {unread.length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-700">
+                  {unread.length} alerte{unread.length > 1 ? "s" : ""} non lue{unread.length > 1 ? "s" : ""}
+                </p>
+                <button
+                  onClick={() => markAlertsRead(unread.map(a => a.id))}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium"
+                >
+                  ✓ Tout marquer comme lu
+                </button>
+              </div>
+            )}
+
+            {alerts.length === 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+                <div className="text-4xl mb-3">✅</div>
+                <p className="font-semibold text-gray-900">Aucune alerte qualité</p>
+                <p className="text-gray-400 text-sm mt-1">Tous les garages ont de bonnes notes.</p>
+              </div>
+            )}
+
+            {/* Alertes non lues */}
+            {unread.map(a => {
+              const m = TYPE_META[a.type] ?? { label: a.type, color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
+              return (
+                <div key={a.id} className="rounded-2xl border-2 shadow-sm overflow-hidden"
+                  style={{ borderColor: m.border, background: m.bg }}>
+                  <div className="px-5 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: m.color, color: "#fff" }}>{m.label}</span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(a.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {a.emailSent && <span className="text-xs text-gray-400">· ✉️ courriel envoyé</span>}
+                        </div>
+                        <p className="font-bold text-gray-900 text-sm">{a.garage.name}
+                          <span className="font-normal text-gray-400 text-xs ml-2">{a.garage.city}</span>
+                        </p>
+                        <p className="text-sm text-gray-600 mt-0.5">{a.message}</p>
+                        {a.avgRating != null && (
+                          <div className="mt-2 flex items-center gap-3">
+                            <span className="text-sm font-bold" style={{ color: m.color }}>
+                              {"★".repeat(Math.round(a.avgRating))}{"☆".repeat(5 - Math.round(a.avgRating))}
+                            </span>
+                            <span className="text-xs text-gray-500">{a.avgRating.toFixed(1)}/5 · {a.reviewCount} avis</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        <Link href={`/garage/${a.garage.slug}`} target="_blank"
+                          className="text-xs px-3 py-1.5 rounded-lg border font-semibold text-center"
+                          style={{ borderColor: m.border, color: m.color }}>
+                          Voir profil ↗
+                        </Link>
+                        <button onClick={() => markAlertsRead([a.id])}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white font-medium">
+                          ✓ Lu
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Alertes lues (section repliable) */}
+            {read.length > 0 && (
+              <details className="group">
+                <summary className="cursor-pointer text-xs text-gray-400 font-medium py-2 select-none">
+                  {read.length} alerte{read.length > 1 ? "s" : ""} archivée{read.length > 1 ? "s" : ""} ▾
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {read.map(a => {
+                    const m = TYPE_META[a.type] ?? { label: a.type, color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
+                    return (
+                      <div key={a.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 opacity-60">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-semibold text-gray-500">{m.label} · </span>
+                            <span className="text-xs font-bold text-gray-700">{a.garage.name}</span>
+                            <span className="text-xs text-gray-400 ml-2">
+                              {new Date(a.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
+                            </span>
+                          </div>
+                          {a.avgRating != null && (
+                            <span className="text-xs text-gray-500">{a.avgRating.toFixed(1)}/5</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── DESCRIPTIONS TAB ─────────────────────────────────────────────── */}
       {tab === "descriptions" && (
