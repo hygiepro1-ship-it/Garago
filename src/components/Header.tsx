@@ -36,6 +36,7 @@ export default function Header() {
 
   const NAV = [
     { label: t.nav.findGarage, href: "/rechercher" },
+    { label: t.nav.catalog,    href: "/prestations" },
     { label: t.nav.pricing,    href: "/tarifs" },
   ];
 
