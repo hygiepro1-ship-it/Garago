@@ -171,7 +171,6 @@ export default function InscriptionConducteurPage() {
     e.preventDefault();
     setError("");
 
-    if (!emailVerified) { setError(r.emailNotVerified); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
 
@@ -297,80 +296,19 @@ export default function InscriptionConducteurPage() {
               </div>
             </div>
 
-            {/* Courriel + bouton d'envoi */}
+            {/* Courriel */}
             <div>
               <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
                 {r.email}
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="email" required
-                  className={`garago-input flex-1 ${emailVerified ? "opacity-60 pointer-events-none" : ""}`}
-                  placeholder="vous@exemple.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailVerified(false);
-                    setCodeSent(false);
-                    setCodeInput("");
-                    setCodeError("");
-                    setCodeSentMsg("");
-                  }}
-                />
-                {!emailVerified && (
-                  <button
-                    type="button"
-                    onClick={sendCode}
-                    disabled={sendingCode || !email}
-                    className="flex-shrink-0 text-xs px-3 py-2 rounded-xl font-semibold text-white transition-opacity disabled:opacity-50"
-                    style={{ background: "#0b1f3a" }}>
-                    {sendingCode ? "…" : codeSent ? "Renvoyer" : r.sendCode}
-                  </button>
-                )}
-                {emailVerified && (
-                  <div className="flex items-center gap-1 flex-shrink-0 px-3 text-green-600 font-semibold text-sm">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {r.emailVerified}
-                  </div>
-                )}
-              </div>
-
-              {/* Message d'envoi */}
-              {codeSentMsg && !emailVerified && (
-                <p className="text-xs mt-1.5 font-medium rounded-lg px-2 py-1"
-                  style={codeSentMsg.startsWith("⚠️")
-                    ? { color: "#92400e", background: "#fef3c7" }
-                    : { color: "#16a34a" }}>
-                  {codeSentMsg.startsWith("⚠️") ? codeSentMsg : `✓ ${codeSentMsg} — vérifiez vos courriels (et vos indésirables).`}
-                </p>
-              )}
+              <input
+                type="email" required
+                className="garago-input"
+                placeholder="vous@exemple.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-
-            {/* Saisie du code */}
-            {codeSent && !emailVerified && (
-              <div>
-                <label className="block text-sm font-bold mb-2" style={{ color: "#0b1f3a" }}>
-                  {r.codeLabel}
-                </label>
-                <div className="flex items-center gap-3">
-                  <CodeInput value={codeInput} onChange={handleCodeChange} disabled={verifyingCode} />
-                  {verifyingCode && (
-                    <svg className="w-5 h-5 animate-spin text-orange-400" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                  )}
-                </div>
-                {codeError && (
-                  <p className="text-xs mt-1.5 text-red-600 font-medium">{codeError}</p>
-                )}
-                <p className="text-xs mt-1.5" style={{ color: "#94a3b8" }}>
-                  Entrez le code à 6 chiffres reçu par courriel. Valide 15 minutes.
-                </p>
-              </div>
-            )}
 
             {/* Téléphone */}
             <div>
@@ -479,7 +417,7 @@ export default function InscriptionConducteurPage() {
 
             <button
               type="submit"
-              disabled={loading || !emailVerified || !acceptTerms || password !== confirmPwd || !password}
+              disabled={loading || !acceptTerms || password !== confirmPwd || !password}
               className="btn-primary w-full py-3 text-base mt-2">
               {loading
                 ? <span className="flex items-center justify-center gap-2">

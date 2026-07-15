@@ -260,7 +260,6 @@ export default function InscriptionGaragePage() {
     e.preventDefault();
     setError("");
 
-    if (!emailVerified) { setError(r.emailNotVerified); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
 
@@ -407,70 +406,17 @@ export default function InscriptionGaragePage() {
                         </div>
                       </div>
 
-                      {/* Courriel + envoi code */}
+                      {/* Courriel */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">{r.email}</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="email" required
-                            className={`${inputClass} flex-1 ${emailVerified ? "opacity-60 pointer-events-none" : ""}`}
-                            placeholder="vous@garage.com"
-                            value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setEmailVerified(false);
-                              setCodeSent(false);
-                              setCodeInput("");
-                              setCodeError("");
-                              setCodeSentMsg("");
-                            }}
-                          />
-                          {!emailVerified && (
-                            <button
-                              type="button"
-                              onClick={sendCode}
-                              disabled={sendingCode || !email}
-                              className="flex-shrink-0 text-xs px-3 rounded-xl font-semibold text-white transition-opacity disabled:opacity-50"
-                              style={{ background: "#0b1f3a" }}>
-                              {sendingCode ? "…" : codeSent ? r.resendCode : r.sendCode}
-                            </button>
-                          )}
-                          {emailVerified && (
-                            <div className="flex items-center gap-1 flex-shrink-0 px-2 text-green-600 font-semibold text-sm">
-                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                              {r.emailVerified}
-                            </div>
-                          )}
-                        </div>
-                        {codeSentMsg && !emailVerified && (
-                          <p className="text-xs mt-1 font-medium rounded px-2 py-1"
-                            style={codeSentMsg.startsWith("⚠️")
-                              ? { color: "#92400e", background: "#fef3c7" }
-                              : { color: "#16a34a" }}>
-                            {codeSentMsg.startsWith("⚠️") ? codeSentMsg : `✓ ${codeSentMsg} — vérifiez vos courriels.`}
-                          </p>
-                        )}
+                        <input
+                          type="email" required
+                          className={inputClass}
+                          placeholder="vous@garage.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
                       </div>
-
-                      {/* Saisie du code */}
-                      {codeSent && !emailVerified && (
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">{r.codeLabel}</label>
-                          <div className="flex items-center gap-3">
-                            <CodeInput value={codeInput} onChange={handleCodeChange} disabled={verifyingCode} />
-                            {verifyingCode && (
-                              <svg className="w-5 h-5 animate-spin text-orange-400" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                              </svg>
-                            )}
-                          </div>
-                          {codeError && <p className="text-xs mt-1 text-red-600 font-medium">{codeError}</p>}
-                          <p className="text-xs mt-1 text-gray-400">{r.codeHint}</p>
-                        </div>
-                      )}
 
                       {/* Téléphone */}
                       <div>
@@ -616,7 +562,7 @@ export default function InscriptionGaragePage() {
 
                   <button
                     type="submit"
-                    disabled={loading || !emailVerified || !acceptTerms || password !== confirmPwd || !password}
+                    disabled={loading || !acceptTerms || password !== confirmPwd || !password}
                     className="w-full py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90 disabled:opacity-60"
                     style={{ backgroundColor: "#f97316" }}
                   >
