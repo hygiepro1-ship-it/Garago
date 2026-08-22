@@ -110,7 +110,7 @@ export default function HomePage() {
             <img
               src="/garago_logo_transparent_1.png"
               alt="Garago"
-              style={{ height: 130, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
+              style={{ height: 155, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
             />
           </div>
 
