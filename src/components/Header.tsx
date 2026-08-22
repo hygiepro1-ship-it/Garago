@@ -48,9 +48,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <div className="bg-white rounded-xl px-2.5 py-1 flex items-center">
-              <img src="/logo-garago.png" alt="Garago" className="h-9 w-auto object-contain" />
-            </div>
+            <img src="/logo-garago.png" alt="Garago" className="h-11 w-auto object-contain" style={{ borderRadius: 8 }} />
           </Link>
 
           {/* Search bar — hors homepage */}

@@ -110,7 +110,7 @@ export default function HomePage() {
             <img
               src="/logo-garago.png"
               alt="Garago"
-              style={{ height: 80, width: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 4px 24px rgba(249,115,22,0.25))" }}
+              style={{ height: 110, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block", borderRadius: 12 }}
             />
           </div>
 
