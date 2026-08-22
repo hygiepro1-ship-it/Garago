@@ -255,7 +255,15 @@ export default function GarageProfilePage() {
             <div className="flex-1">
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div>
+                  <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-extrabold text-gray-900">{garage.name}</h1>
+                  {(garage as any).isAmbassador && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-black"
+                      style={{ background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
+                      ★ Ambassadeur Garago
+                    </span>
+                  )}
+                </div>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${garage.address}, ${garage.city}, ${garage.province} ${garage.postalCode}`)}`}
                     target="_blank"

@@ -728,25 +728,81 @@ export default function DashboardGaragePage() {
           </div>
 
           {/* Referral card */}
-          <div className="bg-white rounded-2xl border-2 border-dashed border-orange-300 shadow-sm p-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Parrainage — Gagnez 1 mois gratuit</h3>
-                <p className="text-gray-500 text-sm mb-3">Partagez votre code avec un autre garage. Dès son premier paiement, vous recevez automatiquement 1 mois gratuit.</p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
-                    {garage.referralCode ?? "—"}
-                  </span>
-                  {garage.referralCode && (
-                    <button type="button"
-                      onClick={() => { navigator.clipboard.writeText(garage.referralCode); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                      Copier
-                    </button>
-                  )}
+          <div className="rounded-2xl overflow-hidden shadow-sm"
+            style={{ border: "2px solid", borderColor: (garage as any).isAmbassador ? "#1f2e67" : "#fed7aa",
+              background: (garage as any).isAmbassador ? "linear-gradient(135deg, #f8f9ff 0%, #fff4ed 100%)" : "white" }}>
+
+            {/* Badge ambassadeur */}
+            {(garage as any).isAmbassador && (
+              <div className="flex items-center gap-2 px-6 py-3"
+                style={{ background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
+                <span className="text-white text-sm font-black">★ Ambassadeur Garago</span>
+                <span className="text-white text-xs opacity-75">— Membre depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}</span>
+              </div>
+            )}
+
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">
+                    Parrainage — Gagnez 15% de commission
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Partagez votre code. Pour chaque garage qui souscrit via votre lien, vous recevez <strong>15% de son premier paiement</strong> en crédit sur votre prochaine facture. Le garage parrainé bénéficie de <strong>60 jours d&apos;essai</strong> au lieu de 30.
+                  </p>
+                </div>
+                <div className="text-4xl">{(garage as any).isAmbassador ? "🏆" : "💰"}</div>
+              </div>
+
+              {/* Stats parrainage */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{(garage as any).referralCount ?? 0}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
+                </div>
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>
+                    {((garage as any).referralCommissionEarned ?? 0).toFixed(0)}$
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
+                </div>
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: (garage as any).isAmbassador ? "#1f2e67" : "#94a3b8" }}>
+                    {(garage as any).isAmbassador ? "✓" : `${Math.max(0, 3 - ((garage as any).referralCount ?? 0))}`}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {(garage as any).isAmbassador ? "Ambassadeur" : "Restants pour Ambassadeur"}
+                  </p>
                 </div>
               </div>
-              <div className="text-4xl">🎁</div>
+
+              {/* Avantages ambassadeur */}
+              {(garage as any).isAmbassador && (
+                <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(31,46,103,0.06)", border: "1px solid rgba(31,46,103,0.12)" }}>
+                  <p className="text-xs font-black mb-1.5" style={{ color: "#1f2e67" }}>Vos avantages Ambassadeur :</p>
+                  <ul className="space-y-1">
+                    {["10% de réduction permanente sur votre abonnement", "Priorité dans les résultats de recherche", "Badge Ambassadeur visible sur votre profil public", "Statistiques avancées débloquées"].map(a => (
+                      <li key={a} className="text-xs text-gray-600 flex items-center gap-1.5">
+                        <span style={{ color: "#f97316" }}>✓</span> {a}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Code + bouton copier */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
+                  {garage.referralCode ?? "—"}
+                </span>
+                {garage.referralCode && (
+                  <button type="button"
+                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                    Copier le code
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

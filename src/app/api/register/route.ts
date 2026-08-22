@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
           latitude:  garageLat  ? parseFloat(garageLat)  : null,
           longitude: garageLng ? parseFloat(garageLng) : null,
           subscriptionStatus: "TRIAL",
-          subscriptionEndAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          subscriptionEndAt: new Date(Date.now() + (referredByCode ? 60 : 30) * 24 * 60 * 60 * 1000),
           referralCode,
           referredByCode: referredByCode ? referredByCode.trim().toUpperCase() : null,
         },

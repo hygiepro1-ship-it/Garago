@@ -96,6 +96,10 @@ model Garage {
   referralCode          String?  @unique
   referredByCode        String?
   referralRewardGranted Boolean  @default(false)
+  referralCount         Int      @default(0)
+  referralCommissionEarned Float @default(0)
+  isAmbassador          Boolean  @default(false)
+  ambassadorSince       DateTime?
 
   yearFounded     Int?
   employeeCount   Int?

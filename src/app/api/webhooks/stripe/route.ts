@@ -65,8 +65,7 @@ export async function POST(req: NextRequest) {
           const sub = await stripe2.subscriptions.retrieve(inv.subscription as string);
           await handleSubscriptionChange(sub);
 
-          // ── Récompense de parrainage au 1er paiement ──────────────────
-          // billing_reason = "subscription_create" + amount_paid > 0 → premier paiement réel (mensuel ou annuel)
+          // ── Commission de parrainage au 1er paiement ──────────────────
           if (inv.billing_reason === "subscription_create" && (inv.amount_paid ?? 0) > 0) {
             const newGarage = await prisma.garage.findFirst({
               where: { stripeCustomerId: inv.customer as string },
@@ -76,19 +75,41 @@ export async function POST(req: NextRequest) {
                 where: { referralCode: newGarage.referredByCode },
               });
               if (referrer) {
-                const currentEnd = referrer.subscriptionEndAt ?? new Date();
-                const newEnd = new Date(Math.max(currentEnd.getTime(), Date.now()));
-                newEnd.setMonth(newEnd.getMonth() + 1); // +1 mois gratuit
+                // 15% de commission sur le premier paiement
+                const commissionCents = Math.round((inv.amount_paid ?? 0) * 0.15);
+                const commissionDollars = commissionCents / 100;
+
+                // Crédit Stripe sur le compte du parrain
+                if (referrer.stripeCustomerId && commissionCents > 0) {
+                  try {
+                    await stripe.customers.createBalanceTransaction(referrer.stripeCustomerId, {
+                      amount: -commissionCents, // négatif = crédit
+                      currency: "cad",
+                      description: `Commission parrainage — ${newGarage.name}`,
+                    });
+                  } catch (e) {
+                    console.error("Erreur crédit Stripe parrainage :", e);
+                  }
+                }
+
+                // Mise à jour compteur + ambassadeur
+                const newCount = (referrer.referralCount ?? 0) + 1;
+                const becomeAmbassador = newCount >= 3 && !referrer.isAmbassador;
 
                 await prisma.garage.update({
                   where: { id: referrer.id },
-                  data: { subscriptionEndAt: newEnd },
+                  data: {
+                    referralCount: newCount,
+                    referralCommissionEarned: { increment: commissionDollars },
+                    isAmbassador: newCount >= 3 ? true : referrer.isAmbassador,
+                    ambassadorSince: becomeAmbassador ? new Date() : referrer.ambassadorSince,
+                  },
                 });
                 await prisma.garage.update({
                   where: { id: newGarage.id },
                   data: { referralRewardGranted: true },
                 });
-                console.log(`🎁 +1 mois offert à ${referrer.name} pour parrainage de ${newGarage.name}`);
+                console.log(`💰 Commission ${commissionDollars}$ → ${referrer.name} (parrainage ${newGarage.name})${becomeAmbassador ? " 🏆 NOUVEAU AMBASSADEUR" : ""}`);
               }
             }
           }

@@ -5,9 +5,8 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// Coupon ID for 10% off first payment — create once in Stripe dashboard
-// or set STRIPE_REFERRAL_COUPON_ID in env (percent_off: 10, duration: once)
-const REFERRAL_COUPON_ID = process.env.STRIPE_REFERRAL_COUPON_ID ?? "garago-referral-10pct";
+// Coupon ambassadeur — 10% de réduction permanente (duration: forever)
+const AMBASSADOR_COUPON_ID = process.env.STRIPE_AMBASSADOR_COUPON_ID ?? "garago-ambassador-10pct";
 
 export async function POST(req: NextRequest) {
   const { default: Stripe } = await import("stripe");
@@ -39,24 +38,23 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
-  // Apply 10% referral coupon if this garage was referred
+  // Réduction ambassadeur permanente si le garage est ambassadeur
   const discounts: { coupon: string }[] = [];
-  if (garage.referredByCode) {
+  if ((garage as any).isAmbassador) {
     try {
-      // Ensure the coupon exists — create it if not
       try {
-        await stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+        await stripe.coupons.retrieve(AMBASSADOR_COUPON_ID);
       } catch {
         await stripe.coupons.create({
-          id: REFERRAL_COUPON_ID,
+          id: AMBASSADOR_COUPON_ID,
           percent_off: 10,
-          duration: "once",
-          name: "10% parrainage — premier paiement",
+          duration: "forever",
+          name: "10% Ambassadeur Garago — réduction permanente",
         });
       }
-      discounts.push({ coupon: REFERRAL_COUPON_ID });
+      discounts.push({ coupon: AMBASSADOR_COUPON_ID });
     } catch {
-      // Non-blocking — proceed without coupon if Stripe fails
+      // Non-bloquant
     }
   }
 

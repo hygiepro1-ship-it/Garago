@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get("sort");
     const orderBy: any =
       sort === "popular"
-        ? [{ reviews: { _count: "desc" } }, { appointments: { _count: "desc" } }]
-        : { createdAt: "desc" };
+        ? [{ isAmbassador: "desc" }, { reviews: { _count: "desc" } }, { appointments: { _count: "desc" } }]
+        : [{ isAmbassador: "desc" }, { createdAt: "desc" }];
 
     const [garages, total] = await Promise.all([
       prisma.garage.findMany({

@@ -9,6 +9,7 @@ interface GarageCardProps {
     slug: string; name: string; city: string; province: string;
     address?: string; description?: string | null; logoUrl?: string | null;
     avgRating: number; reviewCount: number; subscriptionStatus: string;
+    isAmbassador?: boolean;
     services: Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
     brands: Array<{ brand: string; accepts: boolean }>;
     acceptsWalkIn: boolean; appointmentOnly: boolean;
@@ -89,6 +90,12 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
           <div className="flex-1 px-4 py-4 min-w-0">
             <div className="flex flex-wrap items-start gap-2 mb-1.5">
               <h3 className="text-base font-black leading-tight" style={{ color: "#0b1f3a" }}>{garage.name}</h3>
+              {garage.isAmbassador && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white font-black"
+                  style={{ fontSize: 10, background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
+                  ★ Ambassadeur
+                </span>
+              )}
               {garage.subscriptionStatus === "active" && (
                 <span className="badge badge-orange" style={{ fontSize: 10 }}>{c.certified}</span>
               )}
