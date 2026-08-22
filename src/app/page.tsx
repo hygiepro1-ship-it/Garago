@@ -103,12 +103,20 @@ export default function HomePage() {
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 text-center">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-18 text-center">
 
-          {/* Titre */}
-          <h1 className="text-white font-black tracking-tight mb-4"
-            style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", lineHeight: 1.1 }}>
-            {h.heroLine1}<br />
+          {/* Logo */}
+          <div className="mb-6">
+            <img
+              src="/logo-garago.png"
+              alt="Garago"
+              style={{ height: 80, width: "auto", margin: "0 auto", display: "block", filter: "drop-shadow(0 4px 24px rgba(249,115,22,0.25))" }}
+            />
+          </div>
+
+          {/* Slogan */}
+          <h1 className="font-black tracking-tight mb-4"
+            style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", lineHeight: 1.1 }}>
             <span style={{
               background: "linear-gradient(90deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)",
               WebkitBackgroundClip: "text",
@@ -119,11 +127,8 @@ export default function HomePage() {
 
           {/* Sous-titre */}
           <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-3"
-            style={{ color: "rgba(255,255,255,0.5)" }}>
-            {h.heroSub1}{" "}
-            <strong style={{ color: "rgba(255,255,255,0.8)" }}>{h.heroSub2}</strong>
-            {h.heroSub3}{" "}
-            <span style={{ color: "#f97316" }}>{h.heroAccent}</span>
+            style={{ color: "rgba(255,255,255,0.55)" }}>
+            {h.heroSub}
           </p>
 
           {/* Trust pills */}
