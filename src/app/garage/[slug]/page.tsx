@@ -586,6 +586,49 @@ export default function GarageProfilePage() {
             />
           </div>
 
+          {/* Badge Ambassadeur */}
+          {(garage as any).isAmbassador && (
+            <div className="rounded-2xl overflow-hidden"
+              style={{ border: "1px solid rgba(249,115,22,0.3)", background: "linear-gradient(145deg, #0b1f3a 0%, #1a2f50 100%)" }}>
+              {/* Header dégradé */}
+              <div className="px-5 py-4 flex items-center gap-3"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, #f97316, #fbbf24)" }}>
+                  <span style={{ fontSize: 18 }}>★</span>
+                </div>
+                <div>
+                  <p className="text-white font-black text-sm leading-tight">Ambassadeur Garago</p>
+                  <p className="text-xs font-medium" style={{ color: "rgba(249,115,22,0.85)" }}>Garage partenaire de confiance</p>
+                </div>
+              </div>
+              {/* Corps */}
+              <div className="px-5 py-4 space-y-3">
+                <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Le statut Ambassadeur est attribué aux garages qui ont démontré leur engagement envers la qualité de service et la satisfaction client sur la plateforme Garago.
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { icon: "✓", label: "Garage vérifié et recommandé" },
+                    { icon: "✓", label: "Avis clients authentiques" },
+                    { icon: "✓", label: "Partenaire prioritaire Garago" },
+                    { icon: "✓", label: "Engagement qualité reconnu" },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="flex items-center gap-2">
+                      <span className="text-xs font-black flex-shrink-0" style={{ color: "#f97316" }}>{icon}</span>
+                      <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+                {(garage as any).ambassadorSince && (
+                  <p className="text-xs pt-1" style={{ color: "rgba(255,255,255,0.35)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                    Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Horaires */}
           {garage.availability?.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
