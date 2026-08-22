@@ -108,9 +108,9 @@ export default function HomePage() {
           {/* Logo */}
           <div className="mb-6">
             <img
-              src="/logo-garago.png"
+              src="/garago_logo_transparent_1.png"
               alt="Garago"
-              style={{ height: 110, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block", borderRadius: 12 }}
+              style={{ height: 120, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
             />
           </div>
 
