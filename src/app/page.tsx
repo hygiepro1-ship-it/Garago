@@ -103,7 +103,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 text-center">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 text-center">
 
           {/* Logo */}
           <div className="mb-3">
