@@ -384,15 +384,8 @@ export default function DashboardGaragePage() {
     setSavingReply(false);
   }
 
-  async function toggleHideReview(reviewId: string, currentlyHidden: boolean) {
-    const res = await fetch(`/api/reviews/${reviewId}/hide`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isHidden: !currentlyHidden }),
-    });
-    if (res.ok) {
-      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, isHidden: !currentlyHidden } : r));
-    }
+  async function reportReview(reviewId: string) {
+    await fetch(`/api/reviews/${reviewId}/report`, { method: "POST" });
   }
 
   // ── RDV / Calendar ─────────────────────────────────────────────────────
@@ -1239,8 +1232,7 @@ export default function DashboardGaragePage() {
             ) : (
               <div className="space-y-4">
                 {reviews.map((r: any) => (
-                  <div key={r.id} className={`rounded-xl border p-4 transition-all ${r.isHidden ? "opacity-60 bg-gray-50" : "bg-white border-gray-200"}`}
-                    style={r.isHidden ? { border: "1px solid #e2e8f0" } : {}}>
+                  <div key={r.id} className="rounded-xl border p-4 transition-all bg-white border-gray-200">
                     {/* Review header */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
@@ -1256,16 +1248,11 @@ export default function DashboardGaragePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {r.isHidden && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-200 text-gray-500">Masqué</span>
-                        )}
                         <button
-                          onClick={() => toggleHideReview(r.id, r.isHidden)}
+                          onClick={() => reportReview(r.id)}
                           className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
-                          style={r.isHidden
-                            ? { background: "#f0fdf4", borderColor: "#86efac", color: "#15803d" }
-                            : { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                          {r.isHidden ? "👁 Afficher" : "🚫 Masquer"}
+                          style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
+                          🚩 Signaler
                         </button>
                         <button
                           onClick={() => {
@@ -1919,6 +1906,15 @@ export default function DashboardGaragePage() {
                 <p className="text-xs text-gray-400">
                   Permet d&apos;afficher des devis estimatifs automatiques aux clients sur votre profil public. Optionnel — vos prix saisis manuellement restent prioritaires.
                 </p>
+              </div>
+
+              {/* Visibilité du courriel */}
+              <div className="rounded-xl p-4" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={profileData.emailPublic ?? false} onChange={(e) => setProfileData({ ...profileData, emailPublic: e.target.checked })} className="accent-orange-500 w-4 h-4" />
+                  <span className="text-sm font-medium text-gray-700">Afficher mon adresse courriel sur mon profil public</span>
+                </label>
+                <p className="text-xs text-gray-400 mt-1 ml-6">Si désactivé, votre courriel reste visible uniquement pour vous.</p>
               </div>
 
               <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>

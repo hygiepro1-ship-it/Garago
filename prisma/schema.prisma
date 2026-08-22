@@ -101,6 +101,7 @@ model Garage {
   isAmbassador          Boolean  @default(false)
   ambassadorSince       DateTime?
 
+  emailPublic     Boolean @default(false)
   yearFounded     Int?
   employeeCount   Int?
   languages       String?

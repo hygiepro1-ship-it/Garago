@@ -340,6 +340,59 @@ export async function sendAdminNewSuggestion(params: {
   });
 }
 
+// ── Signalement d'avis ────────────────────────────────────────────────────────
+
+export async function sendReviewReport(params: {
+  reviewId:     string;
+  reviewerName: string | null;
+  reviewRating: number;
+  reviewText:   string | null;
+  garageName:   string;
+  garageSlug:   string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const garageUrl = `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/garage/${params.garageSlug}`;
+  const adminUrl  = `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/tableau-de-bord/admin`;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#b91c1c;font-size:22px;font-weight:800">🚨 Signalement d'un avis</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un garage a signalé un avis comme inapproprié ou abusif.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        <p style="margin:0 0 8px;font-size:14px"><strong>🏪 Garage :</strong> ${params.garageName}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>👤 Auteur de l'avis :</strong> ${params.reviewerName ?? "Anonyme"}</p>
+        <p style="margin:0 0 8px;font-size:14px"><strong>⭐ Note :</strong> ${params.reviewRating}/5</p>
+        ${params.reviewText ? `
+        <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #fecdd3;margin-top:8px">
+          <p style="margin:0;font-size:14px;line-height:1.7;color:#374151">${params.reviewText}</p>
+        </div>` : ""}
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Identifiant de l'avis : <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">${params.reviewId}</code></p>
+
+    <div>
+      <a href="${adminUrl}"
+         style="display:inline-block;background:#b91c1c;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-right:10px">
+        📊 Tableau de bord admin
+      </a>
+      <a href="${garageUrl}"
+         style="display:inline-block;background:#f1f5f9;color:#0b1f3a;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;border:1px solid #e2e8f0">
+        Voir le profil du garage →
+      </a>
+    </div>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      "info.garago@gmail.com",
+    subject: `🚨 Signalement d'avis — ${params.garageName}`,
+    html:    baseLayout(body),
+  });
+}
+
 // ── Alerte mauvais avis ───────────────────────────────────────────────────────
 
 export async function sendAdminBadReviewAlert(params: {

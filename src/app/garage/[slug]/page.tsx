@@ -572,14 +572,19 @@ export default function GarageProfilePage() {
         {/* Sidebar */}
         <div className="space-y-5">
           {/* Widget de réservation */}
-          <BookingWidget
-            garageId={garage.id}
-            garageSlug={slug}
-            garageName={garage.name}
-            garageAddress={garage.address}
-            garageCity={garage.city}
-            services={garage.services ?? []}
-          />
+          <div style={isOwner ? { opacity: 0.5, pointerEvents: "none", userSelect: "none" } : undefined}>
+            {isOwner && (
+              <p className="text-center text-xs text-gray-400 mb-2 italic">Aperçu uniquement — vous ne pouvez pas prendre rendez-vous avec vous-même.</p>
+            )}
+            <BookingWidget
+              garageId={garage.id}
+              garageSlug={slug}
+              garageName={garage.name}
+              garageAddress={garage.address}
+              garageCity={garage.city}
+              services={garage.services ?? []}
+            />
+          </div>
 
           {/* Horaires */}
           {garage.availability?.length > 0 && (
@@ -610,16 +615,16 @@ export default function GarageProfilePage() {
                   <span className="font-medium text-gray-900">{garage.yearFounded}</span>
                 </div>
               )}
-              {garage.employeeCount && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{g.employees}</span>
-                  <span className="font-medium text-gray-900">{garage.employeeCount}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-gray-500">{g.walkIn}</span>
                 <span className="font-medium text-gray-900">{garage.acceptsWalkIn ? g.walkInYes : g.walkInNo}</span>
               </div>
+              {(garage as any).emailPublic && garage.email && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Courriel</span>
+                  <a href={`mailto:${garage.email}`} className="font-medium text-orange-600 hover:underline truncate max-w-[60%] text-right">{garage.email}</a>
+                </div>
+              )}
               {garage.languages && (() => {
                 try {
                   const langs = typeof garage.languages === "string"

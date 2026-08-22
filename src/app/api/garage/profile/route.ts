@@ -81,6 +81,7 @@ export async function PUT(req: NextRequest) {
       openingHours: body.openingHours != null
         ? (typeof body.openingHours === "string" ? body.openingHours : JSON.stringify(body.openingHours))
         : null,
+      emailPublic:     body.emailPublic     ?? false,
       acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
       hourlyRate:      body.hourlyRate != null ? parseFloat(body.hourlyRate) : null,
