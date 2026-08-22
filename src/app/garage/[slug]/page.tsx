@@ -428,20 +428,22 @@ export default function GarageProfilePage() {
                                 </p>
                               )}
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              {estimate ? (
-                                <div>
-                                  <p className="text-sm font-bold" style={{ color: "#f97316" }}>
-                                    ~{estimate.totalMin}$ – {estimate.totalMax > estimate.totalMin ? `${estimate.totalMax}$` : ""}
-                                  </p>
-                                  <p className="text-xs text-gray-400">estimé</p>
-                                </div>
-                              ) : (
-                                <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "#f97316" }}>
-                                  {formatPriceRange(s.priceMin, s.priceMax)}
-                                </span>
-                              )}
-                            </div>
+                            {(estimate || s.priceMin || s.priceMax) && (
+                              <div className="text-right flex-shrink-0">
+                                {estimate ? (
+                                  <div>
+                                    <p className="text-sm font-bold" style={{ color: "#f97316" }}>
+                                      ~{estimate.totalMin}$ – {estimate.totalMax > estimate.totalMin ? `${estimate.totalMax}$` : ""}
+                                    </p>
+                                    <p className="text-xs text-gray-400">estimé</p>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "#f97316" }}>
+                                    {formatPriceRange(s.priceMin, s.priceMax)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
