@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ARTICLES, getArticle, getRelatedArticles } from "@/lib/articles";
+import { ArticleImage } from "./ArticleImage";
 
 export function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
@@ -42,14 +43,11 @@ export default async function ArticlePage({
         >
           {article.icon}
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ArticleImage
           src={`https://source.unsplash.com/${article.imageId}/1400x700`}
           alt={article.title}
           className="absolute inset-0 w-full h-full"
-          style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.5s" }}
-          onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          style={{ objectFit: "cover" }}
         />
         {/* Gradient overlay */}
         <div
@@ -243,15 +241,12 @@ export default async function ArticlePage({
                     >
                       {rel.icon}
                     </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <ArticleImage
                       src={`https://source.unsplash.com/${rel.imageId}/600x300`}
                       alt={rel.title}
                       loading="lazy"
                       className="absolute inset-0 w-full h-full"
-                      style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.4s" }}
-                      onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      style={{ objectFit: "cover" }}
                     />
                     <div className="absolute top-2 left-2">
                       <span
