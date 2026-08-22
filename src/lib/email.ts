@@ -349,6 +349,7 @@ export async function sendReviewReport(params: {
   reviewText:   string | null;
   garageName:   string;
   garageSlug:   string;
+  reason:       string | null;
 }) {
   if (!process.env.RESEND_API_KEY) return;
 
@@ -370,6 +371,14 @@ export async function sendReviewReport(params: {
         </div>` : ""}
       </td></tr>
     </table>
+
+    ${params.reason ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px;margin-bottom:24px">
+      <tr><td>
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.05em">Motif du signalement</p>
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#78350f;white-space:pre-wrap">${params.reason}</p>
+      </td></tr>
+    </table>` : ""}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">Identifiant de l'avis : <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:12px">${params.reviewId}</code></p>
 

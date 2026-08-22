@@ -367,6 +367,10 @@ export default function DashboardGaragePage() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null); // reviewId
   const [replyText, setReplyText]   = useState("");
   const [savingReply, setSavingReply] = useState(false);
+  const [reportingId, setReportingId]   = useState<string | null>(null); // reviewId en cours de signalement
+  const [reportReason, setReportReason] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportSent, setReportSent]     = useState<string | null>(null); // reviewId dont le signalement est envoyé
 
   async function saveReply(reviewId: string) {
     setSavingReply(true);
@@ -384,8 +388,17 @@ export default function DashboardGaragePage() {
     setSavingReply(false);
   }
 
-  async function reportReview(reviewId: string) {
-    await fetch(`/api/reviews/${reviewId}/report`, { method: "POST" });
+  async function submitReport(reviewId: string) {
+    setSendingReport(true);
+    await fetch(`/api/reviews/${reviewId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: reportReason }),
+    });
+    setSendingReport(false);
+    setReportSent(reviewId);
+    setReportingId(null);
+    setReportReason("");
   }
 
   // ── RDV / Calendar ─────────────────────────────────────────────────────
@@ -1248,12 +1261,16 @@ export default function DashboardGaragePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => reportReview(r.id)}
-                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
-                          style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                          🚩 Signaler
-                        </button>
+                        {reportSent === r.id ? (
+                          <span className="text-xs px-2.5 py-1 rounded-lg font-medium bg-green-50 text-green-700 border border-green-200">✓ Signalement envoyé</span>
+                        ) : (
+                          <button
+                            onClick={() => { setReportingId(reportingId === r.id ? null : r.id); setReportReason(""); }}
+                            className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
+                            style={{ background: reportingId === r.id ? "#fef2f2" : undefined, borderColor: "#fca5a5", color: "#dc2626" }}>
+                            🚩 Signaler
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             if (replyingTo === r.id) { setReplyingTo(null); setReplyText(""); }
@@ -1268,6 +1285,34 @@ export default function DashboardGaragePage() {
 
                     {r.title && <p className="text-sm font-semibold text-gray-800 mb-1">{r.title}</p>}
                     {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+
+                    {/* Formulaire de signalement */}
+                    {reportingId === r.id && (
+                      <div className="mt-3 rounded-xl p-4 space-y-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+                        <p className="text-xs font-bold text-red-700">Signaler cet avis à l&apos;équipe Garago</p>
+                        <p className="text-xs text-red-600">Décrivez pourquoi vous souhaitez signaler cet avis. Notre équipe examinera votre demande et décidera s&apos;il doit être retiré.</p>
+                        <textarea
+                          className={`${inputClass} min-h-[80px]`}
+                          value={reportReason}
+                          onChange={e => setReportReason(e.target.value)}
+                          placeholder="Ex : avis diffamatoire, faux client, contenu inapproprié…"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => submitReport(r.id)}
+                            disabled={sendingReport || !reportReason.trim()}
+                            className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+                            style={{ background: "#dc2626" }}>
+                            {sendingReport ? "Envoi…" : "Confirmer le signalement"}
+                          </button>
+                          <button
+                            onClick={() => { setReportingId(null); setReportReason(""); }}
+                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Existing reply */}
                     {r.ownerReply && replyingTo !== r.id && (

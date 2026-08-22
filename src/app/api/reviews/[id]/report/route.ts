@@ -20,6 +20,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
   if (!review) return NextResponse.json({ error: "Avis introuvable" }, { status: 404 });
 
+  const body = await req.json().catch(() => ({}));
+
   await sendReviewReport({
     reviewId:     review.id,
     reviewerName: review.user?.name ?? null,
@@ -27,6 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     reviewText:   review.comment ?? null,
     garageName:   garage.name,
     garageSlug:   garage.slug,
+    reason:       body.reason ?? null,
   });
 
   return NextResponse.json({ ok: true });
