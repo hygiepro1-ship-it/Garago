@@ -72,6 +72,8 @@ export default function GarageProfilePage() {
       .catch(() => { setGarage({ error: "Erreur réseau" }); setLoading(false); });
   }, [slug]);
 
+  const isOwner = !!(session?.user && garage?.ownerId && (session.user as any).id === garage.ownerId);
+
   useEffect(() => {
     if (!session?.user || !garage?.id) return;
     fetch("/api/favorites")
@@ -338,8 +340,8 @@ export default function GarageProfilePage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-4">{g.servicesOffered}</h2>
 
-              {/* ── Calculateur de devis ── */}
-              {garage.hourlyRate && (
+              {/* ── Calculateur de devis — visible aux clients uniquement ── */}
+              {!isOwner && garage.hourlyRate && (
                 <div className="mb-6 rounded-xl p-4 space-y-3" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🧮</span>
@@ -493,7 +495,7 @@ export default function GarageProfilePage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-bold text-gray-900 text-lg">{g.reviews} ({garage.reviewCount ?? 0})</h2>
-              {session && (
+              {session && !isOwner && (
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
                   className="text-sm text-white px-4 py-2 rounded-xl transition-colors font-medium" style={{ background: "#f97316" }}
