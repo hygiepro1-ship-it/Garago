@@ -560,8 +560,8 @@ export const translations = {
     // ── Accueil ───────────────────────────────────────────────────────────
     home: {
       badge:            "500+ garages partenaires au Québec",
-      heroLine1:        "Votre voiture mérite",
-      heroLine2:        "le bon garage.",
+      heroLine1:        "avec Garago,",
+      heroLine2:        "Trouvez, comparez, réservez.",
       heroSub1:         "Cherchez par",
       heroSub2:         "marque et modèle",
       heroSub3:         ", comparez les prix et les avis vérifiés — puis réservez en ligne.",
@@ -1183,8 +1183,8 @@ export const translations = {
     // ── Home ──────────────────────────────────────────────────────────────
     home: {
       badge:            "500+ partner garages in Quebec",
-      heroLine1:        "Your car deserves",
-      heroLine2:        "the right garage.",
+      heroLine1:        "with Garago,",
+      heroLine2:        "Find, compare, book.",
       heroSub1:         "Search by",
       heroSub2:         "make and model",
       heroSub3:         ", compare prices and verified reviews — then book online.",
