@@ -103,20 +103,20 @@ export default function HomePage() {
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-18 text-center">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 text-center">
 
           {/* Logo */}
-          <div className="mb-6">
+          <div className="mb-3">
             <img
               src="/garago_logo_transparent_1.png"
               alt="Garago"
-              style={{ height: 200, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
+              style={{ height: 130, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
             />
           </div>
 
           {/* Slogan */}
-          <h1 className="font-black tracking-tight mb-4"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", lineHeight: 1.1 }}>
+          <h1 className="font-black tracking-tight mb-2"
+            style={{ fontSize: "clamp(1.5rem, 4vw, 2.4rem)", lineHeight: 1.15 }}>
             <span style={{
               background: "linear-gradient(90deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)",
               WebkitBackgroundClip: "text",
@@ -126,13 +126,13 @@ export default function HomePage() {
           </h1>
 
           {/* Sous-titre */}
-          <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-3"
+          <p className="text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-3"
             style={{ color: "rgba(255,255,255,0.55)" }}>
             {h.heroSub}
           </p>
 
           {/* Trust pills */}
-          <div className="flex flex-wrap justify-center gap-4 mb-9">
+          <div className="flex flex-wrap justify-center gap-3 mb-5">
             {h.trust.map((txt) => (
               <span key={txt} className="text-xs font-semibold flex items-center gap-1.5"
                 style={{ color: "rgba(255,255,255,0.45)" }}>
