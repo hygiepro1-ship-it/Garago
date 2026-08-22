@@ -96,7 +96,7 @@ export default function HomePage() {
           HERO
       ════════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden hero-lines"
-        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "calc(100vh - 64px)" }}>
+        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "100vh" }}>
 
         <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
