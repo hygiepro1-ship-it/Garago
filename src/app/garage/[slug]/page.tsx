@@ -57,11 +57,16 @@ export default function GarageProfilePage() {
           setGarage({ error: d.error ?? "Erreur serveur" });
         } else {
           setGarage(d);
+          // Track profile view (skip for garage owner)
+          const userId = (session?.user as any)?.id;
+          if (d.id && d.ownerId !== userId) {
+            fetch("/api/garage/view", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ garageId: d.id }) }).catch(() => {});
+          }
         }
         setLoading(false);
       })
       .catch(() => { setGarage({ error: "Erreur réseau" }); setLoading(false); });
-  }, [slug]);
+  }, [slug, session]);
 
   const isOwner = !!(session?.user && garage?.ownerId && (session.user as any).id === garage.ownerId);
 

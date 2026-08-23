@@ -98,8 +98,12 @@ model Garage {
   referralRewardGranted Boolean  @default(false)
   referralCount         Int      @default(0)
   referralCommissionEarned Float @default(0)
-  isAmbassador          Boolean  @default(false)
+  ambassadorTier        Int      @default(0)  // 0=none 1=stats 2=disc10 3=disc20 4=priority 5=certified
+  isAmbassador          Boolean  @default(false) // true = tier 5 (certified)
   ambassadorSince       DateTime?
+  palier2Applied        Boolean  @default(false) // -10% discount already given
+  palier3Applied        Boolean  @default(false) // -20% discount already given
+  palier4Expiry         DateTime? // priority search expiry
 
   emailPublic     Boolean @default(false)
   yearFounded     Int?
@@ -123,6 +127,17 @@ model Garage {
   appointments Appointment[]
   blockedSlots BlockedSlot[]
   alerts       GarageAlert[]
+  profileViews GarageProfileView[]
+}
+
+model GarageProfileView {
+  id        String   @id @default(cuid())
+  garageId  String
+  createdAt DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId, createdAt])
 }
 
 model GarageAlert {

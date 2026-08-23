@@ -199,6 +199,14 @@ export default function DashboardGaragePage() {
     }
   }, [status, router]);
 
+  // ── Stats avancées (palier 1+) ────────────────────────────────────────────
+  const [stats, setStats] = useState<any>(null);
+  useEffect(() => {
+    if (garage?.ambassadorTier >= 1) {
+      fetch("/api/garage/stats").then(r => r.json()).then(s => { if (!s.error) setStats(s); });
+    }
+  }, [garage?.ambassadorTier, garage?.id]);
+
   // ── Services state ────────────────────────────────────────────────────────
   const [services, setServices] = useState<any[]>([]);
   useEffect(() => { if (garage?.services) setServices(garage.services); }, [garage]);
@@ -735,29 +743,24 @@ export default function DashboardGaragePage() {
 
           {/* Referral card */}
           <div className="rounded-2xl overflow-hidden shadow-sm"
-            style={{ border: "2px solid", borderColor: (garage as any).isAmbassador ? "#1f2e67" : "#fed7aa",
-              background: (garage as any).isAmbassador ? "linear-gradient(135deg, #f8f9ff 0%, #fff4ed 100%)" : "white" }}>
+            style={{ border: "2px solid", borderColor: (garage as any).ambassadorTier >= 1 ? "#1f2e67" : "#fed7aa", background: "white" }}>
 
-            {/* Badge ambassadeur */}
-            {(garage as any).isAmbassador && (
+            {(garage as any).ambassadorTier >= 1 && (
               <div className="flex items-center gap-2 px-6 py-3"
                 style={{ background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
-                <span className="text-white text-sm font-black">★ Ambassadeur Garago</span>
-                <span className="text-white text-xs opacity-75">— Membre depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}</span>
+                <span className="text-white text-sm font-black">🏅 Palier {(garage as any).ambassadorTier}/5 — Programme Ambassadeur</span>
               </div>
             )}
 
             <div className="p-6">
               <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
                 <div>
-                  <h3 className="font-bold text-gray-900 mb-1">
-                    Parrainage — Gagnez 15% de commission
-                  </h3>
+                  <h3 className="font-bold text-gray-900 mb-1">Parrainage — Gagnez 15% de commission</h3>
                   <p className="text-gray-500 text-sm">
                     Partagez votre code. Pour chaque garage qui souscrit via votre lien, vous recevez <strong>15% de son premier paiement</strong> en crédit sur votre prochaine facture. Le garage parrainé bénéficie de <strong>60 jours d&apos;essai</strong> au lieu de 30.
                   </p>
                 </div>
-                <div className="text-4xl">{(garage as any).isAmbassador ? "🏆" : "💰"}</div>
+                <div className="text-4xl">{(garage as any).ambassadorTier >= 5 ? "★" : "💰"}</div>
               </div>
 
               {/* Stats parrainage */}
@@ -773,28 +776,20 @@ export default function DashboardGaragePage() {
                   <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
                 </div>
                 <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: (garage as any).isAmbassador ? "#1f2e67" : "#94a3b8" }}>
-                    {(garage as any).isAmbassador ? "✓" : `${Math.max(0, 3 - ((garage as any).referralCount ?? 0))}`}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {(garage as any).isAmbassador ? "Ambassadeur" : "Restants pour Ambassadeur"}
-                  </p>
+                  {(() => {
+                    const tier = (garage as any).ambassadorTier ?? 0;
+                    const count = (garage as any).referralCount ?? 0;
+                    const nextSeuils = [3, 6, 10, 15, 20];
+                    const next = nextSeuils.find(s => s > count) ?? 20;
+                    return <>
+                      <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
+                        {tier >= 5 ? "★" : `${Math.max(0, next - count)}`}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
+                    </>;
+                  })()}
                 </div>
               </div>
-
-              {/* Avantages ambassadeur */}
-              {(garage as any).isAmbassador && (
-                <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(31,46,103,0.06)", border: "1px solid rgba(31,46,103,0.12)" }}>
-                  <p className="text-xs font-black mb-1.5" style={{ color: "#1f2e67" }}>Vos avantages Ambassadeur :</p>
-                  <ul className="space-y-1">
-                    {["10% de réduction permanente sur votre abonnement", "Priorité dans les résultats de recherche", "Badge Ambassadeur visible sur votre profil public", "Statistiques avancées débloquées"].map(a => (
-                      <li key={a} className="text-xs text-gray-600 flex items-center gap-1.5">
-                        <span style={{ color: "#f97316" }}>✓</span> {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {/* Code + bouton copier */}
               <div className="flex items-center gap-3 flex-wrap">
@@ -812,89 +807,152 @@ export default function DashboardGaragePage() {
             </div>
           </div>
 
-          {/* Programme Ambassadeur */}
-          <div className="rounded-2xl overflow-hidden"
-            style={(garage as any).isAmbassador
-              ? { border: "1px solid rgba(249,115,22,0.3)", background: "linear-gradient(145deg, #0b1f3a 0%, #1a2f50 100%)" }
-              : { border: "1px solid #e2e8f0", background: "#f8fafc" }}>
-            {/* Header */}
-            <div className="px-5 py-4 flex items-center gap-3"
-              style={(garage as any).isAmbassador
-                ? { borderBottom: "1px solid rgba(255,255,255,0.07)", background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }
-                : { borderBottom: "1px solid #f1f5f9" }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={(garage as any).isAmbassador
-                  ? { background: "rgba(255,255,255,0.15)" }
-                  : { background: "#f1f5f9", border: "1px dashed #cbd5e1" }}>
-                <span style={{ fontSize: 18 }}>{(garage as any).isAmbassador ? "★" : "🔒"}</span>
-              </div>
-              <div>
-                {(garage as any).isAmbassador ? (
-                  <>
-                    <p className="text-white font-black text-sm leading-tight">Ambassadeur Garago</p>
-                    <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>Statut actif — merci pour votre engagement !</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-black text-gray-700">Programme Ambassadeur Garago</p>
-                    <p className="text-xs text-gray-400">Avantages exclusifs à débloquer</p>
-                  </>
-                )}
-              </div>
-            </div>
-            {/* Corps */}
-            <div className="px-5 py-4 space-y-3">
-              {(garage as any).isAmbassador ? (
-                <>
-                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
-                    Votre garage fait partie des partenaires les plus engagés de la plateforme Garago. Continuez à offrir un service exceptionnel !
-                  </p>
-                  <div className="space-y-2">
-                    {[
-                      "10% de réduction permanente sur votre abonnement",
-                      "Priorité dans les résultats de recherche",
-                      "Badge Ambassadeur visible sur votre profil public",
-                      "Statistiques avancées débloquées",
-                    ].map((label) => (
-                      <div key={label} className="flex items-center gap-2">
-                        <span className="text-xs font-black flex-shrink-0" style={{ color: "#f97316" }}>✓</span>
-                        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>{label}</span>
-                      </div>
-                    ))}
+          {/* Programme Ambassadeur — 5 paliers */}
+          {(() => {
+            const tier = (garage as any).ambassadorTier ?? 0;
+            const count = (garage as any).referralCount ?? 0;
+            const PALIERS = [
+              { seuil: 3,  icon: "📊", label: "Statistiques avancées", desc: "Vues, rendez-vous, note et taux de conversion" },
+              { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture", desc: "Appliqué automatiquement, une seule fois" },
+              { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture", desc: "−30% si abonnement annuel, une seule fois" },
+              { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche", desc: "Votre garage apparaît en tête — 30 jours" },
+              { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur", desc: "Affiché en permanence sur votre profil public" },
+            ];
+            const nextPalier = PALIERS.find((_, i) => i + 1 > tier);
+            return (
+              <div className="rounded-2xl overflow-hidden"
+                style={tier >= 5
+                  ? { border: "1px solid rgba(249,115,22,0.3)", background: "linear-gradient(145deg,#0b1f3a,#1a2f50)" }
+                  : { border: "1px solid #e2e8f0", background: "#f8fafc" }}>
+                {/* Header */}
+                <div className="px-5 py-4 flex items-center gap-3"
+                  style={tier >= 1
+                    ? { borderBottom: "1px solid rgba(255,255,255,0.07)", background: "linear-gradient(135deg,#1f2e67,#f97316)" }
+                    : { borderBottom: "1px solid #f1f5f9" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={tier >= 1 ? { background: "rgba(255,255,255,0.15)" } : { background: "#f1f5f9", border: "1px dashed #cbd5e1" }}>
+                    <span style={{ fontSize: 18 }}>{tier >= 5 ? "★" : tier >= 1 ? "🏅" : "🔒"}</span>
                   </div>
+                  <div>
+                    {tier >= 5 ? (
+                      <>
+                        <p className="text-white font-black text-sm leading-tight">★ Certifié Ambassadeur Garago</p>
+                        <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
+                      </>
+                    ) : tier >= 1 ? (
+                      <>
+                        <p className="text-white font-black text-sm leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
+                        <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""} · encore {nextPalier!.seuil - count} pour le palier {tier + 1}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-black text-gray-700">Programme Ambassadeur Garago</p>
+                        <p className="text-xs text-gray-400">Parrainez des garages, débloquez des avantages</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {/* Paliers */}
+                <div className="px-5 py-4 space-y-2">
+                  {PALIERS.map((p, i) => {
+                    const palierNum = i + 1;
+                    const done = tier >= palierNum;
+                    const active = tier === palierNum - 1 && count > 0;
+                    return (
+                      <div key={i} className="flex items-start gap-3 py-2 px-3 rounded-xl transition-colors"
+                        style={done
+                          ? { background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)" }
+                          : active
+                          ? { background: "rgba(31,46,103,0.06)", border: "1px dashed rgba(31,46,103,0.2)" }
+                          : { background: "transparent" }}>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 text-xs font-black"
+                          style={done
+                            ? { background: "#f97316", color: "#fff" }
+                            : { background: "#e2e8f0", color: "#94a3b8" }}>
+                          {done ? "✓" : palierNum}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs">{p.icon}</span>
+                            <span className="text-xs font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
+                            <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
+                          </div>
+                          <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
+                          {active && (
+                            <div className="mt-1.5">
+                              <div className="h-1 rounded-full" style={{ background: "#e2e8f0" }}>
+                                <div className="h-1 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
+                              </div>
+                              <p className="text-xs mt-0.5" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {tier === 0 && count === 0 && (
+                    <p className="text-xs text-gray-400 pt-1">Partagez votre code de parrainage pour commencer.</p>
+                  )}
                   {(garage as any).ambassadorSince && (
-                    <p className="text-xs pt-2" style={{ color: "rgba(255,255,255,0.3)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                    <p className="text-xs pt-2" style={{ color: tier >= 5 ? "rgba(255,255,255,0.3)" : "#94a3b8", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
                       Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
                     </p>
                   )}
-                </>
-              ) : (
-                <>
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    Parrainez <strong>3 garages</strong> qui s&apos;abonnent et débloquez des avantages exclusifs réservés aux meilleurs partenaires Garago.
-                  </p>
-                  <div className="space-y-2">
-                    {[
-                      "Priorité dans les résultats de recherche",
-                      "Badge Ambassadeur visible par vos clients",
-                      "10% de réduction permanente sur votre abonnement",
-                      "Statistiques avancées débloquées",
-                    ].map((label) => (
-                      <div key={label} className="flex items-center gap-2">
-                        <span className="text-xs font-black flex-shrink-0 text-gray-300">🔒</span>
-                        <span className="text-xs text-gray-400">{label}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Statistiques avancées — palier 1+ */}
+          {(garage as any).ambassadorTier >= 1 && stats && (
+            <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid #e2e8f0", background: "#fff" }}>
+              <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
+                <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
+                <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* KPIs */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Vues du profil", value: stats.views.last30, trend: stats.views.trend30, suffix: "" },
+                    { label: "Rendez-vous reçus", value: stats.appts.last30, trend: stats.appts.trend30, suffix: "" },
+                    { label: "Note moyenne", value: stats.rating.overall ?? "—", trend: null, suffix: stats.rating.overall ? "/5" : "" },
+                    { label: "Taux de conversion", value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
+                  ].map(({ label, value, trend, suffix }) => (
+                    <div key={label} className="p-3 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                      <p className="text-xs text-gray-400 mb-1">{label}</p>
+                      <div className="flex items-end gap-1.5">
+                        <span className="text-xl font-black" style={{ color: "#0b1f3a" }}>{value}{suffix}</span>
+                        {trend !== null && trend !== undefined && (
+                          <span className="text-xs font-bold mb-0.5" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
+                            {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                  <div className="pt-2" style={{ borderTop: "1px solid #f1f5f9" }}>
-                    <p className="text-xs text-gray-400">
-                      Progression : <strong className="text-orange-500">{Math.min((garage as any).referralCount ?? 0, 3)}/3</strong> garages parrainés
-                    </p>
-                  </div>
-                </>
-              )}
+                    </div>
+                  ))}
+                </div>
+                {/* Mini chart — vues 30j */}
+                {stats.chart?.length > 0 && (() => {
+                  const maxV = Math.max(...stats.chart.map((c: any) => c.views), 1);
+                  return (
+                    <div>
+                      <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
+                      <div className="flex items-end gap-px h-16">
+                        {stats.chart.map((c: any, i: number) => (
+                          <div key={i} className="flex-1 rounded-sm transition-all" title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
+                            style={{ height: `${Math.max(4, Math.round((c.views / maxV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                <p className="text-xs" style={{ color: "#94a3b8" }}>
+                  Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Suggestion link */}
           <Link

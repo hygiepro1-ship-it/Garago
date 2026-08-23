@@ -92,24 +92,60 @@ export async function POST(req: NextRequest) {
                   }
                 }
 
-                // Mise à jour compteur + ambassadeur
+                // Mise à jour compteur + tiers ambassadeur
                 const newCount = (referrer.referralCount ?? 0) + 1;
-                const becomeAmbassador = newCount >= 3 && !referrer.isAmbassador;
+                const newTier = newCount >= 20 ? 5 : newCount >= 15 ? 4 : newCount >= 10 ? 3 : newCount >= 6 ? 2 : newCount >= 3 ? 1 : 0;
+                const oldTier = referrer.ambassadorTier ?? 0;
+                const firstTier = oldTier === 0 && newTier >= 1;
 
-                await prisma.garage.update({
-                  where: { id: referrer.id },
-                  data: {
-                    referralCount: newCount,
-                    referralCommissionEarned: { increment: commissionDollars },
-                    isAmbassador: newCount >= 3 ? true : referrer.isAmbassador,
-                    ambassadorSince: becomeAmbassador ? new Date() : referrer.ambassadorSince,
-                  },
-                });
+                const updateData: any = {
+                  referralCount: newCount,
+                  referralCommissionEarned: { increment: commissionDollars },
+                  ambassadorTier: newTier,
+                  ambassadorSince: firstTier ? new Date() : referrer.ambassadorSince,
+                  isAmbassador: newTier >= 5,
+                };
+
+                // Palier 2 — -10% sur prochaine facture (une seule fois)
+                if (newTier >= 2 && !referrer.palier2Applied && referrer.stripeCustomerId) {
+                  updateData.palier2Applied = true;
+                  try {
+                    const COUPON_ID = process.env.STRIPE_AMBASSADOR_COUPON_ID ?? "garago-ambassador-10pct";
+                    try { await stripe2.coupons.retrieve(COUPON_ID); } catch {
+                      await stripe2.coupons.create({ id: COUPON_ID, percent_off: 10, duration: "once", name: "−10% Ambassadeur Garago (palier 2)" });
+                    }
+                    const subs = await stripe2.subscriptions.list({ customer: referrer.stripeCustomerId, status: "active", limit: 1 });
+                    if (subs.data[0]) await stripe2.subscriptions.update(subs.data[0].id, { discounts: [{ coupon: COUPON_ID }] });
+                  } catch (e) { console.error("Erreur coupon palier 2 :", e); }
+                }
+
+                // Palier 3 — -20% (-30% annuel) sur prochaine facture (une seule fois)
+                if (newTier >= 3 && !referrer.palier3Applied && referrer.stripeCustomerId) {
+                  updateData.palier3Applied = true;
+                  try {
+                    const isAnnual = inv.lines?.data?.[0]?.plan?.interval === "year";
+                    const pct = isAnnual ? 30 : 20;
+                    const COUPON_ID3 = `garago-ambassador-${pct}pct`;
+                    try { await stripe2.coupons.retrieve(COUPON_ID3); } catch {
+                      await stripe2.coupons.create({ id: COUPON_ID3, percent_off: pct, duration: "once", name: `−${pct}% Ambassadeur Garago (palier 3)` });
+                    }
+                    const subs = await stripe2.subscriptions.list({ customer: referrer.stripeCustomerId, status: "active", limit: 1 });
+                    if (subs.data[0]) await stripe2.subscriptions.update(subs.data[0].id, { discounts: [{ coupon: COUPON_ID3 }] });
+                  } catch (e) { console.error("Erreur coupon palier 3 :", e); }
+                }
+
+                // Palier 4 — priorité recherche 30 jours
+                if (newTier >= 4 && oldTier < 4) {
+                  updateData.palier4Expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                }
+
+                await prisma.garage.update({ where: { id: referrer.id }, data: updateData });
                 await prisma.garage.update({
                   where: { id: newGarage.id },
                   data: { referralRewardGranted: true },
                 });
-                console.log(`💰 Commission ${commissionDollars}$ → ${referrer.name} (parrainage ${newGarage.name})${becomeAmbassador ? " 🏆 NOUVEAU AMBASSADEUR" : ""}`);
+                const tierLabel = ["", "📊 PALIER 1", "💰 PALIER 2", "💰 PALIER 3", "🔝 PALIER 4", "🏆 CERTIFIÉ"][newTier] ?? "";
+                console.log(`💰 Commission ${commissionDollars}$ → ${referrer.name} (parrainage ${newGarage.name}) ${tierLabel}`);
               }
             }
           }
