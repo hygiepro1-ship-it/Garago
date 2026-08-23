@@ -342,7 +342,6 @@ export default function GarageProfilePage() {
                       {svcs.map((s: any) => (
                         <div key={s.id} className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800">{s.name}</p>
                             {s.description && <p className="text-xs text-gray-500">{s.description}</p>}
                             {s.durationMin && <p className="text-xs text-gray-400">⏱ ~{s.durationMin} min</p>}
                           </div>

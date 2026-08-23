@@ -11,7 +11,7 @@ import AddressAutocomplete, { type AddressResult } from "@/components/AddressAut
 import BrandLogo from "@/components/BrandLogo";
 import { useLang } from "@/contexts/LanguageContext";
 
-type Tab = "apercu" | "services" | "marques" | "horaires" | "profil";
+type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "ambassadeur";
 
 // ─── Colour utilities ────────────────────────────────────────────────────────
 function hslToHex(h: number, s: number, l: number): string {
@@ -660,6 +660,7 @@ export default function DashboardGaragePage() {
     { id: "marques",  label: d.brands,    icon: "🚗" },
     { id: "horaires", label: d.hours,     icon: "🕐" },
     { id: "profil",   label: d.profile,   icon: "⚙️" },
+    ...(garage.ambassadorTier >= 1 ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur", icon: "🏅" }] : []),
   ];
 
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400";
@@ -741,218 +742,73 @@ export default function DashboardGaragePage() {
             ))}
           </div>
 
-          {/* Referral card */}
-          <div className="rounded-2xl overflow-hidden shadow-sm"
-            style={{ border: "2px solid", borderColor: (garage as any).ambassadorTier >= 1 ? "#1f2e67" : "#fed7aa", background: "white" }}>
-
-            {(garage as any).ambassadorTier >= 1 && (
-              <div className="flex items-center gap-2 px-6 py-3"
-                style={{ background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
-                <span className="text-white text-sm font-black">🏅 Palier {(garage as any).ambassadorTier}/5 — Programme Ambassadeur</span>
-              </div>
-            )}
-
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-1">Parrainage — Gagnez 15% de commission</h3>
-                  <p className="text-gray-500 text-sm">
-                    Partagez votre code. Pour chaque garage qui souscrit via votre lien, vous recevez <strong>15% de son premier paiement</strong> en crédit sur votre prochaine facture. Le garage parrainé bénéficie de <strong>60 jours d&apos;essai</strong> au lieu de 30.
-                  </p>
-                </div>
-                <div className="text-4xl">{(garage as any).ambassadorTier >= 5 ? "★" : "💰"}</div>
-              </div>
-
-              {/* Stats parrainage */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{(garage as any).referralCount ?? 0}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
-                </div>
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>
-                    {((garage as any).referralCommissionEarned ?? 0).toFixed(0)}$
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
-                </div>
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  {(() => {
-                    const tier = (garage as any).ambassadorTier ?? 0;
-                    const count = (garage as any).referralCount ?? 0;
-                    const nextSeuils = [3, 6, 10, 15, 20];
-                    const next = nextSeuils.find(s => s > count) ?? 20;
-                    return <>
-                      <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
-                        {tier >= 5 ? "★" : `${Math.max(0, next - count)}`}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
-                    </>;
-                  })()}
-                </div>
-              </div>
-
-              {/* Code + bouton copier */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
-                  {garage.referralCode ?? "—"}
-                </span>
-                {garage.referralCode && (
-                  <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                    Copier le code
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Programme Ambassadeur — 5 paliers */}
+          {/* Parrainage — carte compacte dans Aperçu */}
           {(() => {
             const tier = (garage as any).ambassadorTier ?? 0;
             const count = (garage as any).referralCount ?? 0;
-            const PALIERS = [
-              { seuil: 3,  icon: "📊", label: "Statistiques avancées", desc: "Vues, rendez-vous, note et taux de conversion" },
-              { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture", desc: "Appliqué automatiquement, une seule fois" },
-              { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture", desc: "−30% si abonnement annuel, une seule fois" },
-              { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche", desc: "Votre garage apparaît en tête — 30 jours" },
-              { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur", desc: "Affiché en permanence sur votre profil public" },
-            ];
-            const nextPalier = PALIERS.find((_, i) => i + 1 > tier);
+            const nextSeuils = [3, 6, 10, 15, 20];
+            const next = nextSeuils.find(s => s > count) ?? 20;
             return (
-              <div className="rounded-2xl overflow-hidden"
-                style={tier >= 5
-                  ? { border: "1px solid rgba(249,115,22,0.3)", background: "linear-gradient(145deg,#0b1f3a,#1a2f50)" }
-                  : { border: "1px solid #e2e8f0", background: "#f8fafc" }}>
-                {/* Header */}
-                <div className="px-5 py-4 flex items-center gap-3"
-                  style={tier >= 1
-                    ? { borderBottom: "1px solid rgba(255,255,255,0.07)", background: "linear-gradient(135deg,#1f2e67,#f97316)" }
-                    : { borderBottom: "1px solid #f1f5f9" }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={tier >= 1 ? { background: "rgba(255,255,255,0.15)" } : { background: "#f1f5f9", border: "1px dashed #cbd5e1" }}>
-                    <span style={{ fontSize: 18 }}>{tier >= 5 ? "★" : tier >= 1 ? "🏅" : "🔒"}</span>
+              <div className="rounded-2xl overflow-hidden shadow-sm"
+                style={{ border: "2px solid", borderColor: tier >= 1 ? "#1f2e67" : "#fed7aa", background: "white" }}>
+                {tier >= 1 && (
+                  <div className="flex items-center justify-between px-5 py-2.5"
+                    style={{ background: "linear-gradient(135deg,#1f2e67,#f97316)" }}>
+                    <span className="text-white text-sm font-black">🏅 Ambassadeur — Palier {tier}/5</span>
+                    <button onClick={() => setActiveTab("ambassadeur")}
+                      className="text-xs font-semibold px-3 py-1 rounded-lg"
+                      style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
+                      Voir détails →
+                    </button>
                   </div>
-                  <div>
-                    {tier >= 5 ? (
-                      <>
-                        <p className="text-white font-black text-sm leading-tight">★ Certifié Ambassadeur Garago</p>
-                        <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
-                      </>
-                    ) : tier >= 1 ? (
-                      <>
-                        <p className="text-white font-black text-sm leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
-                        <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""} · encore {nextPalier!.seuil - count} pour le palier {tier + 1}</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm font-black text-gray-700">Programme Ambassadeur Garago</p>
-                        <p className="text-xs text-gray-400">Parrainez des garages, débloquez des avantages</p>
-                      </>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm mb-0.5">Parrainage — 15% de commission</h3>
+                      <p className="text-gray-400 text-xs">Partagez votre code, gagnez une commission sur chaque abonnement souscrit.</p>
+                    </div>
+                    <span className="text-3xl">{tier >= 5 ? "★" : "💰"}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="text-center p-2.5 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                      <p className="text-xl font-black" style={{ color: "#f97316" }}>{count}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Parrainés</p>
+                    </div>
+                    <div className="text-center p-2.5 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                      <p className="text-xl font-black" style={{ color: "#f97316" }}>{((garage as any).referralCommissionEarned ?? 0).toFixed(0)}$</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Commission</p>
+                    </div>
+                    <div className="text-center p-2.5 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                      <p className="text-xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
+                        {tier >= 5 ? "★" : Math.max(0, next - count)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">{tier >= 5 ? "Certifié" : `Palier ${tier + 1}`}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-base px-3 py-1.5 rounded-xl tracking-widest select-all">
+                      {garage.referralCode ?? "—"}
+                    </span>
+                    {garage.referralCode && (
+                      <button type="button"
+                        onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                        className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors">
+                        Copier
+                      </button>
+                    )}
+                    {tier === 0 && (
+                      <button onClick={() => setActiveTab("ambassadeur")}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors hover:opacity-80"
+                        style={{ borderColor: "#1f2e67", color: "#1f2e67" }}>
+                        Voir les avantages →
+                      </button>
                     )}
                   </div>
-                </div>
-                {/* Paliers */}
-                <div className="px-5 py-4 space-y-2">
-                  {PALIERS.map((p, i) => {
-                    const palierNum = i + 1;
-                    const done = tier >= palierNum;
-                    const active = tier === palierNum - 1 && count > 0;
-                    return (
-                      <div key={i} className="flex items-start gap-3 py-2 px-3 rounded-xl transition-colors"
-                        style={done
-                          ? { background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)" }
-                          : active
-                          ? { background: "rgba(31,46,103,0.06)", border: "1px dashed rgba(31,46,103,0.2)" }
-                          : { background: "transparent" }}>
-                        <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 text-xs font-black"
-                          style={done
-                            ? { background: "#f97316", color: "#fff" }
-                            : { background: "#e2e8f0", color: "#94a3b8" }}>
-                          {done ? "✓" : palierNum}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs">{p.icon}</span>
-                            <span className="text-xs font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
-                            <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
-                          </div>
-                          <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
-                          {active && (
-                            <div className="mt-1.5">
-                              <div className="h-1 rounded-full" style={{ background: "#e2e8f0" }}>
-                                <div className="h-1 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
-                              </div>
-                              <p className="text-xs mt-0.5" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {tier === 0 && count === 0 && (
-                    <p className="text-xs text-gray-400 pt-1">Partagez votre code de parrainage pour commencer.</p>
-                  )}
-                  {(garage as any).ambassadorSince && (
-                    <p className="text-xs pt-2" style={{ color: tier >= 5 ? "rgba(255,255,255,0.3)" : "#94a3b8", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                      Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
-                    </p>
-                  )}
                 </div>
               </div>
             );
           })()}
-
-          {/* Statistiques avancées — palier 1+ */}
-          {(garage as any).ambassadorTier >= 1 && stats && (
-            <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid #e2e8f0", background: "#fff" }}>
-              <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
-                <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
-                <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
-              </div>
-              <div className="p-5 space-y-4">
-                {/* KPIs */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Vues du profil", value: stats.views.last30, trend: stats.views.trend30, suffix: "" },
-                    { label: "Rendez-vous reçus", value: stats.appts.last30, trend: stats.appts.trend30, suffix: "" },
-                    { label: "Note moyenne", value: stats.rating.overall ?? "—", trend: null, suffix: stats.rating.overall ? "/5" : "" },
-                    { label: "Taux de conversion", value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
-                  ].map(({ label, value, trend, suffix }) => (
-                    <div key={label} className="p-3 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                      <p className="text-xs text-gray-400 mb-1">{label}</p>
-                      <div className="flex items-end gap-1.5">
-                        <span className="text-xl font-black" style={{ color: "#0b1f3a" }}>{value}{suffix}</span>
-                        {trend !== null && trend !== undefined && (
-                          <span className="text-xs font-bold mb-0.5" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
-                            {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Mini chart — vues 30j */}
-                {stats.chart?.length > 0 && (() => {
-                  const maxV = Math.max(...stats.chart.map((c: any) => c.views), 1);
-                  return (
-                    <div>
-                      <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
-                      <div className="flex items-end gap-px h-16">
-                        {stats.chart.map((c: any, i: number) => (
-                          <div key={i} className="flex-1 rounded-sm transition-all" title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
-                            style={{ height: `${Math.max(4, Math.round((c.views / maxV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                <p className="text-xs" style={{ color: "#94a3b8" }}>
-                  Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Suggestion link */}
           <Link
@@ -2111,6 +1967,198 @@ export default function DashboardGaragePage() {
           </div>
         </div>
       )}
+
+      {/* ══ AMBASSADEUR ══════════════════════════════════════════════════════ */}
+      {activeTab === "ambassadeur" && (garage as any).ambassadorTier >= 1 && (() => {
+        const tier = (garage as any).ambassadorTier ?? 0;
+        const count = (garage as any).referralCount ?? 0;
+        const PALIERS = [
+          { seuil: 3,  icon: "📊", label: "Statistiques avancées", desc: "Vues, rendez-vous, note et taux de conversion" },
+          { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture", desc: "Appliqué automatiquement, une seule fois" },
+          { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture", desc: "−30% si abonnement annuel, une seule fois" },
+          { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche", desc: "Votre garage apparaît en tête — 30 jours" },
+          { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur", desc: "Affiché en permanence sur votre profil public" },
+        ];
+        const nextPalier = PALIERS.find((_, i) => i + 1 > tier);
+        return (
+          <div className="space-y-6">
+            {/* Header hero */}
+            <div className="rounded-2xl overflow-hidden"
+              style={tier >= 5
+                ? { background: "linear-gradient(145deg,#0b1f3a,#1a2f50)", border: "1px solid rgba(249,115,22,0.3)" }
+                : { background: "linear-gradient(135deg,#1f2e67,#f97316)" }}>
+              <div className="p-6 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(255,255,255,0.15)" }}>
+                  <span style={{ fontSize: 28 }}>{tier >= 5 ? "★" : "🏅"}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  {tier >= 5 ? (
+                    <>
+                      <p className="text-white font-black text-xl leading-tight">★ Certifié Ambassadeur Garago</p>
+                      <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
+                      <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
+                        {count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""}
+                        {nextPalier ? ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}` : ""}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+              {/* Progress bar */}
+              {tier < 5 && nextPalier && (
+                <div className="px-6 pb-5">
+                  <div className="h-2 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }}>
+                    <div className="h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, Math.round((count / nextPalier.seuil) * 100))}%`, background: "rgba(255,255,255,0.85)" }} />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{count} parrainages</span>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Objectif : {nextPalier.seuil}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Code de parrainage */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h3 className="font-bold text-gray-900 mb-1">Votre code de parrainage</h3>
+              <p className="text-gray-500 text-sm mb-4">
+                Partagez ce code. Pour chaque garage qui souscrit via votre code, vous recevez <strong>15% de son premier paiement</strong> en crédit. Le garage parrainé profite de <strong>60 jours d&apos;essai</strong> au lieu de 30.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-2xl px-5 py-2.5 rounded-xl tracking-widest select-all">
+                  {garage.referralCode ?? "—"}
+                </span>
+                {garage.referralCode && (
+                  <button type="button"
+                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+                    Copier le code
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-5">
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{count}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
+                </div>
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{((garage as any).referralCommissionEarned ?? 0).toFixed(0)}$</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
+                </div>
+                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+                  <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
+                    {tier >= 5 ? "★" : (() => { const next = [3,6,10,15,20].find(s => s > count) ?? 20; return Math.max(0, next - count); })()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Progression 5 paliers */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Progression des paliers</h3>
+              <div className="space-y-2">
+                {PALIERS.map((p, i) => {
+                  const palierNum = i + 1;
+                  const done = tier >= palierNum;
+                  const active = tier === palierNum - 1 && count > 0;
+                  return (
+                    <div key={i} className="flex items-start gap-3 py-2.5 px-4 rounded-xl transition-colors"
+                      style={done
+                        ? { background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }
+                        : active
+                        ? { background: "rgba(31,46,103,0.05)", border: "1px dashed rgba(31,46,103,0.2)" }
+                        : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 text-sm font-black"
+                        style={done
+                          ? { background: "#f97316", color: "#fff" }
+                          : { background: "#e2e8f0", color: "#94a3b8" }}>
+                        {done ? "✓" : palierNum}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{p.icon}</span>
+                          <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
+                          <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
+                        </div>
+                        <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
+                        {active && (
+                          <div className="mt-2">
+                            <div className="h-1.5 rounded-full" style={{ background: "#e2e8f0" }}>
+                              <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
+                            </div>
+                            <p className="text-xs mt-0.5 font-medium" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {(garage as any).ambassadorSince && (
+                <p className="text-xs mt-4 pt-4" style={{ color: "#94a3b8", borderTop: "1px solid #f1f5f9" }}>
+                  Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
+                </p>
+              )}
+            </div>
+
+            {/* Statistiques avancées — palier 1+ */}
+            {stats && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
+                  <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
+                  <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Vues du profil", value: stats.views.last30, trend: stats.views.trend30, suffix: "" },
+                      { label: "Rendez-vous reçus", value: stats.appts.last30, trend: stats.appts.trend30, suffix: "" },
+                      { label: "Note moyenne", value: stats.rating.overall ?? "—", trend: null, suffix: stats.rating.overall ? "/5" : "" },
+                      { label: "Taux de conversion", value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
+                    ].map(({ label, value, trend, suffix }) => (
+                      <div key={label} className="p-4 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                        <p className="text-xs text-gray-400 mb-1">{label}</p>
+                        <div className="flex items-end gap-1.5">
+                          <span className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{value}{suffix}</span>
+                          {trend !== null && trend !== undefined && (
+                            <span className="text-xs font-bold mb-0.5" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
+                              {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {stats.chart?.length > 0 && (() => {
+                    const maxV = Math.max(...stats.chart.map((c: any) => c.views), 1);
+                    return (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
+                        <div className="flex items-end gap-px h-20">
+                          {stats.chart.map((c: any, i: number) => (
+                            <div key={i} className="flex-1 rounded-sm transition-all" title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
+                              style={{ height: `${Math.max(4, Math.round((c.views / maxV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  <p className="text-xs" style={{ color: "#94a3b8" }}>
+                    Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
