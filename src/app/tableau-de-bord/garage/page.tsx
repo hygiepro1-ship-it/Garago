@@ -812,6 +812,90 @@ export default function DashboardGaragePage() {
             </div>
           </div>
 
+          {/* Programme Ambassadeur */}
+          <div className="rounded-2xl overflow-hidden"
+            style={(garage as any).isAmbassador
+              ? { border: "1px solid rgba(249,115,22,0.3)", background: "linear-gradient(145deg, #0b1f3a 0%, #1a2f50 100%)" }
+              : { border: "1px solid #e2e8f0", background: "#f8fafc" }}>
+            {/* Header */}
+            <div className="px-5 py-4 flex items-center gap-3"
+              style={(garage as any).isAmbassador
+                ? { borderBottom: "1px solid rgba(255,255,255,0.07)", background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }
+                : { borderBottom: "1px solid #f1f5f9" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={(garage as any).isAmbassador
+                  ? { background: "rgba(255,255,255,0.15)" }
+                  : { background: "#f1f5f9", border: "1px dashed #cbd5e1" }}>
+                <span style={{ fontSize: 18 }}>{(garage as any).isAmbassador ? "★" : "🔒"}</span>
+              </div>
+              <div>
+                {(garage as any).isAmbassador ? (
+                  <>
+                    <p className="text-white font-black text-sm leading-tight">Ambassadeur Garago</p>
+                    <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>Statut actif — merci pour votre engagement !</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-black text-gray-700">Programme Ambassadeur Garago</p>
+                    <p className="text-xs text-gray-400">Avantages exclusifs à débloquer</p>
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Corps */}
+            <div className="px-5 py-4 space-y-3">
+              {(garage as any).isAmbassador ? (
+                <>
+                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+                    Votre garage fait partie des partenaires les plus engagés de la plateforme Garago. Continuez à offrir un service exceptionnel !
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      "10% de réduction permanente sur votre abonnement",
+                      "Priorité dans les résultats de recherche",
+                      "Badge Ambassadeur visible sur votre profil public",
+                      "Statistiques avancées débloquées",
+                    ].map((label) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="text-xs font-black flex-shrink-0" style={{ color: "#f97316" }}>✓</span>
+                        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {(garage as any).ambassadorSince && (
+                    <p className="text-xs pt-2" style={{ color: "rgba(255,255,255,0.3)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                      Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Parrainez <strong>3 garages</strong> qui s&apos;abonnent et débloquez des avantages exclusifs réservés aux meilleurs partenaires Garago.
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      "Priorité dans les résultats de recherche",
+                      "Badge Ambassadeur visible par vos clients",
+                      "10% de réduction permanente sur votre abonnement",
+                      "Statistiques avancées débloquées",
+                    ].map((label) => (
+                      <div key={label} className="flex items-center gap-2">
+                        <span className="text-xs font-black flex-shrink-0 text-gray-300">🔒</span>
+                        <span className="text-xs text-gray-400">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2" style={{ borderTop: "1px solid #f1f5f9" }}>
+                    <p className="text-xs text-gray-400">
+                      Progression : <strong className="text-orange-500">{Math.min((garage as any).referralCount ?? 0, 3)}/3</strong> garages parrainés
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Suggestion link */}
           <Link
             href="/suggestions"
