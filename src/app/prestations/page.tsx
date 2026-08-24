@@ -31,6 +31,16 @@ const SERVICE_IMAGES: Record<string, string> = {
   "rust":         "f_ztFPZM50c",
 };
 
+// Groupes de filtres
+const FILTERS = [
+  { id: "all",       label: "Tout",           ids: null },
+  { id: "entretien", label: "🔧 Entretien",    ids: ["oil", "preventive", "battery", "cooling", "fuel", "inspection"] },
+  { id: "pneus",     label: "🔄 Pneus",        ids: ["tires-winter", "tires-summer", "alignment", "bearing"] },
+  { id: "mecanique", label: "⚙️ Mécanique",   ids: ["brakes", "engine", "transmission", "suspension", "timing", "clutch", "exhaust"] },
+  { id: "carrosserie",label: "🚗 Carrosserie", ids: ["bodywork", "glass", "rust", "detailing"] },
+  { id: "systemes",  label: "⚡ Systèmes",     ids: ["ac", "electrical", "ev"] },
+];
+
 function fmtDuration(min: number): string {
   if (min < 60) return `~${min} min`;
   const h = Math.floor(min / 60);
@@ -40,6 +50,7 @@ function fmtDuration(min: number): string {
 
 export default function PrestationsPage() {
   const [stats, setStats] = useState<Record<string, { avgDuration: number; garageCount: number }>>({});
+  const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
     fetch("/api/prestations/stats")
@@ -48,10 +59,15 @@ export default function PrestationsPage() {
       .catch(() => {});
   }, []);
 
+  const filter = FILTERS.find((f) => f.id === activeFilter)!;
+  const visible = filter.ids
+    ? SERVICE_CATEGORIES.filter((c) => filter.ids!.includes(c.id))
+    : SERVICE_CATEGORIES;
+
   return (
     <main>
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section style={{ background: "#0b1f3a" }} className="py-16 px-4">
+      {/* ── Hero ── */}
+      <section style={{ background: "#0b1f3a" }} className="py-14 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span
             className="inline-block text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full mb-5"
@@ -64,104 +80,124 @@ export default function PrestationsPage() {
             <br />
             <span style={{ color: "#f97316" }}>disponibles sur Garago</span>
           </h1>
-          <p className="text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.6)" }}>
-            Trouvez le bon garage pour chaque besoin. Les durées affichées sont calculées
-            à partir des estimations réelles de nos garagistes partenaires.
+          <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
+            Durées basées sur les estimations réelles de nos garagistes partenaires.
           </p>
         </div>
       </section>
 
-      {/* ── Service catalog grid ───────────────────────────────────────────── */}
-      <section className="py-12 px-4" style={{ background: "#f8fafc" }}>
+      {/* ── Filtres sticky ── */}
+      <div
+        className="sticky px-4 py-4 z-30"
+        style={{ top: 64, background: "#0d2347", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        <div className="max-w-6xl mx-auto flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {FILTERS.map((f) => {
+            const active = activeFilter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                style={{
+                  background: active ? "#f97316" : "rgba(255,255,255,0.07)",
+                  color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                  border: `2px solid ${active ? "#f97316" : "rgba(255,255,255,0.1)"}`,
+                  boxShadow: active ? "0 4px 15px rgba(249,115,22,0.35)" : "none",
+                  transform: active ? "translateY(-1px)" : "none",
+                }}
+              >
+                {f.label}
+                {f.ids && (
+                  <span
+                    className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-black"
+                    style={{ background: active ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)" }}
+                  >
+                    {f.ids.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Grille ── */}
+      <section className="py-10 px-4" style={{ background: "#f8fafc" }}>
         <div className="max-w-6xl mx-auto">
 
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-px flex-1" style={{ background: "#e2e8f0" }} />
-            <span className="text-xs font-black uppercase tracking-widest px-3" style={{ color: "#94a3b8" }}>
-              {SERVICE_CATEGORIES.length} prestations disponibles
-            </span>
-            <div className="h-px flex-1" style={{ background: "#e2e8f0" }} />
-          </div>
+          <p className="text-xs font-semibold mb-6" style={{ color: "#94a3b8" }}>
+            {visible.length} prestation{visible.length > 1 ? "s" : ""}
+            {filter.ids ? ` · ${filter.label.replace(/^[^\s]+\s/, "")}` : " au total"}
+          </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SERVICE_CATEGORIES.map((cat) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {visible.map((cat) => {
               const s = stats[cat.id];
               return (
                 <div
                   key={cat.id}
                   className="bg-white rounded-2xl overflow-hidden flex flex-col"
-                  style={{ boxShadow: "0 2px 12px rgba(11,31,58,0.06)", border: "1px solid #e2e8f0" }}
+                  style={{ boxShadow: "0 2px 10px rgba(11,31,58,0.06)", border: "1px solid #e2e8f0" }}
                 >
-                  {/* Photo */}
+                  {/* Photo compacte */}
                   <div
-                    className="relative overflow-hidden flex-shrink-0"
-                    style={{ height: 160, background: "linear-gradient(135deg, #1e3a5f 0%, #0b1f3a 100%)" }}
+                    className="relative flex-shrink-0"
+                    style={{ height: 120, background: "linear-gradient(135deg,#1e3a5f,#0b1f3a)" }}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center text-6xl" style={{ opacity: 0.18 }}>
+                    <div className="absolute inset-0 flex items-center justify-center text-5xl" style={{ opacity: 0.15 }}>
                       {cat.icon}
                     </div>
                     {SERVICE_IMAGES[cat.id] && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={`https://source.unsplash.com/${SERVICE_IMAGES[cat.id]}/800x450`}
+                        src={`https://source.unsplash.com/${SERVICE_IMAGES[cat.id]}/600x300`}
                         alt={cat.name}
                         loading="lazy"
                         className="absolute inset-0 w-full h-full"
-                        style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease" }}
-                        onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
+                        style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.4s" }}
+                        onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.75"; }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                       />
                     )}
                     <div
-                      className="absolute inset-x-0 bottom-0 pointer-events-none"
-                      style={{ height: 60, background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }}
+                      className="absolute inset-x-0 bottom-0"
+                      style={{ height: 50, background: "linear-gradient(to top,rgba(0,0,0,0.5),transparent)" }}
                     />
+                    {/* Durée — badge en haut à droite */}
+                    {s && (
+                      <div
+                        className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg text-xs font-black"
+                        style={{ background: "rgba(249,115,22,0.92)", color: "#fff", backdropFilter: "blur(4px)" }}
+                      >
+                        ⏱ {fmtDuration(s.avgDuration)}
+                      </div>
+                    )}
                     <div
-                      className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black"
-                      style={{ background: "rgba(255,255,255,0.92)", color: "#0b1f3a", backdropFilter: "blur(4px)" }}
+                      className="absolute bottom-2.5 left-3 flex items-center gap-1.5 text-xs font-black"
+                      style={{ color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
                     >
                       <span>{cat.icon}</span>
                       <span>{cat.name}</span>
                     </div>
                   </div>
 
-                  {/* Body */}
-                  <div className="p-5 flex-1 flex flex-col gap-4">
-                    <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                  {/* Description + CTA */}
+                  <div className="p-4 flex-1 flex flex-col gap-3">
+                    <p className="text-xs leading-relaxed flex-1" style={{ color: "#64748b" }}>
                       {cat.description}
                     </p>
-
-                    {/* Durée moyenne */}
-                    <div
-                      className="rounded-xl px-4 py-3 flex items-center justify-between"
-                      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
-                    >
-                      <span className="text-xs font-semibold" style={{ color: "#64748b" }}>
-                        ⏱ Durée moyenne
-                      </span>
-                      {s ? (
-                        <div className="text-right">
-                          <span className="text-sm font-black" style={{ color: "#0b1f3a" }}>
-                            {fmtDuration(s.avgDuration)}
-                          </span>
-                          <p className="text-xs" style={{ color: "#94a3b8" }}>
-                            selon {s.garageCount} garagiste{s.garageCount > 1 ? "s" : ""}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-xs font-semibold" style={{ color: "#94a3b8" }}>Variable</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="px-5 pb-5">
+                    {s && (
+                      <p className="text-xs" style={{ color: "#cbd5e1" }}>
+                        Selon {s.garageCount} garagiste{s.garageCount > 1 ? "s" : ""}
+                      </p>
+                    )}
                     <Link
                       href={`/rechercher?service=${cat.id}`}
-                      className="block text-center py-2.5 rounded-xl text-sm font-black transition-all hover:opacity-90 active:scale-95"
+                      className="block text-center py-2 rounded-xl text-xs font-black transition-all hover:opacity-90"
                       style={{ background: "#0b1f3a", color: "white" }}
                     >
-                      Trouver un garage&nbsp;→
+                      Trouver un garage →
                     </Link>
                   </div>
                 </div>
@@ -171,16 +207,14 @@ export default function PrestationsPage() {
         </div>
       </section>
 
-      {/* ── Bottom CTA ────────────────────────────────────────────────────── */}
+      {/* ── Bottom CTA ── */}
       <section className="py-16 px-4" style={{ background: "#0b1f3a" }}>
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: "#f97316" }}>
             Prêt à réserver ?
           </p>
           <h2 className="text-3xl font-black text-white mb-4">
-            Comparez les garages,
-            <br />
-            réservez en ligne.
+            Comparez les garages,<br />réservez en ligne.
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.5)" }}>
             Avis vérifiés · Prix transparents · Prise de rendez-vous instantanée
