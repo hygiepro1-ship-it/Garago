@@ -2,9 +2,13 @@
  * Génère 104 conseils auto (2/semaine × 52 semaines) pour l'année courante.
  * Lance avec : npx tsx --env-file=.env.local scripts/seed_tips.ts
  */
-import { PrismaClient } from "../src/generated/prisma";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter } as any);
 
 // Retourne le prochain lundi à partir de la date donnée (inclus si lundi)
 function nextMonday(from: Date): Date {

@@ -15,7 +15,7 @@ const SEASON_LABELS: Record<string, string> = {
 
 export default async function ConseilsPage() {
   const tips = await prisma.autoTip.findMany({
-    where: { sentAt: { not: null } },
+    where: { publishAt: { lte: new Date() } },
     orderBy: { publishAt: "desc" },
   });
 
