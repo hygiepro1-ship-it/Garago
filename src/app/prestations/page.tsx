@@ -42,7 +42,7 @@ const VEHICLE_CLASSES: {
   examples: string;
 }[] = [
   { id: "compact", label: "Compact",    emoji: "🚙", examples: "Yaris, Fit, Rio, Accent…" },
-  { id: "regular", label: "Berline",    emoji: "🚗", examples: "Civic, Corolla, Accord…" },
+  { id: "regular", label: "Berline",    emoji: "🚗", examples: "" },
   { id: "suv",     label: "VUS",        emoji: "🚐", examples: "RAV4, CR-V, Rogue, Tucson…" },
   { id: "truck",   label: "Camionnette",emoji: "🛻", examples: "F-150, RAM 1500, Tundra…" },
   { id: "luxury",  label: "Luxe",       emoji: "🏎️", examples: "BMW, Audi, Lexus, Mercedes…" },
@@ -152,7 +152,7 @@ export default function PrestationsPage() {
             className="text-center text-xs mt-3"
             style={{ color: "rgba(255,255,255,0.3)" }}
           >
-            ex.&nbsp;{selected.examples}
+            {selected.examples ? `ex. ${selected.examples}` : ""}
           </p>
         </div>
       </section>
