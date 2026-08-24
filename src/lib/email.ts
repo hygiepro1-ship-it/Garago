@@ -15,14 +15,14 @@ function fmtDateFr(dateStr: string) {
 function baseLayout(body: string) {
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GaragoPro</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Garago</title></head>
 <body style="margin:0;padding:0;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
         <!-- Header -->
         <tr><td style="background:#1e3a5f;border-radius:16px 16px 0 0;padding:24px 32px">
-          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 GaragoPro</span>
+          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 Garago</span>
         </td></tr>
         <!-- Body -->
         <tr><td style="background:#fff;padding:32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
@@ -30,7 +30,7 @@ function baseLayout(body: string) {
         </td></tr>
         <!-- Footer -->
         <tr><td style="background:#f3f4f6;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;border-top:0;padding:16px 32px;text-align:center">
-          <p style="margin:0;color:#9ca3af;font-size:12px">GaragoPro Canada — <a href="https://garagopro.ca" style="color:#f97316;text-decoration:none">garagopro.ca</a></p>
+          <p style="margin:0;color:#9ca3af;font-size:12px">Garago Canada — <a href="https://garagopro.ca" style="color:#f97316;text-decoration:none">garagopro.ca</a></p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">Pour annuler ou modifier, contactez directement le garage.</p>
         </td></tr>
       </table>
@@ -49,7 +49,7 @@ export async function sendVerificationCode(to: string, code: string) {
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vérification de votre courriel 🔐</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur GaragoPro ! Voici votre code de vérification :</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur Garago ! Voici votre code de vérification :</p>
 
     <div style="text-align:center;margin:32px 0">
       <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
@@ -204,7 +204,7 @@ export async function sendVehicleReady(params: {
       </td></tr>
     </table>
 
-    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur GaragoPro !</p>
+    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>
   `;
 
   await getResend().emails.send({
@@ -402,6 +402,67 @@ export async function sendReviewReport(params: {
   });
 }
 
+// ── Conseils auto hebdomadaires ──────────────────────────────────────────────
+
+export async function sendWeeklyTips(params: {
+  recipients: { email: string; name: string | null }[];
+  tips: { title: string; content: string; category: string; season: string }[];
+  conseilsUrl: string;
+}) {
+  if (!process.env.RESEND_API_KEY) return;
+  if (params.recipients.length === 0) return;
+
+  const CAT_ICONS: Record<string, string> = {
+    entretien: "🔧", securite: "⚠️", saisonnier: "🍂", economie: "💰", electrique: "⚡", achat: "🛒",
+  };
+
+  const tipsHtml = params.tips.map((tip) => `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#f97316">
+        ${CAT_ICONS[tip.category] ?? "💡"} ${tip.category}
+      </p>
+      <h3 style="margin:0 0 10px;font-size:17px;font-weight:800;color:#0b1f3a;line-height:1.3">${tip.title}</h3>
+      <p style="margin:0;font-size:14px;line-height:1.7;color:#374151">${tip.content}</p>
+    </div>
+  `).join("");
+
+  const body = `
+    <h2 style="margin:0 0 6px;color:#0b1f3a;font-size:24px;font-weight:800">Vos conseils auto de la semaine 🔧</h2>
+    <p style="margin:0 0 28px;color:#6b7280;font-size:15px">Deux conseils sélectionnés pour vous aider à prendre soin de votre véhicule.</p>
+
+    ${tipsHtml}
+
+    <div style="text-align:center;margin-top:28px">
+      <a href="${params.conseilsUrl}"
+         style="display:inline-block;background:#0b1f3a;color:#fff;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+        📚 Voir tous les conseils →
+      </a>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #f3f4f6;margin:28px 0 16px">
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">
+      Vous recevez cet email car vous avez accepté les communications marketing de Garago.<br>
+      <a href="${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/tableau-de-bord" style="color:#f97316">Gérer mes préférences</a>
+    </p>
+  `;
+
+  // Envoi par batch de 50 (limite Resend)
+  const BATCH = 50;
+  for (let i = 0; i < params.recipients.length; i += BATCH) {
+    const batch = params.recipients.slice(i, i + BATCH);
+    await Promise.all(
+      batch.map(({ email }) =>
+        getResend().emails.send({
+          from:    FROM,
+          to:      email,
+          subject: `🔧 Vos 2 conseils auto de la semaine — Garago`,
+          html:    baseLayout(body),
+        }).catch((e) => console.error(`[WEEKLY TIP] Échec pour ${email}:`, e))
+      )
+    );
+  }
+}
+
 // ── Alerte mauvais avis ───────────────────────────────────────────────────────
 
 export async function sendAdminBadReviewAlert(params: {
@@ -456,7 +517,7 @@ export async function sendAdminBadReviewAlert(params: {
   await getResend().emails.send({
     from:    FROM,
     to:      adminEmail,
-    subject: `${lbl.icon} [GaragoPro] Alerte — ${params.garageName} · ${lbl.title}`,
+    subject: `${lbl.icon} [Garago] Alerte — ${params.garageName} · ${lbl.title}`,
     html:    baseLayout(body),
   });
 }

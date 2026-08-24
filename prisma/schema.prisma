@@ -308,6 +308,20 @@ model EmailVerificationCode {
   @@index([email])
 }
 
+model AutoTip {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String   // "entretien" | "securite" | "saisonnier" | "economie" | "electrique" | "achat"
+  season      String   // "printemps" | "ete" | "automne" | "hiver" | "toute_annee"
+  publishAt   DateTime // date planifiée d'envoi (lundi matin)
+  sentAt      DateTime?
+  year        Int      // année de publication (pour l'agent annuel)
+
+  @@index([publishAt])
+  @@index([sentAt])
+}
+
 model Suggestion {
   id          String   @id @default(cuid())
   content     String
