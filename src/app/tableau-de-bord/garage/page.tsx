@@ -757,7 +757,7 @@ export default function DashboardGaragePage() {
                 </button>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-3">Partagez ce code — vous recevez <strong>15% de commission</strong> sur chaque abonnement souscrit via votre lien.</p>
+            <p className="text-xs text-gray-400 mt-3">Partagez ce code — le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
           </div>
 
           {/* Bloc 2 — Programme Ambassadeur */}
@@ -2023,7 +2023,7 @@ export default function DashboardGaragePage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h3 className="font-bold text-gray-900 mb-1">Votre code de parrainage</h3>
               <p className="text-gray-500 text-sm mb-4">
-                Partagez ce code. Pour chaque garage qui souscrit via votre code, vous recevez <strong>15% de son premier paiement</strong> en crédit. Le garage parrainé profite de <strong>60 jours d&apos;essai</strong> au lieu de 30.
+                Partagez ce code. Le garage parrainé profite de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-2xl px-5 py-2.5 rounded-xl tracking-widest select-all">
