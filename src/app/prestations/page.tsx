@@ -164,15 +164,6 @@ export default function PrestationsPage() {
                       className="absolute inset-x-0 bottom-0"
                       style={{ height: 50, background: "linear-gradient(to top,rgba(0,0,0,0.5),transparent)" }}
                     />
-                    {/* Durée — badge en haut à droite */}
-                    {s && (
-                      <div
-                        className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg text-xs font-black"
-                        style={{ background: "rgba(249,115,22,0.92)", color: "#fff", backdropFilter: "blur(4px)" }}
-                      >
-                        ⏱ {fmtDuration(s.avgDuration)}
-                      </div>
-                    )}
                     <div
                       className="absolute bottom-2.5 left-3 flex items-center gap-1.5 text-xs font-black"
                       style={{ color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
@@ -182,16 +173,30 @@ export default function PrestationsPage() {
                     </div>
                   </div>
 
-                  {/* Description + CTA */}
+                  {/* Description + durée + CTA */}
                   <div className="p-4 flex-1 flex flex-col gap-3">
                     <p className="text-xs leading-relaxed flex-1" style={{ color: "#64748b" }}>
                       {cat.description}
                     </p>
-                    {s && (
-                      <p className="text-xs" style={{ color: "#cbd5e1" }}>
-                        Selon {s.garageCount} garagiste{s.garageCount > 1 ? "s" : ""}
-                      </p>
-                    )}
+
+                    {/* Durée */}
+                    <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl" style={{ background: "#f1f5f9" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base" style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
+                        ⏱
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold" style={{ color: "#94a3b8" }}>Durée estimée</p>
+                        <p className="text-sm font-black leading-tight" style={{ color: s ? "#0b1f3a" : "#cbd5e1" }}>
+                          {s ? fmtDuration(s.avgDuration) : "Variable"}
+                        </p>
+                      </div>
+                      {s && s.garageCount > 1 && (
+                        <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>
+                          {s.garageCount} avis
+                        </span>
+                      )}
+                    </div>
+
                     <Link
                       href={`/rechercher?service=${cat.id}`}
                       className="block text-center py-2 rounded-xl text-xs font-black transition-all hover:opacity-90"
