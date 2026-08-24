@@ -3,73 +3,50 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SERVICE_CATEGORIES } from "@/lib/services";
-import { LABOR_CATALOG, estimateQuote, type VehicleClass } from "@/lib/laborTimes";
 
-const DEFAULT_RATE = 90;
-
-// Unsplash photo IDs — source.unsplash.com/{id}/800x450
 const SERVICE_IMAGES: Record<string, string> = {
-  "oil":          "V37iTrYZz2E",  // refill motor oil
-  "tires-winter": "lJ5_wZ2nkeI",  // tire in snow
-  "tires-summer": "yqsgL2wKEHA",  // summer tire close-up
-  "brakes":       "ii4XEyJEm_I",  // brake disc
-  "ac":           "UZUzvJEvKnI",  // mechanic under hood
-  "engine":       "eyPlv3Mxk8g",  // man working on car engine
-  "inspection":   "4eHREaM5_CA",  // car inspection in garage
-  "battery":      "cpkUK_YD_zs",  // mechanic with car battery
-  "transmission": "pbH2moaClEs",  // gear shift lever
-  "bodywork":     "pqGgKSaKTyc",  // spray gun car paint
-  "alignment":    "PNjW3W8Zfa8",  // close-up tire on car
-  "suspension":   "OOY5kdikxF8",  // wrench tightening nut
-  "electrical":   "dPt-X-KVAjA",  // OBD diagnostic laptop
-  "exhaust":      "I74mkR_3OP0",  // vehicle exhaust
-  "cooling":      "sk6fOQYIO1o",  // engine compartment open hood
-  "detailing":    "JyycY7jyJr0",  // washing car wheel with foam
-  "ev":           "EfbAELIole8",  // electric cars charging
-  "glass":        "r_ioI9YsrEc",  // windshield chip repair
-  "timing":       "6bTHShbYDhY",  // engine work
-  "clutch":       "pbH2moaClEs",  // gear shift / clutch
-  "preventive":   "GIPmXkRNsro",  // mechanic auto service
-  "bearing":      "al01Ad0f_KI",  // mechanical component
-  "fuel":         "qy27JnsH9sU",  // engine part close-up
-  "rust":         "f_ztFPZM50c",  // undercarriage inspection
+  "oil":          "V37iTrYZz2E",
+  "tires-winter": "lJ5_wZ2nkeI",
+  "tires-summer": "yqsgL2wKEHA",
+  "brakes":       "ii4XEyJEm_I",
+  "ac":           "UZUzvJEvKnI",
+  "engine":       "eyPlv3Mxk8g",
+  "inspection":   "4eHREaM5_CA",
+  "battery":      "cpkUK_YD_zs",
+  "transmission": "pbH2moaClEs",
+  "bodywork":     "pqGgKSaKTyc",
+  "alignment":    "PNjW3W8Zfa8",
+  "suspension":   "OOY5kdikxF8",
+  "electrical":   "dPt-X-KVAjA",
+  "exhaust":      "I74mkR_3OP0",
+  "cooling":      "sk6fOQYIO1o",
+  "detailing":    "JyycY7jyJr0",
+  "ev":           "EfbAELIole8",
+  "glass":        "r_ioI9YsrEc",
+  "timing":       "6bTHShbYDhY",
+  "clutch":       "pbH2moaClEs",
+  "preventive":   "GIPmXkRNsro",
+  "bearing":      "al01Ad0f_KI",
+  "fuel":         "qy27JnsH9sU",
+  "rust":         "f_ztFPZM50c",
 };
 
-const VEHICLE_CLASSES: {
-  id: VehicleClass;
-  label: string;
-  emoji: string;
-  examples: string;
-}[] = [
-  { id: "compact", label: "Compact",    emoji: "🚙", examples: "Yaris, Fit, Rio, Accent…" },
-  { id: "regular", label: "Berline",    emoji: "🚗", examples: "Civic, Corolla, Accord…" },
-  { id: "suv",     label: "VUS",        emoji: "🚐", examples: "RAV4, CR-V, Rogue, Tucson…" },
-  { id: "truck",   label: "Camionnette",emoji: "🛻", examples: "F-150, RAM 1500, Tundra…" },
-  { id: "luxury",  label: "Luxe",       emoji: "🏎️", examples: "BMW, Audi, Lexus, Mercedes…" },
-];
-
-function fmt(n: number): string {
-  return `${n.toLocaleString("fr-CA")} $`;
+function fmtDuration(min: number): string {
+  if (min < 60) return `~${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `~${h} h` : `~${h} h ${m} min`;
 }
 
 export default function PrestationsPage() {
-  const [vehicleClass, setVehicleClass] = useState<VehicleClass>("regular");
-  const [minRate, setMinRate] = useState(DEFAULT_RATE);
-  const [garageCount, setGarageCount] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [stats, setStats] = useState<Record<string, { avgDuration: number; garageCount: number }>>({});
 
   useEffect(() => {
-    fetch("/api/prestations/prices")
+    fetch("/api/prestations/stats")
       .then((r) => r.json())
-      .then((d) => {
-        if (d.minRate > 0) setMinRate(d.minRate);
-        if (d.garageCount) setGarageCount(d.garageCount);
-      })
-      .catch(() => {})
-      .finally(() => setLoaded(true));
+      .then(setStats)
+      .catch(() => {});
   }, []);
-
-  const selected = VEHICLE_CLASSES.find((v) => v.id === vehicleClass)!;
 
   return (
     <main>
@@ -83,76 +60,13 @@ export default function PrestationsPage() {
             🔧 Catalogue de prestations
           </span>
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-            Tous nos services auto
+            Tous les services auto
             <br />
-            <span style={{ color: "#f97316" }}>avec prix estimatifs</span>
+            <span style={{ color: "#f97316" }}>disponibles sur Garago</span>
           </h1>
-          <p
-            className="text-lg max-w-2xl mx-auto mb-4"
-            style={{ color: "rgba(255,255,255,0.6)" }}
-          >
-            Consultez nos tarifs indicatifs avant de contacter un garage.
-            Sélectionnez votre type de véhicule pour des estimations personnalisées.
-          </p>
-          {loaded && garageCount > 0 && (
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Prix calculés à partir du taux horaire plancher de nos{" "}
-              <strong style={{ color: "rgba(255,255,255,0.5)" }}>
-                {garageCount} garages partenaires
-              </strong>{" "}
-              ({minRate} $/h min)
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* ── Vehicle class selector ────────────────────────────────────────── */}
-      <section
-        style={{
-          background: "#0d2347",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          position: "sticky",
-          top: 64,
-          zIndex: 30,
-        }}
-        className="py-5 px-4"
-      >
-        <div className="max-w-4xl mx-auto">
-          <p
-            className="text-center text-xs font-bold uppercase tracking-widest mb-4"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
-            Votre type de véhicule
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {VEHICLE_CLASSES.map((vc) => {
-              const active = vehicleClass === vc.id;
-              return (
-                <button
-                  key={vc.id}
-                  onClick={() => setVehicleClass(vc.id)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
-                  style={{
-                    background: active ? "#f97316" : "rgba(255,255,255,0.07)",
-                    color: active ? "white" : "rgba(255,255,255,0.55)",
-                    border: `2px solid ${active ? "#f97316" : "rgba(255,255,255,0.1)"}`,
-                    transform: active ? "translateY(-1px)" : "none",
-                    boxShadow: active
-                      ? "0 4px 15px rgba(249,115,22,0.35)"
-                      : "none",
-                  }}
-                >
-                  <span>{vc.emoji}</span>
-                  <span>{vc.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <p
-            className="text-center text-xs mt-3"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-          >
-            ex.&nbsp;{selected.examples}
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Trouvez le bon garage pour chaque besoin. Les durées affichées sont calculées
+            à partir des estimations réelles de nos garagistes partenaires.
           </p>
         </div>
       </section>
@@ -161,50 +75,31 @@ export default function PrestationsPage() {
       <section className="py-12 px-4" style={{ background: "#f8fafc" }}>
         <div className="max-w-6xl mx-auto">
 
-          {/* Section label */}
           <div className="flex items-center gap-3 mb-8">
-            <div
-              className="h-px flex-1"
-              style={{ background: "#e2e8f0" }}
-            />
-            <span
-              className="text-xs font-black uppercase tracking-widest px-3"
-              style={{ color: "#94a3b8" }}
-            >
+            <div className="h-px flex-1" style={{ background: "#e2e8f0" }} />
+            <span className="text-xs font-black uppercase tracking-widest px-3" style={{ color: "#94a3b8" }}>
               {SERVICE_CATEGORIES.length} prestations disponibles
             </span>
-            <div
-              className="h-px flex-1"
-              style={{ background: "#e2e8f0" }}
-            />
+            <div className="h-px flex-1" style={{ background: "#e2e8f0" }} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {SERVICE_CATEGORIES.map((cat) => {
-              const quote = LABOR_CATALOG[cat.id]
-                ? estimateQuote(cat.id, minRate, vehicleClass)
-                : null;
-
+              const s = stats[cat.id];
               return (
                 <div
                   key={cat.id}
                   className="bg-white rounded-2xl overflow-hidden flex flex-col"
-                  style={{
-                    boxShadow: "0 2px 12px rgba(11,31,58,0.06)",
-                    border: "1px solid #e2e8f0",
-                  }}
+                  style={{ boxShadow: "0 2px 12px rgba(11,31,58,0.06)", border: "1px solid #e2e8f0" }}
                 >
                   {/* Photo */}
                   <div
                     className="relative overflow-hidden flex-shrink-0"
-                    style={{ height: 180, background: "linear-gradient(135deg, #1e3a5f 0%, #0b1f3a 100%)" }}
+                    style={{ height: 160, background: "linear-gradient(135deg, #1e3a5f 0%, #0b1f3a 100%)" }}
                   >
-                    {/* Emoji fallback — always rendered, hidden under image */}
-                    <div className="absolute inset-0 flex items-center justify-center text-6xl"
-                      style={{ opacity: 0.18 }}>
+                    <div className="absolute inset-0 flex items-center justify-center text-6xl" style={{ opacity: 0.18 }}>
                       {cat.icon}
                     </div>
-                    {/* Photo */}
                     {SERVICE_IMAGES[cat.id] && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -217,12 +112,10 @@ export default function PrestationsPage() {
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                       />
                     )}
-                    {/* Bottom gradient overlay */}
                     <div
                       className="absolute inset-x-0 bottom-0 pointer-events-none"
                       style={{ height: 60, background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }}
                     />
-                    {/* Service icon pill over photo */}
                     <div
                       className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black"
                       style={{ background: "rgba(255,255,255,0.92)", color: "#0b1f3a", backdropFilter: "blur(4px)" }}
@@ -232,109 +125,33 @@ export default function PrestationsPage() {
                     </div>
                   </div>
 
-                  {/* Card header */}
-                  <div className="p-5 flex-1">
-                    <div className="mb-4">
-                      <p
-                        className="text-xs leading-relaxed"
-                        style={{ color: "#64748b" }}
-                      >
-                        {cat.description}
-                      </p>
+                  {/* Body */}
+                  <div className="p-5 flex-1 flex flex-col gap-4">
+                    <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                      {cat.description}
+                    </p>
+
+                    {/* Durée moyenne */}
+                    <div
+                      className="rounded-xl px-4 py-3 flex items-center justify-between"
+                      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+                    >
+                      <span className="text-xs font-semibold" style={{ color: "#64748b" }}>
+                        ⏱ Durée moyenne
+                      </span>
+                      {s ? (
+                        <div className="text-right">
+                          <span className="text-sm font-black" style={{ color: "#0b1f3a" }}>
+                            {fmtDuration(s.avgDuration)}
+                          </span>
+                          <p className="text-xs" style={{ color: "#94a3b8" }}>
+                            selon {s.garageCount} garagiste{s.garageCount > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold" style={{ color: "#94a3b8" }}>Variable</span>
+                      )}
                     </div>
-
-                    {quote ? (
-                      <>
-                        {/* Labor & parts breakdown */}
-                        <div
-                          className="rounded-xl p-3 space-y-2 mb-3"
-                          style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs" style={{ color: "#64748b" }}>
-                              Main-d'œuvre
-                            </span>
-                            <span
-                              className="text-xs font-black"
-                              style={{ color: "#0b1f3a" }}
-                            >
-                              {quote.laborHours} h &nbsp;·&nbsp; {fmt(quote.laborCost)}
-                            </span>
-                          </div>
-                          {(quote.partsMin > 0 || quote.partsMax > 0) && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs" style={{ color: "#64748b" }}>
-                                Pièces (estim.)
-                              </span>
-                              <span
-                                className="text-xs font-black"
-                                style={{ color: "#0b1f3a" }}
-                              >
-                                {fmt(quote.partsMin)} – {fmt(quote.partsMax)}
-                              </span>
-                            </div>
-                          )}
-                          {quote.note && (
-                            <p
-                              className="text-xs italic pt-1"
-                              style={{
-                                color: "#94a3b8",
-                                borderTop: "1px solid #e2e8f0",
-                              }}
-                            >
-                              {quote.note}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Total */}
-                        <div
-                          className="rounded-xl p-3"
-                          style={{ background: "#fff4ed" }}
-                        >
-                          <div className="flex items-baseline justify-between">
-                            <span
-                              className="text-xs font-black uppercase tracking-wide"
-                              style={{ color: "#ea580c" }}
-                            >
-                              À partir de
-                            </span>
-                            <span
-                              className="text-2xl font-black"
-                              style={{ color: "#f97316" }}
-                            >
-                              {fmt(quote.totalMin)}
-                            </span>
-                          </div>
-                          {quote.totalMax > quote.totalMin && (
-                            <p
-                              className="text-xs text-right mt-0.5"
-                              style={{ color: "#fb923c" }}
-                            >
-                              jusqu'à&nbsp;{fmt(quote.totalMax)}
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div
-                        className="rounded-xl p-4 border-2 border-dashed text-center"
-                        style={{ borderColor: "#e2e8f0" }}
-                      >
-                        <p
-                          className="text-sm font-black"
-                          style={{ color: "#475569" }}
-                        >
-                          Prix sur devis
-                        </p>
-                        <p
-                          className="text-xs mt-1"
-                          style={{ color: "#94a3b8" }}
-                        >
-                          Tarif variable selon l'étendue du travail
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   {/* CTA */}
@@ -351,41 +168,13 @@ export default function PrestationsPage() {
               );
             })}
           </div>
-
-          {/* Disclaimer */}
-          <div
-            className="mt-10 p-5 rounded-2xl"
-            style={{ background: "#fef3c7", border: "1px solid #fde68a" }}
-          >
-            <p
-              className="text-sm font-black mb-1"
-              style={{ color: "#92400e" }}
-            >
-              ⚠️ Estimations indicatives seulement
-            </p>
-            <p className="text-xs leading-relaxed" style={{ color: "#a16207" }}>
-              Les prix affichés sont calculés à partir du taux horaire plancher de nos garages
-              partenaires et de barèmes de main-d'œuvre standards pour le Québec. Ils peuvent
-              varier selon le garage, l'état de votre véhicule et les pièces réellement
-              nécessaires.&nbsp;
-              <strong>Obtenez toujours un devis écrit avant d'autoriser les réparations.</strong>
-              &nbsp;Les pièces sont estimées à titre indicatif et ne proviennent pas d'un catalogue
-              certifié.
-            </p>
-          </div>
         </div>
       </section>
 
       {/* ── Bottom CTA ────────────────────────────────────────────────────── */}
-      <section
-        className="py-16 px-4"
-        style={{ background: "#0b1f3a" }}
-      >
+      <section className="py-16 px-4" style={{ background: "#0b1f3a" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <p
-            className="text-xs font-black uppercase tracking-widest mb-3"
-            style={{ color: "#f97316" }}
-          >
+          <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: "#f97316" }}>
             Prêt à réserver ?
           </p>
           <h2 className="text-3xl font-black text-white mb-4">
@@ -400,20 +189,14 @@ export default function PrestationsPage() {
             <Link
               href="/rechercher"
               className="px-8 py-3.5 rounded-xl text-base font-black text-white transition-all hover:opacity-90"
-              style={{
-                background: "#f97316",
-                boxShadow: "0 4px 20px rgba(249,115,22,0.4)",
-              }}
+              style={{ background: "#f97316", boxShadow: "0 4px 20px rgba(249,115,22,0.4)" }}
             >
               Trouver un garage près de moi →
             </Link>
             <Link
               href="/inscription/garage"
               className="px-8 py-3.5 rounded-xl text-base font-black transition-all hover:opacity-80"
-              style={{
-                color: "rgba(255,255,255,0.6)",
-                border: "2px solid rgba(255,255,255,0.15)",
-              }}
+              style={{ color: "rgba(255,255,255,0.6)", border: "2px solid rgba(255,255,255,0.15)" }}
             >
               🔧 Inscrire mon garage
             </Link>
