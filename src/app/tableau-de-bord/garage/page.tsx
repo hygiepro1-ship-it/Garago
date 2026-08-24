@@ -742,62 +742,64 @@ export default function DashboardGaragePage() {
             ))}
           </div>
 
-          {/* Parrainage — code + avantages dans Aperçu */}
+          {/* Bloc 1 — Code de parrainage */}
+          <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Code de parrainage</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
+                {garage.referralCode ?? "—"}
+              </span>
+              {garage.referralCode && (
+                <button type="button"
+                  onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                  Copier
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">Partagez ce code — vous recevez <strong>15% de commission</strong> sur chaque abonnement souscrit via votre lien.</p>
+          </div>
+
+          {/* Bloc 2 — Programme Ambassadeur */}
           {(() => {
             const tier = (garage as any).ambassadorTier ?? 0;
             const PALIERS = [
-              { seuil: 3,  icon: "📊", label: "Statistiques avancées" },
-              { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture" },
-              { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture" },
-              { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche" },
-              { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur" },
+              { seuil: 3,  label: "Statistiques avancées" },
+              { seuil: 6,  label: "−10% sur votre prochaine facture" },
+              { seuil: 10, label: "−20% sur votre prochaine facture" },
+              { seuil: 15, label: "Priorité dans les résultats de recherche" },
+              { seuil: 20, label: "Badge Certifié Ambassadeur" },
             ];
             return (
-              <div className="rounded-2xl overflow-hidden shadow-sm"
-                style={{ border: "2px solid", borderColor: tier >= 1 ? "#1f2e67" : "#fed7aa", background: "white" }}>
-                {tier >= 1 && (
-                  <div className="flex items-center justify-between px-5 py-2.5"
-                    style={{ background: "linear-gradient(135deg,#1f2e67,#f97316)" }}>
-                    <span className="text-white text-sm font-black">🏅 Ambassadeur — Palier {tier}/5</span>
+              <div className="rounded-2xl overflow-hidden shadow-sm bg-white"
+                style={{ border: `2px solid ${tier >= 1 ? "#1f2e67" : "#e2e8f0"}` }}>
+                <div className="flex items-center justify-between px-5 py-3"
+                  style={{ background: tier >= 1 ? "linear-gradient(135deg,#1f2e67,#f97316)" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+                  <span className={`text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
+                    🏅 Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
+                  </span>
+                  {tier >= 1 && (
                     <button onClick={() => setActiveTab("ambassadeur")}
                       className="text-xs font-semibold px-3 py-1 rounded-lg"
                       style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
                       Voir détails →
                     </button>
-                  </div>
-                )}
-                <div className="p-5">
-                  {/* Code de parrainage */}
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Code de parrainage</p>
-                  <div className="flex items-center gap-3 flex-wrap mb-5">
-                    <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
-                      {garage.referralCode ?? "—"}
-                    </span>
-                    {garage.referralCode && (
-                      <button type="button"
-                        onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
-                        className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                        Copier
-                      </button>
-                    )}
-                  </div>
-                  {/* Avantages */}
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Avantages du programme</p>
-                  <div className="space-y-1.5">
-                    {PALIERS.map((p, i) => {
-                      const done = tier >= i + 1;
-                      return (
-                        <div key={i} className="flex items-center gap-2.5 py-1.5 px-3 rounded-xl"
-                          style={done
-                            ? { background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.15)" }
-                            : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                          <span className="text-sm flex-shrink-0">{done ? "✅" : "🔒"}</span>
-                          <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
-                          <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  )}
+                </div>
+                <div className="p-4 space-y-1.5">
+                  {PALIERS.map((p, i) => {
+                    const done = tier >= i + 1;
+                    return (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5 px-3 rounded-xl"
+                        style={done
+                          ? { background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.15)" }
+                          : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                        <span className="text-sm flex-shrink-0">{done ? "✅" : "🔒"}</span>
+                        <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
+                        <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
