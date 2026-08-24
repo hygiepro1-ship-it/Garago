@@ -192,7 +192,7 @@ export default function PrestationsPage() {
                       </div>
                       {s && s.garageCount > 1 && (
                         <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>
-                          {s.garageCount} avis
+                          {s.garageCount} garages
                         </span>
                       )}
                     </div>
