@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     vehicleMake,
     vehicleModel,
     serviceName,
+    notes,
     date,
     startTime,
   } = body;
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
       vehicleMake:  vehicleMake  || null,
       vehicleModel: vehicleModel || null,
       serviceName:  serviceName  || null,
+      notes:        notes        || null,
       date,
       startTime,
       endTime,

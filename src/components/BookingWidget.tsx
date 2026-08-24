@@ -47,6 +47,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [vehicleYear, setVehicleYear] = useState("");
   const [userVehicles, setUserVehicles] = useState<{ id: string; year: number; make: string; model: string; isDefault: boolean }[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [notes, setNotes]             = useState("");
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState("");
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
@@ -133,6 +134,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         vehicleMake:   vehicleMake || null,
         vehicleModel:  vehicleModel || null,
         serviceName:   service || null,
+        notes:         notes.trim() || null,
         date:      formatDate(selectedDate!),
         startTime: selectedSlot,
       }),
@@ -451,6 +453,22 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                 </div>
               </div>
             )}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Notes pour le garage <span className="font-normal text-gray-400">(optionnel)</span></label>
+              <textarea
+                className={inputCls}
+                rows={3}
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Ex : bruit à l'accélération, voyant allumé depuis 2 jours, souhait de pneus hiver…"
+                maxLength={500}
+                style={{ resize: "none" }}
+              />
+              {notes.length > 0 && (
+                <p className="text-xs text-right mt-0.5" style={{ color: "#cbd5e1" }}>{notes.length}/500</p>
+              )}
+            </div>
 
             {error && (
               <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>

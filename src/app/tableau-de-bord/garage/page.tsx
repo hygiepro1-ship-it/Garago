@@ -1104,6 +1104,11 @@ export default function DashboardGaragePage() {
                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
                           </div>
                           <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                          {(a as any).notes && (
+                            <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
+                              💬 {(a as any).notes}
+                            </p>
+                          )}
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {a.status === "PENDING" && <>
                               <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">✓ Confirmer</button>
@@ -1179,6 +1184,11 @@ export default function DashboardGaragePage() {
                             <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
                             {(a.vehicleMake || a.vehicleModel) && (
                               <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
+                            )}
+                            {(a as any).notes && (
+                              <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
+                                💬 {(a as any).notes}
+                              </p>
                             )}
                           </div>
                           <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>

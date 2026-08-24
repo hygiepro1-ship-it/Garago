@@ -143,6 +143,12 @@ export const SERVICE_CATEGORIES = [
     icon: "🛡️",
     description: "Traitement antirouille et protection de carrosserie",
   },
+  {
+    id: "diagnostic",
+    name: "Diagnostic",
+    icon: "🖥️",
+    description: "Lecture de codes d'erreur, diagnostic électronique et mécanique",
+  },
 ];
 
 export const QUEBEC_CITIES = [
