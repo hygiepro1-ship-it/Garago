@@ -13,16 +13,19 @@ const TESTIMONIALS = [
     name: "Marie-Ève T.", city: "Montréal", rating: 5, vehicle: "Toyota RAV4 2021",
     text: "J'avais un problème de freins. J'ai trouvé un garage qui indiquait clairement le prix à l'avance. Aucune surprise à la caisse.",
     service: "Freins",
+    avatar: "https://i.pravatar.cc/48?img=47",
   },
   {
     name: "François L.", city: "Laval", rating: 5, vehicle: "Ford F-150 2019",
     text: "Avec le filtre par marque, j'ai trouvé exactement ce qu'il fallait pour mon F-150. Service rapide, prix honnête, réservation facile.",
     service: "Pneus",
+    avatar: "https://i.pravatar.cc/48?img=12",
   },
   {
     name: "Julie M.", city: "Sherbrooke", rating: 4, vehicle: "Honda Civic 2020",
     text: "Comparer les prix avant de se déplacer, c'est génial. Le garage que j'ai choisi était moins cher que mon habituel et tout aussi bon.",
     service: "Vidange",
+    avatar: "https://i.pravatar.cc/48?img=23",
   },
 ];
 
@@ -97,6 +100,16 @@ export default function HomePage() {
       ════════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden hero-lines"
         style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "100vh" }}>
+
+        {/* Photo de fond — mécanicien au travail */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=1920&q=70&auto=format&fit=crop"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ objectFit: "cover", objectPosition: "center 40%", opacity: 0.13, mixBlendMode: "luminosity" }}
+        />
 
         <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
@@ -346,9 +359,19 @@ export default function HomePage() {
                 <p className="text-xs font-semibold mb-3" style={{ color: "#94a3b8" }}>{r.vehicle}</p>
                 <p className="text-sm leading-relaxed mb-4" style={{ color: "#374151" }}>&ldquo;{r.text}&rdquo;</p>
                 <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid #f1f5f9" }}>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{r.name}</p>
-                    <p className="text-xs" style={{ color: "#94a3b8" }}>{r.city}</p>
+                  <div className="flex items-center gap-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={(r as any).avatar}
+                      alt={r.name}
+                      width={36} height={36}
+                      className="rounded-full flex-shrink-0"
+                      style={{ objectFit: "cover", border: "2px solid #f1f5f9" }}
+                    />
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{r.name}</p>
+                      <p className="text-xs" style={{ color: "#94a3b8" }}>{r.city}</p>
+                    </div>
                   </div>
                   <span className="badge badge-orange">{r.service}</span>
                 </div>
