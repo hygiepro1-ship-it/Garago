@@ -90,7 +90,8 @@ export default function TarifsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {p.pains.map((pain, i) => (
               <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50">
-                <span className="text-2xl mt-0.5">{pain.icon}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={pain.iconPath} alt="" width={24} height={24} className="mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-gray-600 leading-relaxed">{pain.text}</p>
               </div>
             ))}
@@ -111,7 +112,8 @@ export default function TarifsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {p.features.map((f) => (
               <div key={f.title} className="bg-white rounded-2xl p-6 border border-gray-100 card-hover" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-                <div className="text-3xl mb-4">{f.icon}</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={f.iconPath} alt="" width={36} height={36} className="mb-4" />
                 <h3 className="font-black text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed mb-4">{f.desc}</p>
                 <span className="inline-block px-3 py-1 rounded-full text-xs font-black" style={{ backgroundColor: "rgba(249,115,22,0.1)", color: "#f97316" }}>
@@ -134,7 +136,8 @@ export default function TarifsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-10">
             {/* Essai gratuit */}
             <div className="bg-white border-2 border-gray-200 rounded-2xl p-8">
-              <div className="text-3xl mb-3">🆓</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/pricing/gift.png" alt="" width={36} height={36} className="mb-3" />
               <h3 className="text-xl font-black text-gray-900 mb-1">{p.freePlanTitle}</h3>
               <div className="flex items-baseline gap-1 my-4">
                 <span className="text-5xl font-black text-gray-900">{p.freePlanPrice}</span>
@@ -158,7 +161,8 @@ export default function TarifsPage() {
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-black text-white" style={{ backgroundColor: "#f97316" }}>
                 {p.proBadge}
               </div>
-              <div className="text-3xl mb-3">🔧</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/pricing/crown.png" alt="" width={36} height={36} className="mb-3" style={{ filter: "brightness(0) invert(1)" }} />
               <h3 className="text-xl font-black text-white mb-1">{p.proMonthlyTitle}</h3>
               <div className="flex items-baseline gap-1 my-4">
                 <span className="text-5xl font-black text-white">{p.proMonthlyPrice}</span>
@@ -183,7 +187,8 @@ export default function TarifsPage() {
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-black" style={{ backgroundColor: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
                 {p.saveBadge}
               </div>
-              <div className="text-3xl mb-3">📅</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/pricing/calendar.png" alt="" width={36} height={36} className="mb-3" />
               <h3 className="text-xl font-black text-gray-900 mb-1">{p.proAnnualTitle}</h3>
               <div className="flex items-baseline gap-1 my-4">
                 <span className="text-5xl font-black text-gray-900">{p.proAnnualPrice}</span>
@@ -206,7 +211,8 @@ export default function TarifsPage() {
 
           {/* ROI callout */}
           <div className="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-5" style={{ background: "linear-gradient(135deg, #fff7ed, #fef3c7)", border: "1px solid #fed7aa" }}>
-            <span className="text-5xl">💡</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/pricing/bulb.png" alt="" width={60} height={60} className="flex-shrink-0" />
             <div>
               <h3 className="font-black text-gray-900 text-lg mb-1">{p.roiTitle}</h3>
               <p className="text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: p.roiDesc }} />
@@ -257,8 +263,9 @@ export default function TarifsPage() {
             {p.howSteps.map((step) => (
               <div key={step.num} className="flex flex-col items-center text-center">
                 <div className="relative mb-5">
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl bg-white border-2 shadow-md" style={{ borderColor: "#f97316" }}>
-                    {step.icon}
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white border-2 shadow-md" style={{ borderColor: "#f97316" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={step.iconPath} alt="" width={40} height={40} />
                   </div>
                   <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shadow" style={{ backgroundColor: "#f97316" }}>
                     {step.num}
