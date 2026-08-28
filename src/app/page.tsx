@@ -252,7 +252,6 @@ export default function HomePage() {
                 style={{ borderColor: "#e2e8f0", background: "white", minWidth: 128 }}
                 onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#f97316"; el.style.background = "#fff4ed"; }}
                 onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#e2e8f0"; el.style.background = "white"; }}>
-                <span className="text-xl">{s.icon}</span>
                 <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#0b1f3a" }}>{s.name}</span>
                 <span className="text-xs font-semibold" style={{ color: "#94a3b8" }}>{s.price}</span>
               </button>
@@ -302,8 +301,11 @@ export default function HomePage() {
             {h.howSteps.map((s, i) => (
               <div key={i} className="flex flex-col items-center text-center">
                 <div className="relative mb-5">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ background: "#fff4ed", border: "2px solid #fed7aa" }}>{s.icon}</div>
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style={{ background: "#fff4ed", border: "2px solid #fed7aa" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.iconPath} alt={s.title} width={36} height={36} style={{ filter: "brightness(0) saturate(100%) invert(45%) sepia(97%) saturate(1000%) hue-rotate(0deg) brightness(100%)" }} />
+                  </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white"
                     style={{ background: "#f97316" }}>{i + 1}</div>
                 </div>
@@ -395,7 +397,6 @@ export default function HomePage() {
               {h.ctaFeatures.map((f) => (
                 <div key={f.title} className="rounded-xl p-4"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <div className="text-xl mb-2">{f.icon}</div>
                   <p className="font-bold text-white text-sm mb-1">{f.title}</p>
                   <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.38)" }}>{f.desc}</p>
                 </div>

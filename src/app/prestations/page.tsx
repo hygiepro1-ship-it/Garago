@@ -33,12 +33,12 @@ const SERVICE_IMAGES: Record<string, string> = {
 
 // Groupes de filtres
 const FILTERS = [
-  { id: "all",       label: "Tout",           ids: null },
-  { id: "entretien", label: "🔧 Entretien",    ids: ["oil", "preventive", "battery", "cooling", "fuel", "inspection"] },
-  { id: "pneus",     label: "🔄 Pneus",        ids: ["tires-winter", "tires-summer", "alignment", "bearing"] },
-  { id: "mecanique", label: "⚙️ Mécanique",   ids: ["brakes", "engine", "transmission", "suspension", "timing", "clutch", "exhaust"] },
-  { id: "carrosserie",label: "🚗 Carrosserie", ids: ["bodywork", "glass", "rust", "detailing"] },
-  { id: "systemes",  label: "⚡ Systèmes",     ids: ["ac", "electrical", "ev"] },
+  { id: "all",        label: "Tout",        iconPath: null,                        ids: null },
+  { id: "entretien",  label: "Entretien",   iconPath: "/icons/filter-entretien.png", ids: ["oil", "preventive", "battery", "cooling", "fuel", "inspection"] },
+  { id: "pneus",      label: "Pneus",       iconPath: "/icons/tires-summer.png",   ids: ["tires-winter", "tires-summer", "alignment", "bearing"] },
+  { id: "mecanique",  label: "Mécanique",   iconPath: "/icons/engine.png",         ids: ["brakes", "engine", "transmission", "suspension", "timing", "clutch", "exhaust"] },
+  { id: "carrosserie",label: "Carrosserie", iconPath: "/icons/bodywork.png",       ids: ["bodywork", "glass", "rust", "detailing"] },
+  { id: "systemes",   label: "Systèmes",    iconPath: "/icons/electrical.png",     ids: ["ac", "electrical", "ev"] },
 ];
 
 function fmtDuration(min: number): string {
@@ -98,7 +98,7 @@ export default function PrestationsPage() {
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id)}
-                className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all"
                 style={{
                   background: active ? "#f97316" : "rgba(255,255,255,0.07)",
                   color: active ? "#fff" : "rgba(255,255,255,0.55)",
@@ -107,6 +107,16 @@ export default function PrestationsPage() {
                   transform: active ? "translateY(-1px)" : "none",
                 }}
               >
+                {f.iconPath && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={f.iconPath}
+                    alt=""
+                    width={16}
+                    height={16}
+                    style={{ filter: "brightness(0) invert(1)", opacity: active ? 1 : 0.55 }}
+                  />
+                )}
                 {f.label}
                 {f.ids && (
                   <span
@@ -128,7 +138,7 @@ export default function PrestationsPage() {
 
           <p className="text-xs font-semibold mb-6" style={{ color: "#94a3b8" }}>
             {visible.length} prestation{visible.length > 1 ? "s" : ""}
-            {filter.ids ? ` · ${filter.label.replace(/^[^\s]+\s/, "")}` : " au total"}
+            {filter.ids ? ` · ${filter.label}` : " au total"}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

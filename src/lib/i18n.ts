@@ -607,9 +607,9 @@ export const translations = {
       howTitle:         "Du problème à la solution — en 3 étapes",
       howSub:           "Pas besoin d'appeler 10 garages. On fait le travail pour vous.",
       howSteps: [
-        { icon: "🔍", title: "Entrez votre véhicule",    desc: "Marque, modèle et service souhaité. On filtre les garages compatibles — plus besoin de chercher qui fait quoi." },
-        { icon: "⚖️", title: "Comparez en toute clarté", desc: "Prix affichés, avis de vrais clients, distance et disponibilité — tout pour choisir en confiance." },
-        { icon: "📅", title: "Réservez en ligne",        desc: "Choisissez votre créneau, recevez une confirmation par courriel et ajoutez le RDV à votre calendrier." },
+        { icon: "🔍", iconPath: "/icons/step1.png", title: "Entrez votre véhicule",    desc: "Marque, modèle et service souhaité. On filtre les garages compatibles — plus besoin de chercher qui fait quoi." },
+        { icon: "⚖️", iconPath: "/icons/step2.png", title: "Comparez en toute clarté", desc: "Prix affichés, avis de vrais clients, distance et disponibilité — tout pour choisir en confiance." },
+        { icon: "📅", iconPath: "/icons/step3.png", title: "Réservez en ligne",        desc: "Choisissez votre créneau, recevez une confirmation par courriel et ajoutez le RDV à votre calendrier." },
       ],
       findGarageBtn:    "Trouver mon garage →",
       reviewsTitle:     "Ils ont trouvé leur garage sur Garago",
