@@ -1070,19 +1070,23 @@ export default function DashboardConducteurPage() {
             <h3 className="font-bold text-gray-900 mb-4">{d.quickActions}</h3>
             <div className="space-y-2">
               <Link href="/rechercher" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
-                <span className="text-xl">🔍</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/step1.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.findGarage}</span>
               </Link>
               <Link href="/rechercher?service=tires-winter" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
-                <span className="text-xl">❄️</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/tires-winter.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.winterTires}</span>
               </Link>
               <Link href="/rechercher?service=oil" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
-                <span className="text-xl">🛢️</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/oil.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.oilChange}</span>
               </Link>
               <Link href="/rechercher?service=inspection" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
-                <span className="text-xl">🔍</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/inspection.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.inspection}</span>
               </Link>
             </div>

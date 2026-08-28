@@ -362,7 +362,11 @@ function SearchContent() {
                     <span className="badge badge-blue">🚗 {make} {model}</span>
                   )}
                   {selectedService && (
-                    <span className="badge badge-blue">{selectedService.icon} {selectedService.name}</span>
+                    <span className="badge badge-blue flex items-center gap-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={selectedService.iconPath} alt="" width={13} height={13} style={{ filter: "brightness(0) invert(1)", opacity: 0.85 }} />
+                      {selectedService.name}
+                    </span>
                   )}
                   {city && <span className="badge badge-gray">📍 {city}</span>}
                   {walkInOnly && <span className="badge badge-green">Sans RDV</span>}
