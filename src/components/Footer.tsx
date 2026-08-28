@@ -34,12 +34,12 @@ export default function Footer() {
   ];
 
   const SERVICE_LINKS = [
-    { label: `🛢️  ${f.oilChange}`,   href: "/rechercher?service=oil" },
-    { label: `❄️  ${f.winterTires}`, href: "/rechercher?service=tires-winter" },
-    { label: `🔴  ${f.brakes}`,      href: "/rechercher?service=brakes" },
-    { label: `💨  ${f.ac}`,          href: "/rechercher?service=ac" },
-    { label: `⚡  ${f.diagnostic}`,  href: "/rechercher?service=electrical" },
-    { label: `🔍  ${f.autoService}`, href: "/rechercher?service=inspection" },
+    { icon: "/icons/oil.png",         label: f.oilChange,   href: "/rechercher?service=oil" },
+    { icon: "/icons/tires-winter.png",label: f.winterTires, href: "/rechercher?service=tires-winter" },
+    { icon: "/icons/brakes.png",      label: f.brakes,      href: "/rechercher?service=brakes" },
+    { icon: "/icons/ac.png",          label: f.ac,          href: "/rechercher?service=ac" },
+    { icon: "/icons/electrical.png",  label: f.diagnostic,  href: "/rechercher?service=electrical" },
+    { icon: "/icons/inspection.png",  label: f.autoService, href: "/rechercher?service=inspection" },
   ];
 
   return (
@@ -99,7 +99,11 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
+                  <Link href={l.href} className="flex items-center gap-2 transition-colors hover:text-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={l.icon} alt="" width={16} height={16} style={{ filter: "brightness(0) invert(1)", opacity: 0.5, flexShrink: 0 }} />
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
