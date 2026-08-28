@@ -1232,9 +1232,9 @@ export const translations = {
       howTitle:         "From problem to solution — in 3 steps",
       howSub:           "No need to call 10 garages. We do the work for you.",
       howSteps: [
-        { icon: "🔍", title: "Enter your vehicle",  desc: "Make, model and desired service. We filter compatible garages — no more searching who does what." },
-        { icon: "⚖️", title: "Compare clearly",     desc: "Upfront prices, real client reviews, distance and availability — everything to choose with confidence." },
-        { icon: "📅", title: "Book online",         desc: "Choose your slot, receive an email confirmation and add the appointment to your calendar." },
+        { icon: "🔍", iconPath: "/icons/step1.png", title: "Enter your vehicle",  desc: "Make, model and desired service. We filter compatible garages — no more searching who does what." },
+        { icon: "⚖️", iconPath: "/icons/step2.png", title: "Compare clearly",     desc: "Upfront prices, real client reviews, distance and availability — everything to choose with confidence." },
+        { icon: "📅", iconPath: "/icons/step3.png", title: "Book online",         desc: "Choose your slot, receive an email confirmation and add the appointment to your calendar." },
       ],
       findGarageBtn:    "Find my garage →",
       reviewsTitle:     "They found their garage on Garago",
