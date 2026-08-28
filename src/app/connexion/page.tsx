@@ -41,9 +41,7 @@ export default function ConnexionPage() {
 
         <div className="relative">
           <Link href="/" className="inline-flex mb-10">
-            <div className="bg-white rounded-xl px-2.5 py-1">
-              <img src="/logo-garago.png" alt="Garago" className="h-9 w-auto object-contain" />
-            </div>
+            <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-9 w-auto object-contain" />
           </Link>
 
           <h2 className="text-3xl font-black text-white leading-snug mb-4">
@@ -91,7 +89,7 @@ export default function ConnexionPage() {
 
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex justify-center">
-              <img src="/logo-garago.png" alt="Garago" className="h-10 w-auto object-contain" />
+              <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-10 w-auto object-contain" />
             </Link>
           </div>
 

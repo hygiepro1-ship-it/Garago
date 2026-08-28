@@ -332,9 +332,7 @@ export default function InscriptionGaragePage() {
       <div style={{ backgroundColor: "#0b1f3a" }} className="py-4 px-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="inline-flex">
-            <div className="bg-white rounded-xl px-2 py-0.5">
-              <img src="/logo-garago.png" alt="Garago" className="h-8 w-auto object-contain" />
-            </div>
+            <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-8 w-auto object-contain" />
           </Link>
           <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             {r.alreadyAccount} <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">{r.signIn}</Link>

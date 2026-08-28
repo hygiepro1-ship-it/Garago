@@ -50,9 +50,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Link href="/" className="inline-flex mb-5">
-              <div className="bg-white rounded-xl px-3 py-1.5">
-                <img src="/logo-garago.png" alt="Garago" className="h-10 w-auto object-contain" />
-              </div>
+              <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-10 w-auto object-contain" />
             </Link>
             <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
               {f.tagline}
