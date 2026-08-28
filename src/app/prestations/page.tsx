@@ -140,36 +140,24 @@ export default function PrestationsPage() {
                   className="bg-white rounded-2xl overflow-hidden flex flex-col"
                   style={{ boxShadow: "0 2px 10px rgba(11,31,58,0.06)", border: "1px solid #e2e8f0" }}
                 >
-                  {/* Photo compacte */}
+                  {/* Icône Flaticon */}
                   <div
-                    className="relative flex-shrink-0"
-                    style={{ height: 120, background: "linear-gradient(135deg,#1e3a5f,#0b1f3a)" }}
+                    className="relative flex-shrink-0 flex items-center justify-center"
+                    style={{ height: 110, background: "linear-gradient(135deg,#0f2744,#0b1f3a)" }}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center text-5xl" style={{ opacity: 0.15 }}>
-                      {cat.icon}
-                    </div>
-                    {SERVICE_IMAGES[cat.id] && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`https://source.unsplash.com/${SERVICE_IMAGES[cat.id]}/600x300`}
-                        alt={cat.name}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full"
-                        style={{ objectFit: "cover", opacity: 0, transition: "opacity 0.4s" }}
-                        onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.75"; }}
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                      />
-                    )}
-                    <div
-                      className="absolute inset-x-0 bottom-0"
-                      style={{ height: 50, background: "linear-gradient(to top,rgba(0,0,0,0.5),transparent)" }}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={cat.iconPath}
+                      alt={cat.name}
+                      width={64}
+                      height={64}
+                      style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }}
                     />
                     <div
-                      className="absolute bottom-2.5 left-3 flex items-center gap-1.5 text-xs font-black"
-                      style={{ color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+                      className="absolute bottom-2.5 left-3 right-3 text-xs font-black truncate"
+                      style={{ color: "rgba(255,255,255,0.5)" }}
                     >
-                      <span>{cat.icon}</span>
-                      <span>{cat.name}</span>
+                      {cat.name}
                     </div>
                   </div>
 
