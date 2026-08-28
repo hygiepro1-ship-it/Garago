@@ -195,17 +195,6 @@ export default function HomePage() {
             {locError && <p className="text-xs text-red-500 px-4 pb-3">{locError}</p>}
           </form>
 
-          {/* Raccourcis populaires */}
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>{h.popularLabel}</span>
-            {h.popularItems.map((s, i) => (
-              <button key={s} onClick={() => router.push(`/rechercher?q=${encodeURIComponent(s)}`)}
-                className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-                style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                {s}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -368,10 +357,6 @@ export default function HomePage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-5"
-                style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.2)", color: "#fb923c" }}>
-                {h.ctaBadge}
-              </div>
               <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-4">
                 {h.ctaLine1}<br/>
                 <span style={{ color: "#f97316" }}>{h.ctaLine2}</span>
