@@ -30,7 +30,7 @@ export const ARTICLES: Article[] = [
     icon: "🔴",
     readTime: 4,
     imageId: "ii4XEyJEm_I",
-    publishedAt: "2025-11-12",
+    publishedAt: "2026-07-20",
     sections: [
       {
         heading: "Une vibration au freinage n'est jamais anodine",
@@ -77,7 +77,7 @@ export const ARTICLES: Article[] = [
     icon: "❄️",
     readTime: 3,
     imageId: "lJ5_wZ2nkeI",
-    publishedAt: "2025-10-28",
+    publishedAt: "2026-07-27",
     sections: [
       {
         heading: "Ce que dit la loi québécoise",
@@ -120,7 +120,7 @@ export const ARTICLES: Article[] = [
     icon: "⚡",
     readTime: 5,
     imageId: "dPt-X-KVAjA",
-    publishedAt: "2025-10-15",
+    publishedAt: "2026-08-03",
     sections: [
       {
         heading: "Les voyants rouges : arrêtez-vous dès que possible",
@@ -167,7 +167,7 @@ export const ARTICLES: Article[] = [
     icon: "🛢️",
     readTime: 4,
     imageId: "V37iTrYZz2E",
-    publishedAt: "2025-09-30",
+    publishedAt: "2026-08-10",
     sections: [
       {
         heading: "La règle des 3 000 km est obsolète",
@@ -211,7 +211,7 @@ export const ARTICLES: Article[] = [
     icon: "🔋",
     readTime: 4,
     imageId: "cpkUK_YD_zs",
-    publishedAt: "2025-09-15",
+    publishedAt: "2026-08-17",
     sections: [
       {
         heading: "La durée de vie réelle d'une batterie",
@@ -256,7 +256,7 @@ export const ARTICLES: Article[] = [
     icon: "🌡️",
     readTime: 4,
     imageId: "sk6fOQYIO1o",
-    publishedAt: "2025-08-20",
+    publishedAt: "2026-08-24",
     sections: [
       {
         heading: "Les premiers signes de surchauffe",
@@ -303,7 +303,7 @@ export const ARTICLES: Article[] = [
     icon: "🛡️",
     readTime: 4,
     imageId: "f_ztFPZM50c",
-    publishedAt: "2025-08-05",
+    publishedAt: "2026-08-31",
     sections: [
       {
         heading: "Pourquoi le Québec est particulièrement agressif pour les véhicules",
@@ -345,7 +345,7 @@ export const ARTICLES: Article[] = [
     icon: "🔴",
     readTime: 3,
     imageId: "OOY5kdikxF8",
-    publishedAt: "2025-07-18",
+    publishedAt: "2026-09-07",
     sections: [
       {
         heading: "Un grincement le matin : souvent normal",
@@ -379,7 +379,7 @@ export const ARTICLES: Article[] = [
     icon: "💨",
     readTime: 4,
     imageId: "UZUzvJEvKnI",
-    publishedAt: "2025-06-30",
+    publishedAt: "2026-09-14",
     sections: [
       {
         heading: "Pourquoi la clim perd de son efficacité",
@@ -418,7 +418,7 @@ export const ARTICLES: Article[] = [
     icon: "⛽",
     readTime: 4,
     imageId: "qy27JnsH9sU",
-    publishedAt: "2025-06-10",
+    publishedAt: "2026-09-21",
     sections: [
       {
         heading: "Comment mesurer sa vraie consommation",
@@ -464,7 +464,7 @@ export const ARTICLES: Article[] = [
     icon: "📋",
     readTime: 5,
     imageId: "JXHN4c5CyUs",
-    publishedAt: "2025-10-01",
+    publishedAt: "2026-09-28",
     sections: [
       {
         heading: "Pneus et freins : la priorité absolue",
@@ -526,7 +526,7 @@ export const ARTICLES: Article[] = [
     icon: "⭕",
     readTime: 3,
     imageId: "yqsgL2wKEHA",
-    publishedAt: "2025-07-01",
+    publishedAt: "2026-10-05",
     sections: [
       {
         heading: "Quelle pression est recommandée pour mon véhicule ?",

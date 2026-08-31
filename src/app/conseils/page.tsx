@@ -19,7 +19,12 @@ function formatDate(iso: string) {
 }
 
 export default function ConseilsPage() {
-  const [featured, ...rest] = ARTICLES;
+  const now = new Date();
+  const published = ARTICLES
+    .filter((a) => new Date(a.publishedAt) <= now)
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+  const [featured, ...rest] = published;
 
   const categories = Array.from(new Set(ARTICLES.map((a) => a.category)));
 
@@ -62,11 +67,18 @@ export default function ConseilsPage() {
         <div className="max-w-4xl mx-auto">
 
           <p className="text-xs font-semibold uppercase tracking-widest mb-7" style={{ color: "#94a3b8" }}>
-            {ARTICLES.length} articles
+            {published.length} article{published.length !== 1 ? "s" : ""}
           </p>
 
+          {published.length === 0 && (
+            <div className="text-center py-20">
+              <p className="font-bold text-lg" style={{ color: "#0b1f3a" }}>Aucun conseil publié pour le moment.</p>
+              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}>Revenez bientôt — de nouveaux articles arrivent chaque semaine.</p>
+            </div>
+          )}
+
           {/* Article vedette */}
-          <article className="rounded-2xl overflow-hidden mb-5 relative"
+          {featured && <article className="rounded-2xl overflow-hidden mb-5 relative"
             style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
             {/* bande accent */}
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: featured.categoryColor }} />
@@ -109,7 +121,7 @@ export default function ConseilsPage() {
                 </Link>
               </div>
             </div>
-          </article>
+          </article>}
 
           {/* Grille des autres articles */}
           <div className="flex flex-col gap-4">
