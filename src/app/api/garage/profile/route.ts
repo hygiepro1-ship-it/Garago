@@ -11,7 +11,7 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 // Only plain descriptive text — no URLs, emails, phone numbers, hashtags, @mentions.
 function validateDescription(text: string | null | undefined): string | null {
   if (!text?.trim()) return null; // empty is fine
-  if (text.length > 1000) return "La description ne peut pas dépasser 1 000 caractères.";
+  if (text.length > 400) return "La description ne peut pas dépasser 400 caractères.";
   if (/(https?:\/\/|www\.)/i.test(text)) return "Les liens URL ne sont pas autorisés dans la description.";
   if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text))
     return "Les adresses courriel ne sont pas autorisées dans la description.";

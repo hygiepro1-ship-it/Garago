@@ -250,8 +250,11 @@ function DescriptionSection({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Décrivez votre garage, votre expertise, vos spécialités…"
-            maxLength={1000}
+            maxLength={400}
           />
+          <p className="text-xs text-right" style={{ color: draft.length >= 380 ? "#dc2626" : "#9ca3af" }}>
+            {draft.length} / 400 caractères
+          </p>
           <p className="text-xs rounded-lg px-3 py-2" style={{ background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa" }}>
             Les modifications de la description doivent être soumises séparément via le bouton <strong>«&nbsp;Faire vérifier&nbsp;»</strong> — le bouton «&nbsp;Sauvegarder le profil&nbsp;» ne les enregistre pas.
           </p>

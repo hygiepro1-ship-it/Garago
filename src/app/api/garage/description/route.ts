@@ -8,7 +8,7 @@ const DESCRIPTION_MAX_PER_YEAR = 4;
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 function validateDescription(text: string): string | null {
-  if (text.length > 1000) return "La description ne peut pas dépasser 1 000 caractères.";
+  if (text.length > 400) return "La description ne peut pas dépasser 400 caractères.";
   if (/(https?:\/\/|www\.)/i.test(text)) return "Les liens URL ne sont pas autorisés.";
   if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text)) return "Les adresses courriel ne sont pas autorisées.";
   if (/(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(text)) return "Les numéros de téléphone ne sont pas autorisés.";
