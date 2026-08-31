@@ -34,10 +34,6 @@ export default function TarifsPage() {
             style={{ background: "radial-gradient(circle, #f97316, transparent)" }} />
         </div>
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6"
-            style={{ backgroundColor: "rgba(249,115,22,0.15)", border: "1px solid rgba(249,115,22,0.3)", color: "#fb923c" }}>
-            {p.badge}
-          </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-tight">
             {p.heroTitle1}<br />
             <span style={{ color: "#f97316" }}>{p.heroTitle2}</span>

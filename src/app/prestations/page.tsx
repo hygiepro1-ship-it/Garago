@@ -69,12 +69,6 @@ export default function PrestationsPage() {
       {/* ── Hero ── */}
       <section style={{ background: "#0b1f3a" }} className="py-14 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <span
-            className="inline-block text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full mb-5"
-            style={{ background: "rgba(249,115,22,0.15)", color: "#f97316" }}
-          >
-            🔧 Catalogue de prestations
-          </span>
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
             Tous les services auto
             <br />
