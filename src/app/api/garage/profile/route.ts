@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { sendDescriptionReviewEmail } from "@/lib/email";
+
+const DESCRIPTION_MAX_PER_YEAR = 4;
+const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 // ─── Description validation ────────────────────────────────────────────────
 // Only plain descriptive text — no URLs, emails, phone numbers, hashtags, @mentions.
@@ -50,18 +54,57 @@ export async function PUT(req: NextRequest) {
   const descErr = validateDescription(body.description);
   if (descErr) return NextResponse.json({ error: descErr }, { status: 422 });
 
-  // Get current approved description
-  const current = await prisma.garage.findUnique({ where: { ownerId: userId }, select: { description: true } });
-  const newDesc  = body.description?.trim() || null;
-  const sameAsApproved = newDesc === (current?.description?.trim() ?? null);
+  // Get current state
+  const current = await prisma.garage.findUnique({
+    where: { ownerId: userId },
+    select: {
+      id: true, name: true, email: true,
+      description: true, descriptionStatus: true,
+      descriptionChanges: true, descriptionChangesYear: true,
+    },
+  });
+  if (!current) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
-  // Description moderation: store as draft if changed
-  const descFields = sameAsApproved
-    ? {} // no change — don't touch status
-    : {
-        descriptionDraft:  newDesc,
-        descriptionStatus: "PENDING",
-      };
+  const newDesc        = body.description?.trim() || null;
+  const sameAsApproved = newDesc === (current.description?.trim() ?? null);
+
+  let descFields: Record<string, unknown> = {};
+
+  if (!sameAsApproved) {
+    // Yearly limit check
+    const thisYear = new Date().getFullYear();
+    const sameYear = current.descriptionChangesYear === thisYear;
+    const usedThisYear = sameYear ? (current.descriptionChanges ?? 0) : 0;
+
+    if (usedThisYear >= DESCRIPTION_MAX_PER_YEAR) {
+      return NextResponse.json(
+        { error: `Limite atteinte — vous ne pouvez soumettre que ${DESCRIPTION_MAX_PER_YEAR} descriptions par année.` },
+        { status: 429 }
+      );
+    }
+
+    const newCount = usedThisYear + 1;
+    descFields = {
+      descriptionDraft:       newDesc,
+      descriptionStatus:      "PENDING",
+      descriptionChanges:     newCount,
+      descriptionChangesYear: thisYear,
+    };
+
+    // Send review email (non-blocking)
+    const token     = process.env.ADMIN_REVIEW_SECRET ?? "garago-admin-secret";
+    const approveUrl = `${BASE_URL}/api/admin/description/review?garageId=${current.id}&action=approve&token=${token}`;
+    const rejectUrl  = `${BASE_URL}/api/admin/description/review?garageId=${current.id}&action=reject&token=${token}`;
+
+    sendDescriptionReviewEmail({
+      garageId:   current.id,
+      garageName: current.name,
+      ownerEmail: current.email ?? userId,
+      draft:      newDesc ?? "",
+      approveUrl,
+      rejectUrl,
+    }).catch(console.error);
+  }
 
   const garage = await prisma.garage.update({
     where: { ownerId: userId },

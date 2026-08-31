@@ -71,9 +71,11 @@ model Garage {
   ownerId     String  @unique
   name        String
   slug        String  @unique
-  description       String?
-  descriptionDraft  String?   // awaiting admin approval
-  descriptionStatus String    @default("APPROVED") // APPROVED | PENDING | REJECTED
+  description           String?
+  descriptionDraft      String?   // awaiting admin approval
+  descriptionStatus     String    @default("APPROVED") // APPROVED | PENDING | REJECTED
+  descriptionChanges    Int       @default(0)   // nb de soumissions cette année
+  descriptionChangesYear Int?                   // année de référence
   address     String
   city        String
   province    String  @default("QC")

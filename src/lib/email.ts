@@ -521,3 +521,80 @@ export async function sendAdminBadReviewAlert(params: {
     html:    baseLayout(body),
   });
 }
+
+// ── Description moderation ───────────────────────────────────────────────────
+
+export async function sendDescriptionReviewEmail(params: {
+  garageId:   string;
+  garageName: string;
+  ownerEmail: string;
+  draft:      string;
+  approveUrl: string;
+  rejectUrl:  string;
+}) {
+  const body = `
+    <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0b1f3a">
+      📝 Nouvelle description à vérifier
+    </h2>
+    <p style="margin:0 0 6px;font-size:14px;color:#374151">
+      <strong>Garage :</strong> ${params.garageName}
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;color:#374151">
+      <strong>Propriétaire :</strong> ${params.ownerEmail}
+    </p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #f97316;border-radius:8px;padding:16px;margin-bottom:20px">
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap">${params.draft}</p>
+    </div>
+    <p style="margin:0 0 4px;font-size:12px;color:#6b7280">
+      Vérifiez que ce texte est une description d'entreprise neutre — sans promotion, sans liens ni coordonnées.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="margin-top:20px">
+      <tr>
+        <td style="padding-right:12px">
+          <a href="${params.approveUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">
+            ✅ Approuver
+          </a>
+        </td>
+        <td>
+          <a href="${params.rejectUrl}" style="display:inline-block;background:#dc2626;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">
+            ✗ Refuser
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      "info.garago@gmail.com",
+    subject: `📝 [Modération] Description à vérifier — ${params.garageName}`,
+    html:    baseLayout(body),
+  });
+}
+
+export async function sendDescriptionDecisionEmail(params: {
+  ownerEmail: string;
+  garageName: string;
+  approved:   boolean;
+}) {
+  const body = params.approved
+    ? `
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">✅ Description approuvée</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour,<br><br>La description de votre garage <strong>${params.garageName}</strong> a été approuvée et est maintenant visible publiquement sur Garago.
+      </p>`
+    : `
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">✗ Description refusée</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour,<br><br>La description soumise pour votre garage <strong>${params.garageName}</strong> a été refusée car elle ne respecte pas nos critères (contenu promotionnel, liens ou coordonnées non autorisés).<br><br>Vous pouvez soumettre une nouvelle version depuis votre tableau de bord.
+      </p>`;
+
+  await getResend().emails.send({
+    from:    FROM,
+    to:      params.ownerEmail,
+    subject: params.approved
+      ? `✅ Votre description a été approuvée — Garago`
+      : `✗ Votre description a été refusée — Garago`,
+    html: baseLayout(body),
+  });
+}
