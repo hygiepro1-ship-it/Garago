@@ -74,14 +74,24 @@ export async function POST(req: NextRequest) {
   const approveUrl = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=approve&token=${token}`;
   const rejectUrl  = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=reject&token=${token}`;
 
-  sendDescriptionReviewEmail({
-    garageId:   garage.id,
-    garageName: garage.name,
-    ownerEmail: garage.owner?.email ?? garage.email ?? "",
-    draft:      text,
-    approveUrl,
-    rejectUrl,
-  }).catch(console.error);
+  try {
+    await sendDescriptionReviewEmail({
+      garageId:   garage.id,
+      garageName: garage.name,
+      ownerEmail: garage.owner?.email ?? garage.email ?? "",
+      draft:      text,
+      approveUrl,
+      rejectUrl,
+    });
+  } catch (err) {
+    console.error("sendDescriptionReviewEmail failed:", err);
+    // Roll back status so the garage isn't stuck in PENDING with no admin email
+    await prisma.garage.update({
+      where: { id: garage.id },
+      data: { descriptionStatus: "APPROVED", descriptionDraft: null, descriptionChanges: usedThisYear, descriptionChangesYear: usedThisYear === 0 ? null : thisYear },
+    });
+    return NextResponse.json({ error: "Impossible d'envoyer l'email de vérification. Veuillez réessayer dans quelques minutes." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, usedThisYear: newCount, maxPerYear: DESCRIPTION_MAX_PER_YEAR });
 }
