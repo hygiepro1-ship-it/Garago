@@ -2,7 +2,8 @@ import { Resend } from "resend";
 
 // Lazy — avoids build-time crash when RESEND_API_KEY is not set
 function getResend() { return new Resend(process.env.RESEND_API_KEY); }
-const FROM = process.env.EMAIL_FROM ?? "Garago <support@garagopro.ca>";
+const FROM       = process.env.EMAIL_FROM   ?? "Garago <support@garagopro.ca>";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "info.garago@gmail.com";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -396,7 +397,7 @@ export async function sendReviewReport(params: {
 
   await getResend().emails.send({
     from:    FROM,
-    to:      "info.garago@gmail.com",
+    to:      ADMIN_EMAIL,
     subject: `🚨 Signalement d'avis — ${params.garageName}`,
     html:    baseLayout(body),
   });
@@ -566,7 +567,7 @@ export async function sendDescriptionReviewEmail(params: {
 
   await getResend().emails.send({
     from:    FROM,
-    to:      "info.garago@gmail.com",
+    to:      ADMIN_EMAIL,
     subject: `📝 [Modération] Description à vérifier — ${params.garageName}`,
     html:    baseLayout(body),
   });
