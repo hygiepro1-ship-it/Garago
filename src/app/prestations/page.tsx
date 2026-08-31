@@ -163,16 +163,11 @@ export default function PrestationsPage() {
                       height={64}
                       style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }}
                     />
-                    <div
-                      className="absolute bottom-2.5 left-3 right-3 text-xs font-black truncate"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
-                    >
-                      {cat.name}
-                    </div>
                   </div>
 
                   {/* Description + durée + CTA */}
                   <div className="p-4 flex-1 flex flex-col gap-3">
+                    <p className="text-sm font-black" style={{ color: "#0b1f3a" }}>{cat.name}</p>
                     <p className="text-xs leading-relaxed flex-1" style={{ color: "#64748b" }}>
                       {cat.description}
                     </p>
