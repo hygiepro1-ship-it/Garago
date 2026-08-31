@@ -22,8 +22,8 @@ function baseLayout(body: string) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
         <!-- Header -->
-        <tr><td style="background:#1e3a5f;border-radius:16px 16px 0 0;padding:24px 32px">
-          <span style="color:#fff;font-size:22px;font-weight:800;letter-spacing:-0.5px">🔧 Garago</span>
+        <tr><td style="background:#1e3a5f;border-radius:16px 16px 0 0;padding:20px 32px;text-align:center">
+          <img src="https://garagopro.ca/logo-garago.png" alt="Garago" height="48" style="display:block;margin:0 auto;max-height:48px" />
         </td></tr>
         <!-- Body -->
         <tr><td style="background:#fff;padding:32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb">
