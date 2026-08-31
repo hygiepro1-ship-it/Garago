@@ -3,6 +3,17 @@ import Link from "next/link";
 import { ARTICLES, getArticle, getRelatedArticles } from "@/lib/articles";
 import { ArticleImage } from "./ArticleImage";
 
+const CAT_ICONS: Record<string, string> = {
+  "Freins":        "/icons/brakes.png",
+  "Pneus":         "/icons/tires-winter.png",
+  "Électronique":  "/icons/electrical.png",
+  "Entretien":     "/icons/filter-entretien.png",
+  "Électrique":    "/icons/ev.png",
+  "Moteur":        "/icons/engine.png",
+  "Protection":    "/icons/bodywork.png",
+  "Climatisation": "/icons/ac.png",
+};
+
 export function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
 }
@@ -36,12 +47,10 @@ export default async function ArticlePage({
           background: "linear-gradient(135deg, #1e3a5f 0%, #0b1f3a 100%)",
         }}
       >
-        {/* Emoji fallback */}
-        <div
-          className="absolute inset-0 flex items-center justify-center text-9xl"
-          style={{ opacity: 0.1 }}
-        >
-          {article.icon}
+        {/* Icon fallback */}
+        <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.08 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {CAT_ICONS[article.category] && <img src={CAT_ICONS[article.category]} alt="" width={160} height={160} style={{ filter: "brightness(0) invert(1)" }} />}
         </div>
         <ArticleImage
           src={`https://source.unsplash.com/${article.imageId}/1400x700`}
@@ -73,10 +82,12 @@ export default async function ArticlePage({
         <div className="absolute bottom-0 inset-x-0 px-4 pb-8">
           <div className="max-w-3xl mx-auto">
             <span
-              className="inline-block text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-3"
+              className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-3"
               style={{ background: article.categoryColor, color: "white" }}
             >
-              {article.icon}&nbsp;&nbsp;{article.category}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {CAT_ICONS[article.category] && <img src={CAT_ICONS[article.category]} alt="" width={13} height={13} style={{ filter: "brightness(0) invert(1)" }} />}
+              {article.category}
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">
               {article.title}
@@ -91,9 +102,16 @@ export default async function ArticlePage({
         className="py-3 px-4"
       >
         <div className="max-w-3xl mx-auto flex items-center gap-4 text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-          <span>📅 {formatDate(article.publishedAt)}</span>
+          <span className="flex items-center gap-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/pricing/calendar.png" alt="" width={12} height={12} style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
+            {formatDate(article.publishedAt)}
+          </span>
           <span>·</span>
-          <span>⏱ {article.readTime} min de lecture</span>
+          <span className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {article.readTime} min de lecture
+          </span>
           <span>·</span>
           <Link href="/conseils" className="hover:text-orange-400 transition-colors">
             ← Tous les conseils
@@ -162,7 +180,7 @@ export default async function ArticlePage({
                     className="mt-4 p-4 rounded-xl flex gap-3"
                     style={{ background: "#fef2f2", border: "1px solid #fecaca" }}
                   >
-                    <span className="text-xl flex-shrink-0">⚠️</span>
+                    <svg className="flex-shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <p className="text-sm leading-relaxed font-semibold" style={{ color: "#991b1b" }}>
                       {section.warning}
                     </p>
@@ -175,7 +193,8 @@ export default async function ArticlePage({
                     className="mt-4 p-4 rounded-xl flex gap-3"
                     style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}
                   >
-                    <span className="text-xl flex-shrink-0">💡</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/icons/pricing/bulb.png" alt="" width={20} height={20} className="flex-shrink-0 mt-0.5" style={{ filter: "brightness(0) saturate(100%) invert(20%) sepia(80%) saturate(500%) hue-rotate(200deg)" }} />
                     <p className="text-sm leading-relaxed" style={{ color: "#1e40af" }}>
                       {section.note}
                     </p>
@@ -235,11 +254,9 @@ export default async function ArticlePage({
                       background: "linear-gradient(135deg, #1e3a5f, #0b1f3a)",
                     }}
                   >
-                    <div
-                      className="absolute inset-0 flex items-center justify-center text-4xl"
-                      style={{ opacity: 0.15 }}
-                    >
-                      {rel.icon}
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.12 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {CAT_ICONS[rel.category] && <img src={CAT_ICONS[rel.category]} alt="" width={48} height={48} style={{ filter: "brightness(0) invert(1)" }} />}
                     </div>
                     <ArticleImage
                       src={`https://source.unsplash.com/${rel.imageId}/600x300`}
