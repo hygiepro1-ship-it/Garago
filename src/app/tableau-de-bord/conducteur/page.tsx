@@ -326,6 +326,10 @@ export default function DashboardConducteurPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/connexion");
+    if (status === "authenticated" && (session?.user as any)?.role === "GARAGE_OWNER") {
+      router.push("/tableau-de-bord/garage");
+      return;
+    }
     if (status === "authenticated") {
       fetch("/api/vehicles").then(r => r.json()).then(d => { if (Array.isArray(d)) setVehicles(d); });
       fetch("/api/appointments").then(r => r.json()).then(d => { if (Array.isArray(d)) { setAppts(d); setApptsLoaded(true); } });
