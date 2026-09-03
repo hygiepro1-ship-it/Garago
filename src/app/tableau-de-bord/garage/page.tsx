@@ -287,6 +287,52 @@ function DescriptionSection({
   );
 }
 
+// ─── Ambassador overview card ─────────────────────────────────────────────────
+
+const AMBASSADOR_PALIERS = [
+  { seuil: 3,  label: "Statistiques avancées" },
+  { seuil: 6,  label: "−10% sur votre prochaine facture" },
+  { seuil: 10, label: "−20% sur votre prochaine facture" },
+  { seuil: 15, label: "Priorité dans les résultats de recherche" },
+  { seuil: 20, label: "Badge Certifié Ambassadeur" },
+];
+
+function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewDetails: () => void }) {
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-sm bg-white"
+      style={{ border: `2px solid ${tier >= 1 ? "#1f2e67" : "#e2e8f0"}` }}>
+      <div className="flex items-center justify-between px-5 py-3"
+        style={{ background: tier >= 1 ? "linear-gradient(135deg,#1f2e67,#f97316)" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+        <span className={`text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
+          🏅 Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
+        </span>
+        {tier >= 1 && (
+          <button onClick={onViewDetails}
+            className="text-xs font-semibold px-3 py-1 rounded-lg"
+            style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
+            Voir détails →
+          </button>
+        )}
+      </div>
+      <div className="p-4 space-y-1.5">
+        {AMBASSADOR_PALIERS.map((p, i) => {
+          const done = tier >= i + 1;
+          return (
+            <div key={i} className="flex items-center gap-2.5 py-1.5 px-3 rounded-xl"
+              style={done
+                ? { background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.15)" }
+                : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+              <span className="text-sm flex-shrink-0">{done ? "✅" : "🔒"}</span>
+              <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
+              <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardGaragePage() {
   const { t } = useLang();
   const d = t.dash;
@@ -914,49 +960,10 @@ export default function DashboardGaragePage() {
           </div>
 
           {/* Bloc 2 — Programme Ambassadeur */}
-          {(() => {
-            const tier = (garage as any).ambassadorTier ?? 0;
-            const PALIERS = [
-              { seuil: 3,  label: "Statistiques avancées" },
-              { seuil: 6,  label: "−10% sur votre prochaine facture" },
-              { seuil: 10, label: "−20% sur votre prochaine facture" },
-              { seuil: 15, label: "Priorité dans les résultats de recherche" },
-              { seuil: 20, label: "Badge Certifié Ambassadeur" },
-            ];
-            return (
-              <div className="rounded-2xl overflow-hidden shadow-sm bg-white"
-                style={{ border: `2px solid ${tier >= 1 ? "#1f2e67" : "#e2e8f0"}` }}>
-                <div className="flex items-center justify-between px-5 py-3"
-                  style={{ background: tier >= 1 ? "linear-gradient(135deg,#1f2e67,#f97316)" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
-                  <span className={`text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
-                    🏅 Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
-                  </span>
-                  {tier >= 1 && (
-                    <button onClick={() => setActiveTab("ambassadeur")}
-                      className="text-xs font-semibold px-3 py-1 rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
-                      Voir détails →
-                    </button>
-                  )}
-                </div>
-                <div className="p-4 space-y-1.5">
-                  {PALIERS.map((p, i) => {
-                    const done = tier >= i + 1;
-                    return (
-                      <div key={i} className="flex items-center gap-2.5 py-1.5 px-3 rounded-xl"
-                        style={done
-                          ? { background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.15)" }
-                          : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                        <span className="text-sm flex-shrink-0">{done ? "✅" : "🔒"}</span>
-                        <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
-                        <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+          <AmbassadorOverviewCard
+            tier={(garage as any).ambassadorTier ?? 0}
+            onViewDetails={() => setActiveTab("ambassadeur")}
+          />
 
           {/* Suggestion link */}
           <Link
@@ -2168,7 +2175,7 @@ export default function DashboardGaragePage() {
                 </div>
                 <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
                   <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
-                    {tier >= 5 ? "★" : (() => { const next = [3,6,10,15,20].find(s => s > count) ?? 20; return Math.max(0, next - count); })()}
+                    {tier >= 5 ? "★" : Math.max(0, ([3,6,10,15,20].find(s => s > count) ?? 20) - count)}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
                 </div>

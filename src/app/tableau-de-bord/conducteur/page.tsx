@@ -265,6 +265,71 @@ const PRIORITY_LABELS: Record<string, { label: string; color: string; bg: string
   LOW:    { label: "Non urgent",  color: "#6b7280", bg: "#f9fafb" },
 };
 
+// ─── Appointment helpers ──────────────────────────────────────────────────────
+
+const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  PENDING:   { label: "En attente",  color: "#d97706", bg: "#fffbeb" },
+  CONFIRMED: { label: "Confirmé",    color: "#2563eb", bg: "#eff6ff" },
+  COMPLETED: { label: "Terminé",     color: "#16a34a", bg: "#f0fdf4" },
+  CANCELLED: { label: "Annulé",      color: "#dc2626", bg: "#fef2f2" },
+};
+
+function canModify(appt: ClientAppt) {
+  if (appt.source !== "ONLINE") return false;
+  if (appt.status === "CANCELLED" || appt.status === "COMPLETED") return false;
+  const dt = new Date(`${appt.date}T${appt.startTime}:00`);
+  return (dt.getTime() - Date.now()) > 24 * 3600 * 1000;
+}
+
+function ApptRow({
+  appt, onReschedule, onCancel,
+}: {
+  appt: ClientAppt;
+  onReschedule: (a: ClientAppt) => void;
+  onCancel: (id: string) => void;
+}) {
+  const s = STATUS_BADGE[appt.status] ?? STATUS_BADGE.PENDING;
+  const modifiable = canModify(appt);
+  return (
+    <div className="border border-gray-200 rounded-xl p-4 space-y-2 bg-white">
+      <div className="flex items-start justify-between gap-2">
+        <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
+          <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs">→</span></p>
+          <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
+          {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">🔧 {appt.serviceName}</p>}
+          {(appt.vehicleMake || appt.vehicleYear) && (
+            <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
+          )}
+        </Link>
+        <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
+      </div>
+      {appt.completionNote && (
+        <div className="rounded-lg px-3 py-2.5 text-xs" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" }}>
+          <p className="font-semibold mb-1">📋 Note du garage</p>
+          <p className="leading-relaxed">{appt.completionNote}</p>
+        </div>
+      )}
+      {!modifiable && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
+        <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
+          ⚠️ Pour modifier, appelez le garage : <a href={`tel:${appt.garage.phone}`} className="font-semibold underline">{appt.garage.phone}</a>
+        </p>
+      )}
+      {modifiable && (
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => onReschedule(appt)}
+            className="text-xs px-3 py-2 rounded-lg font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+          >✏️ Modifier</button>
+          <button
+            onClick={() => onCancel(appt.id)}
+            className="text-xs px-3 py-2 rounded-lg font-semibold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+          >✕ Annuler</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardConducteurPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -351,13 +416,6 @@ export default function DashboardConducteurPage() {
       fetch("/api/reminders").then(r => r.json()).then(d => { setReminders(Array.isArray(d) ? d : []); setRemindersLoaded(true); });
     }
   }, [tab, status, favsLoaded, remindersLoaded]);
-
-  function canModify(appt: ClientAppt) {
-    if (appt.source !== "ONLINE") return false;
-    if (appt.status === "CANCELLED" || appt.status === "COMPLETED") return false;
-    const dt = new Date(`${appt.date}T${appt.startTime}:00`);
-    return (dt.getTime() - Date.now()) > 24 * 3600 * 1000;
-  }
 
   function openReschedule(appt: ClientAppt) {
     setRescheduleAppt(appt);
@@ -559,56 +617,6 @@ export default function DashboardConducteurPage() {
             const past      = appts.filter(a => a.status === "COMPLETED" || (a.date < todayStr && a.status !== "CANCELLED"));
             const cancelled = appts.filter(a => a.status === "CANCELLED");
 
-            const statusBadge: Record<string, { label: string; color: string; bg: string }> = {
-              PENDING:   { label: "En attente",  color: "#d97706", bg: "#fffbeb" },
-              CONFIRMED: { label: "Confirmé",    color: "#2563eb", bg: "#eff6ff" },
-              COMPLETED: { label: "Terminé",     color: "#16a34a", bg: "#f0fdf4" },
-              CANCELLED: { label: "Annulé",      color: "#dc2626", bg: "#fef2f2" },
-            };
-
-            function ApptRow({ appt }: { appt: ClientAppt }) {
-              const s = statusBadge[appt.status] ?? statusBadge.PENDING;
-              const modifiable = canModify(appt);
-              return (
-                <div className="border border-gray-200 rounded-xl p-4 space-y-2 bg-white">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs">→</span></p>
-                      <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
-                      {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">🔧 {appt.serviceName}</p>}
-                      {(appt.vehicleMake || appt.vehicleYear) && (
-                        <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
-                      )}
-                    </Link>
-                    <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
-                  </div>
-                  {appt.completionNote && (
-                    <div className="rounded-lg px-3 py-2.5 text-xs" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" }}>
-                      <p className="font-semibold mb-1">📋 Note du garage</p>
-                      <p className="leading-relaxed">{appt.completionNote}</p>
-                    </div>
-                  )}
-                  {!modifiable && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
-                    <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
-                      ⚠️ Pour modifier, appelez le garage : <a href={`tel:${appt.garage.phone}`} className="font-semibold underline">{appt.garage.phone}</a>
-                    </p>
-                  )}
-                  {modifiable && (
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => openReschedule(appt)}
-                        className="text-xs px-3 py-2 rounded-lg font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-                      >✏️ Modifier</button>
-                      <button
-                        onClick={() => cancelAppt(appt.id)}
-                        className="text-xs px-3 py-2 rounded-lg font-semibold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-                      >✕ Annuler</button>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
             return (
               <div className="space-y-4">
                 {!apptsLoaded ? (
@@ -625,25 +633,25 @@ export default function DashboardConducteurPage() {
                     {upcoming.length > 0 && (
                       <div>
                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">À venir ({upcoming.length})</p>
-                        <div className="space-y-3">{upcoming.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                        <div className="space-y-3">{upcoming.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {active.length > 0 && (
                       <div>
                         <p className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3">Aujourd'hui</p>
-                        <div className="space-y-3">{active.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                        <div className="space-y-3">{active.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {past.length > 0 && (
                       <div>
                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Passés</p>
-                        <div className="space-y-3">{past.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                        <div className="space-y-3">{past.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {cancelled.length > 0 && (
                       <div>
                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Annulés</p>
-                        <div className="space-y-3 opacity-60">{cancelled.map(a => <ApptRow key={a.id} appt={a} />)}</div>
+                        <div className="space-y-3 opacity-60">{cancelled.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                   </div>
