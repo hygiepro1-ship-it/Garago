@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
@@ -74,8 +75,8 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
             {garage.reviewCount > 0 ? (
               <div className="sm:text-center">
                 <div className="flex sm:justify-center gap-0.5">
-                  {[1,2,3,4,5].map((i) => (
-                    <span key={i} style={{ color: i <= ratingFull ? "#f59e0b" : "#e2e8f0", fontSize: 10 }}>★</span>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i} style={{ color: i + 1 <= ratingFull ? "#f59e0b" : "#e2e8f0", fontSize: 10 }}>★</span>
                   ))}
                 </div>
                 <p className="text-xs font-black mt-0.5" style={{ color: "#0b1f3a" }}>{rating}</p>
