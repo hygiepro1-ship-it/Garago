@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -5,6 +6,68 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"] }) {
+  const a = labels;
+  const features = [
+    { icon: "🔒", text: a.secureLogin },
+    { icon: "📅", text: a.appointmentHistory },
+    { icon: "❤️", text: a.savedFavorites },
+    { icon: "🔔", text: a.customReminders },
+  ];
+
+  return (
+    <div className="hidden lg:flex flex-col justify-between w-[400px] flex-shrink-0 p-10 relative overflow-hidden"
+      style={{ background: "linear-gradient(160deg, #071428 0%, #0b1f3a 100%)" }}>
+      <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%)" }} />
+
+      <div className="relative">
+        <Link href="/" className="inline-flex mb-10">
+          <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-9 w-auto object-contain" />
+        </Link>
+
+        <h2 className="text-3xl font-black text-white leading-snug mb-4">
+          {a.welcomeTitle.split("Garago.")[0]}<br />
+          <span style={{ color: "#f97316" }}>Garago.</span>
+        </h2>
+        <p className="text-sm leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {a.welcomeSub}
+        </p>
+
+        <div className="space-y-4">
+          {features.map((feat) => (
+            <div key={feat.text} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                {feat.icon}
+              </div>
+              <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>{feat.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative p-4 rounded-xl"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="flex items-center gap-1 mb-1.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} style={{ color: "#f59e0b", fontSize: 13 }}>★</span>
+          ))}
+          <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
+        </div>
+        <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+          &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes, avec le prix affiché d'avance. Incroyable.&rdquo;
+        </p>
+        <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>— Pierre G., Montréal</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ConnexionPage() {
   const router = useRouter();
@@ -32,56 +95,7 @@ export default function ConnexionPage() {
 
   return (
     <div className="min-h-screen flex">
-
-      {/* Panel gauche — navy Garago */}
-      <div className="hidden lg:flex flex-col justify-between w-[400px] flex-shrink-0 p-10 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #071428 0%, #0b1f3a 100%)" }}>
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%)" }} />
-
-        <div className="relative">
-          <Link href="/" className="inline-flex mb-10">
-            <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-9 w-auto object-contain" />
-          </Link>
-
-          <h2 className="text-3xl font-black text-white leading-snug mb-4">
-            {a.welcomeTitle.split("Garago.")[0]}<br />
-            <span style={{ color: "#f97316" }}>Garago.</span>
-          </h2>
-          <p className="text-sm leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.4)" }}>
-            {a.welcomeSub}
-          </p>
-
-          <div className="space-y-4">
-            {[
-              { icon: "🔒", text: a.secureLogin },
-              { icon: "📅", text: a.appointmentHistory },
-              { icon: "❤️", text: a.savedFavorites },
-              { icon: "🔔", text: a.customReminders },
-            ].map((f) => (
-              <div key={f.text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.2)" }}>
-                  {f.icon}
-                </div>
-                <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>{f.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative p-4 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center gap-1 mb-1.5">
-            {[1,2,3,4,5].map(i => <span key={i} style={{ color: "#f59e0b", fontSize: 13 }}>★</span>)}
-            <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
-          </div>
-          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
-            &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes, avec le prix affiché d'avance. Incroyable.&rdquo;
-          </p>
-          <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>— Pierre G., Montréal</p>
-        </div>
-      </div>
+      <LeftPanel labels={a} />
 
       {/* Panel droit — formulaire */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 bg-white">

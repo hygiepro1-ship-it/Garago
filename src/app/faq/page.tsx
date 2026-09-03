@@ -65,11 +65,10 @@ export default function FAQPage() {
 
   const faqList = tab === "driver" ? f.driverFaq : f.garageFaq;
 
-  // Switch tab → reset open accordion & sync form type
-  function switchTab(t: "driver" | "garage") {
-    setTab(t);
+  function switchTab(key: "driver" | "garage") {
+    setTab(key);
     setOpenIndex(0);
-    setForm(prev => ({ ...prev, type: t === "driver" ? "DRIVER" : "GARAGE" }));
+    setForm(prev => ({ ...prev, type: key === "driver" ? "DRIVER" : "GARAGE" }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -204,15 +203,15 @@ export default function FAQPage() {
                     {f.askerTypeLabel}
                   </label>
                   <div className="flex gap-2">
-                    {(["DRIVER", "GARAGE"] as const).map((type) => {
-                      const active = form.type === type;
+                    {(["DRIVER", "GARAGE"] as const).map((askerType) => {
+                      const active = form.type === askerType;
                       return (
                         <button
-                          key={type}
+                          key={askerType}
                           type="button"
                           onClick={() => {
-                            setForm(prev => ({ ...prev, type }));
-                            switchTab(type === "DRIVER" ? "driver" : "garage");
+                            setForm(prev => ({ ...prev, type: askerType }));
+                            switchTab(askerType === "DRIVER" ? "driver" : "garage");
                           }}
                           className="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
                           style={
@@ -221,7 +220,7 @@ export default function FAQPage() {
                               : { borderColor: "#e2e8f0", background: "#fff", color: "#64748b" }
                           }
                         >
-                          {type === "DRIVER" ? `👤 ${f.askerDriver}` : `🔧 ${f.askerGarage}`}
+                          {askerType === "DRIVER" ? `👤 ${f.askerDriver}` : `🔧 ${f.askerGarage}`}
                         </button>
                       );
                     })}
