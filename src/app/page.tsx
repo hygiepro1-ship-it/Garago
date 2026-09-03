@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -7,6 +8,8 @@ import { getModelsForMake, getYears } from "@/lib/vehicleData";
 import { BRANDS } from "@/lib/vehicleBrands";
 import BrandLogo from "@/components/BrandLogo";
 import { useLang } from "@/contexts/LanguageContext";
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const TESTIMONIALS = [
   {
@@ -26,6 +29,65 @@ const TESTIMONIALS = [
   },
 ];
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface LiveStats {
+  garages:   string | null;
+  reviews:   string | null;
+  avgRating: string | null;
+  cities:    string | null;
+}
+
+function StatsBar({ stats, labels }: {
+  stats: LiveStats;
+  labels: { label: string; value?: string }[];
+}) {
+  const items: { value: string; label: string }[] = [];
+  if (stats.garages)   items.push({ value: stats.garages,   label: labels[0].label });
+  if (stats.reviews)   items.push({ value: stats.reviews,   label: labels[1].label });
+  if (stats.avgRating) items.push({ value: stats.avgRating, label: labels[2].label });
+  if (items.length > 0) items.push({ value: labels[3].value!, label: labels[3].label });
+
+  if (items.length === 0) return null;
+  return (
+    <section className="bg-white" style={{ borderBottom: "1px solid #e2e8f0" }}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-center">
+          {items.map((s) => (
+            <div key={s.label}>
+              <p className="text-2xl font-black" style={{ color: "#f97316" }}>{s.value}</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[number] }) {
+  return (
+    <div className="garago-card p-5">
+      <div className="flex items-center gap-0.5 mb-1">
+        {Array.from({ length: 5 }).map((_, j) => (
+          <span key={j} style={{ color: j < testimonial.rating ? "#f59e0b" : "#e2e8f0", fontSize: 14 }}>★</span>
+        ))}
+      </div>
+      <p className="text-xs font-semibold mb-3" style={{ color: "#94a3b8" }}>{testimonial.vehicle}</p>
+      <p className="text-sm leading-relaxed mb-4" style={{ color: "#374151" }}>&ldquo;{testimonial.text}&rdquo;</p>
+      <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid #f1f5f9" }}>
+        <div>
+          <p className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{testimonial.name}</p>
+          <p className="text-xs" style={{ color: "#94a3b8" }}>{testimonial.city}</p>
+        </div>
+        <span className="badge badge-orange">{testimonial.service}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function HomePage() {
   const router = useRouter();
   const { t } = useLang();
@@ -38,13 +100,7 @@ export default function HomePage() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
 
-  // Statistiques réelles depuis la DB (null = sous le seuil, ne pas afficher)
-  const [liveStats, setLiveStats] = useState<{
-    garages:   string | null;
-    reviews:   string | null;
-    avgRating: string | null;
-    cities:    string | null;
-  } | null>(null);
+  const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
   useEffect(() => {
     fetch("/api/stats/homepage")
       .then(r => r.ok ? r.json() : null)
@@ -91,47 +147,33 @@ export default function HomePage() {
 
   return (
     <div>
-
-      {/* ════════════════════════════════════════════════════════
-          HERO
-      ════════════════════════════════════════════════════════ */}
+      {/* ── HERO ── */}
       <section className="relative overflow-hidden hero-lines"
         style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "100vh" }}>
-
         <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 text-center">
-
-          {/* Logo */}
           <div className="mb-3">
-            <img
-              src="/garago_logo_transparent_1.png"
-              alt="Garago"
-              style={{ height: 185, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }}
-            />
+            <img src="/garago_logo_transparent_1.png" alt="Garago"
+              style={{ height: 185, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }} />
           </div>
 
-          {/* Slogan */}
           <h1 className="font-black tracking-tight mb-2"
             style={{ fontSize: "clamp(1.5rem, 4vw, 2.4rem)", lineHeight: 1.15 }}>
             <span style={{
               background: "linear-gradient(90deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             }}>{h.heroLine2}</span>
           </h1>
 
-          {/* Sous-titre */}
           <p className="text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-3"
             style={{ color: "rgba(255,255,255,0.55)" }}>
             {h.heroSub}
           </p>
 
-          {/* Trust pills */}
           <div className="flex flex-wrap justify-center gap-3 mb-5">
             {h.trust.map((txt) => (
               <span key={txt} className="text-xs font-semibold flex items-center gap-1.5"
@@ -141,12 +183,10 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* ── Barre de recherche ─── */}
+          {/* Search form */}
           <form onSubmit={handleSearch}
             className="bg-white rounded-2xl mx-auto max-w-3xl overflow-hidden"
             style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
-
-            {/* Ligne 1 : véhicule */}
             <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
               {[
                 { label: h.yearLabel,  value: year,  setter: setYear,  opts: years.map(y => ({ v: y, l: y })) },
@@ -164,8 +204,6 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-
-            {/* Ligne 2 : localisation + bouton */}
             <div className="flex items-center">
               <button type="button" onClick={handleLocate} disabled={locating}
                 className="flex-shrink-0 ml-3 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
@@ -194,39 +232,13 @@ export default function HomePage() {
             </div>
             {locError && <p className="text-xs text-red-500 px-4 pb-3">{locError}</p>}
           </form>
-
         </div>
       </section>
 
-      {/* Stats bar — n'affiche une stat live que si elle dépasse son seuil */}
-      {(() => {
-        // Construire la liste des stats visibles
-        const items: { value: string; label: string }[] = [];
-        if (liveStats?.garages)   items.push({ value: liveStats.garages,   label: h.stats[0].label });
-        if (liveStats?.reviews)   items.push({ value: liveStats.reviews,   label: h.stats[1].label });
-        if (liveStats?.avgRating) items.push({ value: liveStats.avgRating, label: h.stats[2].label });
-        // "< 2 min" uniquement si au moins une autre métrique est visible
-        if (items.length > 0) items.push({ value: h.stats[3].value, label: h.stats[3].label });
+      {/* ── STATS BAR ── */}
+      {liveStats && <StatsBar stats={liveStats} labels={h.stats} />}
 
-        if (items.length === 0) return null;
-
-        return (
-          <section className="bg-white" style={{ borderBottom: "1px solid #e2e8f0" }}>
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-              <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-center">
-                {items.map((s) => (
-                  <div key={s.label}>
-                    <p className="text-2xl font-black" style={{ color: "#f97316" }}>{s.value}</p>
-                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#94a3b8" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* Services */}
+      {/* ── SERVICES ── */}
       <section className="bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-5">
@@ -249,7 +261,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Marques */}
+      {/* ── MARQUES ── */}
       <section className="bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-5">
@@ -277,13 +289,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Comment ça marche */}
+      {/* ── COMMENT ÇA MARCHE ── */}
       <section className="py-16" style={{ background: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>
-              {h.howTitle}
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>{h.howTitle}</h2>
             <p className="text-sm" style={{ color: "#94a3b8" }}>{h.howSub}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -292,8 +302,8 @@ export default function HomePage() {
                 <div className="relative mb-5">
                   <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                     style={{ background: "#fff4ed", border: "2px solid #fed7aa" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={s.iconPath} alt={s.title} width={36} height={36} style={{ filter: "brightness(0) saturate(100%) invert(45%) sepia(97%) saturate(1000%) hue-rotate(0deg) brightness(100%)" }} />
+                    <img src={s.iconPath} alt={s.title} width={36} height={36}
+                      style={{ filter: "brightness(0) saturate(100%) invert(45%) sepia(97%) saturate(1000%) hue-rotate(0deg) brightness(100%)" }} />
                   </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white"
                     style={{ background: "#f97316" }}>{i + 1}</div>
@@ -313,7 +323,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Témoignages */}
+      {/* ── TÉMOIGNAGES ── */}
       <section className="py-16 bg-white" style={{ borderTop: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
@@ -322,34 +332,17 @@ export default function HomePage() {
               <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>{h.reviewsSub}</p>
             </div>
             <div className="flex items-center gap-1">
-              {[1,2,3,4,5].map(i => <span key={i} style={{ color: "#f59e0b", fontSize: 16 }}>★</span>)}
+              {Array.from({ length: 5 }).map((_, i) => <span key={i} style={{ color: "#f59e0b", fontSize: 16 }}>★</span>)}
               <span className="font-black text-sm ml-1.5" style={{ color: "#0b1f3a" }}>4.7 / 5</span>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((r, i) => (
-              <div key={i} className="garago-card p-5">
-                <div className="flex items-center gap-0.5 mb-1">
-                  {[...Array(5)].map((_, j) => (
-                    <span key={j} style={{ color: j < r.rating ? "#f59e0b" : "#e2e8f0", fontSize: 14 }}>★</span>
-                  ))}
-                </div>
-                <p className="text-xs font-semibold mb-3" style={{ color: "#94a3b8" }}>{r.vehicle}</p>
-                <p className="text-sm leading-relaxed mb-4" style={{ color: "#374151" }}>&ldquo;{r.text}&rdquo;</p>
-                <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid #f1f5f9" }}>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{r.name}</p>
-                    <p className="text-xs" style={{ color: "#94a3b8" }}>{r.city}</p>
-                  </div>
-                  <span className="badge badge-orange">{r.service}</span>
-                </div>
-              </div>
-            ))}
+            {TESTIMONIALS.map((r, i) => <TestimonialCard key={i} testimonial={r} />)}
           </div>
         </div>
       </section>
 
-      {/* CTA garage */}
+      {/* ── CTA GARAGE ── */}
       <section className="py-16 relative overflow-hidden hero-lines"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
@@ -362,8 +355,7 @@ export default function HomePage() {
                 <span style={{ color: "#f97316" }}>{h.ctaLine2}</span>
               </h2>
               <p className="text-sm leading-relaxed mb-8 max-w-md" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {h.ctaSub1}
-                <strong style={{ color: "rgba(255,255,255,0.75)" }}>{h.ctaSub2}</strong>
+                {h.ctaSub1}<strong style={{ color: "rgba(255,255,255,0.75)" }}>{h.ctaSub2}</strong>
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/inscription/garage"
@@ -390,7 +382,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

@@ -5,17 +5,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type Tab = "alertes" | "descriptions" | "suggestions";
 
 interface GarageAlert {
-  id: string;
-  type: string;
-  message: string;
-  avgRating: number | null;
-  reviewCount: number | null;
-  isRead: boolean;
-  emailSent: boolean;
-  createdAt: string;
+  id: string; type: string; message: string;
+  avgRating: number | null; reviewCount: number | null;
+  isRead: boolean; emailSent: boolean; createdAt: string;
   garage: { name: string; slug: string; city: string };
 }
 
@@ -31,25 +28,201 @@ interface Suggestion {
   status: string; adminNote: string | null; createdAt: string;
 }
 
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   PENDING: { label: "En attente", bg: "#fef3c7", color: "#92400e" },
   READ:    { label: "Lu",          bg: "#dbeafe", color: "#1e40af" },
   DONE:    { label: "Traité",      bg: "#dcfce7", color: "#166534" },
 };
 
+const ALERT_TYPE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  ONE_STAR:   { label: "Avis 1 étoile",         color: "#b91c1c", bg: "#fff1f2", border: "#fecdd3" },
+  LOW_RATING: { label: "Note moyenne sous 3/5",  color: "#92400e", bg: "#fffbeb", border: "#fde68a" },
+  BAD_STREAK: { label: "Série de mauvais avis",  color: "#7c2d12", bg: "#fff7ed", border: "#fdba74" },
+};
+
+const FALLBACK_META = { label: "", color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function AlertCard({ alert, onMarkRead }: { alert: GarageAlert; onMarkRead: (id: string) => void }) {
+  const m = ALERT_TYPE_META[alert.type] ?? { ...FALLBACK_META, label: alert.type };
+  return (
+    <div className="rounded-2xl border-2 shadow-sm overflow-hidden" style={{ borderColor: m.border, background: m.bg }}>
+      <div className="px-5 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{ background: m.color, color: "#fff" }}>{m.label}</span>
+              <span className="text-xs text-gray-400">
+                {new Date(alert.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </span>
+              {alert.emailSent && <span className="text-xs text-gray-400">· ✉️ courriel envoyé</span>}
+            </div>
+            <p className="font-bold text-gray-900 text-sm">
+              {alert.garage.name}
+              <span className="font-normal text-gray-400 text-xs ml-2">{alert.garage.city}</span>
+            </p>
+            <p className="text-sm text-gray-600 mt-0.5">{alert.message}</p>
+            {alert.avgRating != null && (
+              <div className="mt-2 flex items-center gap-3">
+                <span className="text-sm font-bold" style={{ color: m.color }}>
+                  {"★".repeat(Math.round(alert.avgRating))}{"☆".repeat(5 - Math.round(alert.avgRating))}
+                </span>
+                <span className="text-xs text-gray-500">{alert.avgRating.toFixed(1)}/5 · {alert.reviewCount} avis</span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Link href={`/garage/${alert.garage.slug}`} target="_blank"
+              className="text-xs px-3 py-1.5 rounded-lg border font-semibold text-center"
+              style={{ borderColor: m.border, color: m.color }}>
+              Voir profil ↗
+            </Link>
+            <button onClick={() => onMarkRead(alert.id)}
+              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white font-medium">
+              ✓ Lu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DescriptionCard({
+  garage, actionId, onAction,
+}: {
+  garage: PendingGarage;
+  actionId: string | null;
+  onAction: (id: string, action: "approve" | "reject") => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h2 className="font-bold text-gray-900">{garage.name}</h2>
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-semibold">En attente</span>
+          </div>
+          <p className="text-xs text-gray-400">{garage.city} · {garage.owner.email}</p>
+        </div>
+        <Link href={`/garage/${garage.slug}`} target="_blank"
+          className="text-xs text-orange-500 hover:underline flex-shrink-0">
+          Voir le profil ↗
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div className="rounded-xl p-4 bg-gray-50 border border-gray-200">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Description actuelle (approuvée)</p>
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {garage.description || <em className="text-gray-400">Aucune description approuvée</em>}
+          </p>
+        </div>
+        <div className="rounded-xl p-4 border-2 border-orange-200 bg-orange-50">
+          <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">Nouvelle description (brouillon)</p>
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {garage.descriptionDraft || <em className="text-gray-400">Vide</em>}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={() => onAction(garage.id, "approve")} disabled={actionId === garage.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold text-white disabled:opacity-50 transition-opacity"
+          style={{ background: "#16a34a" }}>
+          ✓ Approuver
+        </button>
+        <button onClick={() => onAction(garage.id, "reject")} disabled={actionId === garage.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
+          ✗ Refuser
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SuggestionCard({
+  suggestion, actionId, noteEdit, onNoteChange, onUpdate,
+}: {
+  suggestion: Suggestion;
+  actionId:   string | null;
+  noteEdit:   Record<string, string>;
+  onNoteChange: (id: string, val: string) => void;
+  onUpdate: (id: string, patch: Partial<{ status: string; adminNote: string }>) => void;
+}) {
+  const badge   = STATUS_BADGE[suggestion.status] ?? STATUS_BADGE.PENDING;
+  const dateStr = new Date(suggestion.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+            style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
+          <span className="text-xs text-gray-400">{dateStr}</span>
+          {suggestion.authorName  && <span className="text-xs font-medium text-gray-600">{suggestion.authorName}</span>}
+          {suggestion.authorEmail && <span className="text-xs text-gray-400">{suggestion.authorEmail}</span>}
+        </div>
+        <div className="flex gap-1 flex-shrink-0">
+          {suggestion.status !== "READ" && (
+            <button onClick={() => onUpdate(suggestion.id, { status: "READ" })} disabled={actionId === suggestion.id}
+              className="text-xs px-2.5 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-medium disabled:opacity-50">
+              Lu
+            </button>
+          )}
+          {suggestion.status !== "DONE" && (
+            <button onClick={() => onUpdate(suggestion.id, { status: "DONE" })} disabled={actionId === suggestion.id}
+              className="text-xs px-2.5 py-1 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 font-medium disabled:opacity-50">
+              Traité
+            </button>
+          )}
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4 bg-gray-50 rounded-xl p-4">
+        {suggestion.content}
+      </p>
+
+      <div>
+        <p className="text-xs font-semibold text-gray-500 mb-1">Note interne (optionnelle)</p>
+        <div className="flex gap-2">
+          <input type="text"
+            className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-400"
+            placeholder="Ajouter une note…"
+            value={noteEdit[suggestion.id] ?? (suggestion.adminNote || "")}
+            onChange={e => onNoteChange(suggestion.id, e.target.value)}
+          />
+          <button
+            onClick={() => onUpdate(suggestion.id, { adminNote: noteEdit[suggestion.id] ?? suggestion.adminNote ?? "" })}
+            disabled={actionId === suggestion.id}
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+            Sauvegarder
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [tab, setTab]               = useState<Tab>("alertes");
-  const [garages, setGarages]       = useState<PendingGarage[]>([]);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [alerts, setAlerts]         = useState<GarageAlert[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [actionId, setActionId]     = useState<string | null>(null);
-  const [noteEdit, setNoteEdit]     = useState<Record<string, string>>({});
+
+  const [tab,          setTab]          = useState<Tab>("alertes");
+  const [garages,      setGarages]      = useState<PendingGarage[]>([]);
+  const [suggestions,  setSuggestions]  = useState<Suggestion[]>([]);
+  const [alerts,       setAlerts]       = useState<GarageAlert[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [actionId,     setActionId]     = useState<string | null>(null);
+  const [noteEdit,     setNoteEdit]     = useState<Record<string, string>>({});
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
-  // Auth guard
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/connexion");
     else if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN")
@@ -97,12 +270,12 @@ export default function AdminDashboard() {
     setActionId(null);
   }
 
-  async function updateSuggestion(id: string, update: Partial<{ status: string; adminNote: string }>) {
+  async function updateSuggestion(id: string, patch: Partial<{ status: string; adminNote: string }>) {
     setActionId(id);
     await fetch(`/api/admin/suggestions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(update),
+      body: JSON.stringify(patch),
     });
     await loadSuggestions();
     setActionId(null);
@@ -123,6 +296,9 @@ export default function AdminDashboard() {
     ? suggestions
     : suggestions.filter(s => s.status === filterStatus);
 
+  const unreadAlerts = alerts.filter(a => !a.isRead);
+  const readAlerts   = alerts.filter(a =>  a.isRead);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
@@ -140,8 +316,8 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
         {([
-          { id: "alertes",      label: "Alertes qualité", icon: "🚨", count: alerts.filter(a => !a.isRead).length, urgent: true },
-          { id: "descriptions", label: "Descriptions",    icon: "📝", count: garages.length, urgent: false },
+          { id: "alertes",      label: "Alertes qualité", icon: "🚨", count: unreadAlerts.length,                                 urgent: true  },
+          { id: "descriptions", label: "Descriptions",    icon: "📝", count: garages.length,                                      urgent: false },
           { id: "suggestions",  label: "Suggestions",     icon: "💡", count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -157,122 +333,65 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* ── ALERTES TAB ──────────────────────────────────────────────────── */}
-      {tab === "alertes" && (() => {
-        const TYPE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-          ONE_STAR:  { label: "Avis 1 étoile",              color: "#b91c1c", bg: "#fff1f2", border: "#fecdd3" },
-          LOW_RATING:{ label: "Note moyenne sous 3/5",      color: "#92400e", bg: "#fffbeb", border: "#fde68a" },
-          BAD_STREAK:{ label: "Série de mauvais avis",      color: "#7c2d12", bg: "#fff7ed", border: "#fdba74" },
-        };
-        const unread = alerts.filter(a => !a.isRead);
-        const read   = alerts.filter(a => a.isRead);
+      {/* ── ALERTES ── */}
+      {tab === "alertes" && (
+        <div className="space-y-4">
+          {unreadAlerts.length > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-700">
+                {unreadAlerts.length} alerte{unreadAlerts.length > 1 ? "s" : ""} non lue{unreadAlerts.length > 1 ? "s" : ""}
+              </p>
+              <button onClick={() => markAlertsRead(unreadAlerts.map(a => a.id))}
+                className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">
+                ✓ Tout marquer comme lu
+              </button>
+            </div>
+          )}
 
-        return (
-          <div className="space-y-4">
-            {/* Actions groupées */}
-            {unread.length > 0 && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-700">
-                  {unread.length} alerte{unread.length > 1 ? "s" : ""} non lue{unread.length > 1 ? "s" : ""}
-                </p>
-                <button
-                  onClick={() => markAlertsRead(unread.map(a => a.id))}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium"
-                >
-                  ✓ Tout marquer comme lu
-                </button>
-              </div>
-            )}
+          {alerts.length === 0 && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+              <div className="text-4xl mb-3">✅</div>
+              <p className="font-semibold text-gray-900">Aucune alerte qualité</p>
+              <p className="text-gray-400 text-sm mt-1">Tous les garages ont de bonnes notes.</p>
+            </div>
+          )}
 
-            {alerts.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
-                <div className="text-4xl mb-3">✅</div>
-                <p className="font-semibold text-gray-900">Aucune alerte qualité</p>
-                <p className="text-gray-400 text-sm mt-1">Tous les garages ont de bonnes notes.</p>
-              </div>
-            )}
+          {unreadAlerts.map(a => (
+            <AlertCard key={a.id} alert={a} onMarkRead={(id) => markAlertsRead([id])} />
+          ))}
 
-            {/* Alertes non lues */}
-            {unread.map(a => {
-              const m = TYPE_META[a.type] ?? { label: a.type, color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
-              return (
-                <div key={a.id} className="rounded-2xl border-2 shadow-sm overflow-hidden"
-                  style={{ borderColor: m.border, background: m.bg }}>
-                  <div className="px-5 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: m.color, color: "#fff" }}>{m.label}</span>
-                          <span className="text-xs text-gray-400">
-                            {new Date(a.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+          {readAlerts.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer text-xs text-gray-400 font-medium py-2 select-none">
+                {readAlerts.length} alerte{readAlerts.length > 1 ? "s" : ""} archivée{readAlerts.length > 1 ? "s" : ""} ▾
+              </summary>
+              <div className="mt-2 space-y-2">
+                {readAlerts.map(a => {
+                  const m = ALERT_TYPE_META[a.type] ?? { ...FALLBACK_META, label: a.type };
+                  return (
+                    <div key={a.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 opacity-60">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-semibold text-gray-500">{m.label} · </span>
+                          <span className="text-xs font-bold text-gray-700">{a.garage.name}</span>
+                          <span className="text-xs text-gray-400 ml-2">
+                            {new Date(a.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
                           </span>
-                          {a.emailSent && <span className="text-xs text-gray-400">· ✉️ courriel envoyé</span>}
                         </div>
-                        <p className="font-bold text-gray-900 text-sm">{a.garage.name}
-                          <span className="font-normal text-gray-400 text-xs ml-2">{a.garage.city}</span>
-                        </p>
-                        <p className="text-sm text-gray-600 mt-0.5">{a.message}</p>
                         {a.avgRating != null && (
-                          <div className="mt-2 flex items-center gap-3">
-                            <span className="text-sm font-bold" style={{ color: m.color }}>
-                              {"★".repeat(Math.round(a.avgRating))}{"☆".repeat(5 - Math.round(a.avgRating))}
-                            </span>
-                            <span className="text-xs text-gray-500">{a.avgRating.toFixed(1)}/5 · {a.reviewCount} avis</span>
-                          </div>
+                          <span className="text-xs text-gray-500">{a.avgRating.toFixed(1)}/5</span>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
-                        <Link href={`/garage/${a.garage.slug}`} target="_blank"
-                          className="text-xs px-3 py-1.5 rounded-lg border font-semibold text-center"
-                          style={{ borderColor: m.border, color: m.color }}>
-                          Voir profil ↗
-                        </Link>
-                        <button onClick={() => markAlertsRead([a.id])}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white font-medium">
-                          ✓ Lu
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
 
-            {/* Alertes lues (section repliable) */}
-            {read.length > 0 && (
-              <details className="group">
-                <summary className="cursor-pointer text-xs text-gray-400 font-medium py-2 select-none">
-                  {read.length} alerte{read.length > 1 ? "s" : ""} archivée{read.length > 1 ? "s" : ""} ▾
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {read.map(a => {
-                    const m = TYPE_META[a.type] ?? { label: a.type, color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
-                    return (
-                      <div key={a.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 opacity-60">
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <span className="text-xs font-semibold text-gray-500">{m.label} · </span>
-                            <span className="text-xs font-bold text-gray-700">{a.garage.name}</span>
-                            <span className="text-xs text-gray-400 ml-2">
-                              {new Date(a.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
-                            </span>
-                          </div>
-                          {a.avgRating != null && (
-                            <span className="text-xs text-gray-500">{a.avgRating.toFixed(1)}/5</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </details>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ── DESCRIPTIONS TAB ─────────────────────────────────────────────── */}
+      {/* ── DESCRIPTIONS ── */}
       {tab === "descriptions" && (
         <div className="space-y-4">
           {garages.length === 0 ? (
@@ -282,61 +401,14 @@ export default function AdminDashboard() {
               <p className="text-gray-400 text-sm mt-1">Tout est à jour.</p>
             </div>
           ) : garages.map(g => (
-            <div key={g.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              {/* Garage info */}
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h2 className="font-bold text-gray-900">{g.name}</h2>
-                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-semibold">En attente</span>
-                  </div>
-                  <p className="text-xs text-gray-400">{g.city} · {g.owner.email}</p>
-                </div>
-                <Link href={`/garage/${g.slug}`} target="_blank"
-                  className="text-xs text-orange-500 hover:underline flex-shrink-0">
-                  Voir le profil ↗
-                </Link>
-              </div>
-
-              {/* Side by side: current vs draft */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                <div className="rounded-xl p-4 bg-gray-50 border border-gray-200">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Description actuelle (approuvée)</p>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {g.description || <em className="text-gray-400">Aucune description approuvée</em>}
-                  </p>
-                </div>
-                <div className="rounded-xl p-4 border-2 border-orange-200 bg-orange-50">
-                  <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">Nouvelle description (brouillon)</p>
-                  <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                    {g.descriptionDraft || <em className="text-gray-400">Vide</em>}
-                  </p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button onClick={() => handleDescription(g.id, "approve")}
-                  disabled={actionId === g.id}
-                  className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold text-white disabled:opacity-50 transition-opacity"
-                  style={{ background: "#16a34a" }}>
-                  ✓ Approuver
-                </button>
-                <button onClick={() => handleDescription(g.id, "reject")}
-                  disabled={actionId === g.id}
-                  className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
-                  ✗ Refuser
-                </button>
-              </div>
-            </div>
+            <DescriptionCard key={g.id} garage={g} actionId={actionId} onAction={handleDescription} />
           ))}
         </div>
       )}
 
-      {/* ── SUGGESTIONS TAB ──────────────────────────────────────────────── */}
+      {/* ── SUGGESTIONS ── */}
       {tab === "suggestions" && (
         <div className="space-y-4">
-          {/* Filter chips */}
           <div className="flex flex-wrap gap-2">
             {["ALL", "PENDING", "READ", "DONE"].map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
@@ -352,67 +424,13 @@ export default function AdminDashboard() {
               <p className="font-semibold text-gray-900">Aucune suggestion</p>
               <p className="text-gray-400 text-sm mt-1">Rien à afficher pour ce filtre.</p>
             </div>
-          ) : filteredSuggestions.map(s => {
-            const badge = STATUS_BADGE[s.status] ?? STATUS_BADGE.PENDING;
-            const dateStr = new Date(s.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-            return (
-              <div key={s.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                      style={{ background: badge.bg, color: badge.color }}>
-                      {badge.label}
-                    </span>
-                    <span className="text-xs text-gray-400">{dateStr}</span>
-                    {s.authorName && <span className="text-xs font-medium text-gray-600">{s.authorName}</span>}
-                    {s.authorEmail && <span className="text-xs text-gray-400">{s.authorEmail}</span>}
-                  </div>
-                  {/* Quick status buttons */}
-                  <div className="flex gap-1 flex-shrink-0">
-                    {s.status !== "READ" && (
-                      <button onClick={() => updateSuggestion(s.id, { status: "READ" })}
-                        disabled={actionId === s.id}
-                        className="text-xs px-2.5 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-medium disabled:opacity-50">
-                        Lu
-                      </button>
-                    )}
-                    {s.status !== "DONE" && (
-                      <button onClick={() => updateSuggestion(s.id, { status: "DONE" })}
-                        disabled={actionId === s.id}
-                        className="text-xs px-2.5 py-1 rounded-lg border border-green-200 text-green-600 hover:bg-green-50 font-medium disabled:opacity-50">
-                        Traité
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap mb-4 bg-gray-50 rounded-xl p-4">
-                  {s.content}
-                </p>
-
-                {/* Admin note */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Note interne (optionnelle)</p>
-                  <div className="flex gap-2">
-                    <input type="text"
-                      className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-400"
-                      placeholder="Ajouter une note…"
-                      value={noteEdit[s.id] ?? (s.adminNote || "")}
-                      onChange={e => setNoteEdit(n => ({ ...n, [s.id]: e.target.value }))}
-                    />
-                    <button
-                      onClick={() => updateSuggestion(s.id, { adminNote: noteEdit[s.id] ?? s.adminNote ?? "" })}
-                      disabled={actionId === s.id}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-                      Sauvegarder
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          ) : filteredSuggestions.map(s => (
+            <SuggestionCard key={s.id} suggestion={s} actionId={actionId}
+              noteEdit={noteEdit}
+              onNoteChange={(id, val) => setNoteEdit(n => ({ ...n, [id]: val }))}
+              onUpdate={updateSuggestion}
+            />
+          ))}
         </div>
       )}
     </div>
