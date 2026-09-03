@@ -287,6 +287,15 @@ function DescriptionSection({
   );
 }
 
+// ─── Appointment status colours ─────────────────────────────────────────────
+
+const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  PENDING:   { bg: "#fef3c7", color: "#92400e", label: "En attente" },
+  CONFIRMED: { bg: "#d1fae5", color: "#065f46", label: "Confirmé"   },
+  COMPLETED: { bg: "#ede9fe", color: "#5b21b6", label: "Terminé"    },
+  CANCELLED: { bg: "#fee2e2", color: "#991b1b", label: "Annulé"     },
+};
+
 // ─── Ambassador overview card ─────────────────────────────────────────────────
 
 const AMBASSADOR_PALIERS = [
@@ -329,6 +338,267 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Multi-day summary ───────────────────────────────────────────────────────
+
+function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlock }: {
+  appointments: any[];
+  selectedDays: string[];
+  blockedSlots: any[];
+  onDeleteBlock: (id: string) => void;
+}) {
+  const multiAppts  = appointments.filter(a => selectedDays.includes(a.date));
+  const multiBlocks = blockedSlots.filter(s => selectedDays.includes(s.date));
+  return (
+    <div className="space-y-4">
+      {multiAppts.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Rendez-vous sur ces jours ({multiAppts.length})</p>
+          <div className="space-y-2">
+            {multiAppts
+              .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+              .map(a => {
+                const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                const dFr = new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                return (
+                  <div key={a.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <div className="text-center min-w-[70px]">
+                      <p className="text-xs text-gray-400 font-medium capitalize">{dFr}</p>
+                      <p className="text-sm font-extrabold text-orange-500">{a.startTime}</p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                      <p className="text-xs text-gray-500">{a.serviceName || "—"}</p>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
+                      style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+      {multiBlocks.length > 0 && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Créneaux bloqués sur ces jours ({multiBlocks.length})</p>
+          <div className="space-y-2">
+            {multiBlocks
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map(s => {
+                const dFr = new Date(s.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                return (
+                  <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+                    <span className="text-red-500">🔒</span>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-red-800">{dFr} — {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
+                      {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
+                    </div>
+                    <button onClick={() => onDeleteBlock(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">Retirer</button>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+      {multiAppts.length === 0 && multiBlocks.length === 0 && (
+        <p className="text-gray-400 text-sm text-center py-4">Aucun événement sur ces {selectedDays.length} jours.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Ambassadeur tab ─────────────────────────────────────────────────────────
+
+const AMBASSADEUR_PALIERS = [
+  { seuil: 3,  icon: "📊", label: "Statistiques avancées",                    desc: "Vues, rendez-vous, note et taux de conversion" },
+  { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture",          desc: "Appliqué automatiquement, une seule fois" },
+  { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture",          desc: "−30% si abonnement annuel, une seule fois" },
+  { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche",  desc: "Votre garage apparaît en tête — 30 jours" },
+  { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur",                desc: "Affiché en permanence sur votre profil public" },
+];
+
+function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
+  tier: number;
+  count: number;
+  garage: any;
+  stats: any;
+  onCopyCode: () => void;
+}) {
+  const nextPalier = AMBASSADEUR_PALIERS.find((_, i) => i + 1 > tier);
+  const maxChartV  = stats?.chart?.length > 0 ? Math.max(...stats.chart.map((c: any) => c.views), 1) : 1;
+  return (
+    <div className="space-y-6">
+      {/* Header hero */}
+      <div className="rounded-2xl overflow-hidden"
+        style={tier >= 5
+          ? { background: "linear-gradient(145deg,#0b1f3a,#1a2f50)", border: "1px solid rgba(249,115,22,0.3)" }
+          : { background: "linear-gradient(135deg,#1f2e67,#f97316)" }}>
+        <div className="p-6 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(255,255,255,0.15)" }}>
+            <span style={{ fontSize: 28 }}>{tier >= 5 ? "★" : "🏅"}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            {tier >= 5 ? (
+              <>
+                <p className="text-white font-black text-xl leading-tight">★ Certifié Ambassadeur Garago</p>
+                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
+              </>
+            ) : (
+              <>
+                <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
+                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  {count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""}
+                  {nextPalier ? ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}` : ""}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {tier < 5 && nextPalier && (
+          <div className="px-6 pb-5">
+            <div className="h-2 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <div className="h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(100, Math.round((count / nextPalier.seuil) * 100))}%`, background: "rgba(255,255,255,0.85)" }} />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{count} parrainages</span>
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Objectif : {nextPalier.seuil}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Code de parrainage */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <h3 className="font-bold text-gray-900 mb-1">Votre code de parrainage</h3>
+        <p className="text-gray-500 text-sm mb-4">
+          Partagez ce code. Le garage parrainé profite de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-2xl px-5 py-2.5 rounded-xl tracking-widest select-all">
+            {garage.referralCode ?? "—"}
+          </span>
+          {garage.referralCode && (
+            <button type="button" onClick={onCopyCode}
+              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+              Copier le code
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-5">
+          <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+            <p className="text-2xl font-black" style={{ color: "#f97316" }}>{count}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
+          </div>
+          <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+            <p className="text-2xl font-black" style={{ color: "#f97316" }}>{(garage.referralCommissionEarned ?? 0).toFixed(0)}$</p>
+            <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
+          </div>
+          <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
+            <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
+              {tier >= 5 ? "★" : Math.max(0, ([3,6,10,15,20].find(s => s > count) ?? 20) - count)}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progression des paliers */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <h3 className="font-bold text-gray-900 mb-4">Progression des paliers</h3>
+        <div className="space-y-2">
+          {AMBASSADEUR_PALIERS.map((p, i) => {
+            const palierNum = i + 1;
+            const done   = tier >= palierNum;
+            const active = tier === palierNum - 1 && count > 0;
+            return (
+              <div key={i} className="flex items-start gap-3 py-2.5 px-4 rounded-xl transition-colors"
+                style={done
+                  ? { background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }
+                  : active
+                  ? { background: "rgba(31,46,103,0.05)", border: "1px dashed rgba(31,46,103,0.2)" }
+                  : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 text-sm font-black"
+                  style={done ? { background: "#f97316", color: "#fff" } : { background: "#e2e8f0", color: "#94a3b8" }}>
+                  {done ? "✓" : palierNum}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{p.icon}</span>
+                    <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
+                    <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
+                  {active && (
+                    <div className="mt-2">
+                      <div className="h-1.5 rounded-full" style={{ background: "#e2e8f0" }}>
+                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
+                      </div>
+                      <p className="text-xs mt-0.5 font-medium" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {garage.ambassadorSince && (
+          <p className="text-xs mt-4 pt-4" style={{ color: "#94a3b8", borderTop: "1px solid #f1f5f9" }}>
+            Ambassadeur depuis {new Date(garage.ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
+          </p>
+        )}
+      </div>
+
+      {/* Statistiques avancées — palier 1+ */}
+      {stats && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
+            <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
+            <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Vues du profil",      value: stats.views.last30,      trend: stats.views.trend30,      suffix: "" },
+                { label: "Rendez-vous reçus",   value: stats.appts.last30,      trend: stats.appts.trend30,      suffix: "" },
+                { label: "Note moyenne",         value: stats.rating.overall ?? "—", trend: null,                suffix: stats.rating.overall ? "/5" : "" },
+                { label: "Taux de conversion",  value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
+              ].map(({ label, value, trend, suffix }) => (
+                <div key={label} className="p-4 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                  <p className="text-xs text-gray-400 mb-1">{label}</p>
+                  <div className="flex items-end gap-1.5">
+                    <span className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{value}{suffix}</span>
+                    {trend !== null && trend !== undefined && (
+                      <span className="text-xs font-bold mb-0.5" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
+                        {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {stats.chart?.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
+                <div className="flex items-end gap-px h-20">
+                  {stats.chart.map((c: any, i: number) => (
+                    <div key={i} className="flex-1 rounded-sm transition-all"
+                      title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
+                      style={{ height: `${Math.max(4, Math.round((c.views / maxChartV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="text-xs" style={{ color: "#94a3b8" }}>
+              Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -838,13 +1108,6 @@ export default function DashboardGaragePage() {
   const selectedDayBlocks = selectedDay ? blockedSlots.filter(s => s.date === selectedDay) : [];
   const isMultiSelect = selectedDays.length > 1;
 
-  const statusColors: Record<string, { bg: string; color: string; label: string }> = {
-    PENDING:   { bg: "#fef3c7", color: "#92400e", label: "En attente" },
-    CONFIRMED: { bg: "#d1fae5", color: "#065f46", label: "Confirmé"   },
-    COMPLETED: { bg: "#ede9fe", color: "#5b21b6", label: "Terminé"    },
-    CANCELLED: { bg: "#fee2e2", color: "#991b1b", label: "Annulé"     },
-  };
-
   // ── Computed values ─────────────────────────────────────────────────────
   const avgRating = garage.reviews?.length > 0
     ? (garage.reviews.reduce((s: number, r: any) => s + r.rating, 0) / garage.reviews.length).toFixed(1)
@@ -1187,72 +1450,21 @@ export default function DashboardGaragePage() {
               )}
 
               {/* Multi-day summary */}
-              {isMultiSelect && !showManualForm && !showBlockForm && (() => {
-                const multiAppts  = appointments.filter(a => selectedDays.includes(a.date));
-                const multiBlocks = blockedSlots.filter(s => selectedDays.includes(s.date));
-                return (
-                  <div className="space-y-4">
-                    {multiAppts.length > 0 && (
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Rendez-vous sur ces jours ({multiAppts.length})</p>
-                        <div className="space-y-2">
-                          {multiAppts
-                            .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-                            .map(a => {
-                              const sc = statusColors[a.status] ?? statusColors.PENDING;
-                              const dFr = new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
-                              return (
-                                <div key={a.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                  <div className="text-center min-w-[70px]">
-                                    <p className="text-xs text-gray-400 font-medium capitalize">{dFr}</p>
-                                    <p className="text-sm font-extrabold text-orange-500">{a.startTime}</p>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                                    <p className="text-xs text-gray-500">{a.serviceName || "—"}</p>
-                                  </div>
-                                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
-                                </div>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    )}
-                    {multiBlocks.length > 0 && (
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Créneaux bloqués sur ces jours ({multiBlocks.length})</p>
-                        <div className="space-y-2">
-                          {multiBlocks
-                            .sort((a, b) => a.date.localeCompare(b.date))
-                            .map(s => {
-                              const dFr = new Date(s.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
-                              return (
-                                <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                                  <span className="text-red-500">🔒</span>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-semibold text-red-800">{dFr} — {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
-                                    {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
-                                  </div>
-                                  <button onClick={() => deleteBlockSlot(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">Retirer</button>
-                                </div>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    )}
-                    {multiAppts.length === 0 && multiBlocks.length === 0 && (
-                      <p className="text-gray-400 text-sm text-center py-4">Aucun événement sur ces {selectedDays.length} jours.</p>
-                    )}
-                  </div>
-                );
-              })()}
+              {isMultiSelect && !showManualForm && !showBlockForm && (
+                <MultiDaySummary
+                  appointments={appointments}
+                  selectedDays={selectedDays}
+                  blockedSlots={blockedSlots}
+                  onDeleteBlock={deleteBlockSlot}
+                />
+              )}
 
               {/* Single-day: appointments */}
               {!isMultiSelect && selectedDayAppts.length > 0 && (
                 <div className="space-y-3 mb-4">
                   <p className="text-sm font-semibold text-gray-700">Rendez-vous ({selectedDayAppts.length})</p>
                   {selectedDayAppts.map(a => {
-                    const sc = statusColors[a.status] ?? statusColors.PENDING;
+                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
                     return (
                       <div key={a.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                         <div className="text-center min-w-[50px]">
@@ -1328,7 +1540,7 @@ export default function DashboardGaragePage() {
                   .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
                   .slice(0, 10)
                   .map(a => {
-                    const sc = statusColors[a.status] ?? statusColors.PENDING;
+                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
                     const dateObj = new Date(a.date + "T12:00:00");
                     const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
                     return (
@@ -2091,196 +2303,15 @@ export default function DashboardGaragePage() {
       )}
 
       {/* ══ AMBASSADEUR ══════════════════════════════════════════════════════ */}
-      {activeTab === "ambassadeur" && (garage as any).ambassadorTier >= 1 && (() => {
-        const tier = (garage as any).ambassadorTier ?? 0;
-        const count = (garage as any).referralCount ?? 0;
-        const PALIERS = [
-          { seuil: 3,  icon: "📊", label: "Statistiques avancées", desc: "Vues, rendez-vous, note et taux de conversion" },
-          { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture", desc: "Appliqué automatiquement, une seule fois" },
-          { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture", desc: "−30% si abonnement annuel, une seule fois" },
-          { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche", desc: "Votre garage apparaît en tête — 30 jours" },
-          { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur", desc: "Affiché en permanence sur votre profil public" },
-        ];
-        const nextPalier = PALIERS.find((_, i) => i + 1 > tier);
-        return (
-          <div className="space-y-6">
-            {/* Header hero */}
-            <div className="rounded-2xl overflow-hidden"
-              style={tier >= 5
-                ? { background: "linear-gradient(145deg,#0b1f3a,#1a2f50)", border: "1px solid rgba(249,115,22,0.3)" }
-                : { background: "linear-gradient(135deg,#1f2e67,#f97316)" }}>
-              <div className="p-6 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.15)" }}>
-                  <span style={{ fontSize: 28 }}>{tier >= 5 ? "★" : "🏅"}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  {tier >= 5 ? (
-                    <>
-                      <p className="text-white font-black text-xl leading-tight">★ Certifié Ambassadeur Garago</p>
-                      <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
-                      <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
-                        {count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""}
-                        {nextPalier ? ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}` : ""}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-              {/* Progress bar */}
-              {tier < 5 && nextPalier && (
-                <div className="px-6 pb-5">
-                  <div className="h-2 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }}>
-                    <div className="h-2 rounded-full transition-all"
-                      style={{ width: `${Math.min(100, Math.round((count / nextPalier.seuil) * 100))}%`, background: "rgba(255,255,255,0.85)" }} />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{count} parrainages</span>
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Objectif : {nextPalier.seuil}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Code de parrainage */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-1">Votre code de parrainage</h3>
-              <p className="text-gray-500 text-sm mb-4">
-                Partagez ce code. Le garage parrainé profite de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-2xl px-5 py-2.5 rounded-xl tracking-widest select-all">
-                  {garage.referralCode ?? "—"}
-                </span>
-                {garage.referralCode && (
-                  <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
-                    Copier le code
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-5">
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{count}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
-                </div>
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: "#f97316" }}>{((garage as any).referralCommissionEarned ?? 0).toFixed(0)}$</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
-                </div>
-                <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-                  <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
-                    {tier >= 5 ? "★" : Math.max(0, ([3,6,10,15,20].find(s => s > count) ?? 20) - count)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Progression 5 paliers */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Progression des paliers</h3>
-              <div className="space-y-2">
-                {PALIERS.map((p, i) => {
-                  const palierNum = i + 1;
-                  const done = tier >= palierNum;
-                  const active = tier === palierNum - 1 && count > 0;
-                  return (
-                    <div key={i} className="flex items-start gap-3 py-2.5 px-4 rounded-xl transition-colors"
-                      style={done
-                        ? { background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }
-                        : active
-                        ? { background: "rgba(31,46,103,0.05)", border: "1px dashed rgba(31,46,103,0.2)" }
-                        : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 text-sm font-black"
-                        style={done
-                          ? { background: "#f97316", color: "#fff" }
-                          : { background: "#e2e8f0", color: "#94a3b8" }}>
-                        {done ? "✓" : palierNum}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{p.icon}</span>
-                          <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
-                          <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
-                        </div>
-                        <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
-                        {active && (
-                          <div className="mt-2">
-                            <div className="h-1.5 rounded-full" style={{ background: "#e2e8f0" }}>
-                              <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
-                            </div>
-                            <p className="text-xs mt-0.5 font-medium" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {(garage as any).ambassadorSince && (
-                <p className="text-xs mt-4 pt-4" style={{ color: "#94a3b8", borderTop: "1px solid #f1f5f9" }}>
-                  Ambassadeur depuis {new Date((garage as any).ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
-                </p>
-              )}
-            </div>
-
-            {/* Statistiques avancées — palier 1+ */}
-            {stats && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
-                  <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
-                  <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
-                </div>
-                <div className="p-5 space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: "Vues du profil", value: stats.views.last30, trend: stats.views.trend30, suffix: "" },
-                      { label: "Rendez-vous reçus", value: stats.appts.last30, trend: stats.appts.trend30, suffix: "" },
-                      { label: "Note moyenne", value: stats.rating.overall ?? "—", trend: null, suffix: stats.rating.overall ? "/5" : "" },
-                      { label: "Taux de conversion", value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
-                    ].map(({ label, value, trend, suffix }) => (
-                      <div key={label} className="p-4 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                        <p className="text-xs text-gray-400 mb-1">{label}</p>
-                        <div className="flex items-end gap-1.5">
-                          <span className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{value}{suffix}</span>
-                          {trend !== null && trend !== undefined && (
-                            <span className="text-xs font-bold mb-0.5" style={{ color: trend >= 0 ? "#16a34a" : "#dc2626" }}>
-                              {trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}%
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {stats.chart?.length > 0 && (() => {
-                    const maxV = Math.max(...stats.chart.map((c: any) => c.views), 1);
-                    return (
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
-                        <div className="flex items-end gap-px h-20">
-                          {stats.chart.map((c: any, i: number) => (
-                            <div key={i} className="flex-1 rounded-sm transition-all" title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
-                              style={{ height: `${Math.max(4, Math.round((c.views / maxV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <p className="text-xs" style={{ color: "#94a3b8" }}>
-                    Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+      {activeTab === "ambassadeur" && (garage as any).ambassadorTier >= 1 && (
+        <AmbassadeurTab
+          tier={(garage as any).ambassadorTier ?? 0}
+          count={(garage as any).referralCount ?? 0}
+          garage={garage}
+          stats={stats}
+          onCopyCode={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+        />
+      )}
     </div>
   );
 }
