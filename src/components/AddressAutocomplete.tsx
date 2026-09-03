@@ -227,18 +227,18 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
           <label className="block text-sm font-semibold text-gray-700 mb-1">{addressLabel}</label>
         )}
         <div className="relative">
-        <input
-          type="text"
-          value={street}
-          onChange={handleStreetChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => { if (results.length > 0) setOpen(true); }}
-          placeholder={postalOk ? "Numéro et nom de la rue" : "Entrez d'abord le code postal"}
-          disabled={!postalOk}
-          autoComplete="off"
-          spellCheck={false}
-          className={`${inputBase} pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
-        />
+          <input
+            type="text"
+            value={street}
+            onChange={handleStreetChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => { if (results.length > 0) setOpen(true); }}
+            placeholder={postalOk ? "Numéro et nom de la rue" : "Entrez d'abord le code postal"}
+            disabled={!postalOk}
+            autoComplete="off"
+            spellCheck={false}
+            className={`${inputBase} pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
+          />
         {loading && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">●●●</span>
         )}

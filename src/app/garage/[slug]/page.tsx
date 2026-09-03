@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,6 +11,11 @@ import BookingWidget from "@/components/BookingWidget";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { formatPriceRange, getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
+
+function StarDisplay({ rating }: { rating: number }) {
+  const stars = Math.min(5, Math.max(0, Math.round(rating)));
+  return <span className="text-yellow-400 text-lg">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>;
+}
 
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
@@ -140,8 +146,16 @@ export default function GarageProfilePage() {
   const coverP = parseImgPos(garage.coverPosition);
   const logoP  = parseImgPos(garage.logoPosition);
 
-  const acceptedBrands = garage.brands?.filter((b: any) => b.accepts) ?? [];
-  const refusedBrands = garage.brands?.filter((b: any) => !b.accepts) ?? [];
+  const acceptedBrands  = garage.brands?.filter((b: any) =>  b.accepts) ?? [];
+  const refusedBrands   = garage.brands?.filter((b: any) => !b.accepts) ?? [];
+
+  const garageLangs: string[] | null = (() => {
+    try {
+      const raw = garage.languages;
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    } catch { return null; }
+  })();
   const servicesByCategory = garage.services?.reduce((acc: any, s: any) => {
     const cat = s.category?.name;
     if (!cat) return acc;
@@ -226,21 +240,14 @@ export default function GarageProfilePage() {
                       filter: "blur(12px)",
                     }} />
                   )}
-                  <img
-                  src={garage.logoUrl}
-                  alt={garage.name}
-                  draggable={false}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    transform: `translate(${logoP.tx}%, ${logoP.ty}%) scale(${logoP.zoom})`,
-                    transformOrigin: "center center",
-                    userSelect: "none",
-                  }}
-                />
+                  <img src={garage.logoUrl} alt={garage.name} draggable={false}
+                    style={{
+                      position: "absolute", inset: 0, width: "100%", height: "100%",
+                      objectFit: "contain",
+                      transform: `translate(${logoP.tx}%, ${logoP.ty}%) scale(${logoP.zoom})`,
+                      transformOrigin: "center center", userSelect: "none",
+                    }}
+                  />
                 </>
               ) : "🔧"}
             </div>
@@ -294,10 +301,7 @@ export default function GarageProfilePage() {
           {/* Rating + badges */}
           <div className="flex flex-wrap items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
-              {(() => {
-                const stars = Math.min(5, Math.max(0, Math.round(Number(garage.avgRating) || 0)));
-                return <span className="text-yellow-400 text-lg">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>;
-              })()}
+              <StarDisplay rating={Number(garage.avgRating) || 0} />
               <span className="font-bold text-gray-900">{garage.avgRating ?? 0}</span>
               <span className="text-gray-500 text-sm">({garage.reviewCount ?? 0} {g.reviewsCount})</span>
             </div>
@@ -521,24 +525,14 @@ export default function GarageProfilePage() {
                   <a href={`mailto:${garage.email}`} className="font-medium text-orange-600 hover:underline truncate max-w-[60%] text-right">{garage.email}</a>
                 </div>
               )}
-              {garage.languages && (() => {
-                try {
-                  const langs = typeof garage.languages === "string"
-                    ? JSON.parse(garage.languages)
-                    : garage.languages;
-                  if (!Array.isArray(langs) || langs.length === 0) return null;
-                  return (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{g.languages}</span>
-                      <span className="font-medium text-gray-900">
-                        {langs.map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
-                      </span>
-                    </div>
-                  );
-                } catch {
-                  return null;
-                }
-              })()}
+              {garageLangs && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{g.languages}</span>
+                  <span className="font-medium text-gray-900">
+                    {garageLangs.map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
