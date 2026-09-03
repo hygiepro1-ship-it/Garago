@@ -18,6 +18,29 @@ type Step = "service" | "date" | "slot" | "info" | "done";
 const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const DAYS_FR   = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+function formatDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function formatDateFr(d: Date) {
+  return `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function buildCalendar(month: Date) {
+  const year = month.getFullYear();
+  const mo   = month.getMonth();
+  const firstDay = new Date(year, mo, 1).getDay();
+  const daysInMonth = new Date(year, mo + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cells: (Date | null)[] = Array(firstDay).fill(null);
+  for (let i = 1; i <= daysInMonth; i++) cells.push(new Date(year, mo, i));
+  return { cells, today };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services }: BookingWidgetProps) {
   const { data: session } = useSession();
   const { t } = useLang();
@@ -97,26 +120,6 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         setLoadingSlots(false);
       });
   }, [selectedDate, garageSlug]);
-
-  function formatDate(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  }
-
-  function formatDateFr(d: Date) {
-    return `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
-  }
-
-  function buildCalendar(month: Date) {
-    const year = month.getFullYear();
-    const mo   = month.getMonth();
-    const firstDay = new Date(year, mo, 1).getDay();
-    const daysInMonth = new Date(year, mo + 1, 0).getDate();
-    const today = new Date(); today.setHours(0,0,0,0);
-
-    const cells: (Date | null)[] = Array(firstDay).fill(null);
-    for (let i = 1; i <= daysInMonth; i++) cells.push(new Date(year, mo, i));
-    return { cells, today };
-  }
 
   async function handleSubmit() {
     if (!name || !phone || !selectedDate || !selectedSlot) return;
