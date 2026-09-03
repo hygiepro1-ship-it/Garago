@@ -314,19 +314,19 @@ function SearchContent() {
                 <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>{s.popularServices}</p>
               </div>
               <div className="p-3 space-y-0.5">
-                {SERVICE_CATEGORIES.slice(0, 8).map((s) => (
+                {SERVICE_CATEGORIES.slice(0, 8).map((sc) => (
                   <button
-                    key={s.id}
-                    onClick={() => { setService(s.id); fetchGarages(); }}
+                    key={sc.id}
+                    onClick={() => { setService(sc.id); fetchGarages(); }}
                     className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
-                    style={service === s.id
+                    style={service === sc.id
                       ? { background: "#fff4ed", color: "#f97316" }
                       : { color: "#475569" }
                     }
                   >
-                    <span>{s.icon}</span>
-                    <span>{s.name}</span>
-                    {service === s.id && <span className="ml-auto text-xs">✓</span>}
+                    <span>{sc.icon}</span>
+                    <span>{sc.name}</span>
+                    {service === sc.id && <span className="ml-auto text-xs">✓</span>}
                   </button>
                 ))}
               </div>
@@ -363,7 +363,7 @@ function SearchContent() {
                   )}
                   {selectedService && (
                     <span className="badge badge-blue flex items-center gap-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={selectedService.iconPath} alt="" width={13} height={13} style={{ filter: "brightness(0) invert(1)", opacity: 0.85 }} />
                       {selectedService.name}
                     </span>

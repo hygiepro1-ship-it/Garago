@@ -1,5 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { ARTICLES } from "@/lib/articles";
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const CAT_ICONS: Record<string, string> = {
   "Freins":        "/icons/brakes.png",
@@ -12,11 +15,104 @@ const CAT_ICONS: Record<string, string> = {
   "Climatisation": "/icons/ac.png",
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    day: "numeric", month: "long", year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
 }
+
+function CategoryBadge({ category, dark }: { category: string; dark?: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
+      style={dark
+        ? { background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }
+        : { background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0" }}>
+      {CAT_ICONS[category] && (
+        <img src={CAT_ICONS[category]} alt="" width={12} height={12}
+          style={{ filter: dark ? "brightness(0) invert(1)" : "brightness(0) saturate(100%)", opacity: dark ? 0.7 : 1 }} />
+      )}
+      {category}
+    </span>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+type Article = typeof ARTICLES[number];
+
+function FeaturedArticle({ article }: { article: Article }) {
+  return (
+    <article className="rounded-2xl overflow-hidden mb-5 relative"
+      style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
+      <div className="p-8 pl-10">
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <CategoryBadge category={article.category} dark />
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            {formatDate(article.publishedAt)}
+          </span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-black text-white mb-4 leading-tight" style={{ letterSpacing: "-0.02em" }}>
+          {article.title}
+        </h2>
+        <p className="text-base leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.55)" }}>
+          {article.excerpt}
+        </p>
+        <div className="flex items-center justify-between pt-5 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <ClockIcon />{article.readTime} min de lecture
+          </span>
+          <Link href={`/conseils/${article.slug}`}
+            className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
+            style={{ background: "#f97316", boxShadow: "0 2px 12px rgba(249,115,22,0.4)" }}>
+            Lire l'article →
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ArticleCard({ article }: { article: Article }) {
+  return (
+    <article className="bg-white rounded-2xl relative overflow-hidden transition-all hover:shadow-md"
+      style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 10px rgba(11,31,58,0.05)" }}>
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
+      <div className="p-7 pl-9">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <CategoryBadge category={article.category} />
+          <span className="text-xs font-semibold ml-auto" style={{ color: "#cbd5e1" }}>
+            {formatDate(article.publishedAt)}
+          </span>
+        </div>
+        <h2 className="text-xl font-black mb-3 leading-snug" style={{ color: "#0b1f3a", letterSpacing: "-0.02em" }}>
+          {article.title}
+        </h2>
+        <p className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}>{article.excerpt}</p>
+        <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "#f1f5f9" }}>
+          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#94a3b8" }}>
+            <ClockIcon />{article.readTime} min de lecture
+          </span>
+          <Link href={`/conseils/${article.slug}`}
+            className="text-sm font-bold transition-all hover:gap-2" style={{ color: "#f97316" }}>
+            Lire l'article →
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ConseilsPage() {
   const now = new Date();
@@ -25,7 +121,6 @@ export default function ConseilsPage() {
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
   const [featured, ...rest] = published;
-
   const categories = Array.from(new Set(ARTICLES.map((a) => a.category)));
 
   return (
@@ -34,8 +129,7 @@ export default function ConseilsPage() {
       <section style={{ background: "#0b1f3a" }} className="py-14 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-            Prenez soin de votre voiture
-            <br />
+            Prenez soin de votre voiture<br />
             <span style={{ color: "#f97316" }}>toute l'année</span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -52,7 +146,6 @@ export default function ConseilsPage() {
               className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all"
               style={{ background: "#f8fafc", color: "#64748b", borderColor: "#e2e8f0" }}>
               {CAT_ICONS[cat] && (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={CAT_ICONS[cat]} alt="" width={13} height={13}
                   style={{ filter: "brightness(0) saturate(100%)" }} />
               )}
@@ -65,7 +158,6 @@ export default function ConseilsPage() {
       {/* ── Articles ── */}
       <section className="py-10 px-4" style={{ background: "#f8fafc" }}>
         <div className="max-w-4xl mx-auto">
-
           <p className="text-xs font-semibold uppercase tracking-widest mb-7" style={{ color: "#94a3b8" }}>
             {published.length} article{published.length !== 1 ? "s" : ""}
           </p>
@@ -77,100 +169,10 @@ export default function ConseilsPage() {
             </div>
           )}
 
-          {/* Article vedette */}
-          {featured && <article className="rounded-2xl overflow-hidden mb-5 relative"
-            style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
-            {/* bande accent */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: featured.categoryColor }} />
+          {featured && <FeaturedArticle article={featured} />}
 
-            <div className="p-8 pl-10">
-              <div className="flex flex-wrap items-center gap-2 mb-5">
-                <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
-                  style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                  {CAT_ICONS[featured.category] && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={CAT_ICONS[featured.category]} alt="" width={12} height={12}
-                      style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }} />
-                  )}
-                  {featured.category}
-                </span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  {formatDate(featured.publishedAt)}
-                </span>
-              </div>
-
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-4 leading-tight" style={{ letterSpacing: "-0.02em" }}>
-                {featured.title}
-              </h2>
-              <p className="text-base leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.55)" }}>
-                {featured.excerpt}
-              </p>
-
-              <div className="flex items-center justify-between pt-5 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  {featured.readTime} min de lecture
-                </span>
-                <Link href={`/conseils/${featured.slug}`}
-                  className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
-                  style={{ background: "#f97316", boxShadow: "0 2px 12px rgba(249,115,22,0.4)" }}>
-                  Lire l'article →
-                </Link>
-              </div>
-            </div>
-          </article>}
-
-          {/* Grille des autres articles */}
           <div className="flex flex-col gap-4">
-            {rest.map((article) => (
-              <article key={article.slug}
-                className="bg-white rounded-2xl relative overflow-hidden transition-all hover:shadow-md"
-                style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 10px rgba(11,31,58,0.05)" }}>
-                {/* bande accent */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
-
-                <div className="p-7 pl-9">
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide"
-                      style={{ background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0" }}>
-                      {CAT_ICONS[article.category] && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={CAT_ICONS[article.category]} alt="" width={12} height={12}
-                          style={{ filter: "brightness(0) saturate(100%)" }} />
-                      )}
-                      {article.category}
-                    </span>
-                    <span className="text-xs font-semibold ml-auto" style={{ color: "#cbd5e1" }}>
-                      {formatDate(article.publishedAt)}
-                    </span>
-                  </div>
-
-                  <h2 className="text-xl font-black mb-3 leading-snug" style={{ color: "#0b1f3a", letterSpacing: "-0.02em" }}>
-                    {article.title}
-                  </h2>
-                  <p className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}>
-                    {article.excerpt}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "#f1f5f9" }}>
-                    <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#94a3b8" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                      </svg>
-                      {article.readTime} min de lecture
-                    </span>
-                    <Link href={`/conseils/${article.slug}`}
-                      className="text-sm font-bold transition-all hover:gap-2"
-                      style={{ color: "#f97316" }}>
-                      Lire l'article →
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {rest.map((article) => <ArticleCard key={article.slug} article={article} />)}
           </div>
         </div>
       </section>
@@ -181,9 +183,7 @@ export default function ConseilsPage() {
           <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: "#f97316" }}>
             Ne manquez rien
           </p>
-          <h2 className="text-2xl font-black text-white mb-3">
-            Recevez ces conseils par courriel
-          </h2>
+          <h2 className="text-2xl font-black text-white mb-3">Recevez ces conseils par courriel</h2>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
             Créez un compte Garago et activez les communications dans vos préférences pour recevoir les conseils chaque semaine.
           </p>
