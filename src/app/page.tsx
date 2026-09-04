@@ -108,6 +108,27 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
+  // Auto-géolocalisation sur mobile à l'arrivée sur le site
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 640) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            { headers: { "Accept-Language": "fr" } }
+          );
+          const data = await res.json();
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality;
+          if (city) setLocation(city);
+        } catch { /* silently fail */ }
+      },
+      () => {},
+      { timeout: 8000 }
+    );
+  }, []);
+
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
   const VEHICLE_MAKES = BRANDS.map(b => b.name);
@@ -148,17 +169,17 @@ export default function HomePage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden hero-lines"
-        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)" }}>
+      <section className="relative overflow-hidden hero-lines flex flex-col justify-center"
+        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "calc(100svh - 64px)" }}>
         <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-10 pb-5 sm:pb-8 text-center">
-          <div className="mb-1 sm:mb-4">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
+          <div className="mb-2 sm:mb-4">
             <img src="/garago_logo_transparent_1.png" alt="Garago"
-              style={{ maxHeight: "clamp(56px, 13vw, 185px)", maxWidth: "65%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
+              style={{ maxHeight: "clamp(80px, 20vw, 185px)", maxWidth: "70%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
           </div>
 
           <h1 className="font-black tracking-tight mb-1 sm:mb-2"
@@ -188,8 +209,8 @@ export default function HomePage() {
             className="bg-white rounded-2xl mx-auto max-w-3xl overflow-hidden"
             style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
 
-            {/* Vehicle row — desktop only */}
-            <div className="hidden sm:grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
+            {/* Vehicle row — toujours visible */}
+            <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
               {[
                 { label: h.yearLabel,  value: year,  setter: setYear,  opts: years.map(y => ({ v: y, l: y })) },
                 { label: h.makeLabel,  value: make,  setter: (v: string) => handleMakeChange(v), opts: VEHICLE_MAKES.map(m => ({ v: m, l: m })) },
