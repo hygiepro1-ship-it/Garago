@@ -188,8 +188,8 @@ export default function HomePage() {
             className="bg-white rounded-2xl mx-auto max-w-3xl overflow-hidden"
             style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
 
-            {/* Vehicle row — always 3 cols, compact on mobile */}
-            <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
+            {/* Vehicle row — desktop only */}
+            <div className="hidden sm:grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
               {[
                 { label: h.yearLabel,  value: year,  setter: setYear,  opts: years.map(y => ({ v: y, l: y })) },
                 { label: h.makeLabel,  value: make,  setter: (v: string) => handleMakeChange(v), opts: VEHICLE_MAKES.map(m => ({ v: m, l: m })) },
@@ -245,7 +245,7 @@ export default function HomePage() {
       {liveStats && <StatsBar stats={liveStats} labels={h.stats} />}
 
       {/* ── SERVICES ── */}
-      <section className="bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
+      <section className="hidden sm:block bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-black" style={{ color: "#0b1f3a" }}>{h.servicesTitle}</h2>
@@ -268,7 +268,7 @@ export default function HomePage() {
       </section>
 
       {/* ── MARQUES ── */}
-      <section className="bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
+      <section className="hidden sm:block bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-black" style={{ color: "#0b1f3a" }}>{BRANDS.length} {h.brandsTitle}</h2>
