@@ -1196,24 +1196,24 @@ export default function DashboardGaragePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="text-white rounded-2xl p-6 mb-8"
+      <div className="text-white rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)", border: "1px solid rgba(249,115,22,0.2)" }}>
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold">{garage.name}</h1>
-            <p className="mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>📍 {garage.city}, {garage.province}</p>
+            <h1 className="text-xl sm:text-2xl font-extrabold">{garage.name}</h1>
+            <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>📍 {garage.city}, {garage.province}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {garage.subscriptionStatus === "TRIAL" && (
-              <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
-                Essai gratuit {garage.subscriptionEndAt ? `— expire le ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA")}` : ""}
+              <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
+                Essai {garage.subscriptionEndAt ? `— expire ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}` : "gratuit"}
               </span>
             )}
             {garage.subscriptionStatus === "ACTIVE" && (
-              <span className="bg-green-400 text-green-900 text-xs font-bold px-3 py-1 rounded-full">Abonnement actif ✓</span>
+              <span className="bg-green-400 text-green-900 text-xs font-bold px-2 py-1 rounded-full">Actif ✓</span>
             )}
             <Link href={`/garage/${garage.slug}?from=dashboard`}
-              className="bg-white/20 border border-white/30 text-white text-sm px-4 py-2 rounded-xl hover:bg-white/30 transition-colors">
+              className="bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
               Voir mon profil →
             </Link>
           </div>
@@ -1311,7 +1311,8 @@ export default function DashboardGaragePage() {
                 <h2 className="font-bold text-gray-900 text-lg">
                   {MONTH_NAMES_FR[calMonth]} {calYear}
                 </h2>
-                <p className="text-gray-500 text-sm">Cliquez pour sélectionner · recliquez pour désélectionner · <kbd className="bg-gray-100 px-1 rounded text-xs">Maj</kbd>+clic pour une plage</p>
+                <p className="hidden sm:block text-gray-500 text-sm">Cliquez pour sélectionner · recliquez pour désélectionner · <kbd className="bg-gray-100 px-1 rounded text-xs">Maj</kbd>+clic pour une plage</p>
+                <p className="sm:hidden text-gray-500 text-xs">Touchez un jour pour le sélectionner</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={() => changeMonth(-1)}

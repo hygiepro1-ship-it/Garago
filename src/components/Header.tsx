@@ -14,7 +14,7 @@ import type { Session } from "next-auth";
 type UserRole = "GARAGE_OWNER" | "DRIVER" | undefined;
 
 function getUserRole(session: Session | null): UserRole {
-  return (session?.user as any)?.role as UserRole;
+  return session?.user?.role as UserRole;
 }
 
 function getDashboardHref(role: UserRole): string {

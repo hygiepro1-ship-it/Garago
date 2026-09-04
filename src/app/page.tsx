@@ -149,34 +149,34 @@ export default function HomePage() {
     <div>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden hero-lines"
-        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "100vh" }}>
+        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)" }}>
         <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
         <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 text-center">
-          <div className="mb-3">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-10 pb-5 sm:pb-8 text-center">
+          <div className="mb-1 sm:mb-4">
             <img src="/garago_logo_transparent_1.png" alt="Garago"
-              style={{ height: 185, width: "auto", maxWidth: "90%", margin: "0 auto", display: "block" }} />
+              style={{ maxHeight: "clamp(56px, 13vw, 185px)", maxWidth: "65%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
           </div>
 
-          <h1 className="font-black tracking-tight mb-2"
-            style={{ fontSize: "clamp(1.5rem, 4vw, 2.4rem)", lineHeight: 1.15 }}>
+          <h1 className="font-black tracking-tight mb-1 sm:mb-2"
+            style={{ fontSize: "clamp(1.2rem, 4.5vw, 2.4rem)", lineHeight: 1.15 }}>
             <span style={{
               background: "linear-gradient(90deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             }}>{h.heroLine2}</span>
           </h1>
 
-          <p className="text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-3"
+          <p className="hidden sm:block text-base max-w-2xl mx-auto leading-relaxed mb-3"
             style={{ color: "rgba(255,255,255,0.55)" }}>
             {h.heroSub}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-5">
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2 sm:mb-4">
             {h.trust.map((txt) => (
-              <span key={txt} className="text-xs font-semibold flex items-center gap-1.5"
+              <span key={txt} className="text-xs font-semibold flex items-center gap-1"
                 style={{ color: "rgba(255,255,255,0.45)" }}>
                 <span style={{ color: "#10b981" }}>✓</span>{txt}
               </span>
@@ -187,50 +187,56 @@ export default function HomePage() {
           <form onSubmit={handleSearch}
             className="bg-white rounded-2xl mx-auto max-w-3xl overflow-hidden"
             style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
+
+            {/* Vehicle row — always 3 cols, compact on mobile */}
             <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
               {[
                 { label: h.yearLabel,  value: year,  setter: setYear,  opts: years.map(y => ({ v: y, l: y })) },
                 { label: h.makeLabel,  value: make,  setter: (v: string) => handleMakeChange(v), opts: VEHICLE_MAKES.map(m => ({ v: m, l: m })) },
                 { label: h.modelLabel, value: model, setter: setModel, opts: models.map(m => ({ v: m, l: m })), disabled: !make },
               ].map((f, i) => (
-                <div key={f.label} className={`flex flex-col px-4 py-3 ${i < 2 ? "border-r border-gray-100" : ""}`}>
-                  <label className="text-xs font-black mb-1" style={{ color: "#94a3b8" }}>{f.label}</label>
-                  <select className={selBase} value={f.value}
+                <div key={f.label} className={`flex flex-col px-2 py-1.5 sm:px-4 sm:py-3 ${i < 2 ? "border-r border-gray-100" : ""}`}>
+                  <label className="font-black truncate" style={{ color: "#94a3b8", fontSize: "9px" }}>{f.label}</label>
+                  <select
+                    className="w-full border-0 bg-transparent py-0.5 sm:py-1 text-xs sm:text-sm focus:outline-none text-gray-800"
+                    value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
                     disabled={(f as any).disabled}>
-                    <option value="">{(f as any).disabled ? h.disabled : h.allOpts}</option>
+                    <option value="">{(f as any).disabled ? "—" : h.allOpts}</option>
                     {f.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>
               ))}
             </div>
+
+            {/* Location + search button — always horizontal */}
             <div className="flex items-center">
               <button type="button" onClick={handleLocate} disabled={locating}
-                className="flex-shrink-0 ml-3 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 ml-2 flex items-center justify-center rounded-lg transition-colors"
                 style={{ background: "#fff4ed", color: "#f97316" }} title="Me localiser">
                 {locating
-                  ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                  : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 }
               </button>
-              <div className="flex-1 px-3 py-3">
-                <label className="text-xs font-black" style={{ color: "#94a3b8" }}>{h.cityLabel}</label>
+              <div className="flex-1 px-2 py-2 sm:py-3">
                 <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
                   placeholder={h.cityPlaceholder}
-                  className="block w-full text-sm focus:outline-none bg-transparent mt-0.5 text-gray-800" />
+                  className="block w-full text-sm focus:outline-none bg-transparent text-gray-800"
+                  style={{ color: "#374151" }} />
               </div>
-              <div className="pr-3">
+              <div className="pr-2 py-2">
                 <button type="submit"
-                  className="flex items-center gap-2 px-7 py-3.5 rounded-xl font-black text-white text-sm"
+                  className="flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-black text-white text-sm"
                   style={{ background: "linear-gradient(135deg, #f97316 0%, #ea6c0a 100%)", boxShadow: "0 4px 16px rgba(249,115,22,0.4)" }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                   </svg>
-                  {h.searchBtn}
+                  <span className="hidden sm:inline">{h.searchBtn}</span>
                 </button>
               </div>
             </div>
-            {locError && <p className="text-xs text-red-500 px-4 pb-3">{locError}</p>}
+            {locError && <p className="text-xs text-red-500 px-4 pb-2">{locError}</p>}
           </form>
         </div>
       </section>
@@ -268,7 +274,7 @@ export default function HomePage() {
             <h2 className="text-base font-black" style={{ color: "#0b1f3a" }}>{BRANDS.length} {h.brandsTitle}</h2>
             <Link href="/rechercher" className="text-sm font-bold" style={{ color: "#f97316" }}>{h.allGarages}</Link>
           </div>
-          <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
             {BRANDS.map((brand) => (
               <button key={brand.name} onClick={() => router.push(`/rechercher?make=${encodeURIComponent(brand.name)}`)}
                 title={brand.name}
@@ -290,10 +296,10 @@ export default function HomePage() {
       </section>
 
       {/* ── COMMENT ÇA MARCHE ── */}
-      <section className="py-16" style={{ background: "#f8fafc" }}>
+      <section className="py-10 sm:py-16" style={{ background: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>{h.howTitle}</h2>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>{h.howTitle}</h2>
             <p className="text-sm" style={{ color: "#94a3b8" }}>{h.howSub}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -324,9 +330,9 @@ export default function HomePage() {
       </section>
 
       {/* ── TÉMOIGNAGES ── */}
-      <section className="py-16 bg-white" style={{ borderTop: "1px solid #e2e8f0" }}>
+      <section className="py-10 sm:py-16 bg-white" style={{ borderTop: "1px solid #e2e8f0" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
+          <div className="flex items-end justify-between mb-5 sm:mb-8 flex-wrap gap-4">
             <div>
               <h2 className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{h.reviewsTitle}</h2>
               <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>{h.reviewsSub}</p>
@@ -343,14 +349,14 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA GARAGE ── */}
-      <section className="py-16 relative overflow-hidden hero-lines"
+      <section className="py-10 sm:py-16 relative overflow-hidden hero-lines"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%)" }} />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-4">
+              <h2 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3 sm:mb-4">
                 {h.ctaLine1}<br/>
                 <span style={{ color: "#f97316" }}>{h.ctaLine2}</span>
               </h2>
@@ -370,7 +376,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {h.ctaFeatures.map((f) => (
                 <div key={f.title} className="rounded-xl p-4"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>

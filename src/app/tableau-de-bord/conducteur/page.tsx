@@ -391,7 +391,7 @@ export default function DashboardConducteurPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/connexion");
-    if (status === "authenticated" && (session?.user as any)?.role === "GARAGE_OWNER") {
+    if (status === "authenticated" && session?.user?.role === "GARAGE_OWNER") {
       router.push("/tableau-de-bord/garage");
       return;
     }
@@ -577,10 +577,10 @@ export default function DashboardConducteurPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       {/* Header */}
-      <div className="text-white rounded-2xl p-6 mb-8"
+      <div className="text-white rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)", border: "1px solid rgba(249,115,22,0.2)" }}>
-        <h1 className="text-2xl font-extrabold mb-1">{d.title}, {session?.user?.name} 👋</h1>
-        <p style={{ color: "rgba(255,255,255,0.5)" }}>{d.subtitle}</p>
+        <h1 className="text-xl sm:text-2xl font-extrabold mb-1">{d.title}, {session?.user?.name} 👋</h1>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -589,7 +589,7 @@ export default function DashboardConducteurPage() {
         <div className="md:col-span-2 space-y-4">
 
           {/* Tabs */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 overflow-x-auto pb-1 flex-nowrap">
             {([
               { id: "rdv",       label: "📅 Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : "") },
               { id: "vehicules", label: d.vehicles },

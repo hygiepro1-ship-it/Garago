@@ -64,7 +64,7 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
         <div className="flex flex-col sm:flex-row">
 
           {/* GAUCHE — logo + étoiles */}
-          <div className="sm:w-24 flex sm:flex-col items-center sm:items-center justify-start gap-3 sm:gap-2 p-4 sm:py-5 sm:px-3"
+          <div className="sm:w-24 flex sm:flex-col items-center sm:items-center justify-start gap-3 sm:gap-2 px-4 py-3 sm:py-5 sm:px-3"
             style={{ borderRight: "1px solid #f1f5f9" }}>
             <div className="w-16 h-16 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
               style={{ background: "#f8fafc", border: "2px solid #e2e8f0", color: "#0b1f3a" }}>
@@ -155,19 +155,19 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
           </div>
 
           {/* DROITE — disponibilités */}
-          <div className="sm:w-48 px-4 py-4 sm:border-l flex flex-col justify-between"
+          <div className="sm:w-48 px-4 py-3 sm:py-4 sm:border-l flex flex-col justify-between"
             style={{ borderColor: "#f1f5f9", background: "#fafcff" }}>
             <div>
-              <p className="text-xs font-black mb-2.5" style={{ color: "#0b1f3a" }}>{c.nextSlots}</p>
-              <div className="flex flex-col gap-1.5">
-                {slots.map((slot) => <div key={slot} className="slot-pill w-full text-center">{slot}</div>)}
+              <p className="text-xs font-black mb-2" style={{ color: "#0b1f3a" }}>{c.nextSlots}</p>
+              <div className="flex flex-wrap sm:flex-col gap-1.5">
+                {slots.map((slot) => <div key={slot} className="slot-pill sm:w-full sm:text-center">{slot}</div>)}
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
+              <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
                 {garage.acceptsWalkIn && <span className="badge badge-green">{c.walkIn}</span>}
                 {garage.appointmentOnly && <span className="badge badge-navy">{c.byAppt}</span>}
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white"
                 style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 2px 10px rgba(249,115,22,0.3)" }}>
                 {c.bookAppt}

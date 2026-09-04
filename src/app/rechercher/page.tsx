@@ -143,9 +143,9 @@ function SearchContent() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap gap-2 items-center">
 
-            {/* Selects */}
+            {/* Vehicle selects — hidden on mobile (use drawer instead) */}
             <select
-              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={year} onChange={(e) => setYear(e.target.value)}
             >
@@ -154,7 +154,7 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}
             >
@@ -163,7 +163,7 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}
             >
@@ -172,7 +172,7 @@ function SearchContent() {
             </select>
 
             <select
-              className="rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              className="w-full sm:w-auto rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               value={service} onChange={(e) => setService(e.target.value)}
             >
@@ -443,6 +443,27 @@ function SearchContent() {
               </button>
             </div>
             <div className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.year}</label>
+                <select className="doc-input" value={year} onChange={(e) => setYear(e.target.value)}>
+                  <option value="">{s.year}</option>
+                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.make}</label>
+                <select className="doc-input" value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}>
+                  <option value="">{s.make}</option>
+                  {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.model}</label>
+                <select className="doc-input" value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}>
+                  <option value="">{s.model}</option>
+                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
                 <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>

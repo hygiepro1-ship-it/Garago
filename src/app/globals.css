@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source not "../../skills-src/**";
 
 :root {
   /* ── Garago brand — Navy + Orange ──────────────────
@@ -48,6 +49,22 @@
 }
 
 html { scroll-behavior: smooth; }
+
+/* ── Mobile : suppression du délai 300ms + tap highlight ──── */
+button, a, select, input, textarea, label[for] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── iOS : empêche le zoom auto sur les inputs (font-size < 16px) */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* ── Scrollbar hide utility ─────────────────────────────────── */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 body {
   background: var(--bg);
   color: var(--text-primary);

@@ -103,14 +103,14 @@ export default function TarifsPage() {
   return (
     <div>
       {/* ── HERO ─────────────────────────────────── */}
-      <section className="relative overflow-hidden py-20"
+      <section className="relative overflow-hidden py-10 sm:py-20"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -right-40 -top-40 w-[600px] h-[600px] rounded-full opacity-5"
             style={{ background: "radial-gradient(circle, #f97316, transparent)" }} />
         </div>
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
             {p.heroTitle1}<br />
             <span style={{ color: "#f97316" }}>{p.heroTitle2}</span>
           </h1>
@@ -179,7 +179,7 @@ export default function TarifsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-10">
             {/* Essai gratuit */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-8">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-8">
               <img src="/icons/pricing/gift.png" alt="" width={36} height={36} className="mb-3" />
               <h3 className="text-xl font-black text-gray-900 mb-1">{p.freePlanTitle}</h3>
               <div className="flex items-baseline gap-1 my-4">
@@ -201,7 +201,7 @@ export default function TarifsPage() {
             </div>
 
             {/* Pro Mensuel */}
-            <div className="rounded-2xl p-8 relative"
+            <div className="rounded-2xl p-5 sm:p-8 relative"
               style={{ background: "linear-gradient(160deg, #0b1f3a, #0d2a50)", border: "2px solid #f97316" }}>
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-black text-white"
                 style={{ backgroundColor: "#f97316" }}>
@@ -231,7 +231,7 @@ export default function TarifsPage() {
             </div>
 
             {/* Pro Annuel */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-8 relative">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-8 relative">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-black"
                 style={{ backgroundColor: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
                 {p.saveBadge}
@@ -326,9 +326,9 @@ export default function TarifsPage() {
       </section>
 
       {/* ── FINAL CTA ─────────────────────────────── */}
-      <section className="py-20" style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
+      <section className="py-10 sm:py-20" style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-black text-white mb-4">{p.finalTitle}</h2>
+          <h2 className="text-2xl sm:text-4xl font-black text-white mb-4">{p.finalTitle}</h2>
           <p className="text-lg mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
             {p.finalSub}
             <br />

@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Claude Code skills directory (not part of the web app)
+/skills-src
+
 # dependencies
 /node_modules
 /.pnp

@@ -392,7 +392,7 @@ export default function InscriptionGaragePage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
             {/* Form */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-2xl border border-gray-200 p-8" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
+              <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
                 <h1 className="text-2xl font-black text-gray-900 mb-1">{r.garageProfileTitle}</h1>
                 <p className="text-gray-500 text-sm mb-6">{r.garageProfileSub}</p>
 
@@ -406,7 +406,7 @@ export default function InscriptionGaragePage() {
                     <div className="space-y-3">
 
                       {/* Prénom + Nom */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">{r.firstNameLabel}</label>
                           <input type="text" required className={inputClass} placeholder="Jean"
@@ -440,7 +440,7 @@ export default function InscriptionGaragePage() {
                       </div>
 
                       {/* Mot de passe */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">{r.password}</label>
                           <div className="relative">

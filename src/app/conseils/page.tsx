@@ -53,7 +53,7 @@ function FeaturedArticle({ article }: { article: Article }) {
     <article className="rounded-2xl overflow-hidden mb-5 relative"
       style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
-      <div className="p-8 pl-10">
+      <div className="p-5 pl-7 sm:p-8 sm:pl-10">
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <CategoryBadge category={article.category} dark />
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -87,7 +87,7 @@ function ArticleCard({ article }: { article: Article }) {
     <article className="bg-white rounded-2xl relative overflow-hidden transition-all hover:shadow-md"
       style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 10px rgba(11,31,58,0.05)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
-      <div className="p-7 pl-9">
+      <div className="p-4 pl-6 sm:p-7 sm:pl-9">
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <CategoryBadge category={article.category} />
           <span className="text-xs font-semibold ml-auto" style={{ color: "#cbd5e1" }}>

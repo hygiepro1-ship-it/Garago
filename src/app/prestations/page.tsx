@@ -87,9 +87,9 @@ export default function PrestationsPage() {
   return (
     <main>
       {/* ── Hero ── */}
-      <section style={{ background: "#0b1f3a" }} className="py-14 px-4">
+      <section style={{ background: "#0b1f3a" }} className="py-8 sm:py-14 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-3 sm:mb-4 leading-tight">
             Tous les services auto<br />
             <span style={{ color: "#f97316" }}>disponibles sur Garago</span>
           </h1>
