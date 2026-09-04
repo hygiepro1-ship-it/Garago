@@ -81,7 +81,7 @@ export default function GarageProfilePage() {
       .catch(() => { setGarage({ error: "Erreur réseau" }); setLoading(false); });
   }, [slug, session]);
 
-  const isOwner = !!(session?.user && garage?.ownerId && (session.user as any).id === garage.ownerId);
+  const isOwner = !!(session?.user && garage?.ownerId && session.user.id === garage.ownerId);
 
   useEffect(() => {
     if (!session?.user || !garage?.id) return;

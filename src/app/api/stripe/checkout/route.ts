@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
   const garage = await prisma.garage.findUnique({ where: { ownerId: userId } });
   if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   let customerId = garage.stripeCustomerId ?? undefined;
   if (!customerId) {
     const customer = await stripe.customers.create({
-      email: (session.user as any).email ?? undefined,
+      email: session.user.email ?? undefined,
       name: garage.name,
       metadata: { garageId: garage.id },
     });

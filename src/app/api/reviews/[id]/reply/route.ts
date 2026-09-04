@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || (session.user as any).role !== "GARAGE_OWNER") {
+    if (!session?.user || session.user.role !== "GARAGE_OWNER") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
@@ -17,7 +17,7 @@ export async function POST(
     const { reply } = await req.json();
 
     // Verify this review belongs to the owner's garage
-    const ownerId = (session.user as any).id;
+    const ownerId = session.user.id;
     const review = await prisma.review.findFirst({
       where: { id, garage: { ownerId } },
     });

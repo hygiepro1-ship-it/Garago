@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -17,7 +17,7 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const garage = await prisma.garage.findUnique({
-    where: { ownerId: (session.user as any).id },
+    where: { ownerId: session.user.id },
     select: { id: true, ambassadorTier: true },
   });
   if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });

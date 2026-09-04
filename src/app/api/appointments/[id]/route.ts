@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +22,7 @@ export async function PATCH(
   });
   if (!appt) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const userId = (session.user as any)?.id;
+  const userId = session.user?.id;
   const isGarageOwner = appt.garage.ownerId === userId;
   const isClient      = appt.userId === userId;
 
@@ -72,13 +72,6 @@ export async function PATCH(
     const notifPref    = userRecord?.notifPref ?? "EMAIL";
     // Priorité : email stocké dans le RDV, sinon email du compte Garago
     const recipientEmail = updated.customerEmail || userRecord?.email || null;
-
-    console.log("[RESCHEDULE NOTIF]", {
-      apptId: updated.id,
-      recipientEmail,
-      notifPref,
-      hasGaragePhone: !!garagePhone,
-    });
 
     const reschedulePromises: Promise<void>[] = [];
 

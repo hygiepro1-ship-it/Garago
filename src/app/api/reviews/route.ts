@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     const existing = await prisma.review.findFirst({ where: { garageId, userId } });
     if (existing) {
