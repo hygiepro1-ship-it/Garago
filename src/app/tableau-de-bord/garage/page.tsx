@@ -13,6 +13,64 @@ import { useLang } from "@/contexts/LanguageContext";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "ambassadeur";
 
+// ─── Domain types ─────────────────────────────────────────────────────────────
+
+interface GarageAvailability {
+  dayOfWeek: number;
+  openTime:  string;
+  closeTime: string;
+  isClosed:  boolean;
+}
+
+interface GarageService {
+  categoryId:   string;
+  categoryName: string;
+  icon:         string;
+  name:         string;
+  priceMin:     string;
+  priceMax:     string;
+  durationMin:  string;
+}
+
+interface GarageBrand {
+  brand:   string;
+  accepts: boolean;
+}
+
+interface GarageReview {
+  id:          string;
+  rating:      number;
+  comment?:    string | null;
+  ownerReply?: string | null;
+  user?:       { name?: string | null };
+}
+
+interface Garage {
+  id:                       string;
+  slug:                     string;
+  name:                     string;
+  city:                     string | null;
+  province:                 string | null;
+  description:              string | null;
+  descriptionDraft:         string | null;
+  logoUrl:                  string | null;
+  logoPosition:             string | null;
+  coverUrl:                 string | null;
+  coverPosition:            string | null;
+  subscriptionStatus:       string | null;
+  subscriptionEndAt:        string | null;
+  referralCode:             string | null;
+  referralCommissionEarned: number | null;
+  referralCount:            number;
+  ambassadorTier:           number;
+  ambassadorSince:          string | null;
+  availability:             GarageAvailability[];
+  services:                 GarageService[];
+  brands:                   GarageBrand[];
+  reviews:                  GarageReview[];
+  _count?:                  { reviews: number };
+}
+
 // ─── Colour utilities ────────────────────────────────────────────────────────
 function hslToHex(h: number, s: number, l: number): string {
   s /= 100; l /= 100;
@@ -420,15 +478,23 @@ const AMBASSADEUR_PALIERS = [
   { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur",                desc: "Affiché en permanence sur votre profil public" },
 ];
 
+interface AmbassadeurStats {
+  views:      { last30: number; trend30: number | null };
+  appts:      { last30: number; trend30: number | null };
+  rating:     { overall: number | null; last30: number | null; total: number };
+  conversion: { last30: number; trend30: number | null };
+  chart?:     { date: string; views: number }[];
+}
+
 function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
   tier: number;
   count: number;
-  garage: any;
-  stats: any;
+  garage: Pick<Garage, "referralCode" | "referralCommissionEarned" | "ambassadorSince">;
+  stats: AmbassadeurStats | null;
   onCopyCode: () => void;
 }) {
   const nextPalier = AMBASSADEUR_PALIERS.find((_, i) => i + 1 > tier);
-  const maxChartV  = stats?.chart?.length > 0 ? Math.max(...stats.chart.map((c: any) => c.views), 1) : 1;
+  const maxChartV  = (stats?.chart?.length ?? 0) > 0 ? Math.max(...stats!.chart!.map((c) => c.views), 1) : 1;
   return (
     <div className="space-y-6">
       {/* Header hero */}
@@ -581,11 +647,11 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
                 </div>
               ))}
             </div>
-            {stats.chart?.length > 0 && (
+            {(stats.chart?.length ?? 0) > 0 && (
               <div>
                 <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
                 <div className="flex items-end gap-px h-20">
-                  {stats.chart.map((c: any, i: number) => (
+                  {stats.chart!.map((c, i: number) => (
                     <div key={i} className="flex-1 rounded-sm transition-all"
                       title={`${c.date} : ${c.views} vue${c.views !== 1 ? "s" : ""}`}
                       style={{ height: `${Math.max(4, Math.round((c.views / maxChartV) * 100))}%`, background: c.views > 0 ? "#1f2e67" : "#e2e8f0" }} />
@@ -609,7 +675,7 @@ export default function DashboardGaragePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("apercu");
-  const [garage, setGarage] = useState<any>(null);
+  const [garage, setGarage] = useState<Garage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -671,13 +737,13 @@ export default function DashboardGaragePage() {
   // ── Stats avancées (palier 1+) ────────────────────────────────────────────
   const [stats, setStats] = useState<any>(null);
   useEffect(() => {
-    if (garage?.ambassadorTier >= 1) {
+    if ((garage?.ambassadorTier ?? 0) >= 1) {
       fetch("/api/garage/stats").then(r => r.json()).then(s => { if (!s.error) setStats(s); });
     }
   }, [garage?.ambassadorTier, garage?.id]);
 
   // ── Services state ────────────────────────────────────────────────────────
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<GarageService[]>([]);
   useEffect(() => { if (garage?.services) setServices(garage.services); }, [garage]);
 
   function toggleService(catId: string, cat: any) {
@@ -705,7 +771,7 @@ export default function DashboardGaragePage() {
   }
 
   // ── Brands state ──────────────────────────────────────────────────────────
-  const [brands, setBrands] = useState<any[]>([]);
+  const [brands, setBrands] = useState<GarageBrand[]>([]);
   useEffect(() => { if (garage?.brands) setBrands(garage.brands); }, [garage]);
 
   function toggleBrand(brand: string, accepts: boolean) {
@@ -739,9 +805,9 @@ export default function DashboardGaragePage() {
     DAYS.map((_, i) => ({ dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 }))
   );
   useEffect(() => {
-    if (garage?.availability?.length > 0) {
+    if ((garage?.availability?.length ?? 0) > 0) {
       setHoraires(DAYS.map((_, i) => {
-        const a = garage.availability.find((x: any) => x.dayOfWeek === i);
+        const a = garage!.availability.find((x) => x.dayOfWeek === i);
         return a
           ? { dayOfWeek: i, openTime: a.openTime ?? "08:00", closeTime: a.closeTime ?? "17:00", isClosed: !!a.isClosed }
           : { dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 };
@@ -838,7 +904,7 @@ export default function DashboardGaragePage() {
   }
 
   // ── Reviews state (Aperçu tab) ─────────────────────────────────────────
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<GarageReview[]>([]);
   useEffect(() => { if (garage?.reviews) setReviews(garage.reviews); }, [garage]);
 
   const [replyingTo, setReplyingTo] = useState<string | null>(null); // reviewId
@@ -915,7 +981,7 @@ export default function DashboardGaragePage() {
     setRdvLoaded(false); // reload data for new month
   }
 
-  if (loading) {
+  if (loading || !garage) {
     return <div className="flex items-center justify-center py-20 text-gray-500">{d.loading}</div>;
   }
 
@@ -1224,7 +1290,7 @@ export default function DashboardGaragePage() {
 
           {/* Bloc 2 — Programme Ambassadeur */}
           <AmbassadorOverviewCard
-            tier={(garage as any).ambassadorTier ?? 0}
+            tier={garage.ambassadorTier ?? 0}
             onViewDetails={() => setActiveTab("ambassadeur")}
           />
 
@@ -2303,10 +2369,10 @@ export default function DashboardGaragePage() {
       )}
 
       {/* ══ AMBASSADEUR ══════════════════════════════════════════════════════ */}
-      {activeTab === "ambassadeur" && (garage as any).ambassadorTier >= 1 && (
+      {activeTab === "ambassadeur" && garage.ambassadorTier >= 1 && (
         <AmbassadeurTab
-          tier={(garage as any).ambassadorTier ?? 0}
-          count={(garage as any).referralCount ?? 0}
+          tier={garage.ambassadorTier ?? 0}
+          count={garage.referralCount ?? 0}
           garage={garage}
           stats={stats}
           onCopyCode={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
