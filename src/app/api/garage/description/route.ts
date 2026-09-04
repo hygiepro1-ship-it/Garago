@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const token      = process.env.ADMIN_REVIEW_SECRET ?? "garago-admin-secret";
+  const token      = process.env.ADMIN_REVIEW_SECRET ?? "";
   const approveUrl = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=approve&token=${token}`;
   const rejectUrl  = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=reject&token=${token}`;
 

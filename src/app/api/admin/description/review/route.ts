@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   const garageId = searchParams.get("garageId");
   const action   = searchParams.get("action"); // "approve" | "reject"
 
-  const secret = process.env.ADMIN_REVIEW_SECRET ?? "garago-admin-secret";
+  const secret = process.env.ADMIN_REVIEW_SECRET;
+  if (!secret) return new NextResponse("ADMIN_REVIEW_SECRET non configuré", { status: 500 });
   if (token !== secret)
     return new NextResponse("Non autorisé", { status: 401 });
 

@@ -192,6 +192,7 @@ model GarageBrand {
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 
   @@unique([garageId, brand])
+  @@index([garageId])
 }
 
 model GarageAvailability {
@@ -236,6 +237,8 @@ model Review {
 
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
+
+  @@index([garageId])
 }
 
 model BlockedSlot {
@@ -249,6 +252,8 @@ model BlockedSlot {
   createdAt DateTime @default(now())
 
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId, date])
 }
 
 model GarageFavorite {
@@ -379,4 +384,8 @@ model Appointment {
 
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
   user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([garageId])
+  @@index([userId])
+  @@index([garageId, date])
 }
