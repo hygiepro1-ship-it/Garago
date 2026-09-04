@@ -17,6 +17,13 @@ function StarDisplay({ rating }: { rating: number }) {
   return <span className="text-yellow-400 text-lg">{"★".repeat(stars)}{"☆".repeat(5 - stars)}</span>;
 }
 
+function parseGarageLangs(raw: unknown): string[] | null {
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch { return null; }
+}
+
 function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; zoom: number; color?: string } {
   const d = { tx: 0, ty: 0, zoom: 1 };
   if (!raw) return d;
@@ -146,16 +153,10 @@ export default function GarageProfilePage() {
   const coverP = parseImgPos(garage.coverPosition);
   const logoP  = parseImgPos(garage.logoPosition);
 
-  const acceptedBrands  = garage.brands?.filter((b: any) =>  b.accepts) ?? [];
-  const refusedBrands   = garage.brands?.filter((b: any) => !b.accepts) ?? [];
+  const acceptedBrands  = garage.brands?.filter((b: { brand: string; accepts: boolean }) =>  b.accepts) ?? [];
+  const refusedBrands   = garage.brands?.filter((b: { brand: string; accepts: boolean }) => !b.accepts) ?? [];
 
-  const garageLangs: string[] | null = (() => {
-    try {
-      const raw = garage.languages;
-      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
-    } catch { return null; }
-  })();
+  const garageLangs = parseGarageLangs(garage.languages);
   const servicesByCategory = garage.services?.reduce((acc: any, s: any) => {
     const cat = s.category?.name;
     if (!cat) return acc;

@@ -10,7 +10,27 @@ import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
 
-function withDistances(garages: any[], pos: UserPos | null): any[] {
+interface SearchGarage {
+  slug:               string;
+  name:               string;
+  city:               string;
+  province:           string;
+  address?:           string;
+  description?:       string | null;
+  logoUrl?:           string | null;
+  avgRating:          number;
+  reviewCount:        number;
+  subscriptionStatus: string;
+  isAmbassador?:      boolean;
+  acceptsWalkIn:      boolean;
+  appointmentOnly:    boolean;
+  services:  Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
+  brands:    Array<{ brand: string; accepts: boolean }>;
+  id?:          string;
+  distance_km?: number | null;
+}
+
+function withDistances(garages: SearchGarage[], pos: UserPos | null): SearchGarage[] {
   if (!pos) return garages;
   return garages.map((g) => ({ ...g, distance_km: garageDistance(g, pos) }));
 }
@@ -21,7 +41,7 @@ function SearchContent() {
   const { t } = useLang();
   const s = t.search;
 
-  const [garages, setGarages] = useState<any[]>([]);
+  const [garages, setGarages] = useState<SearchGarage[]>([]);
   const [total,   setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +71,7 @@ function SearchContent() {
     try {
       const res  = await fetch(`/api/garages?${params}`);
       const data = await res.json();
-      let results: any[] = data.garages ?? [];
+      let results: SearchGarage[] = data.garages ?? [];
       if (walkInOnly) results = results.filter((g) => g.acceptsWalkIn);
       if (minRating)  results = results.filter((g) => g.avgRating >= parseFloat(minRating));
       results = withDistances(results, userPos);
