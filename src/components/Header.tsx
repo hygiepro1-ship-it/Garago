@@ -115,8 +115,12 @@ function UserMenu({ session, role }: UserMenuProps) {
             href={getDashboardHref(role)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             onClick={() => setOpen(false)}>
-            <span className="w-6 h-6 flex items-center justify-center rounded-lg text-xs"
-              style={{ background: "#fff4ed", color: "#f97316" }}>📊</span>
+            <span className="w-6 h-6 flex items-center justify-center rounded-lg"
+              style={{ background: "#fff4ed" }}>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/>
+              </svg>
+            </span>
             {t.nav.dashboard}
           </Link>
           <button

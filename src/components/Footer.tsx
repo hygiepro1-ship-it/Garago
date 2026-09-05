@@ -119,7 +119,12 @@ export default function Footer() {
             <span className="cursor-pointer hover:text-white transition-colors">{f.terms}</span>
             <Link href="/faq" className="hover:text-white transition-colors">{f.faq}</Link>
             <Link href="/tarifs" className="hover:text-white transition-colors">{f.pricing}</Link>
-            <Link href="/suggestions" className="hover:text-white transition-colors">💡 Suggestions</Link>
+            <Link href="/suggestions" className="hover:text-white transition-colors flex items-center gap-1">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18h6M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/>
+              </svg>
+              Suggestions
+            </Link>
           </div>
         </div>
       </div>

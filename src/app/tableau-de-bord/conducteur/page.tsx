@@ -623,7 +623,11 @@ export default function DashboardConducteurPage() {
                   <p className="text-gray-400 text-sm text-center py-8">{t.common.loading}</p>
                 ) : appts.length === 0 ? (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
-                    <div className="text-4xl mb-3">📅</div>
+                    <div className="w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-full" style={{ background: "#f1f5f9" }}>
+                      <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                    </div>
                     <p className="font-bold text-gray-700 mb-1">Aucun rendez-vous</p>
                     <p className="text-sm text-gray-400 mb-4">Vos réservations en ligne apparaîtront ici.</p>
                     <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>Trouver un garage →</Link>
@@ -905,7 +909,11 @@ export default function DashboardConducteurPage() {
               )}
               {vehicles.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
-                  <div className="text-4xl mb-2">🚗</div>
+                  <div className="w-12 h-12 mx-auto mb-2 flex items-center justify-center rounded-full" style={{ background: "#f1f5f9" }}>
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
+                    </svg>
+                  </div>
                   <p className="text-sm">{d.noVehicles}</p>
                 </div>
               ) : (
@@ -1017,7 +1025,11 @@ export default function DashboardConducteurPage() {
                 <p className="text-gray-400 text-sm text-center py-6">{t.common.loading}</p>
               ) : reminders.length === 0 ? (
                 <div className="text-center py-10 text-gray-400">
-                  <div className="text-4xl mb-3">🔔</div>
+                  <div className="w-12 h-12 mx-auto mb-3 flex items-center justify-center rounded-full" style={{ background: "#f1f5f9" }}>
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                  </div>
                   <p className="text-sm font-medium mb-1">{d.noReminders}</p>
                   <p className="text-xs">{d.noRemindersSub}</p>
                 </div>

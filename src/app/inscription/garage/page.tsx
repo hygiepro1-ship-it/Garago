@@ -577,20 +577,26 @@ export default function InscriptionGaragePage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="rounded-2xl p-6 text-white" style={{ backgroundColor: "#0b1f3a" }}>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl">🚀</span>
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: "rgba(249,115,22,0.15)" }}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
                   <span className="font-black text-lg">Pourquoi Garago?</span>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { icon: "👁️", text: "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
-                    { icon: "📅", text: "Gérez vos horaires et disponibilités en temps réel" },
-                    { icon: "⭐", text: "Accumulez des avis vérifiés qui construisent votre réputation" },
-                    { icon: "💰", text: "Affichez vos prix — attirez des clients qui savent ce qu'ils veulent" },
-                    { icon: "🚗", text: "Indiquez les marques que vous traitez (et celles que vous ne traitez pas)" },
-                    { icon: "📊", text: "Tableau de bord centralisé pour tout gérer" },
-                  ].map((item, i) => (
+                  {([
+                    { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
+                    { path: "M3 4h18a2 2 0 012 2v13a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2zm0 6h18M8 2v4m8-4v4", text: "Gérez vos horaires et disponibilités en temps réel" },
+                    { path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", text: "Accumulez des avis vérifiés qui construisent votre réputation" },
+                    { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: "Affichez vos prix — attirez des clients qui savent ce qu'ils veulent" },
+                    { path: "M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m3 10a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h10a2 2 0 012 2v8z", text: "Indiquez les marques que vous traitez (et celles que vous ne traitez pas)" },
+                    { path: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v6H3z", text: "Tableau de bord centralisé pour tout gérer" },
+                  ] as { path: string; text: string }[]).map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <span className="text-lg mt-0.5">{item.icon}</span>
+                      <svg className="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                        <path d={item.path}/>
+                      </svg>
                       <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{item.text}</span>
                     </div>
                   ))}
@@ -599,7 +605,11 @@ export default function InscriptionGaragePage() {
 
               <div className="bg-white rounded-2xl border border-gray-200 p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ backgroundColor: "#fff7ed" }}>💬</div>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#fff7ed" }}>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                  </div>
                   <div>
                     <p className="font-bold text-gray-900 text-sm">"Un client de plus par semaine couvre largement l'abonnement"</p>
                   </div>
@@ -692,7 +702,12 @@ export default function InscriptionGaragePage() {
                   <p className="text-xs text-red-500 font-semibold mt-3">{excludedBrands.length} marque{excludedBrands.length > 1 ? "s" : ""} exclue{excludedBrands.length > 1 ? "s" : ""}</p>
                 )}
                 <div className="mt-4 p-3 rounded-xl text-xs" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                  <p className="text-green-700 font-semibold">💡 Conseil</p>
+                  <p className="text-green-700 font-semibold flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18h6M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/>
+                    </svg>
+                    Conseil
+                  </p>
                   <p className="text-green-600 mt-0.5">Les garages avec des marques configurées reçoivent 40% plus de clics car les conducteurs savent qu'ils seront accueillis.</p>
                 </div>
               </div>
@@ -777,7 +792,11 @@ export default function InscriptionGaragePage() {
 
             {/* ROI callout */}
             <div className="rounded-2xl p-5 mb-6 flex items-start gap-4" style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa" }}>
-              <span className="text-3xl">💡</span>
+              <span className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl" style={{ background: "rgba(249,115,22,0.12)" }}>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18h6M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/>
+                </svg>
+              </span>
               <div>
                 <p className="font-black text-gray-900 mb-1">Le retour sur investissement est immédiat</p>
                 <p className="text-gray-600 text-sm">À 49 $/mois, il suffit d'<strong>un seul nouveau client par mois</strong> pour rentabiliser votre abonnement. La majorité de nos garages partenaires déclarent avoir récupéré leur investissement dès la première semaine.</p>

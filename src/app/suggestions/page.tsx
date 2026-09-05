@@ -84,14 +84,22 @@ export default function SuggestionsPage() {
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-8">
         <div className="mb-6">
-          <div className="text-4xl mb-3">💡</div>
+          <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-xl" style={{ background: "#fff7ed" }}>
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18h6M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/>
+            </svg>
+          </div>
           <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{s.title}</h1>
           <p className="text-gray-500 text-sm leading-relaxed">{s.sub}</p>
         </div>
 
         {done ? (
           <div className="text-center py-8">
-            <div className="text-5xl mb-4">✅</div>
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full" style={{ background: "#ecfdf5" }}>
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+            </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{s.successTitle}</h2>
             <p className="text-gray-500 text-sm mb-6">{s.successSub}</p>
             <div className="flex justify-center gap-3">

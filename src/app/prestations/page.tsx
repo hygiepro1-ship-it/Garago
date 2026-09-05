@@ -42,9 +42,11 @@ function ServiceCard({ cat, stat }: { cat: typeof SERVICE_CATEGORIES[number]; st
         <p className="text-sm font-black" style={{ color: "#0b1f3a" }}>{cat.name}</p>
         <p className="text-xs leading-relaxed flex-1" style={{ color: "#64748b" }}>{cat.description}</p>
         <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl" style={{ background: "#f1f5f9" }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base"
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
-            ⏱
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold" style={{ color: "#94a3b8" }}>Durée estimée</p>

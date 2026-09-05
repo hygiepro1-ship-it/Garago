@@ -175,7 +175,11 @@ export default function FAQPage() {
           <div className="bg-white px-6 sm:px-8 py-8">
             {done ? (
               <div className="text-center py-6">
-                <div className="text-5xl mb-4">✅</div>
+                <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full" style={{ background: "#ecfdf5" }}>
+                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                </div>
                 <h3 className="text-xl font-bold mb-2" style={{ color: "#0b1f3a" }}>{f.successTitle}</h3>
                 <p className="text-sm text-gray-500 mb-6">{f.successSub}</p>
                 <div className="flex justify-center gap-3 flex-wrap">

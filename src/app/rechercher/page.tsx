@@ -183,7 +183,7 @@ function SearchContent() {
             <button
               onClick={applyFilters}
               className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
-              style={{ background: "#f97316", boxShadow: "0 2px 8px rgba(5,150,222,0.25)" }}
+              style={{ background: "#f97316", boxShadow: "0 2px 8px rgba(249,115,22,0.25)" }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

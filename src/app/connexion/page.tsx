@@ -12,10 +12,10 @@ import { useLang } from "@/contexts/LanguageContext";
 function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"] }) {
   const a = labels;
   const features = [
-    { icon: "🔒", text: a.secureLogin },
-    { icon: "📅", text: a.appointmentHistory },
-    { icon: "❤️", text: a.savedFavorites },
-    { icon: "🔔", text: a.customReminders },
+    { icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>), text: a.secureLogin },
+    { icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>), text: a.appointmentHistory },
+    { icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>), text: a.savedFavorites },
+    { icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>), text: a.customReminders },
   ];
 
   return (
@@ -119,7 +119,11 @@ export default function ConnexionPage() {
             {error && (
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
                 style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b" }}>
-                ⚠️ {error}
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                {error}
               </div>
             )}
 
