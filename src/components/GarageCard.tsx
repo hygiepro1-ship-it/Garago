@@ -64,26 +64,26 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
         <div className="flex flex-col sm:flex-row">
 
           {/* GAUCHE — logo + étoiles */}
-          <div className="sm:w-24 flex sm:flex-col items-center sm:items-center justify-start gap-3 sm:gap-2 px-4 py-3 sm:py-5 sm:px-3"
+          <div className="sm:w-[88px] flex sm:flex-col items-center sm:items-center justify-start gap-3 sm:gap-3 px-4 py-3 sm:py-5 sm:px-3"
             style={{ borderRight: "1px solid #f1f5f9" }}>
-            <div className="w-16 h-16 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center font-black text-xl flex-shrink-0"
-              style={{ background: "#f8fafc", border: "2px solid #e2e8f0", color: "#0b1f3a" }}>
+            <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0"
+              style={{ background: "#f1f5f9", border: "1.5px solid #e2e8f0", color: "#0b1f3a", letterSpacing: "-0.02em" }}>
               {garage.logoUrl
                 ? <img src={garage.logoUrl} alt={garage.name} className="w-full h-full object-cover rounded-xl" />
                 : garage.name.slice(0, 2).toUpperCase()}
             </div>
             {garage.reviewCount > 0 ? (
               <div className="sm:text-center">
-                <div className="flex sm:justify-center gap-0.5">
+                <div className="flex sm:justify-center gap-0.5 mb-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} style={{ color: i + 1 <= ratingFull ? "#f59e0b" : "#e2e8f0", fontSize: 10 }}>★</span>
+                    <span key={i} style={{ color: i + 1 <= ratingFull ? "#f59e0b" : "#e2e8f0", fontSize: 11 }}>★</span>
                   ))}
                 </div>
-                <p className="text-xs font-black mt-0.5" style={{ color: "#0b1f3a" }}>{rating}</p>
-                <p style={{ fontSize: 10, color: "#94a3b8" }}>({garage.reviewCount})</p>
+                <p className="text-sm font-black sm:text-center" style={{ color: "#0b1f3a", lineHeight: 1 }}>{rating}</p>
+                <p className="sm:text-center" style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>{garage.reviewCount} avis</p>
               </div>
             ) : (
-              <p className="text-xs font-semibold sm:text-center" style={{ color: "#94a3b8" }}>{c.newGarage}</p>
+              <p className="text-xs font-medium sm:text-center" style={{ color: "#94a3b8" }}>{c.newGarage}</p>
             )}
           </div>
 
@@ -92,13 +92,22 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
             <div className="flex flex-wrap items-start gap-2 mb-1.5">
               <h3 className="text-base font-black leading-tight" style={{ color: "#0b1f3a" }}>{garage.name}</h3>
               {garage.isAmbassador && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white font-black"
-                  style={{ fontSize: 10, background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
-                  ★ Ambassadeur
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold"
+                  style={{ fontSize: 10, background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                  </svg>
+                  Ambassadeur
                 </span>
               )}
               {garage.subscriptionStatus === "active" && (
-                <span className="badge badge-orange" style={{ fontSize: 10 }}>{c.certified}</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold"
+                  style={{ fontSize: 10, background: "#0b1f3a", color: "#f97316" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  {c.certified}
+                </span>
               )}
             </div>
 
@@ -168,8 +177,8 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
               </div>
             </div>
             <div className="mt-3 sm:mt-4">
-              <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 2px 10px rgba(249,115,22,0.3)" }}>
+              <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90"
+                style={{ background: "#f97316" }}>
                 {c.bookAppt}
               </div>
             </div>

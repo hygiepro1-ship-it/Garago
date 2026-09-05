@@ -109,13 +109,13 @@ export default function PrestationsPage() {
             const active = activeFilter === f.id;
             return (
               <button key={f.id} onClick={() => setActiveFilter(f.id)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-all"
                 style={{
-                  background:   active ? "#f97316" : "rgba(255,255,255,0.07)",
-                  color:        active ? "#fff"     : "rgba(255,255,255,0.55)",
-                  border:       `2px solid ${active ? "#f97316" : "rgba(255,255,255,0.1)"}`,
-                  boxShadow:    active ? "0 4px 15px rgba(249,115,22,0.35)" : "none",
-                  transform:    active ? "translateY(-1px)" : "none",
+                  borderRadius:  "99px",
+                  background:    active ? "#f97316" : "rgba(255,255,255,0.06)",
+                  color:         active ? "#fff"    : "rgba(255,255,255,0.5)",
+                  border:        `1.5px solid ${active ? "#f97316" : "rgba(255,255,255,0.1)"}`,
+                  boxShadow:     active ? "0 0 0 3px rgba(249,115,22,0.2)" : "none",
                 }}>
                 {f.iconPath && (
                   <img src={f.iconPath} alt="" width={16} height={16}
