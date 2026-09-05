@@ -207,7 +207,10 @@ function SearchContent() {
             {(year || make || model) && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold"
                 style={{ background: "#fff4ed", color: "#f97316", border: "1px solid #fed7aa" }}>
-                🚗 {[year, make, model].filter(Boolean).join(" ")}
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
+                </svg>
+                {[year, make, model].filter(Boolean).join(" ")}
               </div>
             )}
           </div>
@@ -379,7 +382,12 @@ function SearchContent() {
               {hasFilters && (
                 <div className="flex flex-wrap gap-1.5">
                   {make && (
-                    <span className="badge badge-blue">🚗 {make} {model}</span>
+                    <span className="badge badge-blue flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
+                      </svg>
+                      {make} {model}
+                    </span>
                   )}
                   {selectedService && (
                     <span className="badge badge-blue flex items-center gap-1">
@@ -388,7 +396,12 @@ function SearchContent() {
                       {selectedService.name}
                     </span>
                   )}
-                  {city && <span className="badge badge-gray">📍 {city}</span>}
+                  {city && <span className="badge badge-gray flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {city}
+                  </span>}
                   {walkInOnly && <span className="badge badge-green">Sans RDV</span>}
                   {minRating && <span className="badge badge-blue">{minRating}★+</span>}
                 </div>
@@ -404,7 +417,11 @@ function SearchContent() {
               </div>
             ) : displayGarages.length === 0 ? (
               <div className="bg-white rounded-2xl text-center py-20 px-8" style={{ border: "1px solid #e2e8f0" }}>
-                <div className="text-5xl mb-4">🔍</div>
+                <div className="mb-5 flex justify-center">
+                  <svg className="w-14 h-14" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                </div>
                 <h3 className="text-xl font-black mb-2" style={{ color: "#0b1f3a" }}>{s.noGarageFound}</h3>
                 <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
                   {s.noGarageFoundSub}

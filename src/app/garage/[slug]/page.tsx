@@ -143,7 +143,11 @@ export default function GarageProfilePage() {
   if (!garage || garage.error) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-20 text-center">
-        <div className="text-5xl mb-4">🔧</div>
+        <div className="mb-4 flex justify-center">
+          <svg className="w-14 h-14" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{g.notFound}</h1>
         <Link href="/rechercher" className="hover:underline" style={{ color: "#f97316" }}>{g.backToSearch}</Link>
       </div>
@@ -250,7 +254,11 @@ export default function GarageProfilePage() {
                     }}
                   />
                 </>
-              ) : "🔧"}
+              ) : (
+                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                </svg>
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between flex-wrap gap-2">
@@ -271,7 +279,10 @@ export default function GarageProfilePage() {
                     className="text-gray-500 hover:text-orange-500 transition-colors text-sm inline-flex items-center gap-1 group"
                     title="Voir sur Google Maps"
                   >
-                    📍 <span className="group-hover:underline">{garage.address}, {garage.city}, {garage.province} {garage.postalCode}</span>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span className="group-hover:underline">{garage.address}, {garage.city}, {garage.province} {garage.postalCode}</span>
                     <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
@@ -313,7 +324,10 @@ export default function GarageProfilePage() {
           {/* Contact */}
           <div className="flex flex-wrap gap-3">
             <a href={`tel:${garage.phone}`} className="flex items-center gap-2 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm" style={{ background: "#f97316" }}>
-              📞 {garage.phone}
+              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 19.79 19.79 0 01.99 1.18 2 2 0 013 .01h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+              {garage.phone}
             </a>
           </div>
         </div>
