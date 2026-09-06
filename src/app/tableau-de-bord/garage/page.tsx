@@ -2,13 +2,13 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
 import { SERVICE_CATEGORIES } from "@/lib/services";
-import { formatPriceRange } from "@/lib/utils";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
+import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "ambassadeur";
