@@ -583,6 +583,75 @@ export default function DashboardConducteurPage() {
         <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.subtitle}</p>
       </div>
 
+      {/* ── KPI widgets ── */}
+      {apptsLoaded && (() => {
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        const totalRdv = appts.filter(a => a.status !== "CANCELLED").length;
+        const garagesVisites = new Set(appts.filter(a => a.status === "COMPLETED" || a.status === "CONFIRMED").map(a => a.garage.slug)).size;
+        const prochainRdv = appts
+          .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr)
+          .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0];
+
+        return (
+          <div className="space-y-4 mb-6">
+            {/* KPI row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(249,115,22,0.08)" }}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{totalRdv}</p>
+                  <p className="text-xs text-gray-400 font-semibold">Rendez-vous</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(11,31,58,0.06)" }}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#0b1f3a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{garagesVisites}</p>
+                  <p className="text-xs text-gray-400 font-semibold">Garages visités</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Prochain RDV banner */}
+            {prochainRdv && (
+              <div className="rounded-2xl p-4 flex items-center gap-4"
+                style={{ background: "linear-gradient(135deg, #fff7ed, #fff)", border: "1.5px solid #fed7aa" }}>
+                <div className="w-12 h-12 rounded-xl flex-shrink-0 flex flex-col items-center justify-center"
+                  style={{ background: "#f97316" }}>
+                  <span className="text-white text-xs font-black leading-none uppercase">
+                    {new Date(prochainRdv.date + "T12:00:00").toLocaleDateString("fr-CA", { month: "short" })}
+                  </span>
+                  <span className="text-white text-lg font-black leading-tight">
+                    {new Date(prochainRdv.date + "T12:00:00").getDate()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black uppercase tracking-widest mb-0.5" style={{ color: "#f97316" }}>Prochain rendez-vous</p>
+                  <p className="font-bold text-gray-900 text-sm truncate">{prochainRdv.garage.name}</p>
+                  <p className="text-xs text-gray-500">{prochainRdv.startTime} – {prochainRdv.endTime}{prochainRdv.serviceName ? ` · ${prochainRdv.serviceName}` : ""}</p>
+                </div>
+                <Link href={`/garage/${prochainRdv.garage.slug}`}
+                  className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors hover:opacity-80"
+                  style={{ background: "#f97316", color: "#fff" }}>
+                  Voir →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Main panel */}

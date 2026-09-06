@@ -177,6 +177,14 @@ export default function HomePage() {
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
+          {/* Trust eyebrow */}
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <span className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{ background: "rgba(249,115,22,0.12)", color: "#fb923c", border: "1px solid rgba(249,115,22,0.2)" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+              500+ garages partenaires au Québec
+            </span>
+          </div>
           <div className="mb-2 sm:mb-4">
             <img src="/garago_logo_transparent_1.png" alt="Garago"
               style={{ maxHeight: "clamp(120px, 30vw, 220px)", maxWidth: "80%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
@@ -320,20 +328,28 @@ export default function HomePage() {
       <section className="py-10 sm:py-16" style={{ background: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
+            <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: "#f97316" }}>Simple &amp; rapide</p>
             <h2 className="text-xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>{h.howTitle}</h2>
             <p className="text-sm" style={{ color: "#94a3b8" }}>{h.howSub}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connector line on desktop */}
+            <div className="hidden md:block absolute top-8 left-1/3 right-1/3 h-0.5 pointer-events-none"
+              style={{ background: "linear-gradient(90deg, #fed7aa, #f97316, #fed7aa)", zIndex: 0 }} />
             {h.howSteps.map((s, i) => (
-              <div key={i} className="flex flex-col items-center text-center">
+              <div key={i} className="flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
                 <div className="relative mb-5">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                    style={{ background: "#fff4ed", border: "2px solid #fed7aa" }}>
-                    <img src={s.iconPath} alt={s.title} width={36} height={36}
+                  {/* Numbered circle */}
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 4px 16px rgba(249,115,22,0.35)" }}>
+                    <span className="text-2xl font-black text-white">{i + 1}</span>
+                  </div>
+                  {/* Icon badge */}
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: "#fff", border: "2px solid #fed7aa", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                    <img src={s.iconPath} alt={s.title} width={18} height={18}
                       style={{ filter: "brightness(0) saturate(100%) invert(45%) sepia(97%) saturate(1000%) hue-rotate(0deg) brightness(100%)" }} />
                   </div>
-                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white"
-                    style={{ background: "#f97316" }}>{i + 1}</div>
                 </div>
                 <h3 className="text-base font-black mb-2" style={{ color: "#0b1f3a" }}>{s.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: "#64748b" }}>{s.desc}</p>
