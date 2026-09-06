@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
+import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 
 interface GarageCardProps {
@@ -136,7 +137,7 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {services.map((s, i) => (
                   <span key={i} className="badge badge-navy">
-                    {s.category.icon && <span>{s.category.icon}</span>}
+                    <ServiceIcon name={s.category.name} size={12} />
                     {s.category.name}
                     {s.priceMin && <span className="ml-0.5 font-black" style={{ color: "#f97316" }}>{s.priceMin}$</span>}
                   </span>

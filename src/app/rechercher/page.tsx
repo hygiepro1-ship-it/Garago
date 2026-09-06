@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
+import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { garageDistance, formatDistance } from "@/lib/geo";
@@ -178,7 +179,7 @@ function SearchContent() {
               value={service} onChange={(e) => setService(e.target.value)}
             >
               <option value="">{s.service}</option>
-              {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
+              {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
             </select>
 
             <button
@@ -289,7 +290,7 @@ function SearchContent() {
                   <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
                   <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                     <option value="">{s.allServices}</option>
-                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
+                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                   </select>
                 </div>
                 <div>
@@ -348,9 +349,13 @@ function SearchContent() {
                       : { color: "#475569" }
                     }
                   >
-                    <span>{sc.icon}</span>
+                    <ServiceIcon id={sc.id} size={16} />
                     <span>{sc.name}</span>
-                    {service === sc.id && <span className="ml-auto text-xs">✓</span>}
+                    {service === sc.id && (
+                      <svg className="ml-auto flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
                   </button>
                 ))}
               </div>
@@ -364,7 +369,12 @@ function SearchContent() {
             <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
               <div>
                 <h1 className="text-xl font-black" style={{ color: "#0b1f3a" }}>
-                  {selectedService ? `${selectedService.icon} ${selectedService.name}` : s.allGarages}
+                  {selectedService ? (
+                    <span className="inline-flex items-center gap-2">
+                      <ServiceIcon id={selectedService.id} size={20} />
+                      {selectedService.name}
+                    </span>
+                  ) : s.allGarages}
                   {city && <span style={{ color: "#94a3b8" }}> — {city}</span>}
                 </h1>
                 <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>
@@ -486,7 +496,7 @@ function SearchContent() {
                 <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
                 <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                   <option value="">{s.allServices}</option>
-                  {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.icon} {sc.name}</option>)}
+                  {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                 </select>
               </div>
               <div>
