@@ -177,14 +177,7 @@ export default function HomePage() {
           style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
-          {/* Trust eyebrow */}
-          <div className="flex justify-center mb-3 sm:mb-4">
-            <span className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full"
-              style={{ background: "rgba(249,115,22,0.12)", color: "#fb923c", border: "1px solid rgba(249,115,22,0.2)" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-              Garages vérifiés · Prix transparents · Réservation en ligne
-            </span>
-          </div>
+
           <div className="mb-2 sm:mb-4">
             <img src="/garago_logo_transparent_1.png" alt="Garago"
               style={{ maxHeight: "clamp(120px, 30vw, 220px)", maxWidth: "80%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
