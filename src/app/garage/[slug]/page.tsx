@@ -159,10 +159,15 @@ export default function GarageProfilePage() {
   const refusedBrands  = garage.brands?.filter((b: any) => !b.accepts) ?? [];
   const garageLangs    = parseGarageLangs(garage.languages);
 
-  // Unique service categories offered by this garage
-  const offeredCategories = SERVICE_CATEGORIES.filter(sc =>
-    garage.services?.some((s: any) => s.categoryId === sc.id || s.category?.name === sc.name)
-  );
+  // Group services by category name (same as old code — uses API data directly)
+  const servicesByCategory: Record<string, { catName: string; catId: string; services: any[] }> = {};
+  for (const s of garage.services ?? []) {
+    const catName = s.category?.name;
+    if (!catName) continue;
+    if (!servicesByCategory[catName]) servicesByCategory[catName] = { catName, catId: s.categoryId ?? "", services: [] };
+    servicesByCategory[catName].services.push(s);
+  }
+  const offeredGroups = Object.values(servicesByCategory);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -359,7 +364,7 @@ export default function GarageProfilePage() {
           )}
 
           {/* Services */}
-          {offeredCategories.length > 0 && (
+          {offeredGroups.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -368,23 +373,20 @@ export default function GarageProfilePage() {
                 {g.servicesOffered}
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {offeredCategories.map((sc) => {
-                  const svc = garage.services?.find((s: any) => s.categoryId === sc.id || s.category?.name === sc.name);
-                  return (
-                    <div key={sc.id}
-                      className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 bg-gray-50 hover:border-orange-200 hover:bg-orange-50 transition-colors group">
-                      <span className="text-gray-400 group-hover:text-orange-500 transition-colors flex-shrink-0">
-                        <ServiceIcon id={sc.id} size={18} />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{sc.name}</p>
-                        {svc?.durationMin && (
-                          <p className="text-xs text-gray-400 mt-0.5">{svc.durationMin} min</p>
-                        )}
-                      </div>
+                {offeredGroups.map(({ catName, catId, services }) => (
+                  <div key={catName}
+                    className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-100 bg-gray-50 hover:border-orange-200 hover:bg-orange-50 transition-colors group">
+                    <span className="text-gray-400 group-hover:text-orange-500 transition-colors flex-shrink-0">
+                      <ServiceIcon id={catId} name={catName} size={18} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{catName}</p>
+                      {services[0]?.durationMin && (
+                        <p className="text-xs text-gray-400 mt-0.5">{services[0].durationMin} min</p>
+                      )}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
