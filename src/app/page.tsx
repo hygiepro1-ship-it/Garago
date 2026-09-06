@@ -182,7 +182,7 @@ export default function HomePage() {
             <span className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full"
               style={{ background: "rgba(249,115,22,0.12)", color: "#fb923c", border: "1px solid rgba(249,115,22,0.2)" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-              500+ garages partenaires au Québec
+              Garages vérifiés · Prix transparents · Réservation en ligne
             </span>
           </div>
           <div className="mb-2 sm:mb-4">
