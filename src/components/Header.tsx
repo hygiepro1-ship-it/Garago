@@ -209,7 +209,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50"
-      style={{ background: "#0b1f3a", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+      style={{ background: "rgba(11,31,58,0.97)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-5 h-16">
 
@@ -227,8 +227,11 @@ export default function Header() {
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-3 py-2 text-sm font-semibold rounded-lg transition-colors"
-                style={{ color: pathname === item.href ? "#f97316" : "rgba(255,255,255,0.6)" }}>
+                className="px-3 py-2 text-sm font-semibold rounded-lg transition-all"
+                style={{
+                  color: pathname === item.href ? "#f97316" : "rgba(255,255,255,0.6)",
+                  background: pathname === item.href ? "rgba(249,115,22,0.1)" : "transparent",
+                }}>
                 {item.label}
               </Link>
             ))}

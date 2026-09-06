@@ -84,6 +84,70 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+// ─── Comparison table ─────────────────────────────────────────────────────────
+
+function Check({ v }: { v: boolean }) {
+  if (v) return (
+    <span className="flex items-center justify-center">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="#dcfce7" />
+        <path d="M8 12l3 3 5-5" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+  return <span className="flex items-center justify-center" style={{ color: "#cbd5e1", fontSize: "18px", lineHeight: 1 }}>—</span>;
+}
+
+function ComparisonTable({ p }: {
+  p: {
+    freeFeatures: string[]; proFeatures: string[]; annualFeatures: string[];
+    freePlanTitle: string;  proMonthlyTitle: string; proAnnualTitle: string;
+  };
+}) {
+  const groups = [
+    { label: "Inclus dans tous les plans", rows: p.freeFeatures.map(f => ({ text: f, vals: [true, true, true] as [boolean, boolean, boolean] })) },
+    { label: "Fonctionnalités Pro", rows: p.proFeatures.slice(1).map(f => ({ text: f, vals: [false, true, true] as [boolean, boolean, boolean] })) },
+    { label: "Avantages Annuel seulement", rows: p.annualFeatures.slice(1).map(f => ({ text: f, vals: [false, false, true] as [boolean, boolean, boolean] })) },
+  ];
+  return (
+    <div className="mt-10">
+      <div className="text-center mb-6">
+        <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1.5">Tableau comparatif</p>
+        <h3 className="text-xl font-black text-gray-900">Comparer les formules</h3>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
+              <th style={{ textAlign: "left", paddingBottom: "14px", paddingRight: "16px", color: "#64748b", fontWeight: 600, width: "48%" }}>Fonctionnalité</th>
+              <th style={{ textAlign: "center", paddingBottom: "14px", paddingInline: "12px", color: "#94a3b8", fontWeight: 700, minWidth: "90px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{p.freePlanTitle}</th>
+              <th style={{ textAlign: "center", paddingBottom: "14px", paddingInline: "12px", color: "#f97316", fontWeight: 900, minWidth: "110px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em", background: "rgba(249,115,22,0.05)", borderRadius: "10px 10px 0 0" }}>{p.proMonthlyTitle}</th>
+              <th style={{ textAlign: "center", paddingBottom: "14px", paddingInline: "12px", color: "#0b1f3a", fontWeight: 700, minWidth: "90px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{p.proAnnualTitle}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groups.flatMap((group, gi) => [
+              <tr key={`gh-${gi}`}>
+                <td colSpan={4} style={{ paddingTop: "18px", paddingBottom: "6px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#94a3b8" }}>{group.label}</span>
+                </td>
+              </tr>,
+              ...group.rows.map((row, ri) => (
+                <tr key={`rw-${gi}-${ri}`} style={{ borderBottom: "1px solid #f8fafc" }}>
+                  <td style={{ padding: "11px 16px 11px 0", color: "#374151", fontWeight: 500 }}>{row.text}</td>
+                  <td style={{ textAlign: "center", padding: "11px 12px" }}><Check v={row.vals[0]} /></td>
+                  <td style={{ textAlign: "center", padding: "11px 12px", background: "rgba(249,115,22,0.03)" }}><Check v={row.vals[1]} /></td>
+                  <td style={{ textAlign: "center", padding: "11px 12px" }}><Check v={row.vals[2]} /></td>
+                </tr>
+              )),
+            ])}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TarifsPage() {
@@ -177,7 +241,7 @@ export default function TarifsPage() {
             <p className="text-gray-500 mt-2">{p.plansSub}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center mb-6">
             {/* Essai gratuit */}
             <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-8">
               <img src="/icons/pricing/gift.png" alt="" width={36} height={36} className="mb-3" />
@@ -202,7 +266,7 @@ export default function TarifsPage() {
 
             {/* Pro Mensuel */}
             <div className="rounded-2xl p-5 sm:p-8 relative"
-              style={{ background: "linear-gradient(160deg, #0b1f3a, #0d2a50)", border: "2px solid #f97316" }}>
+              style={{ background: "linear-gradient(160deg, #0b1f3a, #0d2a50)", border: "2px solid #f97316", boxShadow: "0 24px 64px rgba(249,115,22,0.22), 0 8px 32px rgba(11,31,58,0.35)", transform: "scale(1.04)", zIndex: 1 }}>
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-black text-white"
                 style={{ backgroundColor: "#f97316" }}>
                 {p.proBadge}
@@ -259,8 +323,10 @@ export default function TarifsPage() {
             </div>
           </div>
 
+          <ComparisonTable p={p} />
+
           {/* ROI callout */}
-          <div className="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-5"
+          <div className="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-5 mt-10"
             style={{ background: "linear-gradient(135deg, #fff7ed, #fef3c7)", border: "1px solid #fed7aa" }}>
             <img src="/icons/pricing/bulb.png" alt="" width={60} height={60} className="flex-shrink-0" />
             <div>
