@@ -282,7 +282,6 @@ export default function HomePage() {
                 onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#f97316"; el.style.background = "#fff4ed"; }}
                 onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#e2e8f0"; el.style.background = "white"; }}>
                 <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#0b1f3a" }}>{s.name}</span>
-                <span className="text-xs font-semibold" style={{ color: "#94a3b8" }}>{s.price}</span>
               </button>
             ))}
           </div>
