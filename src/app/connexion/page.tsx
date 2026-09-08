@@ -102,7 +102,8 @@ export default function ConnexionPage() {
         <div className="w-full max-w-sm">
 
           <div className="lg:hidden text-center mb-8">
-            <Link href="/" className="inline-flex justify-center">
+            <Link href="/" className="inline-flex justify-center items-center px-4 py-2 rounded-2xl"
+              style={{ background: "#0b1f3a" }}>
               <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-10 w-auto object-contain" />
             </Link>
           </div>
@@ -119,9 +120,9 @@ export default function ConnexionPage() {
           <div className="space-y-2.5 mb-6">
             <button type="button"
               onClick={() => signIn("google", { callbackUrl: "/tableau-de-bord/conducteur" })}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border font-semibold text-sm transition-all hover:bg-gray-50"
-              style={{ borderColor: "#e2e8f0", color: "#374151", background: "#fff" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24">
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border font-semibold text-sm transition-all active:scale-[0.98]"
+              style={{ borderColor: "#e2e8f0", color: "#374151", background: "#fff", minHeight: 48 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -131,10 +132,10 @@ export default function ConnexionPage() {
             </button>
             <button type="button"
               onClick={() => signIn("apple", { callbackUrl: "/tableau-de-bord/conducteur" })}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all hover:opacity-85"
-              style={{ background: "#000", color: "#fff" }}>
-              <svg width="16" height="19" viewBox="0 0 814 1000" fill="currentColor">
-                <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.9-155.5-127.4C46 376.8 27.4 158.9 103.4 94.7c43.5-36.5 97.5-55.1 153.1-55.1 53.9 0 102.1 39.7 160.1 39.7 57.2 0 91.1-39.7 164.7-39.7 58.7 0 105.9 24.8 145.3 74.4zm-139.9-166.6c-23.4 27.3-61.1 48.7-95.7 48.7-6.4 0-12.8-.6-19.3-1.9-1.3-6.4-1.9-12.8-1.9-20.5 0-50.1 22.2-93.6 56-123.1 25.4-21.4 67-37.3 101.3-37.9.6 6.4 1.3 12.2 1.3 19.3 0 48.7-20.5 94.9-41.7 115.4z"/>
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] active:opacity-80"
+              style={{ background: "#000", color: "#fff", minHeight: 48 }}>
+              <svg width="17" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.459 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/>
               </svg>
               Continuer avec Apple
             </button>

@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
@@ -14,6 +15,21 @@ export const authOptions: NextAuthOptions = {
     error: "/connexion",
   },
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [GoogleProvider({
+          clientId:     process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          profile(profile) {
+            return {
+              id:    profile.sub,
+              name:  profile.name,
+              email: profile.email,
+              image: profile.picture,
+              role:  "DRIVER" as const,
+            };
+          },
+        })]
+      : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
