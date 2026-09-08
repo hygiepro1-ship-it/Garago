@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
     const make = searchParams.get("make");
     const year = searchParams.get("year");
     const q = searchParams.get("q");
+    const walkInOnly = searchParams.get("walkInOnly") === "1";
     const page = parseInt(searchParams.get("page") ?? "1");
     const limit = parseInt(searchParams.get("limit") ?? "12");
 
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
     };
 
     if (city) where.city = { contains: city };
+    if (walkInOnly) where.acceptsWalkIn = true;
     if (q) {
       where.OR = [
         { name: { contains: q } },

@@ -133,7 +133,7 @@ export default function ConseilsPage() {
             <span style={{ color: "#f97316" }}>toute l'année</span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Conseils pratiques adaptés aux conducteurs québécois — entretien, sécurité, saisons et économies.
+            Conseils pratiques adaptés aux conducteurs québécois — entretien, sécurité et saisons.
           </p>
         </div>
       </section>

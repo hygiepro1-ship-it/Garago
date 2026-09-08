@@ -159,7 +159,7 @@ export default function PrestationsPage() {
             Comparez les garages,<br />réservez en ligne.
           </h2>
           <p className="mb-8" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Avis vérifiés · Prix transparents · Prise de rendez-vous instantanée
+            Avis vérifiés · Garages qualifiés · Prise de rendez-vous instantanée
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/rechercher"

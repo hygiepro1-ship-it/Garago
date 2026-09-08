@@ -315,6 +315,38 @@ export async function sendBookingReminder(params: BookingReminderParams) {
   await send(params.to, `⏰ Rappel RDV demain — ${params.garageName} à ${params.startTime}`, body);
 }
 
+// ─── Email: Rappel d'entretien véhicule ───────────────────────────────────────
+
+export interface MaintenanceReminderParams {
+  to:           string;
+  customerName: string;
+  title:        string;
+  notes?:       string | null;
+  dueDate:      string;
+  vehicleLabel?: string | null;
+}
+
+export async function sendMaintenanceReminder(params: MaintenanceReminderParams) {
+  if (!canSend()) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel d'entretien ⏰</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, un entretien approche pour votre véhicule.</p>
+
+    ${infoCard(`
+      ${row("🔧", "Entretien", params.title)}
+      ${params.vehicleLabel ? row("🚗", "Véhicule", params.vehicleLabel) : ""}
+      ${row("📅", "Échéance", params.dueDate)}
+    `)}
+
+    ${params.notes ? noteBlock(params.notes) : ""}
+
+    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Retrouvez tous vos rappels dans votre tableau de bord Garago.</p>
+  `;
+
+  await send(params.to, `⏰ Rappel d'entretien — ${params.title}`, body);
+}
+
 // ─── Email: Rendez-vous déplacé ───────────────────────────────────────────────
 
 export interface RescheduleParams extends AppointmentDetails {

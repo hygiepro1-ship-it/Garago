@@ -289,15 +289,16 @@ model UserVehicle {
 }
 
 model MaintenanceReminder {
-  id         String    @id @default(cuid())
-  userId     String
-  vehicleId  String?
-  title      String
-  notes      String?
-  dueDate    DateTime?
-  priority   String    @default("SOON") // URGENT | SOON | LOW
-  done       Boolean   @default(false)
-  createdAt  DateTime  @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  vehicleId    String?
+  title        String
+  notes        String?
+  dueDate      DateTime?
+  priority     String    @default("SOON") // URGENT | SOON | LOW
+  done         Boolean   @default(false)
+  reminderSent Boolean   @default(false)
+  createdAt    DateTime  @default(now())
 
   user    User         @relation(fields: [userId], references: [id])
   vehicle UserVehicle? @relation(fields: [vehicleId], references: [id])

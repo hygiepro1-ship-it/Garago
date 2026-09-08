@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
-import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
+import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { garageDistance, formatDistance } from "@/lib/geo";
 import { useLang } from "@/contexts/LanguageContext";
@@ -46,10 +46,11 @@ function SearchContent() {
   const [garages, setGarages] = useState<SearchGarage[]>([]);
   const [total,   setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
+  const [page,      setPage]      = useState(1);
+  const [hasMore,   setHasMore]   = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const [year,      setYear]      = useState(searchParams.get("year")    ?? "");
   const [make,      setMake]      = useState(searchParams.get("make")    ?? "");
-  const [model,     setModel]     = useState(searchParams.get("model")   ?? "");
   const [service,   setService]   = useState(searchParams.get("service") ?? "");
   const [city,      setCity]      = useState(searchParams.get("city")    ?? "");
   const [walkInOnly, setWalkInOnly] = useState(false);
@@ -68,33 +69,42 @@ function SearchContent() {
   );
   const [sortByDist, setSortByDist] = useState(hasInitPos);
 
-  const years  = getYears();
-  const models = make ? getModelsForMake(make) : [];
   const selectedService = SERVICE_CATEGORIES.find((s) => s.id === service);
 
-  const fetchGarages = useCallback(async () => {
-    setLoading(true);
+  const RESULTS_PER_PAGE = 20;
+
+  const fetchGarages = useCallback(async (targetPage: number) => {
+    if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
-    if (make)    params.set("make",    make);
-    if (service) params.set("service", service);
-    if (city)    params.set("city",    city);
+    if (make)      params.set("make",       make);
+    if (service)   params.set("service",    service);
+    if (city)      params.set("city",       city);
+    if (walkInOnly) params.set("walkInOnly", "1");
+    params.set("page",  String(targetPage));
+    params.set("limit", String(RESULTS_PER_PAGE));
     try {
       const res  = await fetch(`/api/garages?${params}`);
       const data = await res.json();
       let results: SearchGarage[] = data.garages ?? [];
-      if (walkInOnly) results = results.filter((g) => g.acceptsWalkIn);
-      if (minRating)  results = results.filter((g) => g.avgRating >= parseFloat(minRating));
+      if (minRating) results = results.filter((g) => g.avgRating >= parseFloat(minRating));
       results = withDistances(results, userPos);
-      setGarages(results);
-      setTotal(results.length);
+      setGarages((prev) => (targetPage === 1 ? results : [...prev, ...results]));
+      setTotal(data.total ?? results.length);
+      setHasMore(typeof data.pages === "number" ? targetPage < data.pages : false);
+      setPage(targetPage);
     } catch {
-      setGarages([]);
-      setTotal(0);
+      if (targetPage === 1) { setGarages([]); setTotal(0); }
+      setHasMore(false);
     }
     setLoading(false);
+    setLoadingMore(false);
   }, [make, service, city, walkInOnly, minRating, userPos]);
 
-  useEffect(() => { fetchGarages(); }, [fetchGarages]);
+  useEffect(() => { fetchGarages(1); }, [fetchGarages]);
+
+  function loadMore() {
+    if (!loadingMore && hasMore) fetchGarages(page + 1);
+  }
   useEffect(() => {
     if (userPos) setGarages((prev) => withDistances(prev, userPos));
   }, [userPos]);
@@ -140,18 +150,16 @@ function SearchContent() {
 
   function applyFilters() {
     const params = new URLSearchParams();
-    if (year)    params.set("year",    year);
     if (make)    params.set("make",    make);
-    if (model)   params.set("model",   model);
     if (service) params.set("service", service);
     if (city)    params.set("city",    city);
     router.push(`/rechercher?${params}`);
-    fetchGarages();
+    fetchGarages(1);
     setSidebarOpen(false);
   }
 
   function clearAll() {
-    setYear(""); setMake(""); setModel("");
+    setMake("");
     setService(""); setCity(""); setWalkInOnly(false); setMinRating("");
     router.push("/rechercher");
   }
@@ -168,32 +176,14 @@ function SearchContent() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap gap-2 items-center">
 
-            {/* Vehicle selects — hidden on mobile (use drawer instead) */}
+            {/* Vehicle select — hidden on mobile (use drawer instead) */}
             <select
               className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
-              value={year} onChange={(e) => setYear(e.target.value)}
-            >
-              <option value="">{s.year}</option>
-              {years.map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
-
-            <select
-              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
-              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
-              value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}
+              value={make} onChange={(e) => setMake(e.target.value)}
             >
               <option value="">{s.make}</option>
               {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-
-            <select
-              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
-              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
-              value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}
-            >
-              <option value="">{s.model}</option>
-              {models.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
 
             <select
@@ -229,13 +219,13 @@ function SearchContent() {
             </button>
 
             {/* Active vehicle chip */}
-            {(year || make || model) && (
+            {make && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold"
                 style={{ background: "#fff4ed", color: "#f97316", border: "1px solid #fed7aa" }}>
                 <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
                 </svg>
-                {[year, make, model].filter(Boolean).join(" ")}
+                {make}
               </div>
             )}
           </div>
@@ -365,7 +355,7 @@ function SearchContent() {
                 {SERVICE_CATEGORIES.slice(0, 8).map((sc) => (
                   <button
                     key={sc.id}
-                    onClick={() => { setService(sc.id); fetchGarages(); }}
+                    onClick={() => setService(sc.id)}
                     className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
                     style={service === sc.id
                       ? { background: "#fff4ed", color: "#f97316" }
@@ -405,7 +395,7 @@ function SearchContent() {
                     <>
                       <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
                       {total !== 1 ? s.garagesFound : s.garageFound}
-                      {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{make} {model}</strong></span>}
+                      {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{make}</strong></span>}
                       {sortByDist && userPos && <span style={{ color: "#00A884" }}> · {s.sortedByDist}</span>}
                     </>
                   )}
@@ -420,7 +410,7 @@ function SearchContent() {
                       <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
                       </svg>
-                      {make} {model}
+                      {make}
                     </span>
                   )}
                   {selectedService && (
@@ -474,6 +464,15 @@ function SearchContent() {
                     distance={garage.distance_km != null ? formatDistance(garage.distance_km) : undefined}
                   />
                 ))}
+                {hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <button onClick={loadMore} disabled={loadingMore}
+                      className="px-6 py-3 rounded-xl border-2 font-bold text-sm transition-colors disabled:opacity-50"
+                      style={{ borderColor: "#f97316", color: "#f97316", background: "#fff" }}>
+                      {loadingMore ? "Chargement…" : "Voir plus de garages"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -495,24 +494,10 @@ function SearchContent() {
             </div>
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.year}</label>
-                <select className="doc-input" value={year} onChange={(e) => setYear(e.target.value)}>
-                  <option value="">{s.year}</option>
-                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-              <div>
                 <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.make}</label>
-                <select className="doc-input" value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}>
+                <select className="doc-input" value={make} onChange={(e) => setMake(e.target.value)}>
                   <option value="">{s.make}</option>
                   {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.model}</label>
-                <select className="doc-input" value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}>
-                  <option value="">{s.model}</option>
-                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div>

@@ -4,7 +4,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getModelsForMake, getYears } from "@/lib/vehicleData";
 import { BRANDS } from "@/lib/vehicleBrands";
 import BrandLogo from "@/components/BrandLogo";
 import { useLang } from "@/contexts/LanguageContext";
@@ -93,9 +92,7 @@ export default function HomePage() {
   const { t } = useLang();
   const h = t.home;
 
-  const [year,     setYear]     = useState("");
   const [make,     setMake]     = useState("");
-  const [model,    setModel]    = useState("");
   const [location, setLocation] = useState("");
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
@@ -128,11 +125,7 @@ export default function HomePage() {
     );
   }, []);
 
-  const years  = getYears();
-  const models = make ? getModelsForMake(make) : [];
   const VEHICLE_MAKES = BRANDS.map(b => b.name);
-
-  function handleMakeChange(m: string) { setMake(m); setModel(""); }
 
   const handleLocate = useCallback(() => {
     setLocError("");
@@ -143,22 +136,18 @@ export default function HomePage() {
         const p = new URLSearchParams();
         p.set("lat", String(pos.coords.latitude));
         p.set("lng", String(pos.coords.longitude));
-        if (year)  p.set("year",  year);
-        if (make)  p.set("make",  make);
-        if (model) p.set("model", model);
+        if (make) p.set("make", make);
         router.push(`/rechercher?${p.toString()}`);
       },
       () => { setLocating(false); setLocError("Localisation refusée."); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  }, [year, make, model, router]);
+  }, [make, router]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const p = new URLSearchParams();
-    if (year)     p.set("year",  year);
     if (make)     p.set("make",  make);
-    if (model)    p.set("model", model);
     if (location) p.set("q",     location);
     router.push(`/rechercher?${p.toString()}`);
   }
@@ -210,24 +199,17 @@ export default function HomePage() {
             style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
 
             {/* Vehicle row — toujours visible */}
-            <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
-              {[
-                { label: h.yearLabel,  value: year,  setter: setYear,  opts: years.map(y => ({ v: y, l: y })) },
-                { label: h.makeLabel,  value: make,  setter: (v: string) => handleMakeChange(v), opts: VEHICLE_MAKES.map(m => ({ v: m, l: m })) },
-                { label: h.modelLabel, value: model, setter: setModel, opts: models.map(m => ({ v: m, l: m })), disabled: !make },
-              ].map((f, i) => (
-                <div key={f.label} className={`flex flex-col px-2 py-1.5 sm:px-4 sm:py-3 ${i < 2 ? "border-r border-gray-100" : ""}`}>
-                  <label className="font-black truncate" style={{ color: "#94a3b8", fontSize: "9px" }}>{f.label}</label>
-                  <select
-                    className="w-full border-0 bg-transparent py-0.5 sm:py-1 text-xs sm:text-sm focus:outline-none text-gray-800"
-                    value={f.value}
-                    onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
-                    disabled={(f as any).disabled}>
-                    <option value="">{(f as any).disabled ? "—" : h.allOpts}</option>
-                    {f.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
-                </div>
-              ))}
+            <div className="grid grid-cols-1" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
+              <div className="flex flex-col px-2 py-1.5 sm:px-4 sm:py-3">
+                <label className="font-black truncate" style={{ color: "#94a3b8", fontSize: "9px" }}>{h.makeLabel}</label>
+                <select
+                  className="w-full border-0 bg-transparent py-0.5 sm:py-1 text-xs sm:text-sm focus:outline-none text-gray-800"
+                  value={make}
+                  onChange={(e) => setMake(e.target.value)}>
+                  <option value="">{h.allOpts}</option>
+                  {VEHICLE_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
             </div>
 
             {/* Location + search button — always horizontal */}
