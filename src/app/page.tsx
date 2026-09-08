@@ -125,7 +125,7 @@ export default function HomePage() {
         } catch { /* silently fail */ }
       },
       () => {},
-      { timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
 
@@ -150,7 +150,7 @@ export default function HomePage() {
         router.push(`/rechercher?${p.toString()}`);
       },
       () => { setLocating(false); setLocError("Localisation refusée."); },
-      { timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }, [year, make, model, router]);
 

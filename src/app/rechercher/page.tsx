@@ -56,9 +56,17 @@ function SearchContent() {
   const [minRating,  setMinRating]  = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [userPos,    setUserPos]    = useState<UserPos | null>(null);
-  const [geoStatus,  setGeoStatus]  = useState<"idle"|"loading"|"ok"|"denied"|"error">("idle");
-  const [sortByDist, setSortByDist] = useState(false);
+  const initLat = parseFloat(searchParams.get("lat") ?? "");
+  const initLng = parseFloat(searchParams.get("lng") ?? "");
+  const hasInitPos = !isNaN(initLat) && !isNaN(initLng);
+
+  const [userPos,    setUserPos]    = useState<UserPos | null>(
+    hasInitPos ? { lat: initLat, lng: initLng } : null
+  );
+  const [geoStatus,  setGeoStatus]  = useState<"idle"|"loading"|"ok"|"denied"|"error">(
+    hasInitPos ? "ok" : "idle"
+  );
+  const [sortByDist, setSortByDist] = useState(hasInitPos);
 
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
@@ -97,7 +105,7 @@ function SearchContent() {
     navigator.geolocation.getCurrentPosition(
       (pos) => { setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoStatus("ok"); setSortByDist(true); },
       (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); },
-      { timeout: 8000, maximumAge: 60_000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30_000 }
     );
   }
 
