@@ -108,10 +108,9 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Auto-géolocalisation sur mobile à l'arrivée sur le site
+  // Auto-géolocalisation à l'arrivée sur le site
   useEffect(() => {
-    if (typeof window === "undefined" || window.innerWidth >= 640) return;
-    if (!navigator.geolocation) return;
+    if (typeof window === "undefined" || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {

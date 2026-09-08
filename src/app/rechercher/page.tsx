@@ -99,6 +99,21 @@ function SearchContent() {
     if (userPos) setGarages((prev) => withDistances(prev, userPos));
   }, [userPos]);
 
+  // Demande automatique de position au chargement — pour tous les visiteurs
+  useEffect(() => {
+    if (hasInitPos || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoStatus("ok");
+        setSortByDist(true);
+      },
+      (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30_000 }
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function requestLocation() {
     if (!navigator.geolocation) { setGeoStatus("error"); return; }
     setGeoStatus("loading");
