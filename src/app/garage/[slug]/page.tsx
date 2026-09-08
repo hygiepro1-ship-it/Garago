@@ -59,6 +59,8 @@ export default function GarageProfilePage() {
 
   const [garage, setGarage]         = useState<any>(null);
   const [loading, setLoading]       = useState(true);
+  const [coverError, setCoverError] = useState(false);
+  const [logoError,  setLogoError]  = useState(false);
   const [isFav, setIsFav]           = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -193,7 +195,7 @@ export default function GarageProfilePage() {
       <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden mb-8">
         {/* Cover image */}
         <div className="relative h-44 sm:h-56 overflow-hidden">
-          {garage.coverUrl ? (
+          {garage.coverUrl && !coverError ? (
             <>
               {coverP.color ? (
                 <div style={{ position: "absolute", inset: 0, background: coverP.color }} />
@@ -206,6 +208,7 @@ export default function GarageProfilePage() {
                 }} />
               )}
               <img src={garage.coverUrl} alt={`Photo de ${garage.name}`} draggable={false}
+                onError={() => setCoverError(true)}
                 style={{
                   position: "absolute", inset: 0, width: "100%", height: "100%",
                   objectFit: "contain",
@@ -228,7 +231,7 @@ export default function GarageProfilePage() {
             {/* Logo avatar */}
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative bg-gray-100 flex-shrink-0"
               style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
-              {garage.logoUrl ? (
+              {garage.logoUrl && !logoError ? (
                 <>
                   {logoP.color ? (
                     <div style={{ position: "absolute", inset: 0, background: logoP.color }} />
@@ -241,6 +244,7 @@ export default function GarageProfilePage() {
                     }} />
                   )}
                   <img src={garage.logoUrl} alt={garage.name} draggable={false}
+                    onError={() => setLogoError(true)}
                     style={{
                       position: "absolute", inset: 0, width: "100%", height: "100%",
                       objectFit: "contain",
@@ -333,6 +337,8 @@ export default function GarageProfilePage() {
             {/* Fav button (mobile) */}
             {session?.user && (
               <button onClick={toggleFav} disabled={favLoading}
+                aria-label={isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                aria-pressed={isFav}
                 className="sm:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-semibold transition-all disabled:opacity-50"
                 style={isFav ? { background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" } : { background: "#fff", borderColor: "#e5e7eb", color: "#6b7280" }}>
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill={isFav ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">

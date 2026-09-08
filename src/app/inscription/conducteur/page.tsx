@@ -296,41 +296,42 @@ export default function InscriptionConducteurPage() {
             {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.firstName}</label>
-                <input type="text" required className="garago-input" placeholder="Marie"
+                <label htmlFor="firstName" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.firstName}</label>
+                <input id="firstName" type="text" required className="garago-input" placeholder="Marie"
                   value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.lastName}</label>
-                <input type="text" required className="garago-input" placeholder="Tremblay"
+                <label htmlFor="lastName" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.lastName}</label>
+                <input id="lastName" type="text" required className="garago-input" placeholder="Tremblay"
                   value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
             </div>
 
             {/* Courriel */}
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.email}</label>
-              <input type="email" required className="garago-input" placeholder="vous@exemple.com"
+              <label htmlFor="email" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.email}</label>
+              <input id="email" type="email" required className="garago-input" placeholder="vous@exemple.com"
                 value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             {/* Téléphone */}
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
+              <label htmlFor="phone" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
                 Téléphone <span style={{ fontWeight: 500, color: "#94a3b8" }}>(optionnel)</span>
               </label>
-              <input type="tel" className="garago-input" placeholder="(514) 555-1234"
+              <input id="phone" type="tel" className="garago-input" placeholder="(514) 555-1234"
                 value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} />
             </div>
 
             {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.password}</label>
+              <label htmlFor="password" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.password}</label>
               <div className="relative">
-                <input type={showPwd ? "text" : "password"} required minLength={8}
+                <input id="password" type={showPwd ? "text" : "password"} required minLength={8}
                   className="garago-input pr-10" placeholder="Minimum 8 caractères"
                   value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPwd(!showPwd)}
+                  aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <EyeIcon visible={showPwd} />
                 </button>
@@ -352,9 +353,9 @@ export default function InscriptionConducteurPage() {
 
             {/* Confirmation mot de passe */}
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.confirmPassword}</label>
+              <label htmlFor="confirmPwd" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{r.confirmPassword}</label>
               <div className="relative">
-                <input type={showConfirm ? "text" : "password"} required
+                <input id="confirmPwd" type={showConfirm ? "text" : "password"} required
                   className={`garago-input pr-10 ${
                     confirmPwd.length > 0 && confirmPwd !== password
                       ? "border-red-300 focus:border-red-400"
@@ -365,6 +366,7 @@ export default function InscriptionConducteurPage() {
                   placeholder="Répétez votre mot de passe"
                   value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                  aria-label={showConfirm ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <EyeIcon visible={showConfirm} />
                 </button>

@@ -48,14 +48,6 @@ export async function POST(req: NextRequest) {
   const endMin = h * 60 + m + 60;
   const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
 
-  // Check slot is still available
-  const conflict = await prisma.appointment.findFirst({
-    where: { garageId, date, startTime, status: { not: "CANCELLED" } },
-  });
-  if (conflict) {
-    return NextResponse.json({ error: "Ce créneau vient d'être réservé. Veuillez en choisir un autre." }, { status: 409 });
-  }
-
   const sessionUserId = (session?.user as any)?.id ?? null;
 
   // Récupère les préférences de notification du client connecté
@@ -64,26 +56,45 @@ export async function POST(req: NextRequest) {
     : null;
   const notifPref = userPref?.notifPref ?? "EMAIL";
 
-  const appt = await prisma.appointment.create({
-    data: {
-      garageId,
-      userId: sessionUserId,
-      customerName,
-      customerPhone,
-      customerEmail: customerEmail || null,
-      vehicleYear:  vehicleYear  ? Number(vehicleYear)  : null,
-      vehicleMake:  vehicleMake  || null,
-      vehicleModel: vehicleModel || null,
-      serviceName:  serviceName  || null,
-      notes:        notes        || null,
-      date,
-      startTime,
-      endTime,
-      status: "PENDING",
-      source: "ONLINE",
-    },
-    include: { garage: true },
-  });
+  // Check-then-create sous isolation Serializable pour empêcher une double réservation
+  // du même créneau par deux clients simultanés (Postgres détecte et rejette le conflit).
+  let appt;
+  try {
+    appt = await prisma.$transaction(async (tx) => {
+      const conflict = await tx.appointment.findFirst({
+        where: { garageId, date, startTime, status: { not: "CANCELLED" } },
+      });
+      if (conflict) {
+        throw new Error("SLOT_TAKEN");
+      }
+      return tx.appointment.create({
+        data: {
+          garageId,
+          userId: sessionUserId,
+          customerName,
+          customerPhone,
+          customerEmail: customerEmail || null,
+          vehicleYear:  vehicleYear  ? Number(vehicleYear)  : null,
+          vehicleMake:  vehicleMake  || null,
+          vehicleModel: vehicleModel || null,
+          serviceName:  serviceName  || null,
+          notes:        notes        || null,
+          date,
+          startTime,
+          endTime,
+          status: "PENDING",
+          source: "ONLINE",
+        },
+        include: { garage: true },
+      });
+    }, { isolationLevel: "Serializable" });
+  } catch (err: any) {
+    // SLOT_TAKEN (conflit détecté) ou 40001 (échec de sérialisation Postgres — conflit concurrent)
+    if (err?.message === "SLOT_TAKEN" || err?.code === "P2034" || err?.meta?.code === "40001") {
+      return NextResponse.json({ error: "Ce créneau vient d'être réservé. Veuillez en choisir un autre." }, { status: 409 });
+    }
+    throw err;
+  }
 
   const garageAddress = [appt.garage.address, appt.garage.city].filter(Boolean).join(", ");
 

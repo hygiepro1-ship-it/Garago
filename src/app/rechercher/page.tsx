@@ -300,21 +300,21 @@ function SearchContent() {
               </div>
               <div className="p-4 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
-                  <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
+                  <label htmlFor="filter-service" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.prestation}</label>
+                  <select id="filter-service" className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                     <option value="">{s.allServices}</option>
                     {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.cityLabel}</label>
-                  <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
+                  <label htmlFor="filter-city" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.cityLabel}</label>
+                  <select id="filter-city" className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
                     <option value="">{s.allCities}</option>
                     {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.options}</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.options}</label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={walkInOnly} onChange={(e) => setWalkInOnly(e.target.checked)}
                       className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
@@ -322,7 +322,7 @@ function SearchContent() {
                   </label>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.minRating}</label>
+                  <label className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.minRating}</label>
                   <div className="flex gap-1.5">
                     {["", "3", "4", "4.5"].map((r) => (
                       <button
@@ -494,22 +494,22 @@ function SearchContent() {
             </div>
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.make}</label>
-                <select className="doc-input" value={make} onChange={(e) => setMake(e.target.value)}>
+                <label htmlFor="drawer-make" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.make}</label>
+                <select id="drawer-make" className="doc-input" value={make} onChange={(e) => setMake(e.target.value)}>
                   <option value="">{s.make}</option>
                   {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.prestation}</label>
-                <select className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
+                <label htmlFor="drawer-service" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.prestation}</label>
+                <select id="drawer-service" className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                   <option value="">{s.allServices}</option>
                   {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.cityLabel}</label>
-                <select className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
+                <label htmlFor="drawer-city" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.cityLabel}</label>
+                <select id="drawer-city" className="doc-input" value={city} onChange={(e) => setCity(e.target.value)}>
                   <option value="">{s.allCities}</option>
                   {QUEBEC_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -521,7 +521,7 @@ function SearchContent() {
                 </label>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-2" style={{ color: "#94a3b8" }}>{s.minRating}</label>
+                <label className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.minRating}</label>
                 <div className="flex gap-2">
                   {["", "3", "4", "4.5"].map((r) => (
                     <button key={r} onClick={() => setMinRating(r)}

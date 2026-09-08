@@ -448,6 +448,7 @@ export default function InscriptionGaragePage() {
                               className={`${inputClass} pr-9`} placeholder="Min. 8 caractères"
                               value={password} onChange={(e) => setPassword(e.target.value)} />
                             <button type="button" onClick={() => setShowPwd(!showPwd)}
+                              aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                               <EyeIcon visible={showPwd} />
                             </button>
