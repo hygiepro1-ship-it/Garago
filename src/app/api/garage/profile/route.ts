@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendDescriptionReviewEmail } from "@/lib/email";
+import { geocodeAddress } from "@/lib/geocode";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -64,6 +65,14 @@ export async function PUT(req: NextRequest) {
     },
   });
   if (!current) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
+
+  // Géocode l'adresse si elle a changé ou si les coordonnées manquent
+  let geoLat: number | undefined = body.latitude  != null ? parseFloat(body.latitude)  : undefined;
+  let geoLng: number | undefined = body.longitude != null ? parseFloat(body.longitude) : undefined;
+  if ((geoLat == null || geoLng == null) && body.address && body.city) {
+    const coords = await geocodeAddress(body.address, body.city);
+    if (coords) { geoLat = coords.latitude; geoLng = coords.longitude; }
+  }
 
   const newDesc        = body.description?.trim() || null;
   const sameAsApproved = newDesc === (current.description?.trim() ?? null);
@@ -128,8 +137,8 @@ export async function PUT(req: NextRequest) {
       acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
       hourlyRate:      body.hourlyRate != null ? parseFloat(body.hourlyRate) : null,
-      latitude:        body.latitude  != null ? parseFloat(body.latitude)  : undefined,
-      longitude:       body.longitude != null ? parseFloat(body.longitude) : undefined,
+      latitude:        geoLat,
+      longitude:       geoLng,
       coverPosition:   body.coverPosition ?? "center",
       logoPosition:    body.logoPosition  ?? "center",
       ...descFields,

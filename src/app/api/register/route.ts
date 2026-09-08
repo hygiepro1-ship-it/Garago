@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { geocodeAddress } from "@/lib/geocode";
 
 // 32-char alphabet — no ambiguous chars (0/O, 1/I/L removed)
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest) {
         referralCode = generateReferralCode();
       }
 
+      // Géocode l'adresse si lat/lng non fournis par le formulaire
+      let finalLat: number | null = garageLat  ? parseFloat(garageLat)  : null;
+      let finalLng: number | null = garageLng ? parseFloat(garageLng) : null;
+      if ((finalLat == null || finalLng == null) && garageAddress && garageCity) {
+        const coords = await geocodeAddress(garageAddress, garageCity);
+        if (coords) { finalLat = coords.latitude; finalLng = coords.longitude; }
+      }
+
       await prisma.garage.create({
         data: {
           ownerId: user.id,
@@ -77,8 +86,8 @@ export async function POST(req: NextRequest) {
           city: garageCity ?? "",
           postalCode: garagePostalCode ?? "",
           phone: garagePhone ?? phone ?? "",
-          latitude:  garageLat  ? parseFloat(garageLat)  : null,
-          longitude: garageLng ? parseFloat(garageLng) : null,
+          latitude:  finalLat,
+          longitude: finalLng,
           subscriptionStatus: "TRIAL",
           subscriptionEndAt: new Date(Date.now() + (referredByCode ? 60 : 30) * 24 * 60 * 60 * 1000),
           referralCode,
