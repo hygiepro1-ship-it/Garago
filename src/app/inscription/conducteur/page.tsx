@@ -32,10 +32,26 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
 function LeftPanel() {
   const benefits = [
-    { icon: "🔍", title: "Recherche par marque et modèle",  desc: "Trouvez exactement les garages qui connaissent votre véhicule." },
-    { icon: "💰", title: "Prix affichés, sans surprise",    desc: "Comparez les tarifs avant de vous déplacer." },
-    { icon: "📅", title: "Réservation en ligne",           desc: "Choisissez votre créneau en quelques secondes." },
-    { icon: "🔔", title: "Rappels d'entretien",            desc: "Ne ratez plus une vidange ou un changement de pneus." },
+    {
+      icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
+      title: "Recherche par marque et modèle",
+      desc: "Trouvez exactement les garages qui connaissent votre véhicule.",
+    },
+    {
+      icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>),
+      title: "Réservation en ligne",
+      desc: "Choisissez votre créneau en quelques secondes.",
+    },
+    {
+      icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>),
+      title: "Rappels d'entretien",
+      desc: "Ne ratez plus une vidange ou un changement de pneus.",
+    },
+    {
+      icon: (<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>),
+      title: "Garages favoris",
+      desc: "Sauvegardez vos garages de confiance pour y revenir facilement.",
+    },
   ];
 
   return (
@@ -54,7 +70,7 @@ function LeftPanel() {
           <span style={{ color: "#f97316" }}>votre voiture.</span>
         </h2>
         <p className="text-sm leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
-          Créez votre compte gratuitement et accédez à 500+ garages partenaires au Québec.
+          Créez votre compte gratuitement et accédez aux garages partenaires au Québec.
         </p>
 
         <div className="space-y-4">

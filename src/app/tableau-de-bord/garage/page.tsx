@@ -1182,13 +1182,22 @@ export default function DashboardGaragePage() {
   const isTrialExpiring = garage.subscriptionStatus === "TRIAL" && garage.subscriptionEndAt
     && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "apercu",   label: d.overview,  icon: "📊" },
-    { id: "services", label: d.services,  icon: "🔧" },
-    { id: "marques",  label: d.brands,    icon: "🚗" },
-    { id: "horaires", label: d.hours,     icon: "🕐" },
-    { id: "profil",   label: d.profile,   icon: "⚙️" },
-    ...(garage.ambassadorTier >= 1 ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur", icon: "🏅" }] : []),
+  const tabIcons: Record<Tab, ReactNode> = {
+    apercu:      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17h7M17 14v7"/></svg>,
+    services:    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>,
+    marques:     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h5l3 3v4h-8V8zM5 7V3m6 4V3M5 17v4m6-4v4"/><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/></svg>,
+    horaires:    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+    profil:      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+    ambassadeur: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>,
+  };
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "apercu",   label: d.overview  },
+    { id: "services", label: d.services  },
+    { id: "marques",  label: d.brands    },
+    { id: "horaires", label: d.hours     },
+    { id: "profil",   label: d.profile   },
+    ...(garage.ambassadorTier >= 1 ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur" }] : []),
   ];
 
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400";
@@ -1231,7 +1240,7 @@ export default function DashboardGaragePage() {
           </div>
           <button onClick={startCheckout} disabled={checkoutLoading}
             className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
-            {checkoutLoading ? "Chargement…" : "S'abonner — 49$/mois"}
+            {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
           </button>
         </div>
       )}
@@ -1246,7 +1255,7 @@ export default function DashboardGaragePage() {
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
             style={activeTab === tab.id ? { background: "#f97316" } : {}}>
-            <span>{tab.icon}</span>{tab.label}
+            {tabIcons[tab.id]}{tab.label}
           </button>
         ))}
       </div>

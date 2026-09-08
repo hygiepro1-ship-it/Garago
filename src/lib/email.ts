@@ -568,6 +568,7 @@ export interface DescriptionReviewParams {
 }
 
 export async function sendDescriptionReviewEmail(params: DescriptionReviewParams) {
+  if (!canSend()) return;
   const body = `
     <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0b1f3a">📝 Nouvelle description à vérifier</h2>
 
@@ -603,6 +604,7 @@ export interface DescriptionDecisionParams {
 }
 
 export async function sendDescriptionDecisionEmail(params: DescriptionDecisionParams) {
+  if (!canSend()) return;
   const body = params.approved
     ? `
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">✅ Description approuvée</h2>

@@ -46,14 +46,14 @@ export async function POST(req: NextRequest) {
       !process.env.RESEND_API_KEY ||
       process.env.RESEND_API_KEY.startsWith("re_VOTRE");
 
-    // En développement OU Resend non configuré → retourner le code pour les tests
-    if (isDev || resendNotConfigured) {
+    // En développement uniquement → retourner le code pour les tests
+    if (isDev) {
       return NextResponse.json({ ok: true, devCode: code });
     }
 
-    // En production avec Resend configuré mais envoi échoué → erreur explicite
-    if (!emailSent) {
-      console.error("[verify-email/send] Resend configuré mais envoi échoué :", emailError);
+    // En production : si Resend n'est pas configuré, erreur explicite (ne jamais exposer le code)
+    if (resendNotConfigured || !emailSent) {
+      console.error("[verify-email/send] Envoi impossible :", resendNotConfigured ? "Resend non configuré" : emailError);
       return NextResponse.json(
         { error: "Impossible d'envoyer le code de vérification. Vérifiez votre adresse courriel et réessayez." },
         { status: 500 }

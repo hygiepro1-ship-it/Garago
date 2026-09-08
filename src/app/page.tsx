@@ -14,17 +14,17 @@ import { useLang } from "@/contexts/LanguageContext";
 const TESTIMONIALS = [
   {
     name: "Marie-Ève T.", city: "Montréal", rating: 5, vehicle: "Toyota RAV4 2021",
-    text: "J'avais un problème de freins. J'ai trouvé un garage qui indiquait clairement le prix à l'avance. Aucune surprise à la caisse.",
+    text: "J'avais un problème de freins. J'ai trouvé un garage qualifié rapidement grâce aux filtres. Service impeccable, zéro surprise.",
     service: "Freins",
   },
   {
     name: "François L.", city: "Laval", rating: 5, vehicle: "Ford F-150 2019",
-    text: "Avec le filtre par marque, j'ai trouvé exactement ce qu'il fallait pour mon F-150. Service rapide, prix honnête, réservation facile.",
+    text: "Avec le filtre par marque, j'ai trouvé exactement ce qu'il fallait pour mon F-150. Service rapide et réservation ultra facile.",
     service: "Pneus",
   },
   {
     name: "Julie M.", city: "Sherbrooke", rating: 4, vehicle: "Honda Civic 2020",
-    text: "Comparer les prix avant de se déplacer, c'est génial. Le garage que j'ai choisi était moins cher que mon habituel et tout aussi bon.",
+    text: "Pouvoir trouver un garage spécialisé pour ma Civic près de chez moi en quelques secondes, c'est vraiment pratique.",
     service: "Vidange",
   },
 ];

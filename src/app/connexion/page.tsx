@@ -59,7 +59,7 @@ function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"]
           <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
         </div>
         <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
-          &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes, avec le prix affiché d'avance. Incroyable.&rdquo;
+          &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes. Réservation simple, service impeccable. Incroyable.&rdquo;
         </p>
         <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>— Pierre G., Montréal</p>
       </div>
@@ -78,6 +78,7 @@ export default function ConnexionPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [showPwd,  setShowPwd]  = useState(false);
+  const [pwdResetMsg, setPwdResetMsg] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -148,6 +149,13 @@ export default function ConnexionPage() {
                 {error}
               </div>
             )}
+            {pwdResetMsg && (
+              <div className="px-4 py-3 rounded-xl text-sm"
+                style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af" }}>
+                Pour réinitialiser votre mot de passe, contactez-nous à{" "}
+                <a href="mailto:support@garagopro.ca" className="font-bold underline">support@garagopro.ca</a>.
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{a.email}</label>
@@ -158,7 +166,8 @@ export default function ConnexionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{a.password}</label>
-                <button type="button" className="text-xs font-semibold" style={{ color: "#f97316" }}>
+                <button type="button" className="text-xs font-semibold" style={{ color: "#f97316" }}
+                  onClick={() => setPwdResetMsg(true)}>
                   {a.forgotPwd}
                 </button>
               </div>

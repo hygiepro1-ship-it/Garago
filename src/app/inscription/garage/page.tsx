@@ -799,7 +799,7 @@ export default function InscriptionGaragePage() {
               </span>
               <div>
                 <p className="font-black text-gray-900 mb-1">Le retour sur investissement est immédiat</p>
-                <p className="text-gray-600 text-sm">À 49 $/mois, il suffit d'<strong>un seul nouveau client par mois</strong> pour rentabiliser votre abonnement. La majorité de nos garages partenaires déclarent avoir récupéré leur investissement dès la première semaine.</p>
+                <p className="text-gray-600 text-sm">Il suffit d'<strong>un seul nouveau client par mois</strong> pour rentabiliser votre abonnement. La majorité de nos garages partenaires déclarent avoir récupéré leur investissement dès la première semaine.</p>
               </div>
             </div>
 

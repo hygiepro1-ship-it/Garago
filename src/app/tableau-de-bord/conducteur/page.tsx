@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
@@ -820,10 +820,10 @@ export default function DashboardConducteurPage() {
                   {/* Choix du mode */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {([
-                      { value: "EMAIL", icon: "📧", label: "Courriel", desc: "Confirmation et rappels par email" },
-                      { value: "SMS",   icon: "📱", label: "SMS",      desc: "Messages texte sur votre téléphone" },
-                      { value: "BOTH",  icon: "🔔", label: "Les deux", desc: "Courriel + SMS pour ne rien manquer" },
-                    ] as { value: "EMAIL"|"SMS"|"BOTH"; icon: string; label: string; desc: string }[]).map(opt => (
+                      { value: "EMAIL", icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>), label: "Courriel", desc: "Confirmation et rappels par email" },
+                      { value: "SMS",   icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>), label: "SMS",      desc: "Messages texte sur votre téléphone" },
+                      { value: "BOTH",  icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>), label: "Les deux", desc: "Courriel + SMS pour ne rien manquer" },
+                    ] as { value: "EMAIL"|"SMS"|"BOTH"; icon: ReactNode; label: string; desc: string }[]).map(opt => (
                       <button
                         key={opt.value}
                         type="button"
@@ -833,7 +833,7 @@ export default function DashboardConducteurPage() {
                           ? { borderColor: "#f97316", background: "#fff7ed" }
                           : { borderColor: "#e5e7eb", background: "#fff" }}
                       >
-                        <div className="text-2xl mb-2">{opt.icon}</div>
+                        <div className="mb-2">{opt.icon}</div>
                         <p className="font-bold text-gray-900 text-sm">{opt.label}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
                         {notifPref === opt.value && (
@@ -880,7 +880,7 @@ export default function DashboardConducteurPage() {
                   {/* Info Twilio */}
                   {(notifPref === "SMS" || notifPref === "BOTH") && (
                     <div className="rounded-xl p-4 text-xs text-blue-800" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                      <p className="font-semibold mb-1">📱 À propos des SMS</p>
+                      <p className="font-semibold mb-1">À propos des SMS</p>
                       <p>Les notifications par SMS seront disponibles très prochainement. En attendant, vos confirmations seront envoyées par courriel.</p>
                     </div>
                   )}
@@ -920,7 +920,7 @@ export default function DashboardConducteurPage() {
                         className="px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-40 whitespace-nowrap"
                         style={{ background: "#0b1f3a" }}
                       >
-                        {vinLoading ? "…" : "🔍 Rechercher"}
+                        {vinLoading ? "…" : "Rechercher"}
                       </button>
                     </div>
                     {vinError && <p className="text-xs text-red-600 mt-1">{vinError}</p>}
@@ -1003,7 +1003,9 @@ export default function DashboardConducteurPage() {
                 <p className="text-gray-400 text-sm text-center py-6">{t.common.loading}</p>
               ) : favorites.length === 0 ? (
                 <div className="text-center py-10 text-gray-400">
-                  <div className="text-4xl mb-3">♡</div>
+                  <svg className="w-10 h-10 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                  </svg>
                   <p className="text-sm font-medium mb-1">{d.noFavourites}</p>
                   <p className="text-xs mb-4">{d.noFavouritesSub}</p>
                   <Link href="/rechercher" className="text-sm hover:underline" style={{ color: "#f97316" }}>{d.findGarage}</Link>
@@ -1186,7 +1188,9 @@ export default function DashboardConducteurPage() {
           </div>
 
           <div className="text-white rounded-2xl p-5" style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)", border: "1px solid rgba(249,115,22,0.2)" }}>
-            <div className="text-2xl mb-2">🏆</div>
+            <svg className="w-6 h-6 mb-2" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3"/>
+            </svg>
             <h3 className="font-bold mb-1">{d.loyalty}</h3>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.loyaltySub}</p>
           </div>
