@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -296,7 +296,7 @@ function ApptRow({
         <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
           <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs">→</span></p>
           <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
-          {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">🔧 {appt.serviceName}</p>}
+          {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">{appt.serviceName}</p>}
           {(appt.vehicleMake || appt.vehicleYear) && (
             <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
           )}
@@ -305,13 +305,13 @@ function ApptRow({
       </div>
       {appt.completionNote && (
         <div className="rounded-lg px-3 py-2.5 text-xs" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" }}>
-          <p className="font-semibold mb-1">📋 Note du garage</p>
+          <p className="font-semibold mb-1">Note du garage</p>
           <p className="leading-relaxed">{appt.completionNote}</p>
         </div>
       )}
       {!modifiable && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
         <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
-          ⚠️ Pour modifier, appelez le garage : <a href={`tel:${appt.garage.phone}`} className="font-semibold underline">{appt.garage.phone}</a>
+          Pour modifier, appelez le garage : <a href={`tel:${appt.garage.phone}`} className="font-semibold underline">{appt.garage.phone}</a>
         </p>
       )}
       {modifiable && (
@@ -336,6 +336,24 @@ export default function DashboardConducteurPage() {
   const { t } = useLang();
   const d = t.driver;
   const [tab, setTab] = useState<Tab>("rdv");
+
+  // ── Suppression du compte ────────────────────────────────────────────────
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function deleteAccount() {
+    setDeleting(true);
+    setDeleteError("");
+    const res = await fetch("/api/user/profile", { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setDeleting(false);
+      return;
+    }
+    await signOut({ callbackUrl: "/" });
+  }
 
   // ── Appointments ──────────────────────────────────────────────────────────
   const [appts,       setAppts]       = useState<ClientAppt[]>([]);
@@ -660,19 +678,24 @@ export default function DashboardConducteurPage() {
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-1 flex-nowrap">
             {([
-              { id: "rdv",       label: "📅 Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : "") },
-              { id: "vehicules", label: d.vehicles },
-              { id: "favoris",   label: d.favorites },
-              { id: "rappels",     label: d.reminders + (pending.length ? ` (${pending.length})` : "") },
-              { id: "preferences", label: "⚙️ Préférences" },
-            ] as { id: Tab; label: string }[]).map(tb => (
+              { id: "rdv",       label: "Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : ""),
+                icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+              { id: "vehicules", label: d.vehicles,
+                icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h5l3 3v4h-8V8zM5 7V3m6 4V3M5 17v4m6-4v4"/><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/></svg> },
+              { id: "favoris",   label: d.favorites,
+                icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> },
+              { id: "rappels",   label: d.reminders + (pending.length ? ` (${pending.length})` : ""),
+                icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg> },
+              { id: "preferences", label: "Préférences",
+                icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
+            ] as { id: Tab; label: string; icon: ReactNode }[]).map(tb => (
               <button
                 key={tb.id}
                 onClick={() => setTab(tb.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
                 style={tab === tb.id ? { background: "#f97316" } : {}}
               >
-                {tb.label}
+                {tb.icon}{tb.label}
               </button>
             ))}
           </div>
@@ -765,7 +788,7 @@ export default function DashboardConducteurPage() {
                               </div>
                             ) : rescheduleSlots.length === 0 ? (
                               <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fffbeb", color: "#92400e" }}>
-                                ⚠️ Aucun créneau disponible ce jour-là. Essayez une autre date.
+                                Aucun créneau disponible ce jour-là. Essayez une autre date.
                               </div>
                             ) : (
                               <div className="grid grid-cols-3 gap-2">
@@ -810,7 +833,7 @@ export default function DashboardConducteurPage() {
           {/* ── Préférences de notification ── */}
           {tab === "preferences" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">⚙️ Préférences de notification</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Préférences de notification</h2>
               <p className="text-sm text-gray-400 mb-6">Choisissez comment vous souhaitez être informé de vos rendez-vous.</p>
 
               {!prefLoaded ? (
@@ -865,7 +888,7 @@ export default function DashboardConducteurPage() {
                     <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{prefErr}</p>
                   )}
                   {prefSaved && (
-                    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">✅ Préférences sauvegardées !</p>
+                    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">Préférences sauvegardées !</p>
                   )}
 
                   <button
@@ -885,6 +908,37 @@ export default function DashboardConducteurPage() {
                     </div>
                   )}
                 </form>
+              )}
+            </div>
+          )}
+
+          {/* ── Zone de suppression du compte ── */}
+          {tab === "preferences" && (
+            <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-4">
+              <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Cette action est définitive. Votre profil, vos véhicules, rendez-vous, avis et favoris seront effacés — impossible à annuler.
+              </p>
+              {!showDeleteConfirm ? (
+                <button onClick={() => setShowDeleteConfirm(true)}
+                  className="text-sm font-bold text-red-600 border border-red-300 rounded-xl px-4 py-2 hover:bg-red-50 transition-colors">
+                  Supprimer définitivement mon compte
+                </button>
+              ) : (
+                <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+                  <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible.</p>
+                  {deleteError && <p className="text-xs text-red-600 mb-3">{deleteError}</p>}
+                  <div className="flex gap-3">
+                    <button onClick={deleteAccount} disabled={deleting}
+                      className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">
+                      {deleting ? "Suppression…" : "Oui, tout supprimer"}
+                    </button>
+                    <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting}
+                      className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
+                      Annuler
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -926,18 +980,18 @@ export default function DashboardConducteurPage() {
                     {vinError && <p className="text-xs text-red-600 mt-1">{vinError}</p>}
                     {vinSpecs && (
                       <div className="mt-2 rounded-xl p-3 space-y-2" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                        <p className="text-xs font-bold text-green-800">✅ Fiche technique récupérée</p>
+                        <p className="text-xs font-bold text-green-800">Fiche technique récupérée</p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-green-900">
-                          {vinSpecs.engine     && <span>🔧 {vinSpecs.engine}{vinSpecs.hp ? ` · ${vinSpecs.hp} ch` : ""}</span>}
-                          {vinSpecs.fuel       && <span>⛽ {vinSpecs.fuel}</span>}
-                          {vinSpecs.transmission && <span>⚙️ {vinSpecs.transmission}</span>}
-                          {vinSpecs.driveType  && <span>🚗 {vinSpecs.driveType}</span>}
-                          {vinSpecs.bodyType   && <span>🏗️ {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} portes` : ""}</span>}
-                          {tireSize            && <span>🛞 {tireSize}</span>}
+                          {vinSpecs.engine     && <span><strong>Moteur :</strong> {vinSpecs.engine}{vinSpecs.hp ? ` · ${vinSpecs.hp} ch` : ""}</span>}
+                          {vinSpecs.fuel       && <span><strong>Carburant :</strong> {vinSpecs.fuel}</span>}
+                          {vinSpecs.transmission && <span><strong>Transmission :</strong> {vinSpecs.transmission}</span>}
+                          {vinSpecs.driveType  && <span><strong>Rouage :</strong> {vinSpecs.driveType}</span>}
+                          {vinSpecs.bodyType   && <span><strong>Carrosserie :</strong> {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} portes` : ""}</span>}
+                          {tireSize            && <span><strong>Pneus :</strong> {tireSize}</span>}
                         </div>
                         {vinSpecs.recallCount > 0 && (
                           <div className="mt-1 rounded-lg px-3 py-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
-                            <p className="text-xs font-bold text-red-700">⚠️ {vinSpecs.recallCount} rappel{vinSpecs.recallCount > 1 ? "s" : ""} actif{vinSpecs.recallCount > 1 ? "s" : ""} (NHTSA)</p>
+                            <p className="text-xs font-bold text-red-700">{vinSpecs.recallCount} rappel{vinSpecs.recallCount > 1 ? "s" : ""} actif{vinSpecs.recallCount > 1 ? "s" : ""} (NHTSA)</p>
                             {vinSpecs.recalls.slice(0, 2).map((rc: any, i: number) => (
                               <p key={i} className="text-xs text-red-600 mt-0.5">· {rc.component}</p>
                             ))}
@@ -1015,8 +1069,12 @@ export default function DashboardConducteurPage() {
                   {favorites.map(f => (
                     <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-lg flex-shrink-0">
-                          {f.garage.logoUrl ? <img src={f.garage.logoUrl} alt="" className="w-7 h-7 object-cover rounded" /> : "🔧"}
+                        <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          {f.garage.logoUrl ? <img src={f.garage.logoUrl} alt="" className="w-7 h-7 object-cover rounded" /> : (
+                            <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                            </svg>
+                          )}
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900 text-sm truncate">{f.garage.name}</p>
@@ -1119,7 +1177,7 @@ export default function DashboardConducteurPage() {
                             {isOverdue && <span className="text-xs text-red-500 font-medium">{d.overdue}</span>}
                           </div>
                           {r.vehicle && <p className="text-xs text-gray-500 mt-0.5">{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}</p>}
-                          {r.dueDate && <p className="text-xs text-gray-400 mt-0.5">📅 {new Date(r.dueDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}</p>}
+                          {r.dueDate && <p className="text-xs text-gray-400 mt-0.5">{new Date(r.dueDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}</p>}
                           {r.notes && <p className="text-xs text-gray-500 mt-1 italic">{r.notes}</p>}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">

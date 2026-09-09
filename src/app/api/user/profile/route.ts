@@ -59,3 +59,56 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json(updated);
 }
+
+// DELETE /api/user/profile — suppression définitive du compte
+export async function DELETE() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const userId = session.user.id;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+
+  if (user.role === "GARAGE_OWNER") {
+    const garage = await prisma.garage.findUnique({
+      where: { ownerId: userId },
+      select: { id: true, stripeCustomerId: true },
+    });
+
+    if (garage?.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
+      try {
+        const { default: Stripe } = await import("stripe");
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
+        const subs = await stripe.subscriptions.list({ customer: garage.stripeCustomerId, status: "active" });
+        for (const sub of subs.data) {
+          await stripe.subscriptions.cancel(sub.id);
+        }
+      } catch (e) {
+        console.error("[account/delete] Erreur annulation Stripe :", e);
+        return NextResponse.json(
+          { error: "Impossible d'annuler l'abonnement Stripe. Contactez le support avant de réessayer." },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (garage) {
+      // Seul GarageFavorite (favoris d'AUTRES utilisateurs sur ce garage) n'a pas de cascade en base
+      await prisma.garageFavorite.deleteMany({ where: { garageId: garage.id } });
+      await prisma.garage.delete({ where: { id: garage.id } });
+    }
+  }
+
+  // Données personnelles du compte sans cascade en base
+  await prisma.review.deleteMany({ where: { userId } });
+  await prisma.garageFavorite.deleteMany({ where: { userId } });
+  await prisma.maintenanceReminder.deleteMany({ where: { userId } });
+  await prisma.userVehicle.deleteMany({ where: { userId } });
+  // Rendez-vous pris chez d'autres garages : on délie le compte plutôt que de supprimer
+  // l'historique de rendez-vous du garage (userId est nullable — "manuel"/anonyme).
+  await prisma.appointment.updateMany({ where: { userId }, data: { userId: null } });
+
+  await prisma.user.delete({ where: { id: userId } });
+
+  return NextResponse.json({ success: true });
+}

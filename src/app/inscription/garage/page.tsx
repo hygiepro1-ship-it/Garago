@@ -9,6 +9,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
+import ServiceIcon from "@/components/ServiceIcon";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ const PLANS = [
     textColor: "#0b1f3a",
     features: [
       "Profil garage complet",
-      "Gestion des services & prix",
+      "Gestion des services offerts",
       "Marques et modèles configurables",
       "Avis clients vérifiés",
       "Horaires d'ouverture",
@@ -112,7 +113,7 @@ const PLANS = [
   {
     id: "monthly",
     label: "Pro Mensuel",
-    price: "49 $",
+    price: "109,99 $",
     period: "/mois",
     tag: "POPULAIRE",
     color: "#0b1f3a",
@@ -132,7 +133,7 @@ const PLANS = [
   {
     id: "annual",
     label: "Pro Annuel",
-    price: "39 $",
+    price: "88,00 $",
     period: "/mois",
     tag: "−20%",
     color: "#f8fafc",
@@ -590,7 +591,7 @@ export default function InscriptionGaragePage() {
                     { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
                     { path: "M3 4h18a2 2 0 012 2v13a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2zm0 6h18M8 2v4m8-4v4", text: "Gérez vos horaires et disponibilités en temps réel" },
                     { path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", text: "Accumulez des avis vérifiés qui construisent votre réputation" },
-                    { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: "Affichez vos prix — attirez des clients qui savent ce qu'ils veulent" },
+                    { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: "Indiquez précisément les services que vous offrez" },
                     { path: "M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m3 10a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h10a2 2 0 012 2v8z", text: "Indiquez les marques que vous traitez (et celles que vous ne traitez pas)" },
                     { path: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v6H3z", text: "Tableau de bord centralisé pour tout gérer" },
                   ] as { path: string; text: string }[]).map((item, i) => (
@@ -661,7 +662,7 @@ export default function InscriptionGaragePage() {
                           className="w-4 h-4 rounded"
                           style={{ accentColor: "#f97316" }}
                         />
-                        <span className="text-lg">{cat.icon}</span>
+                        <ServiceIcon id={cat.id} size={20} className="text-gray-500" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800">{cat.name}</p>
                           <p className="text-xs text-gray-400 truncate">{cat.description}</p>

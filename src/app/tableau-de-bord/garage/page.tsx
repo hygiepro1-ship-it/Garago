@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -370,8 +370,9 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
       style={{ border: `2px solid ${tier >= 1 ? "#1f2e67" : "#e2e8f0"}` }}>
       <div className="flex items-center justify-between px-5 py-3"
         style={{ background: tier >= 1 ? "linear-gradient(135deg,#1f2e67,#f97316)" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
-        <span className={`text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
-          🏅 Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
+        <span className={`flex items-center gap-1.5 text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>
+          Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
         </span>
         {tier >= 1 && (
           <button onClick={onViewDetails}
@@ -389,7 +390,13 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
               style={done
                 ? { background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.15)" }
                 : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-              <span className="text-sm flex-shrink-0">{done ? "✅" : "🔒"}</span>
+              <span className="flex-shrink-0 w-4 h-4" style={{ color: done ? "#16a34a" : "#94a3b8" }}>
+                {done ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                )}
+              </span>
               <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
               <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
             </div>
@@ -449,7 +456,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
                 const dFr = new Date(s.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
                 return (
                   <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                    <span className="text-red-500">🔒</span>
+                    <svg className="w-4 h-4 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                     <div className="flex-1">
                       <p className="text-xs font-semibold text-red-800">{dFr} — {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
                       {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
@@ -471,11 +478,11 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
 // ─── Ambassadeur tab ─────────────────────────────────────────────────────────
 
 const AMBASSADEUR_PALIERS = [
-  { seuil: 3,  icon: "📊", label: "Statistiques avancées",                    desc: "Vues, rendez-vous, note et taux de conversion" },
-  { seuil: 6,  icon: "💰", label: "−10% sur votre prochaine facture",          desc: "Appliqué automatiquement, une seule fois" },
-  { seuil: 10, icon: "💰", label: "−20% sur votre prochaine facture",          desc: "−30% si abonnement annuel, une seule fois" },
-  { seuil: 15, icon: "🔝", label: "Priorité dans les résultats de recherche",  desc: "Votre garage apparaît en tête — 30 jours" },
-  { seuil: 20, icon: "★",  label: "Badge Certifié Ambassadeur",                desc: "Affiché en permanence sur votre profil public" },
+  { seuil: 3,  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17h7M17 14v7"/></svg>, label: "Statistiques avancées",                    desc: "Vues, rendez-vous, note et taux de conversion" },
+  { seuil: 6,  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>, label: "−10% sur votre prochaine facture",          desc: "Appliqué automatiquement, une seule fois" },
+  { seuil: 10, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>, label: "−20% sur votre prochaine facture",          desc: "−30% si abonnement annuel, une seule fois" },
+  { seuil: 15, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, label: "Priorité dans les résultats de recherche",  desc: "Votre garage apparaît en tête — 30 jours" },
+  { seuil: 20, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>,  label: "Badge Certifié Ambassadeur",                desc: "Affiché en permanence sur votre profil public" },
 ];
 
 interface AmbassadeurStats {
@@ -505,7 +512,12 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
         <div className="p-6 flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{ background: "rgba(255,255,255,0.15)" }}>
-            <span style={{ fontSize: 28 }}>{tier >= 5 ? "★" : "🏅"}</span>
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill={tier >= 5 ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              {tier >= 5
+                ? <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                : <><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></>
+              }
+            </svg>
           </div>
           <div className="flex-1 min-w-0">
             {tier >= 5 ? (
@@ -594,7 +606,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{p.icon}</span>
+                    <span className="w-4 h-4 flex-shrink-0" style={{ color: done ? "#f97316" : "#94a3b8" }}>{p.icon}</span>
                     <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
                     <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
                   </div>
@@ -680,6 +692,24 @@ export default function DashboardGaragePage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // ── Suppression du compte ────────────────────────────────────────────────
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function deleteAccount() {
+    setDeleting(true);
+    setDeleteError("");
+    const res = await fetch("/api/user/profile", { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setDeleting(false);
+      return;
+    }
+    await signOut({ callbackUrl: "/" });
+  }
 
   async function startCheckout() {
     setCheckoutLoading(true);
@@ -1277,6 +1307,25 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
+      {garage.subscriptionStatus === "TRIAL" && !isTrialExpiring && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+            </svg>
+            <div>
+              <p className="font-bold text-gray-900">Vous êtes actuellement en période d'essai gratuit</p>
+              <p className="text-gray-500 text-sm">Vous pouvez activer votre abonnement dès maintenant, sans attendre la fin de l'essai.</p>
+            </div>
+          </div>
+          <button onClick={startCheckout} disabled={checkoutLoading}
+            className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
+            style={{ background: "#f97316" }}>
+            {checkoutLoading ? "Chargement…" : "Activer mon abonnement maintenant"}
+          </button>
+        </div>
+      )}
+
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm font-medium">{success}</div>
       )}
@@ -1517,9 +1566,10 @@ export default function DashboardGaragePage() {
                         </span>
                       )}
                       {blockCount > 0 && (
-                        <span className="text-xs px-1 rounded font-bold leading-tight"
+                        <span className="flex items-center gap-0.5 text-xs px-1 rounded font-bold leading-tight"
                           style={{ background: "#fee2e2", color: "#991b1b" }}>
-                          🔒{blockCount}
+                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                          {blockCount}
                         </span>
                       )}
                     </div>
@@ -1532,7 +1582,7 @@ export default function DashboardGaragePage() {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV — rendez-vous</span>
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>🔒 créneau bloqué</span>
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>créneau bloqué</span>
             {selectedDays.length > 0 && (
               <button onClick={() => setSelectedDays([])}
                 className="ml-auto text-gray-400 hover:text-gray-600 font-semibold underline">
@@ -1570,7 +1620,7 @@ export default function DashboardGaragePage() {
                     onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
                     className="text-sm px-4 py-2 rounded-xl font-semibold border"
                     style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                    {isMultiSelect ? `🔒 Bloquer ${selectedDays.length} jours` : "🔒 Bloquer ce créneau"}
+                    {isMultiSelect ? `Bloquer ${selectedDays.length} jours` : "Bloquer ce créneau"}
                   </button>
                 </div>
               </div>
@@ -1629,7 +1679,7 @@ export default function DashboardGaragePage() {
               {showBlockForm && (
                 <div className="rounded-xl p-4 mb-4" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-sm">🔒 Bloquer un créneau</h4>
+                    <h4 className="font-semibold text-gray-900 text-sm">Bloquer un créneau</h4>
                     <button onClick={() => setShowBlockForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                   </div>
                   <form onSubmit={isMultiSelect ? saveBulkBlock : saveBlockSlot} className="space-y-3">
@@ -1722,7 +1772,7 @@ export default function DashboardGaragePage() {
                   <p className="text-sm font-semibold text-gray-700">Créneaux bloqués</p>
                   {selectedDayBlocks.map(s => (
                     <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                      <span className="text-red-500 text-lg">🔒</span>
+                      <svg className="w-5 h-5 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-red-800">
                           {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}
@@ -1972,21 +2022,11 @@ export default function DashboardGaragePage() {
                   <div className="flex items-center gap-3 mb-3">
                     <input type="checkbox" id={cat.id} checked={!!active} onChange={() => toggleService(cat.id, cat)} className="w-4 h-4 accent-orange-500" />
                     <label htmlFor={cat.id} className="flex items-center gap-2 cursor-pointer font-semibold text-gray-900 text-sm">
-                      <span>{cat.icon}</span>{cat.name}
+                      <ServiceIcon id={cat.id} size={18} className="text-gray-500" />{cat.name}
                     </label>
                   </div>
                   {active && (
-                    <div className="grid grid-cols-3 gap-2 pl-7">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">Prix min ($)</label>
-                        <input type="number" className={inputClass} placeholder="Ex: 50" value={active.priceMin}
-                          onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, priceMin: e.target.value } : s))} />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">Prix max ($)</label>
-                        <input type="number" className={inputClass} placeholder="Ex: 80" value={active.priceMax}
-                          onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, priceMax: e.target.value } : s))} />
-                      </div>
+                    <div className="grid grid-cols-1 gap-2 pl-7">
                       <div>
                         <label className="block text-xs text-gray-500 mb-0.5">Durée (min)</label>
                         <input type="number" className={inputClass} placeholder="Ex: 45" value={active.durationMin}
@@ -2136,7 +2176,7 @@ export default function DashboardGaragePage() {
                     <p className="text-sm text-gray-400 text-center py-3">Chargement des disponibilités…</p>
                   ) : slotsClosed ? (
                     <div className="text-center py-4 rounded-xl" style={{ background: "#fef2f2" }}>
-                      <p className="text-sm font-semibold text-red-700">🔒 Fermé ce jour</p>
+                      <p className="text-sm font-semibold text-red-700">Fermé ce jour</p>
                       <p className="text-xs text-red-500 mt-1">Choisissez une autre date</p>
                     </div>
                   ) : rescheduleSlots.length === 0 ? (
@@ -2517,6 +2557,35 @@ export default function DashboardGaragePage() {
 
           {/* ── Description section ─────────────────────────────────────────── */}
           <DescriptionSection garage={garage} inputClass={inputClass} onUpdated={(data) => setGarage((g: any) => ({ ...g, ...data }))} />
+
+          {/* ── Zone de suppression du compte ── */}
+          <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-6">
+            <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées — impossible à annuler.
+            </p>
+            {!showDeleteConfirm ? (
+              <button onClick={() => setShowDeleteConfirm(true)}
+                className="text-sm font-bold text-red-600 border border-red-300 rounded-xl px-4 py-2 hover:bg-red-50 transition-colors">
+                Supprimer définitivement mon compte
+              </button>
+            ) : (
+              <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+                <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible et annule votre abonnement.</p>
+                {deleteError && <p className="text-xs text-red-600 mb-3">{deleteError}</p>}
+                <div className="flex gap-3">
+                  <button onClick={deleteAccount} disabled={deleting}
+                    className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">
+                    {deleting ? "Suppression…" : "Oui, tout supprimer"}
+                  </button>
+                  <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting}
+                    className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
