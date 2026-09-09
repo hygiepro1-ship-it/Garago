@@ -8,10 +8,22 @@ export const dynamic = "force-dynamic";
 // Coupon ambassadeur — 10% de réduction permanente (duration: forever)
 const AMBASSADOR_COUPON_ID = process.env.STRIPE_AMBASSADOR_COUPON_ID ?? "garago-ambassador-10pct";
 
+// Un seul Price ID par plan, lu depuis l'environnement — pour changer un prix,
+// il suffit de créer le nouveau Price dans Stripe et de mettre à jour la variable
+// correspondante sur Vercel, sans toucher au code.
+const PRICE_IDS: Record<string, string | undefined> = {
+  monthly: process.env.STRIPE_PRICE_ID,
+  annual:  process.env.STRIPE_PRICE_ID_ANNUAL,
+};
+
 export async function POST(req: NextRequest) {
   const { default: Stripe } = await import("stripe");
 
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
+  const body = await req.json().catch(() => ({}));
+  const plan = body?.plan === "annual" ? "annual" : "monthly";
+  const priceId = PRICE_IDS[plan];
+
+  if (!process.env.STRIPE_SECRET_KEY || !priceId) {
     return NextResponse.json({ error: "Stripe non configuré" }, { status: 500 });
   }
 
@@ -61,7 +73,7 @@ export async function POST(req: NextRequest) {
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     discounts: discounts.length > 0 ? discounts : undefined,
     success_url: `${origin}/tableau-de-bord/garage?checkout=success`,
     cancel_url:  `${origin}/tableau-de-bord/garage?checkout=cancelled`,

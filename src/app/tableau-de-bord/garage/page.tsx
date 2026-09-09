@@ -711,9 +711,13 @@ export default function DashboardGaragePage() {
     await signOut({ callbackUrl: "/" });
   }
 
-  async function startCheckout() {
+  async function startCheckout(plan: "monthly" | "annual" = "monthly") {
     setCheckoutLoading(true);
-    const res = await fetch("/api/stripe/checkout", { method: "POST" });
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
     else setCheckoutLoading(false);
@@ -1279,10 +1283,16 @@ export default function DashboardGaragePage() {
               <p className="text-yellow-700 text-sm">Activez votre abonnement pour continuer à apparaître dans les résultats.</p>
             </div>
           </div>
-          <button onClick={startCheckout} disabled={checkoutLoading}
-            className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
-            {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+              className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
+            </button>
+            <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+              className="text-xs font-semibold text-yellow-800 underline hover:no-underline disabled:opacity-60">
+              ou payer annuellement (−20 %)
+            </button>
+          </div>
         </div>
       )}
 
@@ -1300,10 +1310,16 @@ export default function DashboardGaragePage() {
               <p className="text-red-700 text-sm">Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.</p>
             </div>
           </div>
-          <button onClick={startCheckout} disabled={checkoutLoading}
-            className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
-            {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+              className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
+            </button>
+            <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+              className="text-xs font-semibold text-red-700 underline hover:no-underline disabled:opacity-60">
+              ou payer annuellement (−20 %)
+            </button>
+          </div>
         </div>
       )}
 
@@ -1318,11 +1334,18 @@ export default function DashboardGaragePage() {
               <p className="text-gray-500 text-sm">Vous pouvez activer votre abonnement dès maintenant, sans attendre la fin de l'essai.</p>
             </div>
           </div>
-          <button onClick={startCheckout} disabled={checkoutLoading}
-            className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
-            style={{ background: "#f97316" }}>
-            {checkoutLoading ? "Chargement…" : "Activer mon abonnement maintenant"}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+              className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
+              style={{ background: "#f97316" }}>
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement maintenant"}
+            </button>
+            <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+              className="text-xs font-semibold underline hover:no-underline disabled:opacity-60"
+              style={{ color: "#f97316" }}>
+              ou payer annuellement (−20 %)
+            </button>
+          </div>
         </div>
       )}
 
