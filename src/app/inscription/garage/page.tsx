@@ -170,6 +170,7 @@ export default function InscriptionGaragePage() {
   const [showConfirm,setShowConfirm]= useState(false);
   const [acceptTerms,setAcceptTerms]= useState(false);
   const [acceptMkt,  setAcceptMkt]  = useState(false);
+  const [hp,         setHp]         = useState("");
 
   // Email verification
   const [codeSent,      setCodeSent]      = useState(false);
@@ -291,6 +292,7 @@ export default function InscriptionGaragePage() {
         garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
         garageLat, garageLng,
         referredByCode: referredByCode.trim().toUpperCase() || undefined,
+        _hp: hp,
       }),
     });
 
@@ -402,6 +404,13 @@ export default function InscriptionGaragePage() {
                 )}
 
                 <form onSubmit={handleStep1} className="space-y-4">
+                  {/* Honeypot — invisible aux vrais utilisateurs, rempli par les bots */}
+                  <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
+                    <label>Ne remplissez pas ce champ</label>
+                    <input type="text" name="website" autoComplete="off" tabIndex={-1}
+                      value={hp} onChange={(e) => setHp(e.target.value)} />
+                  </div>
+
                   <div>
                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{r.yourInfo}</p>
                     <div className="space-y-3">

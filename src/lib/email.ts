@@ -13,6 +13,18 @@ function canSend(): boolean {
   return !!key && !key.startsWith("re_VOTRE");
 }
 
+// Échappe tout texte fourni par un utilisateur avant de l'interpoler dans un email HTML —
+// sans ça, un avis/suggestion/nom pourrait injecter du balisage dans l'email lu par l'admin.
+function esc(value: string | null | undefined): string {
+  if (!value) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AppointmentDetails {
@@ -331,20 +343,20 @@ export async function sendMaintenanceReminder(params: MaintenanceReminderParams)
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel d'entretien ⏰</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, un entretien approche pour votre véhicule.</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, un entretien approche pour votre véhicule.</p>
 
     ${infoCard(`
-      ${row("🔧", "Entretien", params.title)}
-      ${params.vehicleLabel ? row("🚗", "Véhicule", params.vehicleLabel) : ""}
+      ${row("🔧", "Entretien", esc(params.title))}
+      ${params.vehicleLabel ? row("🚗", "Véhicule", esc(params.vehicleLabel)) : ""}
       ${row("📅", "Échéance", params.dueDate)}
     `)}
 
-    ${params.notes ? noteBlock(params.notes) : ""}
+    ${params.notes ? noteBlock(esc(params.notes)) : ""}
 
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Retrouvez tous vos rappels dans votre tableau de bord Garago.</p>
   `;
 
-  await send(params.to, `⏰ Rappel d'entretien — ${params.title}`, body);
+  await send(params.to, `⏰ Rappel d'entretien — ${esc(params.title)}`, body);
 }
 
 // ─── Email: Rendez-vous déplacé ───────────────────────────────────────────────
@@ -394,8 +406,8 @@ export interface NewSuggestionParams {
 export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
   if (!canSend() || !process.env.ADMIN_EMAIL) return;
 
-  const author  = params.authorName  ?? "Anonyme";
-  const contact = params.authorEmail ?? "aucun courriel fourni";
+  const author  = esc(params.authorName)  || "Anonyme";
+  const contact = esc(params.authorEmail) || "aucun courriel fourni";
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">💡 Nouvelle suggestion reçue</h2>
@@ -405,7 +417,7 @@ export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
       ${row("👤", "De", author)}
       <p style="margin:0 0 16px;font-size:14px"><strong>✉️ Contact :</strong> ${contact}</p>
       <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #e5e7eb">
-        <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${params.content}</p>
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${esc(params.content)}</p>
       </div>
     `)}
 
@@ -450,12 +462,12 @@ export async function sendReviewReport(params: ReviewReportParams) {
     <table width="100%" cellpadding="0" cellspacing="0"
            style="background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:20px;margin-bottom:24px">
       <tr><td>
-        ${row("🏪", "Garage", params.garageName)}
-        ${row("👤", "Auteur de l'avis", params.reviewerName ?? "Anonyme")}
+        ${row("🏪", "Garage", esc(params.garageName))}
+        ${row("👤", "Auteur de l'avis", esc(params.reviewerName) || "Anonyme")}
         ${row("⭐", "Note", `${params.reviewRating}/5`)}
         ${params.reviewText ? `
           <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #fecdd3;margin-top:8px">
-            <p style="margin:0;font-size:14px;line-height:1.7;color:#374151">${params.reviewText}</p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#374151">${esc(params.reviewText)}</p>
           </div>` : ""}
       </td></tr>
     </table>
@@ -571,11 +583,11 @@ export async function sendAdminBadReviewAlert(params: BadReviewAlertParams) {
     <table width="100%" cellpadding="0" cellspacing="0"
            style="background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:20px;margin-bottom:24px">
       <tr><td>
-        <p style="margin:0 0 8px;font-size:16px;font-weight:800;color:#111827">${params.garageName}</p>
+        <p style="margin:0 0 8px;font-size:16px;font-weight:800;color:#111827">${esc(params.garageName)}</p>
         <p style="margin:0 0 12px;font-size:14px;color:#374151">${lbl.desc}</p>
         <hr style="border:none;border-top:1px solid #fecdd3;margin:12px 0"/>
         <p style="margin:0;font-size:13px;color:#6b7280">
-          Dernier avis : <strong>${params.lastRating}/5</strong> par ${params.reviewerName ?? "un utilisateur anonyme"}
+          Dernier avis : <strong>${params.lastRating}/5</strong> par ${esc(params.reviewerName) || "un utilisateur anonyme"}
         </p>
       </td></tr>
     </table>
@@ -604,12 +616,12 @@ export async function sendDescriptionReviewEmail(params: DescriptionReviewParams
   const body = `
     <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0b1f3a">📝 Nouvelle description à vérifier</h2>
 
-    <p style="margin:0 0 6px;font-size:14px;color:#374151"><strong>Garage :</strong> ${params.garageName}</p>
-    <p style="margin:0 0 16px;font-size:14px;color:#374151"><strong>Propriétaire :</strong> ${params.ownerEmail}</p>
+    <p style="margin:0 0 6px;font-size:14px;color:#374151"><strong>Garage :</strong> ${esc(params.garageName)}</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#374151"><strong>Propriétaire :</strong> ${esc(params.ownerEmail)}</p>
 
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #f97316;
                 border-radius:8px;padding:16px;margin-bottom:20px">
-      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap">${params.draft}</p>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap">${esc(params.draft)}</p>
     </div>
 
     <p style="margin:0 0 16px;font-size:12px;color:#6b7280">
@@ -642,14 +654,14 @@ export async function sendDescriptionDecisionEmail(params: DescriptionDecisionPa
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">✅ Description approuvée</h2>
       <p style="margin:0 0 16px;font-size:14px;color:#374151">
         Bonjour,<br><br>
-        La description de votre garage <strong>${params.garageName}</strong> a été approuvée
+        La description de votre garage <strong>${esc(params.garageName)}</strong> a été approuvée
         et est maintenant visible publiquement sur Garago.
       </p>`
     : `
       <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">✗ Description refusée</h2>
       <p style="margin:0 0 16px;font-size:14px;color:#374151">
         Bonjour,<br><br>
-        La description soumise pour votre garage <strong>${params.garageName}</strong> a été refusée
+        La description soumise pour votre garage <strong>${esc(params.garageName)}</strong> a été refusée
         car elle ne respecte pas nos critères (contenu promotionnel, liens ou coordonnées non autorisés).<br><br>
         Vous pouvez soumettre une nouvelle version depuis votre tableau de bord.
       </p>`;

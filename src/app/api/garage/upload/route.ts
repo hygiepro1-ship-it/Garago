@@ -1,8 +1,11 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import prisma from "@/lib/prisma";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +30,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Type invalide" }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() ?? "jpg";
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: "Format invalide — utilisez une image JPEG, PNG ou WebP" }, { status: 400 });
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      return NextResponse.json({ error: "Fichier trop volumineux — 5 Mo maximum" }, { status: 400 });
+    }
+
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
     const filename = `garages/${garage.id}/${type}-${Date.now()}.${ext}`;
 
     const blob = await put(filename, file, {
@@ -35,8 +46,14 @@ export async function POST(req: NextRequest) {
       contentType: file.type,
     });
 
+    const previousUrl = type === "logo" ? garage.logoUrl : garage.coverUrl;
     const update = type === "logo" ? { logoUrl: blob.url } : { coverUrl: blob.url };
     await prisma.garage.update({ where: { id: garage.id }, data: update });
+
+    // Supprime l'ancienne image pour éviter une fuite de stockage (coûts qui augmentent indéfiniment)
+    if (previousUrl) {
+      del(previousUrl).catch((e) => console.error("[garage/upload] Échec suppression ancien blob :", e));
+    }
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {

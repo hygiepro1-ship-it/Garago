@@ -16,6 +16,9 @@ function generateReferralCode(): string {
   return "GAR-" + part;
 }
 
+const MAX_REGISTRATIONS_PER_WINDOW = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -25,7 +28,26 @@ export async function POST(req: NextRequest) {
       garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
       garageLat, garageLng,
       referredByCode,
+      _hp,
     } = body;
+
+    // Honeypot — les bots remplissent ce champ caché, jamais les humains
+    if (_hp) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+
+    // Anti-spam : limite le nombre d'inscriptions par IP dans une fenêtre de temps
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? "unknown";
+    const recentAttempts = await prisma.registrationAttempt.count({
+      where: { ip, createdAt: { gt: new Date(Date.now() - WINDOW_MS) } },
+    });
+    if (recentAttempts >= MAX_REGISTRATIONS_PER_WINDOW) {
+      return NextResponse.json(
+        { error: "Trop de tentatives d'inscription. Réessayez dans quelques minutes." },
+        { status: 429 }
+      );
+    }
+    await prisma.registrationAttempt.create({ data: { ip } });
 
     // Accept either firstName+lastName (new) or name (legacy)
     const name = firstName && lastName

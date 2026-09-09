@@ -57,7 +57,7 @@ export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   // Contact form state
-  const [form, setForm]     = useState({ type: "DRIVER", question: "", authorName: "", authorEmail: "" });
+  const [form, setForm]     = useState({ type: "DRIVER", question: "", authorName: "", authorEmail: "", _hp: "" });
   const [sending, setSending] = useState(false);
   const [done, setDone]     = useState(false);
   const [error, setError]   = useState("");
@@ -184,7 +184,7 @@ export default function FAQPage() {
                 <p className="text-sm text-gray-500 mb-6">{f.successSub}</p>
                 <div className="flex justify-center gap-3 flex-wrap">
                   <button
-                    onClick={() => { setDone(false); setForm({ type: tab === "driver" ? "DRIVER" : "GARAGE", question: "", authorName: "", authorEmail: "" }); }}
+                    onClick={() => { setDone(false); setForm({ type: tab === "driver" ? "DRIVER" : "GARAGE", question: "", authorName: "", authorEmail: "", _hp: "" }); }}
                     className="text-sm px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold transition-colors"
                   >
                     {f.sendAnother}
@@ -229,6 +229,19 @@ export default function FAQPage() {
                       );
                     })}
                   </div>
+                </div>
+
+                {/* Honeypot — invisible aux vrais utilisateurs, rempli par les bots */}
+                <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
+                  <label>Ne remplissez pas ce champ</label>
+                  <input
+                    type="text"
+                    name="website"
+                    autoComplete="off"
+                    tabIndex={-1}
+                    value={form._hp}
+                    onChange={e => setForm(prev => ({ ...prev, _hp: e.target.value }))}
+                  />
                 </div>
 
                 {/* Question */}

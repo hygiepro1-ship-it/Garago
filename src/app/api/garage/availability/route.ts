@@ -14,6 +14,20 @@ export async function PUT(req: NextRequest) {
   const { horaires } = await req.json();
   if (!Array.isArray(horaires)) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
+  const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  for (const h of horaires) {
+    if (typeof h.dayOfWeek !== "number" || h.dayOfWeek < 0 || h.dayOfWeek > 6) {
+      return NextResponse.json({ error: "Jour invalide" }, { status: 400 });
+    }
+    if (h.isClosed) continue;
+    if (!TIME_RE.test(h.openTime) || !TIME_RE.test(h.closeTime)) {
+      return NextResponse.json({ error: "Format d'heure invalide (attendu HH:MM)" }, { status: 400 });
+    }
+    if (h.closeTime <= h.openTime) {
+      return NextResponse.json({ error: "L'heure de fermeture doit être après l'heure d'ouverture" }, { status: 400 });
+    }
+  }
+
   // Upsert each day
   await Promise.all(
     horaires.map((h: { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }) =>

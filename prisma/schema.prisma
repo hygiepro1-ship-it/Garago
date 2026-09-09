@@ -317,6 +317,15 @@ model EmailVerificationCode {
   @@index([email])
 }
 
+// Anti-spam : limite le nombre d'inscriptions par IP dans une fenêtre de temps
+model RegistrationAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+}
+
 model AutoTip {
   id          String   @id @default(cuid())
   title       String

@@ -14,7 +14,10 @@ function validate(question: string, type: string): string | null {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { type, question, authorName, authorEmail } = body;
+  const { type, question, authorName, authorEmail, _hp } = body;
+
+  // Honeypot — les bots remplissent ce champ caché, jamais les humains
+  if (_hp) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
 
   const err = validate(question, type);
   if (err) return NextResponse.json({ error: err }, { status: 400 });

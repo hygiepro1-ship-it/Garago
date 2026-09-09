@@ -316,9 +316,9 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
         {([
-          { id: "alertes",      label: "Alertes qualité", icon: "🚨", count: unreadAlerts.length,                                 urgent: true  },
-          { id: "descriptions", label: "Descriptions",    icon: "📝", count: garages.length,                                      urgent: false },
-          { id: "suggestions",  label: "Suggestions",     icon: "💡", count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
+          { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
+          { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
+          { id: "suggestions",  label: "Suggestions",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/></svg>, count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === t.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
 
           {alerts.length === 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
-              <div className="text-4xl mb-3">✅</div>
+              <svg className="w-10 h-10 mx-auto mb-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg>
               <p className="font-semibold text-gray-900">Aucune alerte qualité</p>
               <p className="text-gray-400 text-sm mt-1">Tous les garages ont de bonnes notes.</p>
             </div>
@@ -396,7 +396,7 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           {garages.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
-              <div className="text-4xl mb-3">✅</div>
+              <svg className="w-10 h-10 mx-auto mb-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg>
               <p className="font-semibold text-gray-900">Aucune description en attente</p>
               <p className="text-gray-400 text-sm mt-1">Tout est à jour.</p>
             </div>

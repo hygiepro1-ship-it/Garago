@@ -166,6 +166,7 @@ export default function InscriptionConducteurPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptMkt,   setAcceptMkt]   = useState(false);
+  const [hp,          setHp]          = useState("");
 
   const [codeSent,      setCodeSent]      = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -235,7 +236,7 @@ export default function InscriptionConducteurPage() {
     setLoading(true);
     const res  = await fetch("/api/register", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, phone, password, marketingConsent: acceptMkt, role: "DRIVER" }),
+      body: JSON.stringify({ firstName, lastName, email, phone, password, marketingConsent: acceptMkt, role: "DRIVER", _hp: hp }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? "Une erreur est survenue"); setLoading(false); return; }
@@ -286,6 +287,13 @@ export default function InscriptionConducteurPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot — invisible aux vrais utilisateurs, rempli par les bots */}
+            <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
+              <label>Ne remplissez pas ce champ</label>
+              <input type="text" name="website" autoComplete="off" tabIndex={-1}
+                value={hp} onChange={(e) => setHp(e.target.value)} />
+            </div>
+
             {error && (
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
                 style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b" }}>
