@@ -59,6 +59,7 @@ interface Garage {
   coverPosition:            string | null;
   subscriptionStatus:       string | null;
   subscriptionEndAt:        string | null;
+  cancelAtPeriodEnd?:       boolean;
   referralCode:             string | null;
   referralCommissionEarned: number | null;
   referralCount:            number;
@@ -709,6 +710,30 @@ export default function DashboardGaragePage() {
       return;
     }
     await signOut({ callbackUrl: "/" });
+  }
+
+  // ── Annulation / réactivation de l'abonnement (sans supprimer le compte) ──
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+
+  async function cancelSubscription(resume: boolean) {
+    setCancelLoading(true);
+    setCancelError("");
+    const res = await fetch("/api/stripe/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setCancelError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setCancelLoading(false);
+      return;
+    }
+    setGarage((g: any) => g ? { ...g, cancelAtPeriodEnd: data.cancelAtPeriodEnd } : g);
+    setShowCancelConfirm(false);
+    setCancelLoading(false);
   }
 
   async function startCheckout(plan: "monthly" | "annual" = "monthly") {
@@ -2580,6 +2605,56 @@ export default function DashboardGaragePage() {
 
           {/* ── Description section ─────────────────────────────────────────── */}
           <DescriptionSection garage={garage} inputClass={inputClass} onUpdated={(data) => setGarage((g: any) => ({ ...g, ...data }))} />
+
+          {/* ── Gestion de l'abonnement ── */}
+          {garage.subscriptionStatus === "ACTIVE" && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Mon abonnement</h2>
+              {garage.cancelAtPeriodEnd ? (
+                <>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Votre abonnement ne se renouvellera pas
+                    {garage.subscriptionEndAt ? ` et restera actif jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}. Vous gardez l'accès complet jusqu'à cette date.
+                  </p>
+                  {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
+                  <button onClick={() => cancelSubscription(true)} disabled={cancelLoading}
+                    className="text-sm font-bold text-white rounded-xl px-4 py-2 disabled:opacity-50"
+                    style={{ background: "#f97316" }}>
+                    {cancelLoading ? "Chargement…" : "Réactiver le renouvellement"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Vous pouvez annuler à tout moment — vous garderez l'accès complet jusqu'à la fin de votre période déjà payée, sans renouvellement après.
+                  </p>
+                  {!showCancelConfirm ? (
+                    <button onClick={() => setShowCancelConfirm(true)}
+                      className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors">
+                      Annuler mon abonnement
+                    </button>
+                  ) : (
+                    <div className="rounded-xl p-4" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                      <p className="text-sm font-semibold text-gray-800 mb-3">
+                        Confirmer l'annulation ? Vous garderez l'accès jusqu'à la fin de la période déjà payée, sans renouvellement ensuite.
+                      </p>
+                      {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
+                      <div className="flex gap-3">
+                        <button onClick={() => cancelSubscription(false)} disabled={cancelLoading}
+                          className="text-sm font-bold text-white bg-gray-800 rounded-xl px-4 py-2 hover:bg-gray-900 disabled:opacity-50">
+                          {cancelLoading ? "Chargement…" : "Oui, annuler"}
+                        </button>
+                        <button onClick={() => setShowCancelConfirm(false)} disabled={cancelLoading}
+                          className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
+                          Retour
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* ── Zone de suppression du compte ── */}
           <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-6">

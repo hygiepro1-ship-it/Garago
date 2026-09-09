@@ -92,6 +92,7 @@ model Garage {
 
   subscriptionStatus String    @default("TRIAL")
   subscriptionEndAt  DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
   stripeCustomerId   String?
   stripePriceId      String?
 

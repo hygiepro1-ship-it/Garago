@@ -184,6 +184,7 @@ async function handleSubscriptionChange(sub: import("stripe").Stripe.Subscriptio
       subscriptionStatus: isActive ? "ACTIVE" : sub.status.toUpperCase(),
       stripePriceId:      sub.items.data[0]?.price?.id ?? null,
       subscriptionEndAt:  endDate,
+      cancelAtPeriodEnd:  sub.cancel_at_period_end ?? false,
     },
   });
 
