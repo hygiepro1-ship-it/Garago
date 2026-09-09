@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
+import { getModelsForMake } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
@@ -35,6 +36,11 @@ interface GarageService {
 interface GarageBrand {
   brand:   string;
   accepts: boolean;
+}
+
+interface GarageBrandModel {
+  brand: string;
+  model: string;
 }
 
 interface GarageReview {
@@ -68,6 +74,7 @@ interface Garage {
   availability:             GarageAvailability[];
   services:                 GarageService[];
   brands:                   GarageBrand[];
+  brandModels?:             GarageBrandModel[];
   reviews:                  GarageReview[];
   _count?:                  { reviews: number };
 }
@@ -833,11 +840,35 @@ export default function DashboardGaragePage() {
   const [brands, setBrands] = useState<GarageBrand[]>([]);
   useEffect(() => { if (garage?.brands) setBrands(garage.brands); }, [garage]);
 
+  // ── Modèles précis par marque acceptée ──────────────────────────────────────
+  // Absence d'entrée pour une marque = tous les modèles sont traités (défaut).
+  const [brandModels, setBrandModels] = useState<Record<string, string[]>>({});
+  const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
+  useEffect(() => {
+    if (garage?.brandModels) {
+      const grouped: Record<string, string[]> = {};
+      for (const bm of garage.brandModels) {
+        (grouped[bm.brand] ??= []).push(bm.model);
+      }
+      setBrandModels(grouped);
+    }
+  }, [garage]);
+
+  function toggleBrandModel(brand: string, model: string) {
+    setBrandModels((prev) => {
+      const current = prev[brand] ?? [];
+      const next = current.includes(model) ? current.filter((m) => m !== model) : [...current, model];
+      return { ...prev, [brand]: next };
+    });
+  }
+
   function toggleBrand(brand: string, accepts: boolean) {
     const existing = brands.find((b) => b.brand === brand);
     if (existing) {
-      if (existing.accepts === accepts) setBrands(brands.filter((b) => b.brand !== brand));
-      else setBrands(brands.map((b) => b.brand === brand ? { ...b, accepts } : b));
+      if (existing.accepts === accepts) {
+        setBrands(brands.filter((b) => b.brand !== brand));
+        setBrandModels((prev) => { const { [brand]: _, ...rest } = prev; return rest; });
+      } else setBrands(brands.map((b) => b.brand === brand ? { ...b, accepts } : b));
     } else {
       setBrands([...brands, { brand, accepts }]);
     }
@@ -851,7 +882,7 @@ export default function DashboardGaragePage() {
     setSaving(true);
     await fetch("/api/garage/brands", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brands }),
+      body: JSON.stringify({ brands, brandModels }),
     });
     setSaving(false);
     setSuccess("Marques sauvegardées ✓");
@@ -2140,9 +2171,61 @@ export default function DashboardGaragePage() {
                       className="flex-1 py-2 text-xs font-bold transition-colors"
                       style={isRefused ? { backgroundColor: "#ef4444", color: "white" } : { backgroundColor: "transparent", color: "#6b7280" }}>✗</button>
                   </div>
+                  {isAccepted && getModelsForMake(brand).length > 0 && (
+                    <button onClick={() => setExpandedBrand(brand)}
+                      className="w-full py-1.5 text-xs font-semibold border-t border-gray-100 hover:bg-green-100 transition-colors"
+                      style={{ color: "#166534" }}>
+                      {brandModels[brand]?.length ? `${brandModels[brand].length} modèle${brandModels[brand].length > 1 ? "s" : ""}` : "Tous les modèles"}
+                    </button>
+                  )}
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL — modèles précis pour une marque ═══════════════════════════ */}
+      {expandedBrand && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(11,31,58,0.55)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setExpandedBrand(null); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <div>
+                <h3 className="font-bold text-gray-900">Modèles {expandedBrand}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {brandModels[expandedBrand]?.length ? "Modèles sélectionnés uniquement" : "Aucune restriction — tous les modèles sont traités"}
+                </p>
+              </div>
+              <button onClick={() => setExpandedBrand(null)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors font-bold text-lg">×</button>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              {brandModels[expandedBrand]?.length > 0 && (
+                <button onClick={() => setBrandModels((prev) => ({ ...prev, [expandedBrand]: [] }))}
+                  className="text-xs font-semibold mb-3" style={{ color: "#f97316" }}>
+                  Retirer toutes les restrictions (tous les modèles)
+                </button>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                {getModelsForMake(expandedBrand).map((model) => {
+                  const checked = brandModels[expandedBrand]?.includes(model) ?? false;
+                  return (
+                    <label key={model} className="flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input type="checkbox" checked={checked} onChange={() => toggleBrandModel(expandedBrand, model)}
+                        className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
+                      <span className="text-gray-700">{model}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="px-6 py-4" style={{ borderTop: "1px solid #f1f5f9" }}>
+              <button onClick={() => setExpandedBrand(null)} className="w-full text-white py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>
+                Terminé
+              </button>
+            </div>
           </div>
         </div>
       )}

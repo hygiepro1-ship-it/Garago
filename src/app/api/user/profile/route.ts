@@ -18,7 +18,10 @@ export async function GET() {
       notifPref: true,
       vehicles: {
         orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
-        select: { id: true, year: true, make: true, model: true, isDefault: true },
+        select: {
+          id: true, year: true, make: true, model: true, trim: true, isDefault: true,
+          vin: true, tireSize: true, specs: true,
+        },
       },
     },
   });

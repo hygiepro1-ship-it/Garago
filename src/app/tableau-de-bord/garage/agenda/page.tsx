@@ -33,6 +33,10 @@ interface Appointment {
   vehicleYear?: number;
   vehicleMake?: string;
   vehicleModel?: string;
+  vehicleTrim?: string;
+  vehicleVin?: string;
+  vehicleTireSize?: string;
+  vehicleSpecs?: string; // JSON : engine, fuel, transmission, driveType, bodyType, doors, recalls[]
   serviceName?: string;
   date: string;
   startTime: string;
@@ -803,7 +807,7 @@ function ApptCard({
               )}
             </div>
             <p className="text-xs text-gray-500 mt-0.5 truncate">
-              {[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}
+              {[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel, appt.vehicleTrim].filter(Boolean).join(" ")}
               {(appt.vehicleMake || appt.vehicleYear) && appt.serviceName ? " · " : ""}
               {appt.serviceName}
             </p>
@@ -821,6 +825,37 @@ function ApptCard({
       {/* Détails */}
       {expanded && (
         <div className="border-t border-gray-100 px-4 pb-4 pt-3 space-y-3">
+          {/* Véhicule détaillé */}
+          {(appt.vehicleMake || appt.vehicleVin || appt.vehicleTireSize || appt.vehicleSpecs) && (
+            <div className="rounded-xl p-3" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+              <p className="text-xs font-bold text-gray-700 mb-1.5">Véhicule</p>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
+                {(appt.vehicleYear || appt.vehicleMake) && (
+                  <span className="col-span-2">
+                    <strong>{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel, appt.vehicleTrim].filter(Boolean).join(" ")}</strong>
+                  </span>
+                )}
+                {appt.vehicleVin && <span><strong>NIV :</strong> {appt.vehicleVin}</span>}
+                {appt.vehicleTireSize && <span><strong>Pneus :</strong> {appt.vehicleTireSize}</span>}
+                {(() => {
+                  if (!appt.vehicleSpecs) return null;
+                  try {
+                    const specs = JSON.parse(appt.vehicleSpecs);
+                    return (
+                      <>
+                        {specs.engine && <span><strong>Moteur :</strong> {specs.engine}{specs.hp ? ` · ${specs.hp} ch` : ""}</span>}
+                        {specs.fuel && <span><strong>Carburant :</strong> {specs.fuel}</span>}
+                        {specs.transmission && <span><strong>Transmission :</strong> {specs.transmission}</span>}
+                        {specs.driveType && <span><strong>Rouage :</strong> {specs.driveType}</span>}
+                        {specs.bodyType && <span><strong>Carrosserie :</strong> {specs.bodyType}</span>}
+                      </>
+                    );
+                  } catch { return null; }
+                })()}
+              </div>
+            </div>
+          )}
+
           {/* Contacts */}
           <div className="flex flex-wrap gap-2">
             <a

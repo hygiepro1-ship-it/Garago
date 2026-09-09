@@ -33,6 +33,7 @@ export async function GET(_req: NextRequest) {
     include: {
       services: { include: { category: true } },
       brands: true,
+      brandModels: true,
       availability: { orderBy: { dayOfWeek: "asc" } },
       photos: true,
       reviews: { include: { user: { select: { name: true, image: true } } }, orderBy: { createdAt: "desc" } },

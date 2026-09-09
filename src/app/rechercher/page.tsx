@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
-import { VEHICLE_MAKES } from "@/lib/vehicleData";
+import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { garageDistance, formatDistance } from "@/lib/geo";
 import { useLang } from "@/contexts/LanguageContext";
@@ -51,11 +51,18 @@ function SearchContent() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [make,      setMake]      = useState(searchParams.get("make")    ?? "");
+  // Modèle : filtre réel (transmis à l'API). Année : personnalisation client
+  // uniquement — un garage n'indique pas les années qu'il traite, seulement les modèles.
+  const [model,     setModel]     = useState(searchParams.get("model")   ?? "");
+  const [year,      setYear]      = useState(searchParams.get("year")    ?? "");
   const [service,   setService]   = useState(searchParams.get("service") ?? "");
   const [city,      setCity]      = useState(searchParams.get("city")    ?? "");
   const [walkInOnly, setWalkInOnly] = useState(false);
   const [minRating,  setMinRating]  = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const years  = getYears();
+  const models = make ? getModelsForMake(make) : [];
 
   const initLat = parseFloat(searchParams.get("lat") ?? "");
   const initLng = parseFloat(searchParams.get("lng") ?? "");
@@ -82,6 +89,7 @@ function SearchContent() {
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
     if (make)      params.set("make",       make);
+    if (model)     params.set("model",      model);
     if (service)   params.set("service",    service);
     if (city)      params.set("city",       city);
     if (walkInOnly) params.set("walkInOnly", "1");
@@ -103,7 +111,7 @@ function SearchContent() {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [make, service, city, walkInOnly, minRating]);
+  }, [make, model, service, city, walkInOnly, minRating]);
 
   useEffect(() => { fetchGarages(1); }, [fetchGarages]);
 
@@ -156,6 +164,8 @@ function SearchContent() {
   function applyFilters() {
     const params = new URLSearchParams();
     if (make)    params.set("make",    make);
+    if (model)   params.set("model",   model);
+    if (year)    params.set("year",    year);
     if (service) params.set("service", service);
     if (city)    params.set("city",    city);
     router.push(`/rechercher?${params}`);
@@ -164,13 +174,13 @@ function SearchContent() {
   }
 
   function clearAll() {
-    setMake("");
+    setMake(""); setModel(""); setYear("");
     setService(""); setCity(""); setWalkInOnly(false); setMinRating("");
     router.push("/rechercher");
   }
 
-  const hasFilters   = !!(make || service || city || walkInOnly || minRating);
-  const activeCount  = [make, service, city, walkInOnly ? "x" : "", minRating].filter(Boolean).length;
+  const hasFilters   = !!(make || model || year || service || city || walkInOnly || minRating);
+  const activeCount  = [make, model, year, service, city, walkInOnly ? "x" : "", minRating].filter(Boolean).length;
 
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
@@ -181,14 +191,32 @@ function SearchContent() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap gap-2 items-center">
 
-            {/* Vehicle select — hidden on mobile (use drawer instead) */}
+            {/* Vehicle selects — hidden on mobile (use drawer instead) */}
             <select
               className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
               style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
-              value={make} onChange={(e) => setMake(e.target.value)}
+              value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}
             >
               <option value="">{s.make}</option>
               {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+
+            <select
+              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition disabled:opacity-50"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
+              value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}
+            >
+              <option value="">{s.model}</option>
+              {models.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+
+            <select
+              className="hidden sm:block rounded-xl px-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+              style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
+              value={year} onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="">{s.year}</option>
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
 
             <select
@@ -224,13 +252,13 @@ function SearchContent() {
             </button>
 
             {/* Active vehicle chip */}
-            {make && (
+            {(make || model || year) && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold"
                 style={{ background: "#fff4ed", color: "#f97316", border: "1px solid #fed7aa" }}>
                 <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
                 </svg>
-                {make}
+                {[year, make, model].filter(Boolean).join(" ")}
               </div>
             )}
           </div>
@@ -400,7 +428,7 @@ function SearchContent() {
                     <>
                       <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
                       {total !== 1 ? s.garagesFound : s.garageFound}
-                      {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{make}</strong></span>}
+                      {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{[make, model].filter(Boolean).join(" ")}</strong></span>}
                       {sortByDist && userPos && <span style={{ color: "#00A884" }}> · {s.sortedByDist}</span>}
                     </>
                   )}
@@ -410,12 +438,12 @@ function SearchContent() {
               {/* Active filter chips */}
               {hasFilters && (
                 <div className="flex flex-wrap gap-1.5">
-                  {make && (
+                  {(make || model || year) && (
                     <span className="badge badge-blue flex items-center gap-1">
                       <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>
                       </svg>
-                      {make}
+                      {[year, make, model].filter(Boolean).join(" ")}
                     </span>
                   )}
                   {selectedService && (
@@ -500,9 +528,23 @@ function SearchContent() {
             <div className="space-y-5">
               <div>
                 <label htmlFor="drawer-make" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.make}</label>
-                <select id="drawer-make" className="doc-input" value={make} onChange={(e) => setMake(e.target.value)}>
+                <select id="drawer-make" className="doc-input" value={make} onChange={(e) => { setMake(e.target.value); setModel(""); }}>
                   <option value="">{s.make}</option>
                   {VEHICLE_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="drawer-model" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.model}</label>
+                <select id="drawer-model" className="doc-input disabled:opacity-50" value={model} onChange={(e) => setModel(e.target.value)} disabled={!make}>
+                  <option value="">{s.model}</option>
+                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="drawer-year" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.year}</label>
+                <select id="drawer-year" className="doc-input" value={year} onChange={(e) => setYear(e.target.value)}>
+                  <option value="">{s.year}</option>
+                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div>

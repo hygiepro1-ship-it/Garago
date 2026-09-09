@@ -123,6 +123,7 @@ model Garage {
   owner        User                 @relation(fields: [ownerId], references: [id])
   services     GarageService[]
   brands       GarageBrand[]
+  brandModels  GarageBrandModel[]
   reviews      Review[]
   favorites    GarageFavorite[]
   availability GarageAvailability[]
@@ -194,6 +195,21 @@ model GarageBrand {
 
   @@unique([garageId, brand])
   @@index([garageId])
+}
+
+// Modèles précis traités par un garage pour une marque acceptée.
+// Absence de lignes pour (garageId, brand) = tous les modèles de cette marque
+// sont traités (compatibilité avec les garages déjà inscrits avant cette fonctionnalité).
+model GarageBrandModel {
+  id       String @id @default(cuid())
+  garageId String
+  brand    String
+  model    String
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@unique([garageId, brand, model])
+  @@index([garageId, brand])
 }
 
 model GarageAvailability {
@@ -390,10 +406,15 @@ model Appointment {
   customerPhone String
   customerEmail String?
 
-  // Véhicule
+  // Véhicule — copié au moment de la réservation (pas de FK vers UserVehicle,
+  // le véhicule peut être modifié/supprimé ensuite sans affecter l'historique du garage)
   vehicleYear  Int?
   vehicleMake  String?
   vehicleModel String?
+  vehicleTrim  String?
+  vehicleVin   String?
+  vehicleTireSize String?
+  vehicleSpecs String? // JSON : engine, fuel, transmission, driveType, doors, bodyType, recalls[]
 
   // Service demandé
   serviceName String?

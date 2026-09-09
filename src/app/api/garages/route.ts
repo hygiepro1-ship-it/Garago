@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
     const city = searchParams.get("city");
     const service = searchParams.get("service");
     const make = searchParams.get("make");
+    const model = searchParams.get("model");
     const year = searchParams.get("year");
     const q = searchParams.get("q");
     const walkInOnly = searchParams.get("walkInOnly") === "1";
@@ -34,6 +35,21 @@ export async function GET(req: NextRequest) {
           accepts: true,
         },
       };
+
+      // Filtre par modèle précis : un garage correspond s'il n'a configuré aucune
+      // restriction de modèle pour cette marque (= tous les modèles acceptés par
+      // défaut), ou s'il a explicitement coché ce modèle.
+      if (model) {
+        where.AND = [
+          ...(where.AND ?? []),
+          {
+            OR: [
+              { brandModels: { none: { brand: make } } },
+              { brandModels: { some: { brand: make, model } } },
+            ],
+          },
+        ];
+      }
     }
 
     if (service) {

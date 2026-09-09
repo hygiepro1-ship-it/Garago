@@ -68,7 +68,11 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
-  const [userVehicles, setUserVehicles] = useState<{ id: string; year: number; make: string; model: string; isDefault: boolean }[]>([]);
+  interface SavedVehicle {
+    id: string; year: number; make: string; model: string; trim?: string | null; isDefault: boolean;
+    vin?: string | null; tireSize?: string | null; specs?: string | null;
+  }
+  const [userVehicles, setUserVehicles] = useState<SavedVehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [notes, setNotes]             = useState("");
   const [submitting, setSubmitting]   = useState(false);
@@ -125,6 +129,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     if (!name || !phone || !selectedDate || !selectedSlot) return;
     setSubmitting(true);
     setError("");
+    const selectedVehicle = userVehicles.find(v => v.id === selectedVehicleId);
     const res = await fetch("/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -136,6 +141,10 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         vehicleYear:   vehicleYear || null,
         vehicleMake:   vehicleMake || null,
         vehicleModel:  vehicleModel || null,
+        vehicleTrim:      selectedVehicle?.trim ?? null,
+        vehicleVin:       selectedVehicle?.vin ?? null,
+        vehicleTireSize:  selectedVehicle?.tireSize ?? null,
+        vehicleSpecs:     selectedVehicle?.specs ?? null,
         serviceName:   service || null,
         notes:         notes.trim() || null,
         date:      formatDate(selectedDate!),

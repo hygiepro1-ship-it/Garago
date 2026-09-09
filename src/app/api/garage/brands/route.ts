@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { brands } = await req.json();
+  const { brands, brandModels } = await req.json();
 
   const garage = await prisma.garage.findUnique({ where: { ownerId: userId } });
   if (!garage) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
@@ -24,6 +24,16 @@ export async function PUT(req: NextRequest) {
         note: b.note,
       })),
     });
+  }
+
+  // Modèles précis par marque — absence d'entrée pour une marque = tous les modèles acceptés
+  await prisma.garageBrandModel.deleteMany({ where: { garageId: garage.id } });
+  if (brandModels && typeof brandModels === "object") {
+    const rows = Object.entries(brandModels as Record<string, string[]>)
+      .flatMap(([brand, models]) => (models ?? []).map((model) => ({ garageId: garage.id, brand, model })));
+    if (rows.length > 0) {
+      await prisma.garageBrandModel.createMany({ data: rows });
+    }
   }
 
   const updated = await prisma.garageBrand.findMany({ where: { garageId: garage.id } });
