@@ -37,9 +37,6 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
   const rating          = Math.round(garage.avgRating * 10) / 10;
   const ratingFull      = Math.round(rating);
   const slots           = getNextSlots(garage.slug, c);
-  const highlightedSvc  = highlightService
-    ? garage.services.find((s) => s.category.name.toLowerCase().includes(highlightService.toLowerCase()))
-    : null;
 
   return (
     <Link href={`/garage/${garage.slug}`} className="block group">
@@ -123,23 +120,12 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
               {distance && <span className="badge badge-green">{distance}</span>}
             </div>
 
-            {highlightedSvc && highlightedSvc.priceMin && (
-              <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
-                style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
-                <span className="text-xs font-semibold" style={{ color: "#92400e" }}>{c.startingFrom}</span>
-                <span className="text-xs font-black" style={{ color: "#f97316" }}>
-                  {highlightedSvc.priceMin} $
-                </span>
-              </div>
-            )}
-
             {services.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {services.map((s, i) => (
                   <span key={i} className="badge badge-navy">
                     <ServiceIcon name={s.category.name} size={12} />
                     {s.category.name}
-                    {s.priceMin && <span className="ml-0.5 font-black" style={{ color: "#f97316" }}>{s.priceMin}$</span>}
                   </span>
                 ))}
                 {garage.services.length > 3 && (
