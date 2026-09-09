@@ -326,6 +326,15 @@ model RegistrationAttempt {
   @@index([ip, createdAt])
 }
 
+// Anti-brute-force : compte les échecs de connexion par courriel dans une fenêtre de temps
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 model AutoTip {
   id          String   @id @default(cuid())
   title       String

@@ -5,6 +5,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
+const MAX_LOGIN_ATTEMPTS = 8;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: {
@@ -39,14 +42,29 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        const email = credentials.email; // casse préservée — ne pas modifier la recherche en base
+        const since = new Date(Date.now() - LOGIN_WINDOW_MS);
 
-        if (!user || !user.password) return null;
+        // Anti-brute-force : bloque après trop d'échecs récents sur ce courriel
+        const recentFailures = await prisma.loginAttempt.count({
+          where: { email, createdAt: { gt: since } },
+        });
+        if (recentFailures >= MAX_LOGIN_ATTEMPTS) {
+          throw new Error("Trop de tentatives. Réessayez dans 15 minutes.");
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user || !user.password) {
+          await prisma.loginAttempt.create({ data: { email } });
+          return null;
+        }
 
         const passwordValid = await bcrypt.compare(credentials.password, user.password);
-        if (!passwordValid) return null;
+        if (!passwordValid) {
+          await prisma.loginAttempt.create({ data: { email } });
+          return null;
+        }
 
         return {
           id: user.id,

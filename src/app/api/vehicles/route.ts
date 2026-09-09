@@ -37,10 +37,13 @@ export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
+  const userId = session.user.id;
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID requis" }, { status: 400 });
 
-  await prisma.userVehicle.delete({ where: { id } });
+  const result = await prisma.userVehicle.deleteMany({ where: { id, userId } });
+  if (result.count === 0) return NextResponse.json({ error: "Véhicule introuvable" }, { status: 404 });
+
   return NextResponse.json({ success: true });
 }
