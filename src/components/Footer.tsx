@@ -65,6 +65,32 @@ export default function Footer() {
                 </span>
               )}
             </div>
+
+            {/* Réseaux sociaux */}
+            <div className="flex items-center gap-3 mt-5">
+              <a href="https://www.linkedin.com/company/garago-canada/" target="_blank" rel="noopener noreferrer"
+                aria-label="Garago sur LinkedIn"
+                className="flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#0A66C2"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 11.01-4.13 2.07 2.07 0 01-.01 4.13zM7.12 20.45H3.56V9h3.56v11.45z"/>
+                </svg>
+              </a>
+              <a href="https://www.instagram.com/garago.ca" target="_blank" rel="noopener noreferrer"
+                aria-label="Garago sur Instagram"
+                className="flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#E1306C"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                  <rect x="3" y="3" width="18" height="18" rx="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+              </a>
+            </div>
           </div>
 
           {/* Conducteurs */}
