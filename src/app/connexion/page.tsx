@@ -78,7 +78,6 @@ export default function ConnexionPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [showPwd,  setShowPwd]  = useState(false);
-  const [pwdResetMsg, setPwdResetMsg] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,14 +148,6 @@ export default function ConnexionPage() {
                 {error}
               </div>
             )}
-            {pwdResetMsg && (
-              <div className="px-4 py-3 rounded-xl text-sm"
-                style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af" }}>
-                Pour réinitialiser votre mot de passe, contactez-nous à{" "}
-                <a href="mailto:support@garagopro.ca" className="font-bold underline">support@garagopro.ca</a>.
-              </div>
-            )}
-
             <div>
               <label className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{a.email}</label>
               <input type="email" required className="garago-input" placeholder={a.emailPlaceholder}
@@ -166,10 +157,9 @@ export default function ConnexionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{a.password}</label>
-                <button type="button" className="text-xs font-semibold" style={{ color: "#f97316" }}
-                  onClick={() => setPwdResetMsg(true)}>
+                <Link href="/mot-de-passe-oublie" className="text-xs font-semibold" style={{ color: "#f97316" }}>
                   {a.forgotPwd}
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <input type={showPwd ? "text" : "password"} required className="garago-input pr-10"

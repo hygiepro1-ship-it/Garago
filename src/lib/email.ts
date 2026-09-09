@@ -187,6 +187,33 @@ export async function sendVerificationCode(to: string, code: string) {
   await send(to, `${code} — Code de vérification Garago`, body);
 }
 
+// ─── Email: Réinitialisation de mot de passe ──────────────────────────────────
+
+export async function sendPasswordResetCode(to: string, code: string) {
+  if (!canSend()) {
+    console.log(`[DEV] Code de réinitialisation pour ${to} : ${code}`);
+    return;
+  }
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Réinitialisation de mot de passe 🔑</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Voici votre code pour réinitialiser votre mot de passe Garago :</p>
+
+    <div style="text-align:center;margin:32px 0">
+      <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
+        <span style="font-size:44px;font-weight:900;letter-spacing:12px;color:#fff;font-family:monospace">${code}</span>
+      </div>
+    </div>
+
+    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">Ce code est valide pendant <strong>15 minutes</strong>.</p>
+    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement ce message — votre mot de passe ne changera pas.</p>
+    ${HR}
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
+  `;
+
+  await send(to, `${code} — Réinitialisation de mot de passe Garago`, body);
+}
+
 // ─── Email: Confirmation de rendez-vous (client) ──────────────────────────────
 
 export interface BookingConfirmationParams extends AppointmentDetails {

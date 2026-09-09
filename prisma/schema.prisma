@@ -317,6 +317,16 @@ model EmailVerificationCode {
   @@index([email])
 }
 
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 // Anti-spam : limite le nombre d'inscriptions par IP dans une fenêtre de temps
 model RegistrationAttempt {
   id        String   @id @default(cuid())
