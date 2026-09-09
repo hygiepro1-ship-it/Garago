@@ -58,6 +58,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Le mot de passe doit contenir au moins 8 caractères" }, { status: 400 });
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json({ error: "Un compte existe déjà avec ce courriel" }, { status: 409 });

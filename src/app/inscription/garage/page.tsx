@@ -277,6 +277,7 @@ export default function InscriptionGaragePage() {
     e.preventDefault();
     setError("");
 
+    if (!emailVerified) { setError("Veuillez d'abord vérifier votre adresse courriel."); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
 
@@ -432,13 +433,38 @@ export default function InscriptionGaragePage() {
                       {/* Courriel */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">{r.email}</label>
-                        <input
-                          type="email" required
-                          className={inputClass}
-                          placeholder="vous@garage.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="email" required
+                            className={inputClass}
+                            placeholder="vous@garage.com"
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setEmailVerified(false); setCodeSent(false); setCodeInput(""); setCodeSentMsg(""); }}
+                            disabled={emailVerified}
+                          />
+                          {!emailVerified && (
+                            <button type="button" onClick={sendCode} disabled={sendingCode || !email}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
+                              style={{ background: "#0b1f3a" }}>
+                              {sendingCode ? "…" : codeSent ? "Renvoyer" : "Vérifier"}
+                            </button>
+                          )}
+                        </div>
+
+                        {emailVerified && (
+                          <p className="text-xs font-semibold text-green-600 mt-1.5 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Courriel vérifié
+                          </p>
+                        )}
+
+                        {codeSent && !emailVerified && (
+                          <div className="mt-3">
+                            <p className="text-xs mb-2 text-gray-500">{codeSentMsg || `Entrez le code reçu à ${email}`}</p>
+                            <CodeInput value={codeInput} onChange={handleCodeChange} disabled={verifyingCode} />
+                            {codeError && <p className="text-xs text-red-600 mt-1.5">{codeError}</p>}
+                          </div>
+                        )}
                       </div>
 
                       {/* Téléphone */}
