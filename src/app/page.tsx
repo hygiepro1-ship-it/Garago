@@ -177,9 +177,9 @@ export default function HomePage() {
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
 
-          <div className="mb-2 sm:mb-4">
+          <div className="mb-2 sm:mb-4" style={{ display: "flex", justifyContent: "center" }}>
             <img src="/garago_logo_transparent_1.png" alt="Garago"
-              style={{ maxHeight: "clamp(120px, 30vw, 220px)", maxWidth: "80%", width: "auto", height: "auto", margin: "0 auto", display: "block" }} />
+              style={{ maxHeight: "clamp(90px, 20vw, 160px)", maxWidth: "70%", width: "auto", height: "auto", display: "block" }} />
           </div>
 
           <h1 className="font-black tracking-tight mb-1 sm:mb-2"
