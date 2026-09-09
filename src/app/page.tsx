@@ -223,7 +223,7 @@ export default function HomePage() {
                     value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
                     disabled={(f as any).disabled}>
-                    <option value="">{(f as any).disabled ? "—" : h.allOpts}</option>
+                    <option value="">{(f as any).disabled ? "—" : ""}</option>
                     {f.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>
