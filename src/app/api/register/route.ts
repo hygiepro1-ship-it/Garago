@@ -67,6 +67,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Un compte existe déjà avec ce courriel" }, { status: 409 });
     }
 
+    // Le courriel doit avoir été vérifié via /api/verify-email/confirm avant de pouvoir
+    // créer le compte — empêche un appel direct à cette route de contourner la vérification.
+    const verification = await prisma.emailVerificationCode.findFirst({
+      where: { email, verified: true, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!verification) {
+      return NextResponse.json({ error: "Veuillez d'abord vérifier votre adresse courriel." }, { status: 403 });
+    }
+
     // Validate referral code if provided
     if (referredByCode) {
       const referrer = await prisma.garage.findUnique({ where: { referralCode: referredByCode.trim().toUpperCase() } });
@@ -80,6 +90,9 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: { name, email, password: hashed, role: role ?? "DRIVER", phone, marketingConsent: !!marketingConsent },
     });
+
+    // Code de vérification consommé — plus valide pour une prochaine inscription
+    await prisma.emailVerificationCode.deleteMany({ where: { email } });
 
     if (role === "GARAGE_OWNER" && garageName) {
       const baseSlug = slugify(garageName);

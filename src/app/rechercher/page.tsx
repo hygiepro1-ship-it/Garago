@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
@@ -73,6 +73,11 @@ function SearchContent() {
 
   const RESULTS_PER_PAGE = 20;
 
+  // Ref plutôt que dépendance directe : la position déclenche déjà un recalcul
+  // local des distances (effet ci-dessous) — pas besoin de tout re-fetch depuis l'API.
+  const userPosRef = useRef(userPos);
+  useEffect(() => { userPosRef.current = userPos; }, [userPos]);
+
   const fetchGarages = useCallback(async (targetPage: number) => {
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
@@ -87,7 +92,7 @@ function SearchContent() {
       const data = await res.json();
       let results: SearchGarage[] = data.garages ?? [];
       if (minRating) results = results.filter((g) => g.avgRating >= parseFloat(minRating));
-      results = withDistances(results, userPos);
+      results = withDistances(results, userPosRef.current);
       setGarages((prev) => (targetPage === 1 ? results : [...prev, ...results]));
       setTotal(data.total ?? results.length);
       setHasMore(typeof data.pages === "number" ? targetPage < data.pages : false);
@@ -98,7 +103,7 @@ function SearchContent() {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [make, service, city, walkInOnly, minRating, userPos]);
+  }, [make, service, city, walkInOnly, minRating]);
 
   useEffect(() => { fetchGarages(1); }, [fetchGarages]);
 

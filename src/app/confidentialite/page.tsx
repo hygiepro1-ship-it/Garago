@@ -66,8 +66,8 @@ export default function ConfidentialitePage() {
         <section>
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>5. Cookies</h2>
           <p className="text-sm leading-relaxed">
-            Nous utilisons des cookies essentiels pour maintenir votre session et des cookies analytiques pour
-            améliorer notre service. Vous pouvez désactiver les cookies non essentiels via les paramètres de votre navigateur.
+            Nous utilisons uniquement des cookies essentiels, nécessaires pour maintenir votre session de connexion.
+            Nous n'utilisons actuellement aucun cookie de suivi ou d'analyse.
           </p>
         </section>
 

@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Code invalide ou expiré." }, { status: 400 });
     }
 
-    // Supprimer le code après validation
-    await prisma.emailVerificationCode.delete({ where: { id: record.id } });
+    // Marquer comme vérifié (et non supprimer) — /api/register doit pouvoir
+    // confirmer côté serveur que cet email a bien été vérifié avant de créer le compte.
+    await prisma.emailVerificationCode.update({ where: { id: record.id }, data: { verified: true } });
 
     return NextResponse.json({ verified: true });
   } catch (err) {
