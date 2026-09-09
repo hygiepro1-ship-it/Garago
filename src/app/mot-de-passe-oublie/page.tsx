@@ -98,7 +98,7 @@ export default function MotDePasseOubliePage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex justify-center items-center px-4 py-2 rounded-2xl mb-6"
             style={{ background: "#0b1f3a" }}>
-            <img src="/garago_logo_transparent_1.png" alt="Garago" className="h-9 w-auto object-contain" />
+            <img src="/garago_logo_transparent_1.png?v=3" alt="Garago" className="h-9 w-auto object-contain" />
           </Link>
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>
             {step === "done" ? "Mot de passe réinitialisé" : "Mot de passe oublié"}
