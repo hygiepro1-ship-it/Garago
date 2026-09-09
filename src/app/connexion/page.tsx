@@ -167,7 +167,7 @@ export default function ConnexionPage() {
                   value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPwd(!showPwd)}
                   aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d={showPwd

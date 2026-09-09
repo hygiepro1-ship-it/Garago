@@ -367,7 +367,7 @@ export default function InscriptionConducteurPage() {
                   value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="button" onClick={() => setShowPwd(!showPwd)}
                   aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600">
                   <EyeIcon visible={showPwd} />
                 </button>
               </div>
@@ -402,7 +402,7 @@ export default function InscriptionConducteurPage() {
                   value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                   aria-label={showConfirm ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600">
                   <EyeIcon visible={showConfirm} />
                 </button>
               </div>
