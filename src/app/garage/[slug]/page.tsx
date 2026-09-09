@@ -354,7 +354,7 @@ export default function GarageProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ── Main column ── */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="order-2 lg:order-none lg:col-span-2 space-y-6">
 
           {/* Description */}
           {garage.description && (
@@ -513,7 +513,7 @@ export default function GarageProfilePage() {
         </div>
 
         {/* ── Sidebar ── */}
-        <div className="space-y-5">
+        <div className="order-1 lg:order-none space-y-5">
 
           {/* Booking widget */}
           <div className="lg:sticky lg:top-6">
