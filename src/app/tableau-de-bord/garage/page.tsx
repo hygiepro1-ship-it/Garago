@@ -718,12 +718,48 @@ export default function DashboardGaragePage() {
   // ── Garages du propriétaire (multi-garages) ─────────────────────────────
   type MyGarage = { id: string; name: string; city: string; parentId: string | null; subscriptionStatus: string | null };
   const [myGarages, setMyGarages] = useState<MyGarage[]>([]);
+  function loadMyGarages() {
+    gfetch("/api/garage/list").then(r => r.ok ? r.json() : []).then(d => Array.isArray(d) && setMyGarages(d)).catch(() => {});
+  }
   useEffect(() => {
     if (status !== "authenticated") return;
-    gfetch("/api/garage/list").then(r => r.ok ? r.json() : []).then(d => Array.isArray(d) && setMyGarages(d)).catch(() => {});
+    loadMyGarages();
   }, [status]);
   function switchGarage(id: string) {
     window.location.href = id ? `/tableau-de-bord/garage?g=${encodeURIComponent(id)}` : "/tableau-de-bord/garage";
+  }
+
+  // ── Ajouter / retirer une succursale ───────────────────────────────────
+  const [showAddBranch, setShowAddBranch] = useState(false);
+  const [branchForm, setBranchForm] = useState({ name: "", address: "", city: "", postalCode: "", phone: "", latitude: null as number | null, longitude: null as number | null });
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchError, setBranchError] = useState("");
+  const [removingBranch, setRemovingBranch] = useState<string | null>(null);
+
+  async function submitBranch(e: React.FormEvent) {
+    e.preventDefault();
+    setBranchError(""); setBranchSaving(true);
+    try {
+      const res = await fetch("/api/garage/branch", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(branchForm),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setBranchError(data.error ?? "Une erreur est survenue."); setBranchSaving(false); return; }
+      setShowAddBranch(false);
+      setBranchForm({ name: "", address: "", city: "", postalCode: "", phone: "", latitude: null, longitude: null });
+      loadMyGarages();
+    } catch { setBranchError("Erreur réseau."); }
+    finally { setBranchSaving(false); }
+  }
+
+  async function removeBranch(id: string) {
+    setRemovingBranch(id);
+    try {
+      const res = await fetch(`/api/garage/branch/${id}`, { method: "DELETE" });
+      if (res.ok) loadMyGarages();
+      else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Impossible de retirer ce garage."); }
+    } finally { setRemovingBranch(null); }
   }
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -2743,12 +2779,12 @@ export default function DashboardGaragePage() {
       {activeTab === "abonnement" && (
         <div className="space-y-6">
 
-          {/* ── Mes garages (propriétaires multi-garages) ── */}
-          {myGarages.length > 1 && (
+          {/* ── Mes garages (visible depuis le garage principal) ── */}
+          {garage.parentId === null && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-1">Mes garages</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Un seul abonnement couvre l'ensemble de vos garages. Le garage principal porte la facturation.
+                Un seul abonnement couvre tous vos garages. 1<sup>er</sup> garage 109,99 $/mois, chaque garage supplémentaire +49,99 $/mois (−20 % en annuel). Chaque garage garde son profil, ses horaires et son agenda.
               </p>
               <div className="divide-y divide-gray-100">
                 {myGarages.map((g) => {
@@ -2760,27 +2796,86 @@ export default function DashboardGaragePage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{g.name}</p>
-                        <p className="text-xs text-gray-400">{g.city}{g.parentId === null ? " · garage principal" : ""}</p>
+                        <p className="text-xs text-gray-400">
+                          {g.city}{g.parentId === null ? " · garage principal" : " · +49,99 $/mois"}
+                        </p>
                       </div>
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={
-                        g.subscriptionStatus === "ACTIVE" ? { background: "#ecfdf5", color: "#047857", border: "1px solid #6ee7b7" } :
-                        g.subscriptionStatus === "TRIAL" ? { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" } :
-                        { background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }
-                      }>
-                        {g.subscriptionStatus === "ACTIVE" ? "Actif" : g.subscriptionStatus === "TRIAL" ? "Essai" : "Inactif"}
-                      </span>
-                      {isCurrent ? (
-                        <span className="text-xs font-semibold text-gray-400 flex-shrink-0 w-16 text-right">affiché</span>
-                      ) : (
+                      {!isCurrent && (
                         <button onClick={() => switchGarage(g.id)}
-                          className="text-xs font-bold text-orange-600 hover:underline flex-shrink-0 w-16 text-right">
+                          className="text-xs font-bold text-orange-600 hover:underline flex-shrink-0">
                           Gérer →
                         </button>
                       )}
+                      {g.parentId !== null && (
+                        <button onClick={() => { if (window.confirm(`Retirer « ${g.name} » ? Le profil est masqué immédiatement et votre facture baisse de 49,99 $/mois.`)) removeBranch(g.id); }}
+                          disabled={removingBranch === g.id}
+                          className="text-xs font-semibold text-gray-400 hover:text-red-600 flex-shrink-0 disabled:opacity-50">
+                          {removingBranch === g.id ? "…" : "Retirer"}
+                        </button>
+                      )}
+                      {isCurrent && <span className="text-xs font-semibold text-gray-300 flex-shrink-0">affiché</span>}
                     </div>
                   );
                 })}
               </div>
+              <button onClick={() => { setBranchError(""); setShowAddBranch(true); }}
+                className="mt-4 w-full flex items-center justify-center gap-2 border-[1.5px] border-dashed border-gray-300 rounded-xl py-3 text-sm font-bold text-gray-600 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Ajouter une succursale
+              </button>
+            </div>
+          )}
+
+          {/* Modale — ajouter une succursale */}
+          {showAddBranch && (
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-10" style={{ background: "rgba(11,31,58,0.5)" }}
+              onClick={() => !branchSaving && setShowAddBranch(false)}>
+              <form onSubmit={submitBranch} onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                <h3 className="text-lg font-black text-gray-900 mb-1">Ajouter une succursale</h3>
+                <p className="text-sm text-gray-500 mb-4">Ce garage aura son propre profil, ses horaires et son agenda.</p>
+                {branchError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{branchError}</p>}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Nom du garage</label>
+                    <input type="text" required className={inputClass} placeholder="Garage Tremblay — Brossard"
+                      value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Adresse</label>
+                    <AddressAutocomplete
+                      initialValue={branchForm.address}
+                      inputClass={inputClass}
+                      onSelect={(r: AddressResult) => setBranchForm((f) => ({
+                        ...f, address: r.streetAddress, city: r.city,
+                        postalCode: r.postalCode, latitude: r.lat, longitude: r.lng,
+                      }))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Téléphone</label>
+                    <input type="tel" className={inputClass} placeholder="(450) 555-1234"
+                      value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} />
+                  </div>
+                </div>
+                <div className="rounded-xl p-3 mt-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
+                  <p className="text-sm font-bold" style={{ color: "#ea6c0a" }}>+ 49,99 $/mois</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#9a3412" }}>
+                    {garage.subscriptionStatus === "ACTIVE"
+                      ? "Facturé au prorata dès aujourd'hui, puis à chaque cycle. Le garage principal porte la facture."
+                      : "Gratuit pendant votre essai. Facturé quand vous activerez votre abonnement."}
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-5">
+                  <button type="button" onClick={() => setShowAddBranch(false)} disabled={branchSaving}
+                    className="flex-1 border border-gray-300 rounded-xl py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                    Annuler
+                  </button>
+                  <button type="submit" disabled={branchSaving}
+                    className="flex-1 text-white rounded-xl py-2.5 text-sm font-black disabled:opacity-50" style={{ background: "#f97316" }}>
+                    {branchSaving ? "Ajout…" : "Ajouter la succursale"}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getBillingGarage } from "@/lib/garage-access";
+import { countBranches, extraPriceForInterval } from "@/lib/stripe-branches";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
       metadata: { garageId: garage.id },
     });
     customerId = customer.id;
-    await prisma.garage.update({ where: { id: garage.id }, data: { stripeCustomerId: customerId } });
+    // Tous les garages du dossier (principal + succursales) partagent le client Stripe
+    await prisma.garage.updateMany({ where: { ownerId: userId }, data: { stripeCustomerId: customerId } });
   }
 
   const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
@@ -72,10 +74,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Garages supplémentaires (succursales) déjà rattachés : facturés dès l'activation
+  const branchCount = await countBranches(userId);
+  const extraPriceId = extraPriceForInterval(plan === "annual" ? "year" : "month");
+  const lineItems: { price: string; quantity: number }[] = [{ price: priceId, quantity: 1 }];
+  if (branchCount > 0 && extraPriceId) {
+    lineItems.push({ price: extraPriceId, quantity: branchCount });
+  }
+
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: lineItems,
     discounts: discounts.length > 0 ? discounts : undefined,
     success_url: `${origin}/tableau-de-bord/garage?checkout=success`,
     cancel_url:  `${origin}/tableau-de-bord/garage?checkout=cancelled`,
