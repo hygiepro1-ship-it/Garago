@@ -801,13 +801,17 @@ export default function DashboardGaragePage() {
     fetch("/api/stripe/billing").then(r => r.ok ? r.json() : null).then(setBilling).catch(() => {});
   }, [activeTab]);
 
+  const [portalError, setPortalError] = useState("");
   async function openBillingPortal() {
     setPortalLoading(true);
+    setPortalError("");
     try {
       const res = await fetch("/api/stripe/billing", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (data.url) { window.location.href = data.url; return; }
-      alert(data.error ?? "Impossible d'ouvrir le portail de facturation.");
+      setPortalError(data.error ?? "Impossible d'ouvrir le portail de facturation.");
+    } catch {
+      setPortalError("Erreur réseau.");
     } finally { setPortalLoading(false); }
   }
 
@@ -1485,10 +1489,13 @@ export default function DashboardGaragePage() {
               </p>
             </div>
           </div>
-          <button onClick={openBillingPortal} disabled={portalLoading}
-            className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
-            {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={openBillingPortal} disabled={portalLoading}
+              className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
+              {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
+            </button>
+            {portalError && <p className="text-xs text-red-700 max-w-[220px] text-right">{portalError}</p>}
+          </div>
         </div>
       )}
 
@@ -3063,51 +3070,63 @@ export default function DashboardGaragePage() {
           </div>
           )}
 
-          {/* ── Prochaine facture + moyen de paiement (garage principal, abonné) ── */}
-          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && billing?.hasSubscription && (
+          {/* ── Facturation + moyen de paiement (garage principal, abonné) ── */}
+          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-4">Facturation</h2>
 
-              <div className="flex items-baseline justify-between gap-3 pb-3 border-b border-gray-100">
-                <span className="text-sm text-gray-500">
-                  {billing.cancelAtPeriodEnd
-                    ? "Dernière facture avant résiliation"
-                    : billing.interval === "year" ? "Prochaine facture annuelle" : "Prochaine facture mensuelle"}
-                </span>
-                <span className="text-xl font-black text-gray-900" style={{ fontVariantNumeric: "tabular-nums" }}>
-                  {billing.nextAmount != null
-                    ? `${(billing.nextAmount / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2 })} ${billing.currency ?? "CAD"}`
-                    : "—"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 py-3 border-b border-gray-100">
-                <span className="text-sm text-gray-500">
-                  {billing.cancelAtPeriodEnd ? "Échéance" : "Date de prélèvement"}
-                </span>
-                <span className="text-sm font-bold text-gray-900">
-                  {billing.nextDate
-                    ? new Date(billing.nextDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })
-                    : "—"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3 pt-3">
-                <span className="text-sm text-gray-500">Moyen de paiement</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {billing.paymentMethod?.type === "card"
-                    ? `${(billing.paymentMethod.brand ?? "carte").replace(/^\w/, c => c.toUpperCase())} •••• ${billing.paymentMethod.last4}`
-                    : billing.paymentMethod?.type === "acss_debit"
-                    ? `Compte bancaire •••• ${billing.paymentMethod.last4 ?? ""}`
-                    : billing.paymentMethod?.type ?? "—"}
-                </span>
-              </div>
+              {billing?.hasSubscription ? (
+                <>
+                  <div className="flex items-baseline justify-between gap-3 pb-3 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {billing.cancelAtPeriodEnd
+                        ? "Dernière facture avant résiliation"
+                        : billing.interval === "year" ? "Prochaine facture annuelle" : "Prochaine facture mensuelle"}
+                    </span>
+                    <span className="text-xl font-black text-gray-900" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {billing.nextAmount != null
+                        ? `${(billing.nextAmount / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2 })} ${billing.currency ?? "CAD"}`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3 py-3 border-b border-gray-100">
+                    <span className="text-sm text-gray-500">
+                      {billing.cancelAtPeriodEnd ? "Échéance" : "Date de prélèvement"}
+                    </span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {billing.nextDate
+                        ? new Date(billing.nextDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 pt-3">
+                    <span className="text-sm text-gray-500">Moyen de paiement</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {billing.paymentMethod?.type === "card"
+                        ? `${(billing.paymentMethod.brand ?? "carte").replace(/^\w/, c => c.toUpperCase())} •••• ${billing.paymentMethod.last4}`
+                        : billing.paymentMethod?.type === "acss_debit"
+                        ? `Compte bancaire •••• ${billing.paymentMethod.last4 ?? ""}`
+                        : billing.paymentMethod?.type ?? "Non renseigné"}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  {billing === null
+                    ? "Chargement…"
+                    : "Gérez votre moyen de paiement et consultez vos factures sur la page sécurisée de Stripe."}
+                </p>
+              )}
 
-              <button onClick={openBillingPortal} disabled={portalLoading}
+              <button onClick={openBillingPortal} disabled={portalLoading || billing === null}
                 className="mt-4 text-sm font-semibold text-gray-700 border border-gray-300 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors disabled:opacity-50">
                 {portalLoading ? "Ouverture…" : "Modifier le moyen de paiement"}
               </button>
-              <p className="text-xs text-gray-400 mt-2">
-                Vous serez redirigé vers la page sécurisée de Stripe pour mettre à jour votre carte ou vos coordonnées bancaires et consulter vos factures.
-              </p>
+              {portalError
+                ? <p className="text-xs text-red-600 mt-2">{portalError}</p>
+                : <p className="text-xs text-gray-400 mt-2">
+                    Vous serez redirigé vers la page sécurisée de Stripe pour mettre à jour votre carte ou vos coordonnées bancaires et consulter vos factures.
+                  </p>}
             </div>
           )}
 
