@@ -12,7 +12,7 @@ import BrandLogo from "@/components/BrandLogo";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 
-type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "ambassadeur";
+type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "abonnement" | "ambassadeur";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
 
@@ -1278,6 +1278,7 @@ export default function DashboardGaragePage() {
     marques:     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h5l3 3v4h-8V8zM5 7V3m6 4V3M5 17v4m6-4v4"/><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/></svg>,
     horaires:    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     profil:      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+    abonnement:  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>,
     ambassadeur: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>,
   };
 
@@ -1287,6 +1288,7 @@ export default function DashboardGaragePage() {
     { id: "marques",  label: d.brands    },
     { id: "horaires", label: d.hours     },
     { id: "profil",   label: d.profile   },
+    { id: "abonnement", label: "Abonnement" },
     ...(garage.ambassadorTier >= 1 ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur" }] : []),
   ];
 
@@ -2689,15 +2691,99 @@ export default function DashboardGaragePage() {
           {/* ── Description section ─────────────────────────────────────────── */}
           <DescriptionSection garage={garage} inputClass={inputClass} onUpdated={(data) => setGarage((g: any) => ({ ...g, ...data }))} />
 
-          {/* ── Gestion de l'abonnement ── */}
+        </div>
+      )}
+
+      {/* ══ ABONNEMENT ══════════════════════════════════════════════════════ */}
+      {activeTab === "abonnement" && (
+        <div className="space-y-6">
+
+          {/* ── Statut de l'abonnement ── */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h2 className="font-bold text-gray-900 text-lg mb-4">Statut</h2>
+
+            {garage.subscriptionStatus === "TRIAL" && (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
+                    Essai gratuit
+                  </span>
+                  {garage.subscriptionEndAt && (
+                    <span className="text-sm text-gray-500">
+                      jusqu'au {new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Votre garage est visible dans les résultats. Activez votre abonnement dès maintenant pour éviter toute coupure à la fin de l'essai.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                    {checkoutLoading ? "Chargement…" : "Activer — 109,99 $/mois"}
+                  </button>
+                  <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    ou payer annuellement (88,00 $/mois, −20 %)
+                  </button>
+                </div>
+              </>
+            )}
+
+            {garage.subscriptionStatus === "ACTIVE" && (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#ecfdf5", color: "#047857", border: "1px solid #6ee7b7" }}>
+                    Actif
+                  </span>
+                  {garage.subscriptionEndAt && (
+                    <span className="text-sm text-gray-500">
+                      {garage.cancelAtPeriodEnd ? "se termine le" : "prochain renouvellement le"}{" "}
+                      {new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">
+                  {garage.cancelAtPeriodEnd
+                    ? "Votre abonnement ne se renouvellera pas. Vous gardez l'accès complet jusqu'à la date ci-dessus."
+                    : "Votre garage apparaît dans les résultats de recherche et reçoit les réservations en ligne."}
+                </p>
+              </>
+            )}
+
+            {(garage.subscriptionStatus === "EXPIRED" || garage.subscriptionStatus === "PAST_DUE") && (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
+                    {garage.subscriptionStatus === "PAST_DUE" ? "Paiement échoué" : "Expiré"}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                    {checkoutLoading ? "Chargement…" : "Activer — 109,99 $/mois"}
+                  </button>
+                  <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    ou payer annuellement (88,00 $/mois, −20 %)
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ── Annulation / réactivation (abonnement actif) ── */}
           {garage.subscriptionStatus === "ACTIVE" && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Mon abonnement</h2>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Renouvellement</h2>
               {garage.cancelAtPeriodEnd ? (
                 <>
                   <p className="text-sm text-gray-500 mb-4">
-                    Votre abonnement ne se renouvellera pas
-                    {garage.subscriptionEndAt ? ` et restera actif jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}. Vous gardez l'accès complet jusqu'à cette date.
+                    Le renouvellement automatique est désactivé
+                    {garage.subscriptionEndAt ? ` — votre accès reste complet jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
                   </p>
                   {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
                   <button onClick={() => cancelSubscription(true)} disabled={cancelLoading}
@@ -2740,7 +2826,7 @@ export default function DashboardGaragePage() {
           )}
 
           {/* ── Zone de suppression du compte ── */}
-          <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-6">
+          <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
             <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
             <p className="text-sm text-gray-500 mb-4">
               Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées — impossible à annuler.
