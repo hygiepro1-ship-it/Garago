@@ -110,7 +110,8 @@ export async function POST(req: NextRequest) {
                 if (newTier >= 2 && !referrer.palier2Applied && referrer.stripeCustomerId) {
                   updateData.palier2Applied = true;
                   try {
-                    const COUPON_ID = process.env.STRIPE_AMBASSADOR_COUPON_ID ?? "garago-ambassador-10pct";
+                    // ID dédié « -once » — évite tout coupon "forever" hérité de l'ancienne logique
+                    const COUPON_ID = "garago-ambassador-10pct-once";
                     try { await stripe2.coupons.retrieve(COUPON_ID); } catch {
                       await stripe2.coupons.create({ id: COUPON_ID, percent_off: 10, duration: "once", name: "−10% Ambassadeur Garago (palier 2)" });
                     }

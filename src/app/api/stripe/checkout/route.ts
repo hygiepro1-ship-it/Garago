@@ -7,9 +7,6 @@ import { countBranches, extraPriceForInterval } from "@/lib/stripe-branches";
 
 export const dynamic = "force-dynamic";
 
-// Coupon ambassadeur — 10% de réduction permanente (duration: forever)
-const AMBASSADOR_COUPON_ID = process.env.STRIPE_AMBASSADOR_COUPON_ID ?? "garago-ambassador-10pct";
-
 // Un seul Price ID par plan, lu depuis l'environnement — pour changer un prix,
 // il suffit de créer le nouveau Price dans Stripe et de mettre à jour la variable
 // correspondante sur Vercel, sans toucher au code.
@@ -54,25 +51,8 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
-  // Réduction ambassadeur permanente si le garage est ambassadeur
-  const discounts: { coupon: string }[] = [];
-  if ((garage as any).isAmbassador) {
-    try {
-      try {
-        await stripe.coupons.retrieve(AMBASSADOR_COUPON_ID);
-      } catch {
-        await stripe.coupons.create({
-          id: AMBASSADOR_COUPON_ID,
-          percent_off: 10,
-          duration: "forever",
-          name: "10% Ambassadeur Garago — réduction permanente",
-        });
-      }
-      discounts.push({ coupon: AMBASSADOR_COUPON_ID });
-    } catch {
-      // Non-bloquant
-    }
-  }
+  // Les réductions ambassadeur (paliers 2 et 3) sont ponctuelles et appliquées
+  // par le webhook sur l'abonnement actif — pas de réduction à l'inscription.
 
   // Garages supplémentaires (succursales) déjà rattachés : facturés dès l'activation
   const branchCount = await countBranches(userId);
@@ -86,7 +66,6 @@ export async function POST(req: NextRequest) {
     customer: customerId,
     mode: "subscription",
     line_items: lineItems,
-    discounts: discounts.length > 0 ? discounts : undefined,
     success_url: `${origin}/tableau-de-bord/garage?checkout=success`,
     cancel_url:  `${origin}/tableau-de-bord/garage?checkout=cancelled`,
     metadata: { garageId: garage.id },
