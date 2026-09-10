@@ -75,25 +75,8 @@ export async function POST(req: NextRequest) {
                 where: { referralCode: newGarage.referredByCode },
               });
               // Le programme de parrainage est réservé aux garages abonnés : un
-              // parrain en essai / expiré ne gagne ni commission ni palier.
+              // parrain en essai / expiré ne monte pas en palier.
               if (referrer && referrer.subscriptionStatus === "ACTIVE") {
-                // 15% de commission sur le premier paiement
-                const commissionCents = Math.round((inv.amount_paid ?? 0) * 0.15);
-                const commissionDollars = commissionCents / 100;
-
-                // Crédit Stripe sur le compte du parrain
-                if (referrer.stripeCustomerId && commissionCents > 0) {
-                  try {
-                    await stripe.customers.createBalanceTransaction(referrer.stripeCustomerId, {
-                      amount: -commissionCents, // négatif = crédit
-                      currency: "cad",
-                      description: `Commission parrainage — ${newGarage.name}`,
-                    });
-                  } catch (e) {
-                    console.error("Erreur crédit Stripe parrainage :", e);
-                  }
-                }
-
                 // Mise à jour compteur + tiers ambassadeur
                 const newCount = (referrer.referralCount ?? 0) + 1;
                 const newTier = newCount >= 20 ? 5 : newCount >= 15 ? 4 : newCount >= 10 ? 3 : newCount >= 6 ? 2 : newCount >= 3 ? 1 : 0;
@@ -102,7 +85,6 @@ export async function POST(req: NextRequest) {
 
                 const updateData: any = {
                   referralCount: newCount,
-                  referralCommissionEarned: { increment: commissionDollars },
                   ambassadorTier: newTier,
                   ambassadorSince: firstTier ? new Date() : referrer.ambassadorSince,
                   isAmbassador: newTier >= 5,
@@ -148,7 +130,7 @@ export async function POST(req: NextRequest) {
                   data: { referralRewardGranted: true },
                 });
                 const tierLabel = ["", "📊 PALIER 1", "💰 PALIER 2", "💰 PALIER 3", "🔝 PALIER 4", "🏆 CERTIFIÉ"][newTier] ?? "";
-                console.log(`💰 Commission ${commissionDollars}$ → ${referrer.name} (parrainage ${newGarage.name}) ${tierLabel}`);
+                console.log(`🤝 Parrainage ${newGarage.name} → ${referrer.name} (${newCount} au total) ${tierLabel}`);
               }
               // Récompense traitée (créditée ou non) — pas de reprise ultérieure.
               await prisma.garage.update({

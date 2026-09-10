@@ -84,7 +84,6 @@ interface Garage {
   subscriptionEndAt:        string | null;
   cancelAtPeriodEnd?:       boolean;
   referralCode:             string | null;
-  referralCommissionEarned: number | null;
   referralCount:            number;
   ambassadorTier:           number;
   ambassadorSince:          string | null;
@@ -521,7 +520,7 @@ interface AmbassadeurStats {
 function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
   tier: number;
   count: number;
-  garage: Pick<Garage, "referralCode" | "referralCommissionEarned" | "ambassadorSince">;
+  garage: Pick<Garage, "referralCode" | "ambassadorSince">;
   stats: AmbassadeurStats | null;
   onCopyCode: () => void;
 }) {
@@ -592,14 +591,10 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-3 mt-5">
+        <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
             <p className="text-2xl font-black" style={{ color: "#f97316" }}>{count}</p>
             <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
-          </div>
-          <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
-            <p className="text-2xl font-black" style={{ color: "#f97316" }}>{(garage.referralCommissionEarned ?? 0).toFixed(0)}$</p>
-            <p className="text-xs text-gray-500 mt-0.5">Commission gagnée</p>
           </div>
           <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
             <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
@@ -787,6 +782,33 @@ export default function DashboardGaragePage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState("");
+
+  // ── Résumé de facturation (prochaine facture, moyen de paiement) ──
+  type Billing = {
+    hasSubscription: boolean;
+    interval?: "month" | "year";
+    currency?: string;
+    nextAmount?: number | null;
+    nextDate?: number | null;
+    cancelAtPeriodEnd?: boolean;
+    paymentMethod?: { type: string; brand?: string; last4?: string } | null;
+  };
+  const [billing, setBilling] = useState<Billing | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  useEffect(() => {
+    if (activeTab !== "abonnement") return;
+    fetch("/api/stripe/billing").then(r => r.ok ? r.json() : null).then(setBilling).catch(() => {});
+  }, [activeTab]);
+
+  async function openBillingPortal() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/billing", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (data.url) { window.location.href = data.url; return; }
+      alert(data.error ?? "Impossible d'ouvrir le portail de facturation.");
+    } finally { setPortalLoading(false); }
+  }
 
   async function cancelSubscription(resume: boolean) {
     setCancelLoading(true);
@@ -2991,6 +3013,54 @@ export default function DashboardGaragePage() {
               </>
             )}
           </div>
+          )}
+
+          {/* ── Prochaine facture + moyen de paiement (garage principal, abonné) ── */}
+          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && billing?.hasSubscription && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-4">Facturation</h2>
+
+              <div className="flex items-baseline justify-between gap-3 pb-3 border-b border-gray-100">
+                <span className="text-sm text-gray-500">
+                  {billing.cancelAtPeriodEnd
+                    ? "Dernière facture avant résiliation"
+                    : billing.interval === "year" ? "Prochaine facture annuelle" : "Prochaine facture mensuelle"}
+                </span>
+                <span className="text-xl font-black text-gray-900" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {billing.nextAmount != null
+                    ? `${(billing.nextAmount / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2 })} ${billing.currency ?? "CAD"}`
+                    : "—"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-3 py-3 border-b border-gray-100">
+                <span className="text-sm text-gray-500">
+                  {billing.cancelAtPeriodEnd ? "Échéance" : "Date de prélèvement"}
+                </span>
+                <span className="text-sm font-bold text-gray-900">
+                  {billing.nextDate
+                    ? new Date(billing.nextDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })
+                    : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-3">
+                <span className="text-sm text-gray-500">Moyen de paiement</span>
+                <span className="text-sm font-bold text-gray-900">
+                  {billing.paymentMethod?.type === "card"
+                    ? `${(billing.paymentMethod.brand ?? "carte").replace(/^\w/, c => c.toUpperCase())} •••• ${billing.paymentMethod.last4}`
+                    : billing.paymentMethod?.type === "acss_debit"
+                    ? `Compte bancaire •••• ${billing.paymentMethod.last4 ?? ""}`
+                    : billing.paymentMethod?.type ?? "—"}
+                </span>
+              </div>
+
+              <button onClick={openBillingPortal} disabled={portalLoading}
+                className="mt-4 text-sm font-semibold text-gray-700 border border-gray-300 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                {portalLoading ? "Ouverture…" : "Modifier le moyen de paiement"}
+              </button>
+              <p className="text-xs text-gray-400 mt-2">
+                Vous serez redirigé vers la page sécurisée de Stripe pour mettre à jour votre carte ou vos coordonnées bancaires et consulter vos factures.
+              </p>
+            </div>
           )}
 
           {/* ── Annulation / réactivation (abonnement actif, garage principal) ── */}
