@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendDescriptionReviewEmail } from "@/lib/email";
 import { geocodeAddress } from "@/lib/geocode";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -28,8 +29,8 @@ export async function GET(_req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const garage = await prisma.garage.findUnique({
-    where: { ownerId: userId },
+  const garage = await prisma.garage.findFirst({
+    where: ownedGarageWhere(userId, readGarageId(_req.url)),
     include: {
       services: { include: { category: true } },
       brands: true,
@@ -57,8 +58,8 @@ export async function PUT(req: NextRequest) {
   if (descErr) return NextResponse.json({ error: descErr }, { status: 422 });
 
   // Get current state
-  const current = await prisma.garage.findUnique({
-    where: { ownerId: userId },
+  const current = await prisma.garage.findFirst({
+    where: ownedGarageWhere(userId, readGarageId(req.url)),
     select: {
       id: true, name: true, email: true,
       description: true, descriptionStatus: true,
@@ -117,7 +118,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const garage = await prisma.garage.update({
-    where: { ownerId: userId },
+    where: { id: current.id },
     data: {
       name:    body.name,
       address: body.address,

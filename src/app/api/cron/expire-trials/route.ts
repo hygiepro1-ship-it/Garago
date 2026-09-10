@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   // Bascule tout garage encore en TRIAL dont la période d'essai est révolue vers EXPIRED
   const result = await prisma.garage.updateMany({
     where: {
+      parentId: null, // les succursales héritent du statut de leur garage principal
       subscriptionStatus: "TRIAL",
       subscriptionEndAt:  { lt: new Date() },
     },

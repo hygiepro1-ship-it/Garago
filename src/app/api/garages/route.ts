@@ -14,18 +14,30 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") ?? "1");
     const limit = parseInt(searchParams.get("limit") ?? "12");
 
+    // Un garage est visible s'il a lui-même un abonnement actif/essai (garage
+    // principal ou autonome), ou si son garage principal en a un (succursale
+    // rattachée — l'abonnement couvre tout le dossier).
     const where: any = {
-      subscriptionStatus: { in: ["ACTIVE", "TRIAL"] },
+      AND: [
+        {
+          OR: [
+            { parentId: null, subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
+            { parent: { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } } },
+          ],
+        },
+      ],
     };
 
     if (city) where.city = { contains: city };
     if (walkInOnly) where.acceptsWalkIn = true;
     if (q) {
-      where.OR = [
-        { name: { contains: q } },
-        { description: { contains: q } },
-        { city: { contains: q } },
-      ];
+      where.AND.push({
+        OR: [
+          { name: { contains: q } },
+          { description: { contains: q } },
+          { city: { contains: q } },
+        ],
+      });
     }
 
     if (make) {

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { put, del } from "@vercel/blob";
 import prisma from "@/lib/prisma";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ownerId = session.user.id;
-    const garage = await prisma.garage.findUnique({ where: { ownerId } });
+    const garage = await prisma.garage.findFirst({ where: ownedGarageWhere(ownerId, readGarageId(req.url)) });
     if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
 
     const formData = await req.formData();

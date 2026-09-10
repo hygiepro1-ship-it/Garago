@@ -2,13 +2,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const garage = await prisma.garage.findUnique({ where: { ownerId: session.user.id } });
+  const garage = await prisma.garage.findFirst({ where: ownedGarageWhere(session.user.id, readGarageId(req.url)) });
   if (!garage) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
   const { searchParams } = req.nextUrl;
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const garage = await prisma.garage.findUnique({ where: { ownerId: session.user.id } });
+  const garage = await prisma.garage.findFirst({ where: ownedGarageWhere(session.user.id, readGarageId(req.url)) });
   if (!garage) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
   const body = await req.json();

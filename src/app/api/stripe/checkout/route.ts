@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getBillingGarage } from "@/lib/garage-access";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const garage = await prisma.garage.findUnique({ where: { ownerId: userId } });
+  // L'abonnement couvre l'ensemble du dossier et est porté par le garage principal.
+  const garage = await getBillingGarage(userId);
   if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });

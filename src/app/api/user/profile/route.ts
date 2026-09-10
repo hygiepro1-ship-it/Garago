@@ -73,16 +73,19 @@ export async function DELETE() {
   if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
   if (user.role === "GARAGE_OWNER") {
-    const garage = await prisma.garage.findUnique({
+    // Un propriétaire peut avoir plusieurs garages (principal + succursales) — tous
+    // partagent le même client Stripe, porté par le garage principal.
+    const garages = await prisma.garage.findMany({
       where: { ownerId: userId },
       select: { id: true, stripeCustomerId: true },
     });
+    const stripeCustomerId = garages.find((g) => g.stripeCustomerId)?.stripeCustomerId ?? null;
 
-    if (garage?.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
+    if (stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
       try {
         const { default: Stripe } = await import("stripe");
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-        const subs = await stripe.subscriptions.list({ customer: garage.stripeCustomerId, status: "active" });
+        const subs = await stripe.subscriptions.list({ customer: stripeCustomerId, status: "active" });
         for (const sub of subs.data) {
           await stripe.subscriptions.cancel(sub.id);
         }
@@ -95,10 +98,10 @@ export async function DELETE() {
       }
     }
 
-    if (garage) {
+    for (const g of garages) {
       // Seul GarageFavorite (favoris d'AUTRES utilisateurs sur ce garage) n'a pas de cascade en base
-      await prisma.garageFavorite.deleteMany({ where: { garageId: garage.id } });
-      await prisma.garage.delete({ where: { id: garage.id } });
+      await prisma.garageFavorite.deleteMany({ where: { garageId: g.id } });
+      await prisma.garage.delete({ where: { id: g.id } });
     }
   }
 

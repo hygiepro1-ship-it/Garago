@@ -26,7 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const garages = await prisma.garage.findMany({
-    where: { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
+    where: {
+      OR: [
+        { parentId: null, subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
+        { parent: { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } } },
+      ],
+    },
     select: { slug: true, updatedAt: true },
   });
 

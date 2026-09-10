@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -10,7 +11,7 @@ export async function PUT(req: NextRequest) {
   const userId = session.user.id;
   const { brands, brandModels } = await req.json();
 
-  const garage = await prisma.garage.findUnique({ where: { ownerId: userId } });
+  const garage = await prisma.garage.findFirst({ where: ownedGarageWhere(userId, readGarageId(req.url)) });
   if (!garage) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
   // Upsert all brands

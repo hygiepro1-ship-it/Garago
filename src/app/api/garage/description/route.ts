@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendDescriptionReviewEmail } from "@/lib/email";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -29,8 +30,8 @@ export async function POST(req: NextRequest) {
   const err = validateDescription(text);
   if (err) return NextResponse.json({ error: err }, { status: 422 });
 
-  const garage = await prisma.garage.findUnique({
-    where: { ownerId: userId },
+  const garage = await prisma.garage.findFirst({
+    where: ownedGarageWhere(userId, readGarageId(req.url)),
     select: {
       id: true, name: true, email: true,
       description: true, descriptionStatus: true,

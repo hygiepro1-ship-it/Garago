@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getBillingGarage } from "@/lib/garage-access";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,9 @@ export async function POST(req: NextRequest) {
   const resume = body?.resume === true;
 
   const userId = session.user.id;
-  const garage = await prisma.garage.findUnique({ where: { ownerId: userId } });
+  // L'abonnement est porté par le garage principal du propriétaire ; les
+  // succursales partagent le même client Stripe.
+  const garage = await getBillingGarage(userId);
   if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
   if (!garage.stripeCustomerId) {
     return NextResponse.json({ error: "Aucun abonnement actif" }, { status: 400 });
@@ -35,8 +38,9 @@ export async function POST(req: NextRequest) {
 
   const updated = await stripe.subscriptions.update(sub.id, { cancel_at_period_end: !resume });
 
-  await prisma.garage.update({
-    where: { id: garage.id },
+  // Répercute sur tous les garages du dossier (principal + succursales)
+  await prisma.garage.updateMany({
+    where: { stripeCustomerId: garage.stripeCustomerId },
     data:  { cancelAtPeriodEnd: updated.cancel_at_period_end ?? false },
   });
 

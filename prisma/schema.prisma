@@ -58,7 +58,7 @@ model User {
 
   accounts     Account[]
   sessions     Session[]
-  garage       Garage?
+  garages      Garage[]
   reviews      Review[]
   favorites    GarageFavorite[]
   vehicles     UserVehicle[]
@@ -68,7 +68,8 @@ model User {
 
 model Garage {
   id          String  @id @default(cuid())
-  ownerId     String  @unique
+  ownerId     String
+  parentId    String?   // null = garage principal ; sinon succursale rattachée à ce garage
   name        String
   slug        String  @unique
   description           String?
@@ -121,6 +122,8 @@ model Garage {
   updatedAt DateTime @updatedAt
 
   owner        User                 @relation(fields: [ownerId], references: [id])
+  parent       Garage?              @relation("GarageBranches", fields: [parentId], references: [id], onDelete: SetNull)
+  branches     Garage[]             @relation("GarageBranches")
   services     GarageService[]
   brands       GarageBrand[]
   brandModels  GarageBrandModel[]
@@ -132,6 +135,9 @@ model Garage {
   blockedSlots BlockedSlot[]
   alerts       GarageAlert[]
   profileViews GarageProfileView[]
+
+  @@index([ownerId])
+  @@index([parentId])
 }
 
 model GarageProfileView {

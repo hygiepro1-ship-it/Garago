@@ -12,6 +12,22 @@ import BrandLogo from "@/components/BrandLogo";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 
+/**
+ * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
+ * routes API via `?g=<id>` — lu depuis l'URL de la page (paramètre `g`).
+ * Sans paramètre, les routes ciblent le garage principal du propriétaire.
+ */
+function selectedGarageId(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("g");
+}
+function gfetch(path: string, init?: RequestInit) {
+  const g = selectedGarageId();
+  if (!g) return fetch(path, init);
+  const sep = path.includes("?") ? "&" : "?";
+  return fetch(`${path}${sep}g=${encodeURIComponent(g)}`, init);
+}
+
 type Tab = "apercu" | "services" | "marques" | "horaires" | "profil" | "abonnement" | "ambassadeur";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
@@ -53,6 +69,7 @@ interface GarageReview {
 
 interface Garage {
   id:                       string;
+  parentId:                 string | null;
   slug:                     string;
   name:                     string;
   city:                     string | null;
@@ -228,7 +245,7 @@ function DescriptionSection({
     if (!draft.trim()) { setError("La description ne peut pas être vide."); return; }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/garage/description", {
+      const res = await gfetch("/api/garage/description", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: draft }),
@@ -697,6 +714,17 @@ export default function DashboardGaragePage() {
   const [activeTab, setActiveTab] = useState<Tab>("apercu");
   const [garage, setGarage] = useState<Garage | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // ── Garages du propriétaire (multi-garages) ─────────────────────────────
+  type MyGarage = { id: string; name: string; city: string; parentId: string | null; subscriptionStatus: string | null };
+  const [myGarages, setMyGarages] = useState<MyGarage[]>([]);
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    gfetch("/api/garage/list").then(r => r.ok ? r.json() : []).then(d => Array.isArray(d) && setMyGarages(d)).catch(() => {});
+  }, [status]);
+  function switchGarage(id: string) {
+    window.location.href = id ? `/tableau-de-bord/garage?g=${encodeURIComponent(id)}` : "/tableau-de-bord/garage";
+  }
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -796,7 +824,7 @@ export default function DashboardGaragePage() {
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/connexion"); return; }
     if (status === "authenticated") {
-      fetch("/api/garage/profile").then(r => r.json()).then(d => { setGarage(d); setLoading(false); });
+      gfetch("/api/garage/profile").then(r => r.json()).then(d => { setGarage(d); setLoading(false); });
     }
   }, [status, router]);
 
@@ -804,7 +832,7 @@ export default function DashboardGaragePage() {
   const [stats, setStats] = useState<any>(null);
   useEffect(() => {
     if ((garage?.ambassadorTier ?? 0) >= 1) {
-      fetch("/api/garage/stats").then(r => r.json()).then(s => { if (!s.error) setStats(s); });
+      gfetch("/api/garage/stats").then(r => r.json()).then(s => { if (!s.error) setStats(s); });
     }
   }, [garage?.ambassadorTier, garage?.id]);
 
@@ -826,7 +854,7 @@ export default function DashboardGaragePage() {
 
   async function saveServices() {
     setSaving(true);
-    await fetch("/api/garage/services", {
+    await gfetch("/api/garage/services", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ services }),
@@ -880,7 +908,7 @@ export default function DashboardGaragePage() {
   }
   async function saveBrands() {
     setSaving(true);
-    await fetch("/api/garage/brands", {
+    await gfetch("/api/garage/brands", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ brands, brandModels }),
     });
@@ -910,7 +938,7 @@ export default function DashboardGaragePage() {
   }
   async function saveHoraires() {
     setSaving(true);
-    await fetch("/api/garage/availability", {
+    await gfetch("/api/garage/availability", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ horaires }),
     });
@@ -955,7 +983,7 @@ export default function DashboardGaragePage() {
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/garage/profile", {
+    await gfetch("/api/garage/profile", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...profileData,
@@ -981,7 +1009,7 @@ export default function DashboardGaragePage() {
     const fd = new FormData();
     fd.append("file", file);
     fd.append("type", type);
-    const res = await fetch("/api/garage/upload", { method: "POST", body: fd });
+    const res = await gfetch("/api/garage/upload", { method: "POST", body: fd });
     const data = await res.json();
     if (data.url) {
       setGarage((g: any) => ({ ...g, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
@@ -1039,8 +1067,8 @@ export default function DashboardGaragePage() {
     if (activeTab === "apercu" && !rdvLoaded && garage) {
       const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
       Promise.all([
-        fetch("/api/garage/appointments").then(r => r.json()),
-        fetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
+        gfetch("/api/garage/appointments").then(r => r.json()),
+        gfetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
       ]).then(([appts, blocks]) => {
         setAppointments(Array.isArray(appts) ? appts : []);
         setBlockedSlots(Array.isArray(blocks) ? blocks : []);
@@ -1053,8 +1081,8 @@ export default function DashboardGaragePage() {
     if (!garage) return;
     const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
     const [appts, blocks] = await Promise.all([
-      fetch("/api/garage/appointments").then(r => r.json()),
-      fetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
+      gfetch("/api/garage/appointments").then(r => r.json()),
+      gfetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
     ]);
     setAppointments(Array.isArray(appts) ? appts : []);
     setBlockedSlots(Array.isArray(blocks) ? blocks : []);
@@ -1089,7 +1117,7 @@ export default function DashboardGaragePage() {
     setSavingRdv(true);
     // Ensure selectedDays[0] is used as date if manualForm.date not set
     const formData = { ...manualForm, date: manualForm.date || selectedDays[0] || "" };
-    const res = await fetch("/api/garage/appointments", {
+    const res = await gfetch("/api/garage/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -1108,7 +1136,7 @@ export default function DashboardGaragePage() {
   async function saveBlockSlot(e: React.FormEvent) {
     e.preventDefault();
     setSavingBlock(true);
-    const res = await fetch("/api/blocked-slots", {
+    const res = await gfetch("/api/blocked-slots", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(blockForm),
@@ -1167,7 +1195,7 @@ export default function DashboardGaragePage() {
     e.preventDefault();
     setSavingBlock(true);
     for (const date of selectedDays) {
-      const res = await fetch("/api/blocked-slots", {
+      const res = await gfetch("/api/blocked-slots", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...blockForm, date }),
@@ -1188,7 +1216,7 @@ export default function DashboardGaragePage() {
     e.preventDefault();
     setSavingRdv(true);
     for (const date of selectedDays) {
-      const res = await fetch("/api/garage/appointments", {
+      const res = await gfetch("/api/garage/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...manualForm, date }),
@@ -1328,6 +1356,23 @@ export default function DashboardGaragePage() {
           </div>
         </div>
       </div>
+
+      {/* Sélecteur de garage (propriétaires multi-garages) */}
+      {myGarages.length > 1 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 mb-6 flex items-center gap-3 flex-wrap shadow-sm">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Vous gérez</span>
+          <select
+            value={selectedGarageId() ?? (myGarages.find(g => g.parentId === null)?.id ?? "")}
+            onChange={(e) => switchGarage(e.target.value)}
+            className="flex-1 min-w-[220px] border border-gray-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400">
+            {myGarages.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} · {g.city}{g.parentId === null ? " (principal)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {isTrialExpiring && (
         <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
@@ -2698,7 +2743,65 @@ export default function DashboardGaragePage() {
       {activeTab === "abonnement" && (
         <div className="space-y-6">
 
-          {/* ── Statut de l'abonnement ── */}
+          {/* ── Mes garages (propriétaires multi-garages) ── */}
+          {myGarages.length > 1 && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Mes garages</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Un seul abonnement couvre l'ensemble de vos garages. Le garage principal porte la facturation.
+              </p>
+              <div className="divide-y divide-gray-100">
+                {myGarages.map((g) => {
+                  const isCurrent = (selectedGarageId() ?? myGarages.find(x => x.parentId === null)?.id) === g.id;
+                  return (
+                    <div key={g.id} className="flex items-center gap-3 py-3">
+                      <div className="w-9 h-9 rounded-lg bg-gray-900 text-white grid place-items-center text-xs font-bold flex-shrink-0">
+                        {g.name.replace(/[^A-Za-zÀ-ÿ ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{g.name}</p>
+                        <p className="text-xs text-gray-400">{g.city}{g.parentId === null ? " · garage principal" : ""}</p>
+                      </div>
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={
+                        g.subscriptionStatus === "ACTIVE" ? { background: "#ecfdf5", color: "#047857", border: "1px solid #6ee7b7" } :
+                        g.subscriptionStatus === "TRIAL" ? { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" } :
+                        { background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }
+                      }>
+                        {g.subscriptionStatus === "ACTIVE" ? "Actif" : g.subscriptionStatus === "TRIAL" ? "Essai" : "Inactif"}
+                      </span>
+                      {isCurrent ? (
+                        <span className="text-xs font-semibold text-gray-400 flex-shrink-0 w-16 text-right">affiché</span>
+                      ) : (
+                        <button onClick={() => switchGarage(g.id)}
+                          className="text-xs font-bold text-orange-600 hover:underline flex-shrink-0 w-16 text-right">
+                          Gérer →
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Succursale : l'abonnement est géré depuis le garage principal */}
+          {garage.parentId !== null && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 text-lg mb-1">Statut</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Cette succursale est couverte par l'abonnement de votre garage principal.
+                La facturation, l'activation et la résiliation se gèrent depuis celui-ci.
+              </p>
+              <button
+                onClick={() => { const p = myGarages.find(g => g.parentId === null); if (p) switchGarage(p.id); }}
+                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
+                Aller au garage principal →
+              </button>
+            </div>
+          )}
+
+          {/* ── Statut de l'abonnement (garage principal) ── */}
+          {garage.parentId === null && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h2 className="font-bold text-gray-900 text-lg mb-4">Statut</h2>
 
@@ -2774,9 +2877,10 @@ export default function DashboardGaragePage() {
               </>
             )}
           </div>
+          )}
 
-          {/* ── Annulation / réactivation (abonnement actif) ── */}
-          {garage.subscriptionStatus === "ACTIVE" && (
+          {/* ── Annulation / réactivation (abonnement actif, garage principal) ── */}
+          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-1">Renouvellement</h2>
               {garage.cancelAtPeriodEnd ? (

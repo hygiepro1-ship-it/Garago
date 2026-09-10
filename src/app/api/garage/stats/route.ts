@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +13,12 @@ function startOf(daysAgo: number) {
   return d;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const garage = await prisma.garage.findUnique({
-    where: { ownerId: session.user.id },
+  const garage = await prisma.garage.findFirst({
+    where: ownedGarageWhere(session.user.id, readGarageId(req.url)),
     select: { id: true, ambassadorTier: true },
   });
   if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
