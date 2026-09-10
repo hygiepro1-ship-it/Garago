@@ -74,7 +74,9 @@ export async function POST(req: NextRequest) {
               const referrer = await prisma.garage.findUnique({
                 where: { referralCode: newGarage.referredByCode },
               });
-              if (referrer) {
+              // Le programme de parrainage est réservé aux garages abonnés : un
+              // parrain en essai / expiré ne gagne ni commission ni palier.
+              if (referrer && referrer.subscriptionStatus === "ACTIVE") {
                 // 15% de commission sur le premier paiement
                 const commissionCents = Math.round((inv.amount_paid ?? 0) * 0.15);
                 const commissionDollars = commissionCents / 100;
@@ -148,6 +150,11 @@ export async function POST(req: NextRequest) {
                 const tierLabel = ["", "📊 PALIER 1", "💰 PALIER 2", "💰 PALIER 3", "🔝 PALIER 4", "🏆 CERTIFIÉ"][newTier] ?? "";
                 console.log(`💰 Commission ${commissionDollars}$ → ${referrer.name} (parrainage ${newGarage.name}) ${tierLabel}`);
               }
+              // Récompense traitée (créditée ou non) — pas de reprise ultérieure.
+              await prisma.garage.update({
+                where: { id: newGarage.id },
+                data: { referralRewardGranted: true },
+              });
             }
           }
         }

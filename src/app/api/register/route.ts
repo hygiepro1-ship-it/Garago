@@ -77,12 +77,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Veuillez d'abord vérifier votre adresse courriel." }, { status: 403 });
     }
 
-    // Validate referral code if provided
+    // Validate referral code if provided — le parrain doit être un garage abonné
+    // (le programme de parrainage est réservé aux abonnés).
+    let referralBonus = false;
     if (referredByCode) {
-      const referrer = await prisma.garage.findUnique({ where: { referralCode: referredByCode.trim().toUpperCase() } });
+      const referrer = await prisma.garage.findUnique({
+        where: { referralCode: referredByCode.trim().toUpperCase() },
+        select: { subscriptionStatus: true },
+      });
       if (!referrer) {
         return NextResponse.json({ error: "Code de parrainage invalide" }, { status: 400 });
       }
+      if (referrer.subscriptionStatus !== "ACTIVE") {
+        return NextResponse.json({ error: "Ce code de parrainage n'est plus actif." }, { status: 400 });
+      }
+      referralBonus = true;
     }
 
     const hashed = await bcrypt.hash(password, 12);
@@ -128,9 +137,9 @@ export async function POST(req: NextRequest) {
           latitude:  finalLat,
           longitude: finalLng,
           subscriptionStatus: "TRIAL",
-          subscriptionEndAt: new Date(Date.now() + (referredByCode ? 60 : 30) * 24 * 60 * 60 * 1000),
+          subscriptionEndAt: new Date(Date.now() + (referralBonus ? 60 : 30) * 24 * 60 * 60 * 1000),
           referralCode,
-          referredByCode: referredByCode ? referredByCode.trim().toUpperCase() : null,
+          referredByCode: referralBonus ? referredByCode.trim().toUpperCase() : null,
         },
       });
     }
