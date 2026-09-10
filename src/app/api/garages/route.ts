@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { activeSubscriptionOr } from "@/lib/garage-access";
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,15 +15,16 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") ?? "1");
     const limit = parseInt(searchParams.get("limit") ?? "12");
 
-    // Un garage est visible s'il a lui-même un abonnement actif/essai (garage
-    // principal ou autonome), ou si son garage principal en a un (succursale
-    // rattachée — l'abonnement couvre tout le dossier).
+    // Un garage est visible si son abonnement (le sien s'il est principal/autonome,
+    // celui de son garage principal s'il est une succursale) est actif, en essai,
+    // ou impayé mais encore dans la période de grâce.
+    const subOr = activeSubscriptionOr();
     const where: any = {
       AND: [
         {
           OR: [
-            { parentId: null, subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
-            { parent: { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } } },
+            { parentId: null, OR: subOr },
+            { parent: { OR: subOr } },
           ],
         },
       ],

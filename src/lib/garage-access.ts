@@ -34,3 +34,22 @@ export function ownedGarageWhere(userId: string, garageId?: string | null) {
 export function getBillingGarage(userId: string) {
   return prisma.garage.findFirst({ where: { ownerId: userId, parentId: null } });
 }
+
+/**
+ * Période de grâce après un paiement échoué : le garage reste visible pendant
+ * ces jours (le temps que Stripe retente la carte / que le garage la mette à
+ * jour), puis un cron le bascule en EXPIRED.
+ */
+export const PAST_DUE_GRACE_DAYS = 7;
+
+/**
+ * Fragment `where` : l'abonnement du garage le rend visible dans la recherche
+ * — actif, en essai, ou impayé mais encore dans la période de grâce.
+ */
+export function activeSubscriptionOr() {
+  const graceCutoff = new Date(Date.now() - PAST_DUE_GRACE_DAYS * 24 * 60 * 60 * 1000);
+  return [
+    { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
+    { subscriptionStatus: "PAST_DUE", pastDueSince: { gte: graceCutoff } },
+  ];
+}

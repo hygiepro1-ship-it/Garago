@@ -82,6 +82,7 @@ interface Garage {
   coverPosition:            string | null;
   subscriptionStatus:       string | null;
   subscriptionEndAt:        string | null;
+  pastDueSince:             string | null;
   cancelAtPeriodEnd?:       boolean;
   referralCode:             string | null;
   referralCount:            number;
@@ -1358,6 +1359,12 @@ export default function DashboardGaragePage() {
   const isTrialExpiring = garage.subscriptionStatus === "TRIAL" && garage.subscriptionEndAt
     && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+  // Date limite de la période de grâce après un paiement échoué (7 jours)
+  const pastDueDeadline = garage.pastDueSince
+    ? new Date(new Date(garage.pastDueSince).getTime() + 7 * 24 * 60 * 60 * 1000)
+        .toLocaleDateString("fr-CA", { day: "numeric", month: "long" })
+    : null;
+
   const tabIcons: Record<Tab, ReactNode> = {
     apercu:      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17h7M17 14v7"/></svg>,
     services:    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>,
@@ -1408,8 +1415,11 @@ export default function DashboardGaragePage() {
             {garage.subscriptionStatus === "ACTIVE" && (
               <span className="bg-green-400 text-green-900 text-xs font-bold px-2 py-1 rounded-full">Actif ✓</span>
             )}
-            {(garage.subscriptionStatus === "EXPIRED" || garage.subscriptionStatus === "PAST_DUE") && (
-              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">Essai expiré</span>
+            {garage.subscriptionStatus === "PAST_DUE" && (
+              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">Paiement échoué</span>
+            )}
+            {garage.subscriptionStatus === "EXPIRED" && (
+              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">Expiré</span>
             )}
             <Link href={`/garage/${garage.slug}?from=dashboard`}
               className="bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
@@ -1461,7 +1471,7 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {(garage.subscriptionStatus === "EXPIRED" || garage.subscriptionStatus === "PAST_DUE") && (
+      {garage.subscriptionStatus === "PAST_DUE" && (
         <div className="bg-red-50 border border-red-300 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -1469,9 +1479,28 @@ export default function DashboardGaragePage() {
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div>
-              <p className="font-bold text-red-900">
-                {garage.subscriptionStatus === "PAST_DUE" ? "Votre paiement a échoué" : "Votre essai gratuit est terminé"}
+              <p className="font-bold text-red-900">Votre dernier paiement a échoué</p>
+              <p className="text-red-700 text-sm">
+                Mettez à jour votre carte {pastDueDeadline ? `avant le ${pastDueDeadline}` : "rapidement"} pour éviter que votre garage soit retiré des résultats de recherche.
               </p>
+            </div>
+          </div>
+          <button onClick={openBillingPortal} disabled={portalLoading}
+            className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
+            {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
+          </button>
+        </div>
+      )}
+
+      {garage.subscriptionStatus === "EXPIRED" && (
+        <div className="bg-red-50 border border-red-300 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <p className="font-bold text-red-900">Votre abonnement est expiré</p>
               <p className="text-red-700 text-sm">Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.</p>
             </div>
           </div>
@@ -2990,11 +3019,30 @@ export default function DashboardGaragePage() {
               </>
             )}
 
-            {(garage.subscriptionStatus === "EXPIRED" || garage.subscriptionStatus === "PAST_DUE") && (
+            {garage.subscriptionStatus === "PAST_DUE" && (
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
-                    {garage.subscriptionStatus === "PAST_DUE" ? "Paiement échoué" : "Expiré"}
+                    Paiement échoué
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Votre dernier prélèvement n'a pas abouti. {pastDueDeadline
+                    ? `Mettez votre moyen de paiement à jour avant le ${pastDueDeadline} pour rester visible dans la recherche.`
+                    : "Mettez votre moyen de paiement à jour pour rester visible dans la recherche."}
+                </p>
+                <button onClick={openBillingPortal} disabled={portalLoading}
+                  className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                  {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
+                </button>
+              </>
+            )}
+
+            {garage.subscriptionStatus === "EXPIRED" && (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
+                    Expiré
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">

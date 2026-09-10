@@ -93,6 +93,7 @@ model Garage {
 
   subscriptionStatus String    @default("TRIAL")
   subscriptionEndAt  DateTime?
+  pastDueSince       DateTime?  // début de la période de grâce quand un paiement échoue
   cancelAtPeriodEnd  Boolean   @default(false)
   stripeCustomerId   String?
   stripePriceId      String?

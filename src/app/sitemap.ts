@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
+import { activeSubscriptionOr } from "@/lib/garage-access";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -25,11 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === "" ? 1 : 0.6,
   }));
 
+  const subOr = activeSubscriptionOr();
   const garages = await prisma.garage.findMany({
     where: {
       OR: [
-        { parentId: null, subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } },
-        { parent: { subscriptionStatus: { in: ["ACTIVE", "TRIAL"] } } },
+        { parentId: null, OR: subOr },
+        { parent: { OR: subOr } },
       ],
     },
     select: { slug: true, updatedAt: true },

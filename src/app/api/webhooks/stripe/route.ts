@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as import("stripe").Stripe.Subscription;
         await prisma.garage.updateMany({
           where: { stripeCustomerId: sub.customer as string },
-          data:  { subscriptionStatus: "EXPIRED" },
+          data:  { subscriptionStatus: "EXPIRED", pastDueSince: null },
         });
         break;
       }
@@ -146,6 +146,12 @@ export async function POST(req: NextRequest) {
       // ── Paiement échoué ──────────────────────────────────────────────────
       case "invoice.payment_failed": {
         const inv = event.data.object as any;
+        // Démarre la période de grâce au 1er échec seulement (ne pas remettre le
+        // compteur à zéro à chaque nouvelle tentative de Stripe).
+        await prisma.garage.updateMany({
+          where: { stripeCustomerId: inv.customer as string, pastDueSince: null },
+          data:  { pastDueSince: new Date() },
+        });
         await prisma.garage.updateMany({
           where: { stripeCustomerId: inv.customer as string },
           data:  { subscriptionStatus: "PAST_DUE" },
@@ -175,6 +181,7 @@ async function handleSubscriptionChange(sub: import("stripe").Stripe.Subscriptio
       stripePriceId:      sub.items.data[0]?.price?.id ?? null,
       subscriptionEndAt:  endDate,
       cancelAtPeriodEnd:  sub.cancel_at_period_end ?? false,
+      ...(isActive ? { pastDueSince: null } : {}), // paiement récupéré → fin de la grâce
     },
   });
 
