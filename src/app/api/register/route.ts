@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Code de parrainage invalide" }, { status: 400 });
       }
       if (referrer.subscriptionStatus !== "ACTIVE") {
-        return NextResponse.json({ error: "Ce code de parrainage n'est plus actif." }, { status: 400 });
+        return NextResponse.json({ error: "Ce code de parrainage n'est pas actif." }, { status: 400 });
       }
       referralBonus = true;
     }

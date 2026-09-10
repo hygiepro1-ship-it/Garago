@@ -1658,7 +1658,7 @@ export default function DashboardGaragePage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Programme de parrainage</p>
               <p className="text-sm text-gray-600 mb-3">
-                Activez votre abonnement pour débloquer votre code de parrainage : <strong>15 % de commission</strong> sur chaque garage parrainé, plus des réductions sur votre facture aux paliers 6 et 10 parrainages.
+                Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).
               </p>
               <button type="button" onClick={() => setActiveTab("abonnement")}
                 className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
