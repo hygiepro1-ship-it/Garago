@@ -37,15 +37,15 @@ export async function GET() {
   const interval: string = subAny.items?.data?.[0]?.price?.recurring?.interval ?? "month";
   const currency: string = (subAny.currency ?? "cad").toUpperCase();
 
-  // Prochaine facture : montant réel (avec réductions/taxes) via la facture à venir,
-  // sinon on retombe sur la somme des lignes de l'abonnement.
+  // Prochaine facture : montant réel (réductions + taxes incluses) via l'aperçu
+  // de la facture à venir ; sinon on retombe sur la somme des lignes.
   let nextAmount: number | null = null;
   let nextDate: number | null = subAny.current_period_end ?? null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const upcoming: any = await (stripe.invoices as any).retrieveUpcoming({ customer: garage.stripeCustomerId });
-    nextAmount = upcoming.amount_due ?? upcoming.total ?? null;
-    nextDate = upcoming.next_payment_attempt ?? upcoming.period_end ?? nextDate;
+    const preview: any = await (stripe.invoices as any).createPreview({ customer: garage.stripeCustomerId });
+    nextAmount = preview.amount_due ?? preview.total ?? null;
+    nextDate = preview.next_payment_attempt ?? preview.period_end ?? nextDate;
   } catch {
     nextAmount = subAny.items.data.reduce(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

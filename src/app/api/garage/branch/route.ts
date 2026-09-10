@@ -26,6 +26,15 @@ export async function POST(req: NextRequest) {
   const principal = await getBillingGarage(userId);
   if (!principal) return NextResponse.json({ error: "Garage principal introuvable" }, { status: 404 });
 
+  // On ne peut ajouter une succursale que si l'abonnement du dossier est en cours
+  // (actif ou en essai) — sinon le nouveau garage serait invisible de toute façon.
+  if (principal.subscriptionStatus !== "ACTIVE" && principal.subscriptionStatus !== "TRIAL") {
+    return NextResponse.json(
+      { error: "Activez ou régularisez votre abonnement avant d'ajouter une succursale." },
+      { status: 409 },
+    );
+  }
+
   const total = await prisma.garage.count({ where: { ownerId: userId } });
   if (total >= MAX_GARAGES_PER_OWNER) {
     return NextResponse.json(
