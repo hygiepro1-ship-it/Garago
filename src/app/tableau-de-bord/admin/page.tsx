@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "alertes" | "descriptions" | "suggestions";
+type Tab = "alertes" | "descriptions" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -223,6 +223,45 @@ export default function AdminDashboard() {
   const [noteEdit,     setNoteEdit]     = useState<Record<string, string>>({});
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
+  // ── Mode maintenance ──────────────────────────────────────────────────────
+  const [maintMode,    setMaintMode]    = useState(false);
+  const [maintMessage, setMaintMessage] = useState("");
+  const [maintUntil,   setMaintUntil]   = useState(""); // datetime-local
+  const [maintSaving,  setMaintSaving]  = useState(false);
+  const [maintSaved,   setMaintSaved]   = useState(false);
+  const [maintLoaded,  setMaintLoaded]  = useState(false);
+
+  const loadMaintenance = useCallback(async () => {
+    const r = await fetch("/api/admin/maintenance");
+    if (r.ok) {
+      const d = await r.json();
+      setMaintMode(!!d.maintenanceMode);
+      setMaintMessage(d.maintenanceMessage ?? "");
+      setMaintUntil(d.maintenanceUntil ? new Date(d.maintenanceUntil).toISOString().slice(0, 16) : "");
+    }
+    setMaintLoaded(true);
+  }, []);
+
+  async function saveMaintenance(next: { maintenanceMode: boolean }) {
+    setMaintSaving(true);
+    setMaintSaved(false);
+    const res = await fetch("/api/admin/maintenance", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        maintenanceMode: next.maintenanceMode,
+        maintenanceMessage: maintMessage,
+        maintenanceUntil: maintUntil || null,
+      }),
+    });
+    if (res.ok) {
+      setMaintMode(next.maintenanceMode);
+      setMaintSaved(true);
+      setTimeout(() => setMaintSaved(false), 3000);
+    }
+    setMaintSaving(false);
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/connexion");
     else if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN")
@@ -247,8 +286,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadDescriptions(), loadSuggestions(), loadAlerts()]).finally(() => setLoading(false));
-  }, [status, loadDescriptions, loadSuggestions, loadAlerts]);
+    Promise.all([loadDescriptions(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
+  }, [status, loadDescriptions, loadSuggestions, loadAlerts, loadMaintenance]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {
@@ -319,6 +358,7 @@ export default function AdminDashboard() {
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
           { id: "suggestions",  label: "Suggestions",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/></svg>, count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
+          { id: "maintenance",  label: "Maintenance",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>, count: maintMode ? 1 : 0,                                    urgent: true  },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === t.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
@@ -431,6 +471,61 @@ export default function AdminDashboard() {
               onUpdate={updateSuggestion}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── MAINTENANCE ── */}
+      {tab === "maintenance" && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border shadow-sm p-6" style={{ borderColor: maintMode ? "#fecaca" : "#e5e7eb" }}>
+            <div className="flex items-center justify-between gap-4 mb-1">
+              <h2 className="font-bold text-gray-900 text-lg">Mode maintenance</h2>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={
+                maintMode ? { background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }
+                          : { background: "#ecfdf5", color: "#047857", border: "1px solid #6ee7b7" }
+              }>
+                {maintMode ? "En maintenance" : "Site en ligne"}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              Quand il est activé, tous les visiteurs (conducteurs et garages) voient une page de maintenance.
+              Vous restez capable de vous connecter et d'accéder à cette page pour le désactiver.
+            </p>
+
+            <div className="space-y-4 max-w-xl">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Message affiché aux visiteurs</label>
+                <textarea rows={3}
+                  className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  placeholder="Le site est actuellement en maintenance. Nous serons de retour très bientôt."
+                  value={maintMessage} onChange={(e) => setMaintMessage(e.target.value)} maxLength={500} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Retour prévu (optionnel)</label>
+                <input type="datetime-local" value={maintUntil} onChange={(e) => setMaintUntil(e.target.value)}
+                  className="border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                {maintMode ? (
+                  <button onClick={() => saveMaintenance({ maintenanceMode: false })} disabled={maintSaving || !maintLoaded}
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50" style={{ background: "#059669" }}>
+                    {maintSaving ? "…" : "Désactiver la maintenance"}
+                  </button>
+                ) : (
+                  <button onClick={() => saveMaintenance({ maintenanceMode: true })} disabled={maintSaving || !maintLoaded}
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50" style={{ background: "#b91c1c" }}>
+                    {maintSaving ? "…" : "Activer la maintenance"}
+                  </button>
+                )}
+                <button onClick={() => saveMaintenance({ maintenanceMode: maintMode })} disabled={maintSaving || !maintLoaded}
+                  className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-xl px-4 py-2.5 hover:bg-gray-50 disabled:opacity-50">
+                  Enregistrer le message
+                </button>
+                {maintSaved && <span className="text-sm font-semibold text-green-600">Enregistré ✓</span>}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const AUTH_PATHS = ["/connexion", "/inscription"];
+const AUTH_PATHS = ["/connexion", "/inscription", "/maintenance"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

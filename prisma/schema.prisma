@@ -448,3 +448,12 @@ model Appointment {
   @@index([userId])
   @@index([garageId, date])
 }
+
+/// Réglages globaux du site — une seule ligne (id fixe "singleton").
+model SiteSetting {
+  id                 String    @id @default("singleton")
+  maintenanceMode    Boolean   @default(false)
+  maintenanceMessage String?
+  maintenanceUntil   DateTime?
+  updatedAt          DateTime  @updatedAt
+}
