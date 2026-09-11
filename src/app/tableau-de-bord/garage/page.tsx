@@ -1570,24 +1570,10 @@ export default function DashboardGaragePage() {
         <div className="space-y-6">
           {/* Stats grid */}
           {(() => {
-            const todayStr = new Date().toISOString().slice(0, 10);
-            const confirmedToday = appointments.filter(a => a.date === todayStr && (a.status === "CONFIRMED" || a.status === "PENDING")).length;
             const totalThisMonth = appointments.filter(a => a.date?.startsWith(new Date().toISOString().slice(0, 7))).length;
             const confirmedThisMonth = appointments.filter(a => a.date?.startsWith(new Date().toISOString().slice(0, 7)) && a.status === "CONFIRMED").length;
             const tauxRdv = totalThisMonth > 0 ? Math.round((confirmedThisMonth / totalThisMonth) * 100) : 0;
             const tauxRemplissage = rdvLoaded && appointments.length > 0 ? Math.min(100, Math.round((appointments.filter(a => a.status !== "CANCELLED").length / Math.max(appointments.length, 1)) * 100)) : null;
-
-            // Sparkline: group appointments by day for last 14 days
-            const spark: { day: string; count: number }[] = [];
-            for (let i = 13; i >= 0; i--) {
-              const d = new Date(); d.setDate(d.getDate() - i);
-              const ds = d.toISOString().slice(0, 10);
-              spark.push({ day: ds, count: appointments.filter(a => a.date === ds).length });
-            }
-            const maxSpark = Math.max(...spark.map(s => s.count), 1);
-
-            // Vue du jour
-            const todayAppts = appointments.filter(a => a.date === todayStr).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
             return (
               <>
@@ -1626,69 +1612,6 @@ export default function DashboardGaragePage() {
                     )}
                     <p className="text-xs text-gray-400 mt-1">créneaux non-annulés</p>
                   </div>
-                </div>
-
-                {/* Sparkline activité */}
-                {rdvLoaded && (
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-bold text-gray-700">Activité — 14 derniers jours</p>
-                      <span className="text-xs text-gray-400">{appointments.length} RDV total</span>
-                    </div>
-                    <div className="flex items-end gap-1 h-14">
-                      {spark.map((s, i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                          <div className="w-full rounded-sm transition-all"
-                            title={`${s.day} : ${s.count} RDV`}
-                            style={{ height: `${Math.max(4, Math.round((s.count / maxSpark) * 48))}px`, background: s.count > 0 ? "#f97316" : "#e2e8f0", opacity: s.day === todayStr ? 1 : 0.7 }} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-xs text-gray-300">il y a 14j</span>
-                      <span className="text-xs font-semibold" style={{ color: "#f97316" }}>Aujourd'hui : {confirmedToday} RDV</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Vue du jour */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-gray-900">Vue du jour</h3>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                      style={{ background: confirmedToday > 0 ? "rgba(249,115,22,0.1)" : "#f1f5f9", color: confirmedToday > 0 ? "#f97316" : "#94a3b8" }}>
-                      {confirmedToday} rendez-vous
-                    </span>
-                  </div>
-                  {!rdvLoaded ? (
-                    <p className="text-gray-400 text-sm text-center py-4">Chargement…</p>
-                  ) : todayAppts.length === 0 ? (
-                    <div className="text-center py-6 text-gray-400">
-                      <svg className="w-8 h-8 mx-auto mb-2 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      <p className="text-sm">Aucun rendez-vous aujourd'hui</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {todayAppts.map(a => {
-                        const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
-                        return (
-                          <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl"
-                            style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
-                            <div className="text-center min-w-[48px]">
-                              <p className="text-sm font-black" style={{ color: "#f97316" }}>{a.startTime}</p>
-                              <p className="text-xs text-gray-400">{a.endTime}</p>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-gray-900 text-sm truncate">{a.customerName}</p>
-                              <p className="text-xs text-gray-400 truncate">{a.serviceName || "—"}{a.vehicleMake ? ` · ${a.vehicleMake} ${a.vehicleModel ?? ""}` : ""}</p>
-                            </div>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
-                              style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               </>
             );
