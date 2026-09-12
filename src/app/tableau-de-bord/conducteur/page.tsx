@@ -80,18 +80,13 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
 }) {
   const [deleting, setDeleting]     = useState(false);
   const [showSpecs, setShowSpecs]   = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const color   = BRAND_COLOR[v.make] ?? "#1e3a5f";
-  const model   = (v.model ?? "") as string;
-  const isT     = TRUCK_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
-  const isSUV   = !isT && SUV_MODELS.some(m => model.toLowerCase().includes(m.toLowerCase()));
-  const carType: "sedan"|"suv"|"truck" = isT ? "truck" : isSUV ? "suv" : "sedan";
-  const typeLabel = isT ? "Camionnette" : isSUV ? "VUS" : "Berline / Coupé";
 
   let specs: any = null;
   try { if (v.specs) specs = typeof v.specs === "string" ? JSON.parse(v.specs) : v.specs; } catch { /**/ }
 
   async function handleDelete() {
-    if (!window.confirm(`Retirer ${v.year} ${v.make} ${v.model} de vos véhicules ?`)) return;
     setDeleting(true);
     await onDelete(v.id);
     setDeleting(false);
@@ -99,66 +94,60 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
 
   return (
     <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-      {/* Zone image — fond blanc + ellipse grise comme Belair Direct */}
-      <div className="relative h-44 flex items-center justify-center bg-white overflow-hidden px-3 pt-5 pb-2">
-        {/* Ellipse grise sous la voiture */}
-        <div className="absolute" style={{
-          width: "75%", height: "58%",
-          background: "radial-gradient(ellipse at 50% 60%, #dde0e5 0%, #c8ccd3 55%, transparent 100%)",
-          borderRadius: "50%",
-          bottom: "8%",
-        }}/>
-        {/* Badge année */}
-        <span className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full z-10"
-          style={{ background: "#f1f3f5", color: "#374151", border: "1px solid #e2e8f0" }}>
-          {v.year}
-        </span>
-        {/* Badge marque + bouton retirer */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: color, color: "#fff" }}>
-            {v.make}
-          </span>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            title="Retirer ce véhicule"
-            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-            style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #e2e8f0" }}>
-            {deleting ? "…" : "×"}
-          </button>
-        </div>
-        {/* Image 3D */}
-        <div className="relative z-10 w-full h-36">
-          <CarImage make={v.make} model={model} year={v.year} type={carType} />
-        </div>
-      </div>
-      {/* Infos */}
-      <div className="border-t border-gray-100">
+      <div>
 
-        {/* Ligne titre + bouton fiche */}
-        <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
-          <div>
-            <p className="font-extrabold text-gray-900 text-sm leading-tight">{v.make} {v.model}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{v.year} &nbsp;·&nbsp; {typeLabel}</p>
+        {/* Ligne titre + bouton fiche + bouton retirer */}
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+              style={{ background: color, color: "#fff" }}>
+              {v.year}
+            </span>
+            <p className="font-extrabold text-gray-900 text-sm leading-tight truncate">{v.make} {v.model}</p>
           </div>
-          {specs && (
-            <button
-              onClick={() => setShowSpecs(s => !s)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
-              style={showSpecs
-                ? { background: "#0b1f3a", color: "#fff", borderColor: "#0b1f3a" }
-                : { background: "#fff", color: "#0b1f3a", borderColor: "#cbd5e1" }}
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
-                <rect x="7" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
-                <rect x="1" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
-                <rect x="7" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
-              </svg>
-              {showSpecs ? "Fermer" : "Fiche tech."}
-            </button>
-          )}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {specs && (
+              <button
+                onClick={() => setShowSpecs(s => !s)}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
+                style={showSpecs
+                  ? { background: "#0b1f3a", color: "#fff", borderColor: "#0b1f3a" }
+                  : { background: "#fff", color: "#0b1f3a", borderColor: "#cbd5e1" }}
+              >
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <rect x="1" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                  <rect x="7" y="1" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                  <rect x="1" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                  <rect x="7" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
+                </svg>
+                {showSpecs ? "Fermer" : "Fiche tech."}
+              </button>
+            )}
+            {confirmingDelete ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="text-xs font-bold text-white px-2.5 py-1.5 rounded-full disabled:opacity-50"
+                  style={{ background: "#dc2626" }}>
+                  {deleting ? "…" : "Retirer"}
+                </button>
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  disabled={deleting}
+                  className="text-xs font-semibold text-gray-500 px-2.5 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50">
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                title="Retirer ce véhicule"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Bandeau rappel (toujours visible si rappels) */}
@@ -606,7 +595,6 @@ export default function DashboardConducteurPage() {
         const now = new Date();
         const todayStr = now.toISOString().slice(0, 10);
         const totalRdv = appts.filter(a => a.status !== "CANCELLED").length;
-        const garagesVisites = new Set(appts.filter(a => a.status === "COMPLETED" || a.status === "CONFIRMED").map(a => a.garage.slug)).size;
         const prochainRdv = appts
           .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr)
           .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0];
@@ -614,30 +602,16 @@ export default function DashboardConducteurPage() {
         return (
           <div className="space-y-4 mb-6">
             {/* KPI row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(249,115,22,0.08)" }}>
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{totalRdv}</p>
-                  <p className="text-xs text-gray-400 font-semibold">Rendez-vous</p>
-                </div>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(249,115,22,0.08)" }}>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(11,31,58,0.06)" }}>
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#0b1f3a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{garagesVisites}</p>
-                  <p className="text-xs text-gray-400 font-semibold">Garages visités</p>
-                </div>
+              <div>
+                <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{totalRdv}</p>
+                <p className="text-xs text-gray-400 font-semibold">Rendez-vous</p>
               </div>
             </div>
 
@@ -1243,14 +1217,6 @@ export default function DashboardConducteurPage() {
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.inspection}</span>
               </Link>
             </div>
-          </div>
-
-          <div className="text-white rounded-2xl p-5" style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)", border: "1px solid rgba(249,115,22,0.2)" }}>
-            <svg className="w-6 h-6 mb-2" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3"/>
-            </svg>
-            <h3 className="font-bold mb-1">{d.loyalty}</h3>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.loyaltySub}</p>
           </div>
 
           <Link

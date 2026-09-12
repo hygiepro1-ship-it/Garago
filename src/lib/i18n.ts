@@ -542,8 +542,6 @@ export const translations = {
       winterTires:     "Pneus d'hiver",
       oilChange:       "Vidange d'huile",
       inspection:      "Inspection mécanique",
-      loyalty:         "Programme fidélité",
-      loyaltySub:      "Bientôt disponible — Gagnez des points à chaque visite chez nos garages partenaires!",
       suggestionLink:  "💡 Faire une suggestion",
     },
 
@@ -1167,8 +1165,6 @@ export const translations = {
       winterTires:     "Winter tires",
       oilChange:       "Oil change",
       inspection:      "Mechanical inspection",
-      loyalty:         "Loyalty program",
-      loyaltySub:      "Coming soon — Earn points at every visit to our partner garages!",
       suggestionLink:  "💡 Make a suggestion",
     },
 
