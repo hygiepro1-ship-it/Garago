@@ -376,13 +376,6 @@ export default function DashboardConducteurPage() {
   const [favorites, setFavorites]     = useState<any[]>([]);
   const [favsLoaded, setFavsLoaded]   = useState(false);
 
-  // ── Préférences de notification ───────────────────────────────────────────
-  const [notifPref,      setNotifPref]      = useState<"EMAIL"|"SMS"|"BOTH">("EMAIL");
-  const [notifPhone,     setNotifPhone]     = useState("");
-  const [prefLoaded,     setPrefLoaded]     = useState(false);
-  const [prefSaving,     setPrefSaving]     = useState(false);
-  const [prefSaved,      setPrefSaved]      = useState(false);
-  const [prefErr,        setPrefErr]        = useState("");
 
   // ── Reminders ─────────────────────────────────────────────────────────────
   const [reminders, setReminders]       = useState<any[]>([]);
@@ -409,13 +402,6 @@ export default function DashboardConducteurPage() {
   }, [status, router]);
 
   useEffect(() => {
-    if (tab === "preferences" && !prefLoaded && status === "authenticated") {
-      fetch("/api/user/profile").then(r => r.json()).then(d => {
-        if (d.notifPref) setNotifPref(d.notifPref as "EMAIL"|"SMS"|"BOTH");
-        if (d.phone)     setNotifPhone(d.phone);
-        setPrefLoaded(true);
-      });
-    }
     if (tab === "favoris" && !favsLoaded && status === "authenticated") {
       fetch("/api/favorites").then(r => r.json()).then(d => { setFavorites(Array.isArray(d) ? d : []); setFavsLoaded(true); });
     }
@@ -477,20 +463,6 @@ export default function DashboardConducteurPage() {
       body: JSON.stringify({ status: "CANCELLED" }),
     });
     if (res.ok) setAppts(prev => prev.map(a => a.id === id ? { ...a, status: "CANCELLED" } : a));
-  }
-
-  async function savePreferences(e: React.FormEvent) {
-    e.preventDefault();
-    setPrefSaving(true); setPrefErr(""); setPrefSaved(false);
-    const res = await fetch("/api/user/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notifPref, phone: notifPhone || undefined }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setPrefErr(data.error ?? "Erreur"); }
-    else { setPrefSaved(true); setTimeout(() => setPrefSaved(false), 3000); }
-    setPrefSaving(false);
   }
 
   async function lookupVin() {
@@ -808,81 +780,7 @@ export default function DashboardConducteurPage() {
           {tab === "preferences" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-1">Préférences de notification</h2>
-              <p className="text-sm text-gray-400 mb-6">Choisissez comment vous souhaitez être informé de vos rendez-vous.</p>
-
-              {!prefLoaded ? (
-                <p className="text-gray-400 text-sm text-center py-8">{t.common.loading}</p>
-              ) : (
-                <form onSubmit={savePreferences} className="space-y-6">
-                  {/* Choix du mode */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {([
-                      { value: "EMAIL", icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>), label: "Courriel", desc: "Confirmation et rappels par email" },
-                      { value: "SMS",   icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>), label: "SMS",      desc: "Messages texte sur votre téléphone" },
-                      { value: "BOTH",  icon: (<svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>), label: "Les deux", desc: "Courriel + SMS pour ne rien manquer" },
-                    ] as { value: "EMAIL"|"SMS"|"BOTH"; icon: ReactNode; label: string; desc: string }[]).map(opt => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setNotifPref(opt.value)}
-                        className="text-left p-4 rounded-xl border-2 transition-all"
-                        style={notifPref === opt.value
-                          ? { borderColor: "#f97316", background: "#fff7ed" }
-                          : { borderColor: "#e5e7eb", background: "#fff" }}
-                      >
-                        <div className="mb-2">{opt.icon}</div>
-                        <p className="font-bold text-gray-900 text-sm">{opt.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
-                        {notifPref === opt.value && (
-                          <span className="mt-2 inline-block text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#f97316", color: "#fff" }}>✓ Sélectionné</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Numéro de téléphone (requis si SMS ou BOTH) */}
-                  {(notifPref === "SMS" || notifPref === "BOTH") && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Numéro de téléphone <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="Ex : 514-555-1234"
-                        className={inputClass}
-                        value={notifPhone}
-                        onChange={e => setNotifPhone(e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Numéro canadien utilisé uniquement pour les notifications Garago.</p>
-                    </div>
-                  )}
-
-                  {prefErr && (
-                    <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{prefErr}</p>
-                  )}
-                  {prefSaved && (
-                    <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3">Préférences sauvegardées !</p>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={prefSaving}
-                    className="w-full py-3 rounded-xl text-white font-bold text-sm disabled:opacity-50 transition-opacity"
-                    style={{ background: "#f97316" }}
-                  >
-                    {prefSaving ? "Sauvegarde…" : "Sauvegarder mes préférences"}
-                  </button>
-
-                  {/* Info Twilio */}
-                  {(notifPref === "SMS" || notifPref === "BOTH") && (
-                    <div className="rounded-xl p-4 text-xs text-blue-800" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                      <p className="font-semibold mb-1">À propos des SMS</p>
-                      <p>Les notifications par SMS seront disponibles très prochainement. En attendant, vos confirmations seront envoyées par courriel.</p>
-                    </div>
-                  )}
-                </form>
-              )}
+              <p className="text-sm text-gray-500">Vous recevez vos confirmations et rappels de rendez-vous par courriel.</p>
             </div>
           )}
 

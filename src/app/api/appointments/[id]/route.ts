@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification } from "@/lib/email";
-import { sendVehicleReadySMS, sendRescheduleSMS } from "@/lib/sms";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -61,21 +60,20 @@ export async function PATCH(
     const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
     const garagePhone   = updated.garage.phone ?? "";
 
-    // Récupère préférences + email du compte client (si RDV lié à un compte)
+    // Récupère l'email du compte client (si RDV lié à un compte)
     const userRecord = updated.userId
       ? await prisma.user.findUnique({
           where:  { id: updated.userId },
-          select: { notifPref: true, phone: true, email: true },
+          select: { email: true },
         })
       : null;
 
-    const notifPref    = userRecord?.notifPref ?? "EMAIL";
     // Priorité : email stocké dans le RDV, sinon email du compte Garago
     const recipientEmail = updated.customerEmail || userRecord?.email || null;
 
     const reschedulePromises: Promise<void>[] = [];
 
-    if (recipientEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+    if (recipientEmail) {
       reschedulePromises.push(
         sendRescheduleNotification({
           to:           recipientEmail,
@@ -91,21 +89,6 @@ export async function PATCH(
       );
     }
 
-    const smsPhone = updated.customerPhone || userRecord?.phone || null;
-    if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
-      reschedulePromises.push(
-        sendRescheduleSMS({
-          to:           smsPhone,
-          customerName: updated.customerName,
-          garageName:   updated.garage.name,
-          garagePhone,
-          date:         updated.date,
-          startTime:    updated.startTime,
-          serviceName:  updated.serviceName,
-        }).catch(e => console.error("[RESCHEDULE SMS]", e))
-      );
-    }
-
     await Promise.all(reschedulePromises);
   }
 
@@ -114,20 +97,19 @@ export async function PATCH(
     const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
     const note = completionNote ?? updated.completionNote;
 
-    // Récupère la préférence + email du compte client
+    // Récupère l'email du compte client
     const userRecord2 = updated.userId
       ? await prisma.user.findUnique({
           where:  { id: updated.userId },
-          select: { notifPref: true, phone: true, email: true },
+          select: { email: true },
         })
       : null;
-    const notifPref2     = userRecord2?.notifPref ?? "EMAIL";
     const recipientEmail2 = updated.customerEmail || userRecord2?.email || null;
     const garagePhone2    = updated.garage.phone ?? "";
 
     const completedPromises: Promise<void>[] = [];
 
-    if (recipientEmail2 && (notifPref2 === "EMAIL" || notifPref2 === "BOTH")) {
+    if (recipientEmail2) {
       completedPromises.push(
         sendVehicleReady({
           to:            recipientEmail2,
@@ -137,20 +119,6 @@ export async function PATCH(
           garagePhone:   garagePhone2,
           completionNote: note,
         }).catch(e => console.error("[VEHICLE READY EMAIL]", e))
-      );
-    }
-
-    const smsPhone2 = updated.customerPhone || userRecord2?.phone || null;
-    if (smsPhone2 && (notifPref2 === "SMS" || notifPref2 === "BOTH")) {
-      completedPromises.push(
-        sendVehicleReadySMS({
-          to:            smsPhone2,
-          customerName:  updated.customerName,
-          garageName:    updated.garage.name,
-          garageAddress,
-          garagePhone:   garagePhone2,
-          completionNote: note,
-        }).catch(e => console.error("[VEHICLE READY SMS]", e))
       );
     }
 

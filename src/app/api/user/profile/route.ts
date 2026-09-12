@@ -39,15 +39,10 @@ export async function PATCH(req: NextRequest) {
   const userId = session.user.id;
   const { notifPref, phone, name } = await req.json();
 
-  // Validation notifPref
-  const validPrefs = ["EMAIL", "SMS", "BOTH"];
+  // Validation notifPref (SMS non disponible pour le moment)
+  const validPrefs = ["EMAIL"];
   if (notifPref && !validPrefs.includes(notifPref)) {
     return NextResponse.json({ error: "Préférence invalide" }, { status: 400 });
-  }
-
-  // Si SMS ou BOTH, un numéro de téléphone est requis
-  if ((notifPref === "SMS" || notifPref === "BOTH") && !phone) {
-    return NextResponse.json({ error: "Un numéro de téléphone est requis pour les notifications SMS." }, { status: 400 });
   }
 
   const updated = await prisma.user.update({

@@ -229,13 +229,13 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
   const icsUrl = `${BASE_URL}/api/appointments/${params.appointmentId}/ics`;
 
   const body = `
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Demande de rendez-vous envoyée ✅</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre demande a bien été reçue.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rendez-vous confirmé ✅</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre rendez-vous est confirmé.</p>
 
     ${appointmentCard(params)}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">
-      Le garage vous contactera pour <strong>confirmer</strong> votre rendez-vous. En cas de question, appelez directement :
+      En cas de question, appelez directement le garage :
     </p>
     ${phoneBtn(params.garagePhone)}
 
@@ -286,7 +286,7 @@ export async function sendGarageNewAppointment(params: GarageNewAppointmentParam
       ${row("🕐", "Heure", `${params.startTime} – ${params.endTime}`, true)}
     `)}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Confirmez ou gérez ce rendez-vous depuis votre tableau de bord :</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Gérez ce rendez-vous depuis votre tableau de bord :</p>
     ${primaryBtn(dashUrl, "📊 Ouvrir mon tableau de bord")}
   `;
 

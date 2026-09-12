@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
-import { sendBookingConfirmationSMS } from "@/lib/sms";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -54,12 +53,6 @@ export async function POST(req: NextRequest) {
 
   const sessionUserId = (session?.user as any)?.id ?? null;
 
-  // Récupère les préférences de notification du client connecté
-  const userPref = sessionUserId
-    ? await prisma.user.findUnique({ where: { id: sessionUserId }, select: { notifPref: true, phone: true } })
-    : null;
-  const notifPref = userPref?.notifPref ?? "EMAIL";
-
   // Check-then-create sous isolation Serializable pour empêcher une double réservation
   // du même créneau par deux clients simultanés (Postgres détecte et rejette le conflit).
   let appt;
@@ -90,10 +83,10 @@ export async function POST(req: NextRequest) {
           date,
           startTime,
           endTime,
-          status: "PENDING",
+          status: "CONFIRMED",
           source: "ONLINE",
         },
-        include: { garage: true },
+        include: { garage: { include: { owner: { select: { email: true } } } } },
       });
     }, { isolationLevel: "Serializable" });
   } catch (err: any) {
@@ -114,7 +107,7 @@ export async function POST(req: NextRequest) {
     || (sessionUserId ? (await prisma.user.findUnique({ where: { id: sessionUserId }, select: { email: true } }))?.email : null)
     || null;
 
-  if (recipientEmail && (notifPref === "EMAIL" || notifPref === "BOTH")) {
+  if (recipientEmail) {
     notifPromises.push(
       sendBookingConfirmation({
         to:            recipientEmail,
@@ -131,27 +124,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 1b. SMS de confirmation au client (si SMS ou BOTH)
-  const smsPhone = appt.customerPhone || userPref?.phone;
-  if (smsPhone && (notifPref === "SMS" || notifPref === "BOTH")) {
-    notifPromises.push(
-      sendBookingConfirmationSMS({
-        to:           smsPhone,
-        customerName: appt.customerName,
-        garageName:   appt.garage.name,
-        garagePhone:  appt.garage.phone ?? "",
-        date:         appt.date,
-        startTime:    appt.startTime,
-        serviceName:  appt.serviceName,
-      }).catch(e => console.error("[BOOKING CONFIRMATION SMS]", e))
-    );
-  }
-
-  // 2. Notification au garage
-  if (appt.garage.email) {
+  // 2. Notification au garage (courriel public du garage, sinon celui du propriétaire)
+  const garageEmail = appt.garage.email || appt.garage.owner?.email || null;
+  if (garageEmail) {
     notifPromises.push(
       sendGarageNewAppointment({
-        to:            appt.garage.email,
+        to:            garageEmail,
         garageName:    appt.garage.name,
         customerName:  appt.customerName,
         customerPhone: appt.customerPhone,

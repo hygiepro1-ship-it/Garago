@@ -1617,6 +1617,88 @@ export default function DashboardGaragePage() {
             );
           })()}
 
+          {/* Upcoming appointments list */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-4">Prochains rendez-vous</h3>
+            {!rdvLoaded ? (
+              <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
+            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">Aucun rendez-vous à venir.</p>
+            ) : (
+              <div className="space-y-2">
+                {appointments
+                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED")
+                  .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+                  .slice(0, 10)
+                  .map(a => {
+                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                    const dateObj = new Date(a.date + "T12:00:00");
+                    const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                    return (
+                      <div key={a.id} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px] flex-shrink-0">
+                            <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
+                            <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
+                            <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                            {(a.vehicleMake || a.vehicleModel) && (
+                              <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
+                            )}
+                            {(a as any).notes && (
+                              <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
+                                💬 {(a as any).notes}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                            {sc.label}
+                          </span>
+                        </div>
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-1.5 pl-[76px]">
+                          {a.status === "PENDING" && (
+                            <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold hover:bg-green-100 transition-colors">
+                              ✓ Confirmer
+                            </button>
+                          )}
+                          {a.status === "CONFIRMED" && (
+                            <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold hover:bg-purple-100 transition-colors">
+                              ✓ Terminé
+                            </button>
+                          )}
+                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
+                            <button onClick={() => {
+                              setRescheduleAppt(a);
+                              setRescheduleDate(a.date);
+                              fetchGarageSlots(a.date, a.id);
+                            }}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
+                              📅 Déplacer
+                            </button>
+                          )}
+                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
+                            <button onClick={async () => {
+                              if (!window.confirm("Annuler ce rendez-vous ?")) return;
+                              await updateApptStatus(a.id, "CANCELLED");
+                            }}
+                              className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
+                              ✗ Annuler
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
           {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
           {referralUnlocked ? (
             <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
@@ -1955,88 +2037,6 @@ export default function DashboardGaragePage() {
               )}
             </div>
           )}
-
-          {/* Upcoming appointments list */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4">Prochains rendez-vous</h3>
-            {!rdvLoaded ? (
-              <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
-            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">Aucun rendez-vous à venir.</p>
-            ) : (
-              <div className="space-y-2">
-                {appointments
-                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED")
-                  .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-                  .slice(0, 10)
-                  .map(a => {
-                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
-                    const dateObj = new Date(a.date + "T12:00:00");
-                    const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
-                    return (
-                      <div key={a.id} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px] flex-shrink-0">
-                            <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
-                            <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
-                            <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
-                            {(a.vehicleMake || a.vehicleModel) && (
-                              <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
-                            )}
-                            {(a as any).notes && (
-                              <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                                💬 {(a as any).notes}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
-                            {sc.label}
-                          </span>
-                        </div>
-                        {/* Actions */}
-                        <div className="flex flex-wrap gap-1.5 pl-[76px]">
-                          {a.status === "PENDING" && (
-                            <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold hover:bg-green-100 transition-colors">
-                              ✓ Confirmer
-                            </button>
-                          )}
-                          {a.status === "CONFIRMED" && (
-                            <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold hover:bg-purple-100 transition-colors">
-                              ✓ Terminé
-                            </button>
-                          )}
-                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
-                            <button onClick={() => {
-                              setRescheduleAppt(a);
-                              setRescheduleDate(a.date);
-                              fetchGarageSlots(a.date, a.id);
-                            }}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                              📅 Déplacer
-                            </button>
-                          )}
-                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
-                            <button onClick={async () => {
-                              if (!window.confirm("Annuler ce rendez-vous ?")) return;
-                              await updateApptStatus(a.id, "CANCELLED");
-                            }}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
-                              ✗ Annuler
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
 
           {/* Reviews with reply + moderation */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
