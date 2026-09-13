@@ -98,7 +98,7 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
                   Ambassadeur
                 </span>
               )}
-              {garage.subscriptionStatus === "active" && (
+              {garage.subscriptionStatus === "ACTIVE" && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold"
                   style={{ fontSize: 10, background: "#0b1f3a", color: "#f97316" }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
