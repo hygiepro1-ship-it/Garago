@@ -22,6 +22,7 @@ import { useSession }   from "next-auth/react";
 import { useRouter }    from "next/navigation";
 import Link             from "next/link";
 import { useLang }      from "@/contexts/LanguageContext";
+import { isCardRequired } from "@/lib/trial-card";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -131,14 +132,7 @@ export default function AgendaPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
     fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
-      if (!g || g.parentId !== null) return;
-      // stripePriceId (pas stripeCustomerId) : ce dernier est écrit dès la création
-      // du client Stripe, avant même la saisie de la carte — voir tableau-de-bord/garage/page.tsx.
-      const cardRequired = g.subscriptionStatus === "TRIAL"
-        && !g.stripePriceId
-        && g.createdAt
-        && new Date(g.createdAt) >= new Date("2026-09-13T00:00:00Z");
-      if (cardRequired) router.push("/tableau-de-bord/garage");
+      if (g && isCardRequired(g)) router.push("/tableau-de-bord/garage");
     }).catch(() => {});
   }, [status, router]);
 

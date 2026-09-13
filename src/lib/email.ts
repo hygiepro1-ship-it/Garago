@@ -386,6 +386,42 @@ export async function sendMaintenanceReminder(params: MaintenanceReminderParams)
   await send(params.to, `⏰ Rappel d'entretien — ${esc(params.title)}`, body);
 }
 
+// ─── Email: Relance carte manquante (inscription garage inachevée) ───────────
+
+export interface CardReminderParams {
+  to:         string;
+  garageName: string;
+  isFinal:    boolean; // dernière relance — l'accès restera bloqué sans action
+}
+
+export async function sendCardReminder(params: CardReminderParams) {
+  if (!canSend()) return;
+
+  const dashboardUrl = `${BASE_URL}/tableau-de-bord/garage`;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre essai gratuit attend une carte 💳</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">
+      Bonjour, le profil de <strong>${esc(params.garageName)}</strong> a bien été créé sur Garago, mais l'inscription
+      n'est pas terminée : aucune carte n'a été enregistrée, donc l'accès à votre tableau de bord reste bloqué.
+    </p>
+
+    ${infoCard(`
+      ${row("💳", "Aucun frais", "Rien n'est prélevé avant la fin de votre essai de 30 jours", true)}
+    `)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Ajoutez votre carte pour débloquer votre tableau de bord et commencer à recevoir des clients :</p>
+    ${primaryBtn(dashboardUrl, "Ajouter ma carte")}
+
+    ${params.isFinal ? `
+    <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">
+      Ceci est notre dernière relance. Sans carte enregistrée, votre profil restera inaccessible et sera éventuellement retiré.
+    </p>` : ""}
+  `;
+
+  await send(params.to, "💳 Votre essai Garago attend une carte pour démarrer", body);
+}
+
 // ─── Email: Rendez-vous déplacé ───────────────────────────────────────────────
 
 export interface RescheduleParams extends AppointmentDetails {

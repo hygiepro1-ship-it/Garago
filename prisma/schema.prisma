@@ -97,6 +97,8 @@ model Garage {
   cancelAtPeriodEnd  Boolean   @default(false)
   stripeCustomerId   String?
   stripePriceId      String?
+  cardReminderCount  Int       @default(0)   // nb de relances "carte manquante" envoyées
+  cardReminderSentAt DateTime?               // dernière relance envoyée
 
   referralCode          String?  @unique
   referredByCode        String?

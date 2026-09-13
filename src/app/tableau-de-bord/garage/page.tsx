@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
 import { getModelsForMake } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES } from "@/lib/services";
+import { isCardRequired } from "@/lib/trial-card";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
 import ServiceIcon from "@/components/ServiceIcon";
@@ -1195,24 +1196,7 @@ export default function DashboardGaragePage() {
     return <div className="flex items-center justify-center py-20 text-gray-500">{d.loading}</div>;
   }
 
-  // Carte obligatoire pour les garages inscrits depuis le passage à l'essai "carte requise"
-  // (2026-09-13) — évite qu'on accède au tableau de bord sans jamais avoir fourni de moyen
-  // de paiement (ex. en annulant Stripe Checkout / en utilisant son bouton retour). Les
-  // garages déjà en essai avant cette date gardent l'accès promis à l'époque.
-  //
-  // On teste stripePriceId (rempli uniquement par le webhook une fois l'abonnement Stripe
-  // réellement créé, donc la carte saisie) et non stripeCustomerId : ce dernier est écrit
-  // dès la création du client Stripe dans /api/stripe/start-trial, AVANT même que Stripe
-  // affiche le formulaire de carte — s'y fier laisserait passer quelqu'un qui abandonne
-  // immédiatement après avoir cliqué "Ajouter ma carte".
-  const CARD_REQUIRED_SINCE = new Date("2026-09-13T00:00:00Z");
-  const cardRequired = garage.parentId === null
-    && garage.subscriptionStatus === "TRIAL"
-    && !garage.stripePriceId
-    && !!garage.createdAt
-    && new Date(garage.createdAt) >= CARD_REQUIRED_SINCE;
-
-  if (cardRequired) {
+  if (isCardRequired(garage)) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <div className="w-14 h-14 mx-auto mb-5 rounded-2xl flex items-center justify-center" style={{ background: "#fff7ed" }}>
