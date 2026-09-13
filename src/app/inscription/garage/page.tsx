@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -158,6 +158,16 @@ export default function InscriptionGaragePage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cardError, setCardError] = useState(false);
+
+  // Retour depuis Stripe Checkout (carte annulée/refusée) : le compte et le
+  // garage existent déjà, on ramène directement à l'étape du choix de
+  // formule avec un message, plutôt que de laisser l'inscription "en l'air".
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("step") === "3") setStep(3);
+    if (params.get("cardError")) setCardError(true);
+  }, []);
 
   // Step 1 — Compte + garage
   const [firstName,  setFirstName]  = useState("");
@@ -208,12 +218,13 @@ export default function InscriptionGaragePage() {
 
   async function handleFinish() {
     setStartingTrial(true);
+    setCardError(false);
     try {
       const plan = selectedPlan === "annual" ? "annual" : "monthly";
       const res = await fetch("/api/stripe/start-trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, cancelTo: "wizard" }),
       });
       const data = await res.json();
       if (res.ok && data.url) {
@@ -809,6 +820,19 @@ export default function InscriptionGaragePage() {
               <h2 className="text-2xl font-black text-gray-900 mb-2">{r.choosePlan}</h2>
               <p className="text-gray-500">{r.choosePlanSub}</p>
             </div>
+
+            {cardError && (
+              <div className="rounded-2xl p-4 mb-6 flex items-start gap-3" style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca" }}>
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <div>
+                  <p className="font-bold text-red-900 text-sm">L'enregistrement de votre carte n'a pas été complété</p>
+                  <p className="text-red-700 text-sm">Une carte valide est requise pour activer votre essai de 30 jours. Réessayez ci-dessous pour continuer.</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
               {PLANS.map((plan) => {

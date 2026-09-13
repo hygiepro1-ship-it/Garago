@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const plan = body?.plan === "annual" ? "annual" : "monthly";
   const priceId = PRICE_IDS[plan];
+  // "wizard" : annulation depuis l'inscription → retour à l'étape du choix de
+  // formule avec un message d'erreur, pour forcer une nouvelle tentative
+  // immédiate plutôt que d'atterrir sur le tableau de bord (même bloqué).
+  const cancelTo = body?.cancelTo === "wizard" ? "wizard" : "dashboard";
 
   if (!process.env.STRIPE_SECRET_KEY || !priceId) {
     return NextResponse.json({ error: "Stripe non configuré" }, { status: 500 });
@@ -66,6 +70,9 @@ export async function POST(req: NextRequest) {
     const trialDays = Math.max(1, Math.ceil(msRemaining / (24 * 60 * 60 * 1000)));
 
     const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const cancelUrl = cancelTo === "wizard"
+      ? `${origin}/inscription/garage?step=3&cardError=1`
+      : `${origin}/tableau-de-bord/garage?trial=skipped`;
 
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -73,7 +80,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: { trial_period_days: trialDays },
       success_url: `${origin}/tableau-de-bord/garage?trial=started`,
-      cancel_url:  `${origin}/tableau-de-bord/garage?trial=skipped`,
+      cancel_url:  cancelUrl,
       metadata: { garageId: garage.id },
     });
 
