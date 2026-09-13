@@ -168,20 +168,26 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionChange(sub: import("stripe").Stripe.Subscription) {
-  const isActive = sub.status === "active" || sub.status === "trialing";
+  // "trialing" = carte enregistrée mais essai encore en cours (pas encore facturé) —
+  // reste TRIAL, pas ACTIVE, pour ne pas fausser les statistiques/paliers de
+  // parrainage qui exigent un garage réellement payant.
+  const isTrialing = sub.status === "trialing";
+  const isActive   = sub.status === "active";
   const subAny   = sub as any;
   const endDate  = subAny.current_period_end
     ? new Date(subAny.current_period_end * 1000)
     : null;
 
+  const status = isTrialing ? "TRIAL" : isActive ? "ACTIVE" : sub.status.toUpperCase();
+
   await prisma.garage.updateMany({
     where: { stripeCustomerId: sub.customer as string },
     data: {
-      subscriptionStatus: isActive ? "ACTIVE" : sub.status.toUpperCase(),
+      subscriptionStatus: status,
       stripePriceId:      sub.items.data[0]?.price?.id ?? null,
       subscriptionEndAt:  endDate,
       cancelAtPeriodEnd:  sub.cancel_at_period_end ?? false,
-      ...(isActive ? { pastDueSince: null } : {}), // paiement récupéré → fin de la grâce
+      ...(isActive || isTrialing ? { pastDueSince: null } : {}), // paiement récupéré → fin de la grâce
     },
   });
 

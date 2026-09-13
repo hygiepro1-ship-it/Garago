@@ -204,6 +204,28 @@ export default function InscriptionGaragePage() {
 
   // Step 3 — Plan
   const [selectedPlan, setSelectedPlan] = useState("monthly");
+  const [startingTrial, setStartingTrial] = useState(false);
+
+  async function handleFinish() {
+    setStartingTrial(true);
+    try {
+      const plan = selectedPlan === "annual" ? "annual" : "monthly";
+      const res = await fetch("/api/stripe/start-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      // Stripe indisponible — ne bloque pas l'accès au tableau de bord, le
+      // garage pourra ajouter sa carte depuis la bannière du tableau de bord.
+    }
+    router.push("/tableau-de-bord/garage");
+  }
 
   function toggleService(id: string) {
     setSelectedServices((prev) =>
@@ -659,8 +681,8 @@ export default function InscriptionGaragePage() {
               </div>
 
               <div className="rounded-2xl p-4 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                <p className="font-bold text-green-700 mb-1">✓ Aucune carte de crédit requise</p>
-                <p className="text-green-600">30 jours complets pour tester la plateforme. Résiliez en 1 clic si ce n'est pas pour vous.</p>
+                <p className="font-bold text-green-700 mb-1">✓ Aucun montant prélevé avant 30 jours</p>
+                <p className="text-green-600">Carte requise pour activer l'essai, mais vous ne payez rien avant la fin des 30 jours. Résiliez en 1 clic si ce n'est pas pour vous.</p>
               </div>
             </div>
           </div>
@@ -846,11 +868,12 @@ export default function InscriptionGaragePage() {
                 {r.back}
               </button>
               <button
-                onClick={() => router.push("/tableau-de-bord/garage")}
-                className="flex-1 py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90"
+                onClick={handleFinish}
+                disabled={startingTrial}
+                className="flex-1 py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90 disabled:opacity-60"
                 style={{ backgroundColor: "#f97316" }}
               >
-                {r.toDashboard}
+                {startingTrial ? "Redirection…" : r.toDashboard}
               </button>
             </div>
 

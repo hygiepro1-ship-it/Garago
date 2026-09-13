@@ -84,6 +84,7 @@ interface Garage {
   subscriptionEndAt:        string | null;
   pastDueSince:             string | null;
   cancelAtPeriodEnd?:       boolean;
+  stripeCustomerId?:        string | null;
   referralCode:             string | null;
   referralCount:            number;
   ambassadorTier:           number;
@@ -846,6 +847,23 @@ export default function DashboardGaragePage() {
     else setCheckoutLoading(false);
   }
 
+  // Ajoute une carte sans quitter l'essai en cours — Stripe ne facture qu'à la
+  // fin des jours d'essai restants (voir /api/stripe/start-trial).
+  const [addCardLoading, setAddCardLoading] = useState(false);
+  async function addTrialCard(plan: "monthly" | "annual" = "monthly") {
+    setAddCardLoading(true);
+    try {
+      const res = await fetch("/api/stripe/start-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.url) { window.location.href = data.url; return; }
+    } catch {}
+    setAddCardLoading(false);
+  }
+
   // ── Appointments + blocked slots state ──────────────────────────────────
   const [appointments, setAppointments] = useState<any[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
@@ -1450,7 +1468,32 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {isTrialExpiring && (
+      {garage.subscriptionStatus === "TRIAL" && !garage.stripeCustomerId && (
+        <div className={`rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap ${isTrialExpiring ? "bg-red-50 border border-red-300" : "bg-orange-50 border border-orange-200"}`}>
+          <div className="flex items-center gap-3">
+            <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke={isTrialExpiring ? "#b91c1c" : "#f97316"} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <div>
+              <p className={`font-bold ${isTrialExpiring ? "text-red-900" : "text-gray-900"}`}>Aucun moyen de paiement enregistré</p>
+              <p className={`text-sm ${isTrialExpiring ? "text-red-700" : "text-gray-500"}`}>
+                {isTrialExpiring
+                  ? "Ajoutez une carte avant la fin de votre essai pour ne pas perdre votre visibilité — aucun montant n'est prélevé avant l'expiration de l'essai."
+                  : "Ajoutez une carte pour que votre abonnement démarre automatiquement à la fin de l'essai, sans interruption. Aucun montant prélevé avant cette date."}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
+              className={`text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60 ${isTrialExpiring ? "bg-red-600 hover:bg-red-700" : ""}`}
+              style={isTrialExpiring ? undefined : { background: "#f97316" }}>
+              {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isTrialExpiring && garage.stripeCustomerId && (
         <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#a16207" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -1524,7 +1567,7 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {garage.subscriptionStatus === "TRIAL" && !isTrialExpiring && (
+      {garage.subscriptionStatus === "TRIAL" && !isTrialExpiring && garage.stripeCustomerId && (
         <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -2913,12 +2956,23 @@ export default function DashboardGaragePage() {
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Votre garage est visible dans les résultats. Activez votre abonnement dès maintenant pour éviter toute coupure à la fin de l'essai.
+                  Votre garage est visible dans les résultats.{" "}
+                  {garage.stripeCustomerId
+                    ? "Votre abonnement démarrera automatiquement à la fin de l'essai avec la carte enregistrée."
+                    : "Aucune carte n'est enregistrée — ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure."}
                 </p>
+                {!garage.stripeCustomerId && (
+                  <div className="mb-4">
+                    <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
+                      className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                      {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Activer — 109,99 $/mois"}
+                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement — 109,99 $/mois"}
                   </button>
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>

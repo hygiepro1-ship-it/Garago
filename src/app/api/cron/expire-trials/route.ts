@@ -11,12 +11,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 1. Essais échus → EXPIRED (les succursales héritent du statut du principal)
+  // 1. Essais échus → EXPIRED (les succursales héritent du statut du principal).
+  // Ne concerne que les garages sans carte enregistrée : ceux qui en ont une
+  // ont un abonnement Stripe en essai, et c'est Stripe (via webhook) qui fait
+  // passer le statut à ACTIVE ou PAST_DUE à la fin de l'essai — pas ce cron.
   const trials = await prisma.garage.updateMany({
     where: {
       parentId: null,
       subscriptionStatus: "TRIAL",
       subscriptionEndAt:  { lt: new Date() },
+      stripeCustomerId:   null,
     },
     data: { subscriptionStatus: "EXPIRED" },
   });
