@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { syncSubscriptionToGarage } from "@/lib/stripe-sync";
 
 // Force la route en dynamique — empêche Next.js d'évaluer ce module au build
 export const dynamic = "force-dynamic";
@@ -168,30 +169,9 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionChange(sub: import("stripe").Stripe.Subscription) {
-  // "trialing" = carte enregistrée mais essai encore en cours (pas encore facturé) —
-  // reste TRIAL, pas ACTIVE, pour ne pas fausser les statistiques/paliers de
-  // parrainage qui exigent un garage réellement payant.
-  const isTrialing = sub.status === "trialing";
-  const isActive   = sub.status === "active";
-  const subAny   = sub as any;
-  const endDate  = subAny.current_period_end
-    ? new Date(subAny.current_period_end * 1000)
-    : null;
+  await syncSubscriptionToGarage(sub);
 
-  const status = isTrialing ? "TRIAL" : isActive ? "ACTIVE" : sub.status.toUpperCase();
-
-  await prisma.garage.updateMany({
-    where: { stripeCustomerId: sub.customer as string },
-    data: {
-      subscriptionStatus: status,
-      stripePriceId:      sub.items.data[0]?.price?.id ?? null,
-      subscriptionEndAt:  endDate,
-      cancelAtPeriodEnd:  sub.cancel_at_period_end ?? false,
-      ...(isActive || isTrialing ? { pastDueSince: null } : {}), // paiement récupéré → fin de la grâce
-    },
-  });
-
-  if (isActive) {
+  if (sub.status === "active") {
     console.log(`✅ Abonnement activé pour customer=${sub.customer}`);
   }
 }

@@ -85,6 +85,7 @@ interface Garage {
   pastDueSince:             string | null;
   cancelAtPeriodEnd?:       boolean;
   stripeCustomerId?:        string | null;
+  stripePriceId?:           string | null;
   createdAt?:               string;
   referralCode:             string | null;
   referralCount:            number;
@@ -906,7 +907,16 @@ export default function DashboardGaragePage() {
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/connexion"); return; }
     if (status === "authenticated") {
-      gfetch("/api/garage/profile").then(r => r.json()).then(d => { setGarage(d); setLoading(false); });
+      // Retour de Stripe Checkout : force la synchro avant de charger le garage —
+      // le webhook peut ne pas encore être traité, ce qui bloquerait à tort
+      // l'accès juste après l'ajout réussi d'une carte (voir cardRequired plus bas).
+      const isTrialReturn = new URLSearchParams(window.location.search).get("trial") === "started";
+      const sync = isTrialReturn
+        ? fetch("/api/stripe/sync-subscription", { method: "POST" }).catch(() => {})
+        : Promise.resolve();
+      sync.then(() => {
+        gfetch("/api/garage/profile").then(r => r.json()).then(d => { setGarage(d); setLoading(false); });
+      });
     }
   }, [status, router]);
 
@@ -1189,10 +1199,16 @@ export default function DashboardGaragePage() {
   // (2026-09-13) — évite qu'on accède au tableau de bord sans jamais avoir fourni de moyen
   // de paiement (ex. en annulant Stripe Checkout / en utilisant son bouton retour). Les
   // garages déjà en essai avant cette date gardent l'accès promis à l'époque.
+  //
+  // On teste stripePriceId (rempli uniquement par le webhook une fois l'abonnement Stripe
+  // réellement créé, donc la carte saisie) et non stripeCustomerId : ce dernier est écrit
+  // dès la création du client Stripe dans /api/stripe/start-trial, AVANT même que Stripe
+  // affiche le formulaire de carte — s'y fier laisserait passer quelqu'un qui abandonne
+  // immédiatement après avoir cliqué "Ajouter ma carte".
   const CARD_REQUIRED_SINCE = new Date("2026-09-13T00:00:00Z");
   const cardRequired = garage.parentId === null
     && garage.subscriptionStatus === "TRIAL"
-    && !garage.stripeCustomerId
+    && !garage.stripePriceId
     && !!garage.createdAt
     && new Date(garage.createdAt) >= CARD_REQUIRED_SINCE;
 
@@ -1505,7 +1521,7 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {garage.subscriptionStatus === "TRIAL" && !garage.stripeCustomerId && (
+      {garage.subscriptionStatus === "TRIAL" && !garage.stripePriceId && (
         <div className={`rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap ${isTrialExpiring ? "bg-red-50 border border-red-300" : "bg-orange-50 border border-orange-200"}`}>
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke={isTrialExpiring ? "#b91c1c" : "#f97316"} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -1530,7 +1546,7 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {isTrialExpiring && garage.stripeCustomerId && (
+      {isTrialExpiring && garage.stripePriceId && (
         <div className="bg-yellow-50 border border-yellow-300 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#a16207" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -1604,7 +1620,7 @@ export default function DashboardGaragePage() {
         </div>
       )}
 
-      {garage.subscriptionStatus === "TRIAL" && !isTrialExpiring && garage.stripeCustomerId && (
+      {garage.subscriptionStatus === "TRIAL" && !isTrialExpiring && garage.stripePriceId && (
         <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -2994,11 +3010,11 @@ export default function DashboardGaragePage() {
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
                   Votre garage est visible dans les résultats.{" "}
-                  {garage.stripeCustomerId
+                  {garage.stripePriceId
                     ? "Votre abonnement démarrera automatiquement à la fin de l'essai avec la carte enregistrée."
                     : "Aucune carte n'est enregistrée — ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure."}
                 </p>
-                {!garage.stripeCustomerId && (
+                {!garage.stripePriceId && (
                   <div className="mb-4">
                     <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
                       className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>

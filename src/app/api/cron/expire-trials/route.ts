@@ -12,15 +12,19 @@ export async function GET(req: NextRequest) {
   }
 
   // 1. Essais échus → EXPIRED (les succursales héritent du statut du principal).
-  // Ne concerne que les garages sans carte enregistrée : ceux qui en ont une
-  // ont un abonnement Stripe en essai, et c'est Stripe (via webhook) qui fait
-  // passer le statut à ACTIVE ou PAST_DUE à la fin de l'essai — pas ce cron.
+  // Ne concerne que les garages sans abonnement Stripe réel (stripePriceId, posé
+  // uniquement par le webhook une fois la carte saisie) : ceux qui en ont un sont
+  // pris en charge par Stripe (webhook → ACTIVE/PAST_DUE à la fin de l'essai).
+  // stripeCustomerId seul ne suffit pas ici : il est écrit dès la création du
+  // client Stripe, avant même que la carte soit saisie (cf. /api/stripe/start-trial) —
+  // un garage qui abandonne à cette étape n'a jamais de stripePriceId et doit
+  // donc bien expirer normalement.
   const trials = await prisma.garage.updateMany({
     where: {
       parentId: null,
       subscriptionStatus: "TRIAL",
       subscriptionEndAt:  { lt: new Date() },
-      stripeCustomerId:   null,
+      stripePriceId:      null,
     },
     data: { subscriptionStatus: "EXPIRED" },
   });

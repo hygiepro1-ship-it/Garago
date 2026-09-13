@@ -132,8 +132,10 @@ export default function AgendaPage() {
     if (status !== "authenticated") return;
     fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
       if (!g || g.parentId !== null) return;
+      // stripePriceId (pas stripeCustomerId) : ce dernier est écrit dès la création
+      // du client Stripe, avant même la saisie de la carte — voir tableau-de-bord/garage/page.tsx.
       const cardRequired = g.subscriptionStatus === "TRIAL"
-        && !g.stripeCustomerId
+        && !g.stripePriceId
         && g.createdAt
         && new Date(g.createdAt) >= new Date("2026-09-13T00:00:00Z");
       if (cardRequired) router.push("/tableau-de-bord/garage");
