@@ -85,6 +85,7 @@ interface Garage {
   pastDueSince:             string | null;
   cancelAtPeriodEnd?:       boolean;
   stripeCustomerId?:        string | null;
+  createdAt?:               string;
   referralCode:             string | null;
   referralCount:            number;
   ambassadorTier:           number;
@@ -1182,6 +1183,42 @@ export default function DashboardGaragePage() {
 
   if (loading || !garage) {
     return <div className="flex items-center justify-center py-20 text-gray-500">{d.loading}</div>;
+  }
+
+  // Carte obligatoire pour les garages inscrits depuis le passage à l'essai "carte requise"
+  // (2026-09-13) — évite qu'on accède au tableau de bord sans jamais avoir fourni de moyen
+  // de paiement (ex. en annulant Stripe Checkout / en utilisant son bouton retour). Les
+  // garages déjà en essai avant cette date gardent l'accès promis à l'époque.
+  const CARD_REQUIRED_SINCE = new Date("2026-09-13T00:00:00Z");
+  const cardRequired = garage.parentId === null
+    && garage.subscriptionStatus === "TRIAL"
+    && !garage.stripeCustomerId
+    && !!garage.createdAt
+    && new Date(garage.createdAt) >= CARD_REQUIRED_SINCE;
+
+  if (cardRequired) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="w-14 h-14 mx-auto mb-5 rounded-2xl flex items-center justify-center" style={{ background: "#fff7ed" }}>
+          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+        </div>
+        <h1 className="text-xl font-black text-gray-900 mb-2">Ajoutez votre carte pour continuer</h1>
+        <p className="text-gray-500 text-sm mb-6">
+          Votre essai gratuit de 30 jours est prêt, mais aucun moyen de paiement n'a été enregistré.
+          Ajoutez une carte pour accéder à votre tableau de bord — aucun montant n'est prélevé avant la fin de l'essai.
+        </p>
+        <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
+          className="text-white px-6 py-3 rounded-xl font-bold text-sm disabled:opacity-60"
+          style={{ background: "#f97316" }}>
+          {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+        </button>
+        <p className="mt-6 text-xs text-gray-400">
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="underline hover:no-underline">Se déconnecter</button>
+        </p>
+      </div>
+    );
   }
 
   async function updateApptStatus(id: string, newStatus: string) {

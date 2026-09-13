@@ -123,6 +123,23 @@ export default function AgendaPage() {
     if (status === "unauthenticated") router.push("/connexion");
   }, [status, router]);
 
+  // Carte obligatoire (essai depuis le 2026-09-13) — cette page ne doit pas
+  // rester accessible en contournant le tableau de bord principal (ex. bouton
+  // retour de Stripe Checkout, lien direct) tant que le garage n'a pas de
+  // moyen de paiement enregistré. Renvoie vers le tableau de bord, qui affiche
+  // l'écran bloquant « Ajoutez votre carte ».
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
+      if (!g || g.parentId !== null) return;
+      const cardRequired = g.subscriptionStatus === "TRIAL"
+        && !g.stripeCustomerId
+        && g.createdAt
+        && new Date(g.createdAt) >= new Date("2026-09-13T00:00:00Z");
+      if (cardRequired) router.push("/tableau-de-bord/garage");
+    }).catch(() => {});
+  }, [status, router]);
+
   // Chargement RDV
   const loadAppointments = useCallback(async (date: string) => {
     setLoading(true);
