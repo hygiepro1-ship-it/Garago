@@ -11,6 +11,7 @@ interface BookingWidgetProps {
   garageAddress?: string;
   garageCity?:    string;
   services: Array<{ category: { name: string } }>;
+  availability?: Array<{ dayOfWeek: number; isClosed: boolean }>;
 }
 
 type Step = "service" | "date" | "slot" | "info" | "done";
@@ -41,7 +42,7 @@ function buildCalendar(month: Date) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services }: BookingWidgetProps) {
+export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services, availability }: BookingWidgetProps) {
   const { data: session } = useSession();
   const { t } = useLang();
   const b = t.booking;
@@ -61,6 +62,11 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [selectedSlot, setSelectedSlot] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [closedDay, setClosedDay] = useState(false);
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
+
+  const closedWeekdays = new Set(
+    (availability ?? []).filter(a => a.isClosed).map(a => a.dayOfWeek)
+  );
 
   const [name, setName]           = useState("");
   const [phone, setPhone]         = useState("");
@@ -107,6 +113,15 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
       })
       .catch(() => {});
   }, [session]);
+
+  // Fetch fully-blocked (vacances / fermeture exceptionnelle) dates for the displayed month
+  useEffect(() => {
+    const month = `${calMonth.getFullYear()}-${String(calMonth.getMonth()+1).padStart(2,"0")}`;
+    fetch(`/api/garages/${garageSlug}/blocked-dates?month=${month}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setBlockedDates(new Set(d?.dates ?? [])))
+      .catch(() => setBlockedDates(new Set()));
+  }, [calMonth, garageSlug]);
 
   // Fetch slots when date changes
   useEffect(() => {
@@ -347,17 +362,20 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               {cells.map((d, i) => {
                 if (!d) return <div key={i} />;
                 const isPast  = d < today;
+                const isUnavailable = closedWeekdays.has(d.getDay()) || blockedDates.has(formatDate(d));
+                const isDisabled = isPast || isUnavailable;
                 const isSel   = selectedDate ? formatDate(d) === formatDate(selectedDate) : false;
                 const isToday = formatDate(d) === formatDate(today);
                 return (
                   <button
                     key={i}
-                    disabled={isPast}
+                    disabled={isDisabled}
+                    title={!isPast && isUnavailable ? b.garageUnavailable : undefined}
                     onClick={() => { setSelectedDate(d); setStep("slot"); }}
                     className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
-                      ${isSel    ? "bg-orange-500 text-white"          : ""}
+                      ${isSel      ? "bg-orange-500 text-white"          : ""}
                       ${isToday && !isSel ? "border border-orange-300 text-orange-600" : ""}
-                      ${isPast   ? "text-gray-200 cursor-not-allowed"  : !isSel ? "hover:bg-orange-50 text-gray-700" : ""}
+                      ${isDisabled ? "text-gray-200 cursor-not-allowed"  : !isSel ? "hover:bg-orange-50 text-gray-700" : ""}
                     `}
                   >
                     {d.getDate()}

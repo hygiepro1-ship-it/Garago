@@ -528,6 +528,7 @@ export default function GarageProfilePage() {
                 garageAddress={garage.address}
                 garageCity={garage.city}
                 services={garage.services ?? []}
+                availability={garage.availability ?? []}
               />
             </div>
 
