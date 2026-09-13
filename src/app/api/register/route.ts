@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Le mot de passe doit contenir au moins 8 caractères" }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
     if (existing) {
       return NextResponse.json({ error: "Un compte existe déjà avec ce courriel" }, { status: 409 });
     }

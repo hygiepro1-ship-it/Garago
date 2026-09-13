@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { email }, select: { id: true, password: true } });
+    // Recherche insensible à la casse : le courriel stocké peut avoir une casse
+    // différente de celle retapée par l'utilisateur (ex. majuscule auto sur mobile).
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, password: true },
+    });
 
     // Ne jamais révéler si un compte existe pour cette adresse (anti-énumération) —
     // on répond succès dans tous les cas et on n'envoie réellement que si le compte existe.

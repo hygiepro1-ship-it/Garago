@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email; // casse préservée — ne pas modifier la recherche en base
+        const email = credentials.email;
         const since = new Date(Date.now() - LOGIN_WINDOW_MS);
 
         // Anti-brute-force : bloque après trop d'échecs récents sur ce courriel
@@ -53,7 +53,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Trop de tentatives. Réessayez dans 15 minutes.");
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Recherche insensible à la casse : certains comptes ont été créés avec un
+        // courriel dont la casse diffère de ce que l'utilisateur retape ensuite
+        // (ex. majuscule auto sur mobile) — findUnique exigerait une correspondance exacte.
+        const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
 
         if (!user || !user.password) {
           await prisma.loginAttempt.create({ data: { email } });

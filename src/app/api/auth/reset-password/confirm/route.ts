@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Code invalide ou expiré." }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
     if (!user) return NextResponse.json({ error: "Compte introuvable." }, { status: 404 });
 
     const hashed = await bcrypt.hash(newPassword, 12);
