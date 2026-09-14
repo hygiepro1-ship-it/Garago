@@ -48,6 +48,31 @@ function fmtDateFr(dateStr: string): string {
   return `${d} ${MONTHS_FR[m - 1]} ${y}`;
 }
 
+/** Liens "Ajouter au calendrier" — Google et Outlook en un clic (aucune app
+ * requise), Apple/Outlook desktop/autres via le fichier .ics déjà généré par
+ * /api/appointments/[id]/ics. Mêmes paramètres que ceux de BookingWidget. */
+function calendarLinks(appt: AppointmentDetails & { appointmentId: string }): { google: string; outlook: string; ics: string } {
+  const start = `${appt.date.replace(/-/g, "")}T${appt.startTime.replace(":", "")}00`;
+  const end   = `${appt.date.replace(/-/g, "")}T${appt.endTime.replace(":", "")}00`;
+  const title = `RDV ${appt.garageName}${appt.serviceName ? ` — ${appt.serviceName}` : ""}`;
+  const details = `Rendez-vous chez ${appt.garageName}${appt.serviceName ? `\nService : ${appt.serviceName}` : ""}`;
+
+  const google = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${encodeURIComponent(title)}` +
+    `&dates=${start}/${end}` +
+    `&details=${encodeURIComponent(details)}` +
+    `&location=${encodeURIComponent(appt.garageAddress)}`;
+
+  const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent` +
+    `&subject=${encodeURIComponent(title)}` +
+    `&startdt=${start}&enddt=${end}` +
+    `&location=${encodeURIComponent(appt.garageAddress)}`;
+
+  const ics = `${BASE_URL}/api/appointments/${appt.appointmentId}/ics`;
+
+  return { google, outlook, ics };
+}
+
 /** Orange info card used in appointment-related emails. */
 function infoCard(rows: string): string {
   return `
@@ -257,7 +282,7 @@ export interface BookingConfirmationParams extends AppointmentDetails {
 export async function sendBookingConfirmation(params: BookingConfirmationParams) {
   if (!canSend()) return;
 
-  const icsUrl = `${BASE_URL}/api/appointments/${params.appointmentId}/ics`;
+  const cal = calendarLinks(params);
 
   const body = `
     ${iconBadge("check")}
@@ -273,8 +298,12 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
 
     ${HR}
     <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">Ajouter à votre calendrier</p>
-    <p style="margin:0 0 16px;color:#6b7280;font-size:13px">Ne manquez pas votre rendez-vous — ajoutez-le maintenant :</p>
-    ${secondaryBtn(icsUrl, "Télécharger .ics")}
+    <p style="margin:0 0 16px;color:#6b7280;font-size:13px">Ne manquez pas votre rendez-vous :</p>
+    <table cellpadding="0" cellspacing="0"><tr>
+      <td style="padding-right:8px;padding-bottom:8px">${secondaryBtn(cal.google, "Google Calendar")}</td>
+      <td style="padding-bottom:8px">${secondaryBtn(cal.outlook, "Outlook")}</td>
+    </tr></table>
+    ${secondaryBtn(cal.ics, "Apple Calendar / autre (.ics)")}
   `;
 
   await send(params.to, `RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`, body);
