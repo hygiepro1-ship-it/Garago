@@ -195,6 +195,7 @@ export default function InscriptionGaragePage() {
   const [garageCity, setGarageCity]           = useState("");
   const [garagePostalCode, setGaragePostalCode] = useState("");
   const [garagePhone, setGaragePhone]         = useState("");
+  const [garageNeq, setGarageNeq]             = useState("");
   const [garageLat, setGarageLat]             = useState<number | null>(null);
   const [garageLng, setGarageLng]             = useState<number | null>(null);
   const [referredByCode, setReferredByCode]   = useState("");
@@ -313,6 +314,7 @@ export default function InscriptionGaragePage() {
     if (!emailVerified) { setError("Veuillez d'abord vérifier votre adresse courriel."); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
+    if (!/^\d{10}$/.test(garageNeq)) { setError("Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis."); return; }
 
     setLoading(true);
 
@@ -324,7 +326,7 @@ export default function InscriptionGaragePage() {
         marketingConsent: acceptMkt,
         role: "GARAGE_OWNER",
         garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
-        garageLat, garageLng,
+        garageLat, garageLng, garageNeq,
         referredByCode: referredByCode.trim().toUpperCase() || undefined,
         _hp: hp,
       }),
@@ -609,6 +611,17 @@ export default function InscriptionGaragePage() {
                         <input type="tel" className={inputClass} placeholder="(514) 555-5678"
                           value={garagePhone}
                           onChange={(e) => setGaragePhone(formatPhone(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          Numéro d'entreprise du Québec (NEQ) <span className="text-red-500">*</span>
+                        </label>
+                        <input type="text" required inputMode="numeric" maxLength={10} className={inputClass} placeholder="1234567890"
+                          value={garageNeq}
+                          onChange={(e) => setGarageNeq(e.target.value.replace(/\D/g, "").slice(0, 10))} />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Utilisé pour vérifier votre entreprise avant l'activation de votre profil public.
+                        </p>
                       </div>
                     </div>
                   </div>

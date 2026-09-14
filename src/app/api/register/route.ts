@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { geocodeAddress } from "@/lib/geocode";
+import { sendGarageVerificationRequest } from "@/lib/email";
 
 // 32-char alphabet — no ambiguous chars (0/O, 1/I/L removed)
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
       firstName, lastName, name: nameRaw, email, password, role, phone,
       marketingConsent,
       garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
-      garageLat, garageLng,
+      garageLat, garageLng, garageNeq,
       referredByCode,
       _hp,
     } = body;
@@ -77,6 +78,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Veuillez d'abord vérifier votre adresse courriel." }, { status: 403 });
     }
 
+    // NEQ obligatoire pour un garage — vérifié manuellement par un admin avant
+    // que le profil n'apparaisse dans les résultats de recherche.
+    let neq = "";
+    if (role === "GARAGE_OWNER" && garageName) {
+      neq = String(garageNeq ?? "").replace(/\D/g, "");
+      if (!/^\d{10}$/.test(neq)) {
+        return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis." }, { status: 400 });
+      }
+    }
+
     // Validate referral code if provided — le parrain doit être un garage abonné
     // (le programme de parrainage est réservé aux abonnés).
     let referralBonus = false;
@@ -125,7 +136,7 @@ export async function POST(req: NextRequest) {
         if (coords) { finalLat = coords.latitude; finalLng = coords.longitude; }
       }
 
-      await prisma.garage.create({
+      const garage = await prisma.garage.create({
         data: {
           ownerId: user.id,
           name: garageName,
@@ -140,8 +151,13 @@ export async function POST(req: NextRequest) {
           subscriptionEndAt: new Date(Date.now() + (referralBonus ? 60 : 30) * 24 * 60 * 60 * 1000),
           referralCode,
           referredByCode: referralBonus ? referredByCode.trim().toUpperCase() : null,
+          neq,
+          verificationStatus: "PENDING",
         },
       });
+
+      sendGarageVerificationRequest({ garageId: garage.id, garageName: garage.name, neq, ownerEmail: email })
+        .catch(e => console.error("[GARAGE VERIFICATION REQUEST EMAIL]", e));
     }
 
     return NextResponse.json({ success: true, userId: user.id });

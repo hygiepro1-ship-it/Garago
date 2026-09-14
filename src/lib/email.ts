@@ -799,3 +799,76 @@ export async function sendDescriptionDecisionEmail(params: DescriptionDecisionPa
 
   await send(params.ownerEmail, subject, body);
 }
+
+// ─── Email: Nouveau garage à vérifier (admin) ─────────────────────────────────
+
+export interface GarageVerificationRequestParams {
+  garageId:   string;
+  garageName: string;
+  neq:        string;
+  ownerEmail: string;
+}
+
+export async function sendGarageVerificationRequest(params: GarageVerificationRequestParams) {
+  if (!canSend()) return;
+
+  const adminUrl = `${BASE_URL}/tableau-de-bord/admin`;
+  const reqUrl   = "https://www.registreentreprises.gouv.qc.ca/fr/consulter/rechercher/default.aspx";
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Nouveau garage à vérifier</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un nouveau garage vient de s'inscrire et attend une vérification manuelle avant d'apparaître dans les résultats de recherche.</p>
+
+    ${infoCard(`
+      ${row("Garage", esc(params.garageName))}
+      ${row("Propriétaire", esc(params.ownerEmail))}
+      ${row("NEQ", `<span style="font-family:monospace">${esc(params.neq)}</span>`, true)}
+    `)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Vérifiez le NEQ au Registre des entreprises du Québec, puis approuvez ou refusez depuis le tableau de bord admin :</p>
+    ${primaryBtn(adminUrl, "Ouvrir le tableau de bord admin")}
+    &nbsp;&nbsp;
+    ${secondaryBtn(reqUrl, "Rechercher au Registre →")}
+  `;
+
+  await send(ADMIN_EMAIL, `Garage à vérifier — ${params.garageName}`, body);
+}
+
+// ─── Email: Décision de vérification (garage) ─────────────────────────────────
+
+export interface GarageVerificationDecisionParams {
+  ownerEmail: string;
+  garageName: string;
+  approved:   boolean;
+}
+
+export async function sendGarageVerificationDecision(params: GarageVerificationDecisionParams) {
+  if (!canSend()) return;
+
+  const dashboardUrl = `${BASE_URL}/tableau-de-bord/garage`;
+
+  const body = params.approved
+    ? `
+      ${iconBadge("check")}
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">Votre garage est vérifié</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour,<br><br>
+        Le profil de <strong>${esc(params.garageName)}</strong> a été vérifié et est maintenant visible dans les résultats de recherche Garago.
+      </p>
+      ${primaryBtn(dashboardUrl, "Ouvrir mon tableau de bord")}`
+    : `
+      ${iconBadge("warning")}
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">Vérification refusée</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour,<br><br>
+        Nous n'avons pas pu vérifier le profil de <strong>${esc(params.garageName)}</strong> à partir des informations fournies.
+        Votre profil reste invisible dans les résultats de recherche.<br><br>
+        Pour résoudre la situation, contactez notre équipe à <a href="mailto:${ADMIN_EMAIL}" style="color:#f97316">${ADMIN_EMAIL}</a>.
+      </p>`;
+
+  const subject = params.approved
+    ? `Votre garage est vérifié — Garago`
+    : `Vérification de votre garage refusée — Garago`;
+
+  await send(params.ownerEmail, subject, body);
+}

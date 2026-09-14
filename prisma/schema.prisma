@@ -100,6 +100,9 @@ model Garage {
   cardReminderCount  Int       @default(0)   // nb de relances "carte manquante" envoyées
   cardReminderSentAt DateTime?               // dernière relance envoyée
 
+  neq                String?                 // Numéro d'entreprise du Québec (10 chiffres), fourni à l'inscription
+  verificationStatus String    @default("APPROVED") // APPROVED | PENDING | REJECTED — vérification manuelle du NEQ avant visibilité publique
+
   referralCode          String?  @unique
   referredByCode        String?
   referralRewardGranted Boolean  @default(false)

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -30,6 +32,17 @@ export async function GET(
 
     if (!garage) {
       return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
+    }
+
+    // Un garage non vérifié (NEQ en attente/refusé) n'est visible que pour son
+    // propriétaire (aperçu) ou un admin — pas au public, même par lien direct.
+    if (garage.verificationStatus !== "APPROVED") {
+      const session = await getServerSession(authOptions);
+      const isOwner = session?.user?.id === garage.ownerId;
+      const isAdmin = (session?.user as any)?.role === "ADMIN";
+      if (!isOwner && !isAdmin) {
+        return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
+      }
     }
 
     const avgRating =

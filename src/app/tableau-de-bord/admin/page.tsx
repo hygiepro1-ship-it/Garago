@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "alertes" | "descriptions" | "suggestions" | "maintenance";
+type Tab = "alertes" | "descriptions" | "verification" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -20,6 +20,13 @@ interface PendingGarage {
   id: string; name: string; slug: string; city: string;
   description: string | null; descriptionDraft: string | null;
   updatedAt: string;
+  owner: { name: string | null; email: string | null };
+}
+
+interface PendingVerificationGarage {
+  id: string; name: string; slug: string; neq: string | null;
+  address: string; city: string; postalCode: string; phone: string;
+  createdAt: string;
   owner: { name: string | null; email: string | null };
 }
 
@@ -145,6 +152,62 @@ function DescriptionCard({
   );
 }
 
+function VerificationCard({
+  garage, actionId, onAction,
+}: {
+  garage: PendingVerificationGarage;
+  actionId: string | null;
+  onAction: (id: string, action: "approve" | "reject") => void;
+}) {
+  const reqUrl = "https://www.registreentreprises.gouv.qc.ca/fr/consulter/rechercher/default.aspx";
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h2 className="font-bold text-gray-900">{garage.name}</h2>
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-semibold">En attente</span>
+          </div>
+          <p className="text-xs text-gray-400">{garage.owner.name} · {garage.owner.email}</p>
+        </div>
+        <Link href={`/garage/${garage.slug}`} target="_blank"
+          className="text-xs text-orange-500 hover:underline flex-shrink-0">
+          Voir le profil ↗
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div className="rounded-xl p-4 bg-gray-50 border border-gray-200">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Adresse</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {garage.address}, {garage.city} {garage.postalCode}<br />{garage.phone}
+          </p>
+        </div>
+        <div className="rounded-xl p-4 border-2 border-orange-200 bg-orange-50">
+          <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">NEQ</p>
+          <p className="text-lg font-mono font-bold text-gray-900 mb-2 select-all">{garage.neq}</p>
+          <a href={reqUrl} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-orange-600 hover:underline font-semibold">
+            Rechercher au Registre des entreprises ↗
+          </a>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={() => onAction(garage.id, "approve")} disabled={actionId === garage.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold text-white disabled:opacity-50 transition-opacity"
+          style={{ background: "#16a34a" }}>
+          ✓ Approuver
+        </button>
+        <button onClick={() => onAction(garage.id, "reject")} disabled={actionId === garage.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
+          ✗ Refuser
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SuggestionCard({
   suggestion, actionId, noteEdit, onNoteChange, onUpdate,
 }: {
@@ -214,8 +277,9 @@ export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [tab,          setTab]          = useState<Tab>("alertes");
-  const [garages,      setGarages]      = useState<PendingGarage[]>([]);
+  const [tab,           setTab]           = useState<Tab>("alertes");
+  const [garages,       setGarages]       = useState<PendingGarage[]>([]);
+  const [verifications, setVerifications] = useState<PendingVerificationGarage[]>([]);
   const [suggestions,  setSuggestions]  = useState<Suggestion[]>([]);
   const [alerts,       setAlerts]       = useState<GarageAlert[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -278,6 +342,11 @@ export default function AdminDashboard() {
     if (r.ok) setSuggestions(await r.json());
   }, []);
 
+  const loadVerifications = useCallback(async () => {
+    const r = await fetch("/api/admin/garages/pending");
+    if (r.ok) setVerifications(await r.json());
+  }, []);
+
   const loadAlerts = useCallback(async () => {
     const r = await fetch("/api/admin/alerts");
     if (r.ok) setAlerts(await r.json());
@@ -286,8 +355,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadDescriptions(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
-  }, [status, loadDescriptions, loadSuggestions, loadAlerts, loadMaintenance]);
+    Promise.all([loadDescriptions(), loadVerifications(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
+  }, [status, loadDescriptions, loadVerifications, loadSuggestions, loadAlerts, loadMaintenance]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {
@@ -306,6 +375,17 @@ export default function AdminDashboard() {
       body: JSON.stringify({ action }),
     });
     await loadDescriptions();
+    setActionId(null);
+  }
+
+  async function handleVerification(garageId: string, action: "approve" | "reject") {
+    setActionId(garageId);
+    await fetch(`/api/admin/garages/${garageId}/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    await loadVerifications();
     setActionId(null);
   }
 
@@ -357,6 +437,7 @@ export default function AdminDashboard() {
         {([
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
+          { id: "verification", label: "Vérifications",   icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>, count: verifications.length,                                  urgent: true  },
           { id: "suggestions",  label: "Suggestions",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/></svg>, count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
           { id: "maintenance",  label: "Maintenance",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>, count: maintMode ? 1 : 0,                                    urgent: true  },
         ] as const).map(t => (
@@ -442,6 +523,21 @@ export default function AdminDashboard() {
             </div>
           ) : garages.map(g => (
             <DescriptionCard key={g.id} garage={g} actionId={actionId} onAction={handleDescription} />
+          ))}
+        </div>
+      )}
+
+      {/* ── VÉRIFICATIONS ── */}
+      {tab === "verification" && (
+        <div className="space-y-4">
+          {verifications.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+              <svg className="w-10 h-10 mx-auto mb-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+              <p className="font-semibold text-gray-900">Aucun garage en attente de vérification</p>
+              <p className="text-gray-400 text-sm mt-1">Tout est à jour.</p>
+            </div>
+          ) : verifications.map(g => (
+            <VerificationCard key={g.id} garage={g} actionId={actionId} onAction={handleVerification} />
           ))}
         </div>
       )}

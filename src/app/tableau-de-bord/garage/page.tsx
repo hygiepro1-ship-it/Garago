@@ -87,6 +87,7 @@ interface Garage {
   cancelAtPeriodEnd?:       boolean;
   stripeCustomerId?:        string | null;
   stripePriceId?:           string | null;
+  verificationStatus?:      string | null;
   createdAt?:               string;
   referralCode:             string | null;
   referralCount:            number;
@@ -1502,6 +1503,30 @@ export default function DashboardGaragePage() {
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {garage.parentId === null && garage.verificationStatus === "PENDING" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
+          </svg>
+          <div>
+            <p className="font-bold text-blue-900">Vérification en cours</p>
+            <p className="text-blue-700 text-sm">Votre profil est en cours de vérification et n'apparaît pas encore dans les résultats de recherche. Vous recevrez un courriel dès que ce sera fait.</p>
+          </div>
+        </div>
+      )}
+
+      {garage.parentId === null && garage.verificationStatus === "REJECTED" && (
+        <div className="bg-red-50 border border-red-300 rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div>
+            <p className="font-bold text-red-900">Vérification refusée</p>
+            <p className="text-red-700 text-sm">Nous n'avons pas pu vérifier votre profil. Contactez-nous à info.garago@gmail.com pour résoudre la situation.</p>
+          </div>
         </div>
       )}
 

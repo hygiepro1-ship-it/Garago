@@ -30,8 +30,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const garages = await prisma.garage.findMany({
     where: {
       OR: [
-        { parentId: null, OR: subOr },
-        { parent: { OR: subOr } },
+        { parentId: null, verificationStatus: "APPROVED", OR: subOr },
+        { parent: { verificationStatus: "APPROVED", OR: subOr } },
       ],
     },
     select: { slug: true, updatedAt: true },

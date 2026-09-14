@@ -17,14 +17,15 @@ export async function GET(req: NextRequest) {
 
     // Un garage est visible si son abonnement (le sien s'il est principal/autonome,
     // celui de son garage principal s'il est une succursale) est actif, en essai,
-    // ou impayé mais encore dans la période de grâce.
+    // ou impayé mais encore dans la période de grâce — et si son NEQ a été vérifié
+    // par un admin (le sien, ou celui du garage principal pour une succursale).
     const subOr = activeSubscriptionOr();
     const where: any = {
       AND: [
         {
           OR: [
-            { parentId: null, OR: subOr },
-            { parent: { OR: subOr } },
+            { parentId: null, verificationStatus: "APPROVED", OR: subOr },
+            { parent: { verificationStatus: "APPROVED", OR: subOr } },
           ],
         },
       ],
