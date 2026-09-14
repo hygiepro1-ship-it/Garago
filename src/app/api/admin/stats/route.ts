@@ -37,6 +37,7 @@ export async function GET(_req: NextRequest) {
     visitorGroups30d, visitorGroups7d,
     garagesByCity,
     topByAppointments,
+    leastActiveGarages,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "DRIVER" } }),
     prisma.user.count({ where: { role: "DRIVER", createdAt: { gte: d30 } } }),
@@ -83,6 +84,23 @@ export async function GET(_req: NextRequest) {
       orderBy: { appointments: { _count: "desc" } },
       take: 5,
     }),
+
+    // Garages établis depuis au moins 14 jours, encore actifs (essai ou payant),
+    // avec le moins de rendez-vous — candidats à un suivi personnalisé.
+    prisma.garage.findMany({
+      where: {
+        parentId: null,
+        subscriptionStatus: { in: ["TRIAL", "ACTIVE"] },
+        createdAt: { lte: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) },
+      },
+      select: {
+        id: true, name: true, slug: true, city: true, phone: true, subscriptionStatus: true, createdAt: true,
+        owner: { select: { name: true, email: true } },
+        _count: { select: { appointments: true, reviews: true } },
+      },
+      orderBy: { appointments: { _count: "asc" } },
+      take: 5,
+    }),
   ]);
 
   const groupToMap = (rows: any[], key: string) =>
@@ -123,6 +141,12 @@ export async function GET(_req: NextRequest) {
       totalReviews, avgRating: ratingAgg._avg.rating,
       topGarages: topByAppointments.map((g: any) => ({
         id: g.id, name: g.name, slug: g.slug, city: g.city, subscriptionStatus: g.subscriptionStatus,
+        appointmentCount: g._count.appointments, reviewCount: g._count.reviews,
+      })),
+      leastActiveGarages: leastActiveGarages.map((g: any) => ({
+        id: g.id, name: g.name, slug: g.slug, city: g.city, phone: g.phone,
+        subscriptionStatus: g.subscriptionStatus, createdAt: g.createdAt,
+        ownerName: g.owner?.name ?? null, ownerEmail: g.owner?.email ?? null,
         appointmentCount: g._count.appointments, reviewCount: g._count.reviews,
       })),
     },

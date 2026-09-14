@@ -7,7 +7,6 @@ import { geocodeAddress } from "@/lib/geocode";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
-const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 // ─── Description validation ────────────────────────────────────────────────
 // Only plain descriptive text — no URLs, emails, phone numbers, hashtags, @mentions.
@@ -103,17 +102,11 @@ export async function PUT(req: NextRequest) {
     };
 
     // Send review email (non-blocking)
-    const token     = process.env.ADMIN_REVIEW_SECRET ?? "";
-    const approveUrl = `${BASE_URL}/api/admin/description/review?garageId=${current.id}&action=approve&token=${token}`;
-    const rejectUrl  = `${BASE_URL}/api/admin/description/review?garageId=${current.id}&action=reject&token=${token}`;
-
     sendDescriptionReviewEmail({
       garageId:   current.id,
       garageName: current.name,
       ownerEmail: current.email ?? userId,
       draft:      newDesc ?? "",
-      approveUrl,
-      rejectUrl,
     }).catch(console.error);
   }
 

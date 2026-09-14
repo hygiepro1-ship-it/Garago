@@ -732,12 +732,11 @@ export interface DescriptionReviewParams {
   garageName: string;
   ownerEmail: string;
   draft:      string;
-  approveUrl: string;
-  rejectUrl:  string;
 }
 
 export async function sendDescriptionReviewEmail(params: DescriptionReviewParams) {
   if (!canSend()) return;
+  const adminUrl = `${BASE_URL}/tableau-de-bord/admin`;
   const body = `
     <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#0b1f3a">Nouvelle description à vérifier</h2>
 
@@ -753,12 +752,7 @@ export async function sendDescriptionReviewEmail(params: DescriptionReviewParams
       Vérifiez que ce texte est une description d'entreprise neutre — sans promotion, sans liens ni coordonnées.
     </p>
 
-    <table cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="padding-right:12px">${primaryBtn(params.approveUrl, "Approuver", "#16a34a")}</td>
-        <td>${primaryBtn(params.rejectUrl, "Refuser", "#dc2626")}</td>
-      </tr>
-    </table>
+    ${primaryBtn(adminUrl, "Approuver ou refuser dans le tableau de bord")}
   `;
 
   await send(ADMIN_EMAIL, `[Modération] Description à vérifier — ${params.garageName}`, body);

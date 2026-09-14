@@ -36,6 +36,7 @@ interface AdminStats {
     totalAppointments: number; appointments30d: number; appointmentsByStatus30d: Record<string, number>;
     totalReviews: number; avgRating: number | null;
     topGarages: { id: string; name: string; slug: string; city: string; subscriptionStatus: string; appointmentCount: number; reviewCount: number }[];
+    leastActiveGarages: { id: string; name: string; slug: string; city: string; phone: string; subscriptionStatus: string; createdAt: string; ownerName: string | null; ownerEmail: string | null; appointmentCount: number; reviewCount: number }[];
   };
   referral: { totalAmbassadors: number; totalReferrals: number; totalCommission: number };
   traffic: { visitors30d: number; visitors7d: number; newSignups30d: number; visitorConversionRate: number | null };
@@ -472,21 +473,21 @@ export default function AdminDashboard() {
   const readAlerts   = alerts.filter(a =>  a.isRead);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Administration</h1>
-          <p className="text-gray-500 text-sm">Modération des descriptions et des suggestions</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">Administration</h1>
+          <p className="text-gray-500 text-xs sm:text-sm">Modération des descriptions et des suggestions</p>
         </div>
         <Link href="/tableau-de-bord/garage"
-          className="text-sm px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">
+          className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium flex-shrink-0">
           ← Tableau de bord
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4 sm:mb-6 overflow-x-auto">
         {([
           { id: "apercu",       label: "Vue d'ensemble",  icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>, count: 0,                                                    urgent: false },
           { id: "garages",      label: "Garages",         icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>, count: allGarages.length,                                     urgent: false },
@@ -497,7 +498,7 @@ export default function AdminDashboard() {
           { id: "maintenance",  label: "Maintenance",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>, count: maintMode ? 1 : 0,                                    urgent: true  },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${tab === t.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap flex-shrink-0 ${tab === t.id ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
             {t.icon} {t.label}
             {t.count > 0 && (
               <span className="text-xs px-1.5 py-0.5 rounded-full font-bold text-white"
@@ -524,19 +525,19 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h2 className="font-bold text-gray-900 mb-1">Entonnoir d'acquisition (30 derniers jours)</h2>
             <p className="text-xs text-gray-400 mb-4">Visiteurs anonymes qui naviguent le site vs ceux qui créent un compte.</p>
-            <div className="flex items-center gap-6 flex-wrap">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6">
               <div>
-                <p className="text-3xl font-black text-gray-900">{stats.traffic.visitors30d}</p>
-                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Visiteurs</p>
+                <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.traffic.visitors30d}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Visiteurs</p>
               </div>
-              <div className="text-gray-300 text-2xl">→</div>
+              <div className="hidden sm:block text-gray-300 text-2xl">→</div>
               <div>
-                <p className="text-3xl font-black text-gray-900">{stats.traffic.newSignups30d}</p>
-                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Inscriptions</p>
+                <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.traffic.newSignups30d}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Inscriptions</p>
               </div>
-              <div className="text-gray-300 text-2xl">=</div>
+              <div className="hidden sm:block text-gray-300 text-2xl">=</div>
               <div>
-                <p className="text-3xl font-black" style={{ color: "#f97316" }}>
+                <p className="text-2xl sm:text-3xl font-black" style={{ color: "#f97316" }}>
                   {stats.traffic.visitorConversionRate !== null ? `${stats.traffic.visitorConversionRate.toFixed(1)}%` : "—"}
                 </p>
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Taux de conversion</p>
@@ -644,6 +645,30 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Garages les moins actifs — à recontacter */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-1">Garages les moins actifs</h2>
+              <p className="text-xs text-gray-400 mb-4">Inscrits depuis 14 jours ou plus, encore en essai ou actifs, avec le moins de rendez-vous — à recontacter au besoin.</p>
+              <div className="space-y-2">
+                {stats.marketplace.leastActiveGarages.map(g => (
+                  <div key={g.id} className="flex items-center justify-between text-sm rounded-xl px-3 py-2 hover:bg-gray-50 gap-2">
+                    <Link href={`/garage/${g.slug}`} target="_blank" className="min-w-0">
+                      <span className="font-semibold text-gray-800 truncate block">{g.name}</span>
+                      <span className="text-gray-400 text-xs">{g.city} · {g.appointmentCount} RDV · inscrit le {new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}</span>
+                    </Link>
+                    {g.ownerEmail && (
+                      <a href={`mailto:${g.ownerEmail}`} className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-medium flex-shrink-0">
+                        Contacter
+                      </a>
+                    )}
+                  </div>
+                ))}
+                {stats.marketplace.leastActiveGarages.length === 0 && <p className="text-sm text-gray-400">Aucun garage établi depuis 14 jours ou plus pour l'instant.</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Parrainage / Ambassadeurs */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-4">Programme de parrainage</h2>
@@ -688,70 +713,112 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-left text-xs text-gray-400 uppercase tracking-wide">
-                    <th className="px-4 py-3 font-semibold">Garage</th>
-                    <th className="px-4 py-3 font-semibold">Ville</th>
-                    <th className="px-4 py-3 font-semibold">Statut</th>
-                    <th className="px-4 py-3 font-semibold">Vérification</th>
-                    <th className="px-4 py-3 font-semibold">Note</th>
-                    <th className="px-4 py-3 font-semibold">RDV</th>
-                    <th className="px-4 py-3 font-semibold">Inscrit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allGarages
-                    .filter(g => garageFilter === "ALL" || g.subscriptionStatus === garageFilter)
-                    .filter(g => !garageSearch || `${g.name} ${g.city}`.toLowerCase().includes(garageSearch.toLowerCase()))
-                    .map(g => {
-                      const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
-                        TRIAL:     { label: "Essai",            color: "#1d4ed8", bg: "#eff6ff" },
-                        ACTIVE:    { label: "Actif",            color: "#047857", bg: "#ecfdf5" },
-                        PAST_DUE:  { label: "Paiement échoué",  color: "#b91c1c", bg: "#fef2f2" },
-                        EXPIRED:   { label: "Expiré",           color: "#6b7280", bg: "#f9fafb" },
-                      };
-                      const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
-                      const vMeta: Record<string, { label: string; color: string; bg: string }> = {
-                        APPROVED: { label: "Vérifié",  color: "#047857", bg: "#ecfdf5" },
-                        PENDING:  { label: "En attente", color: "#92400e", bg: "#fef3c7" },
-                        REJECTED: { label: "Refusé",    color: "#b91c1c", bg: "#fef2f2" },
-                      };
-                      const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
-                      return (
-                        <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <Link href={`/garage/${g.slug}`} target="_blank" className="font-semibold text-gray-900 hover:text-orange-500">
-                              {g.name}{g.isAmbassador && " ★"}
-                            </Link>
-                            <p className="text-xs text-gray-400">{g.owner.email}</p>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">{g.city}</td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">{g.avgRating ? `${g.avgRating}/5` : "—"} <span className="text-gray-300">({g.reviewCount})</span></td>
-                          <td className="px-4 py-3 text-gray-600">{g.appointmentCount}</td>
-                          <td className="px-4 py-3 text-gray-400 text-xs">{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</td>
+          {(() => {
+            const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
+              TRIAL:     { label: "Essai",            color: "#1d4ed8", bg: "#eff6ff" },
+              ACTIVE:    { label: "Actif",            color: "#047857", bg: "#ecfdf5" },
+              PAST_DUE:  { label: "Paiement échoué",  color: "#b91c1c", bg: "#fef2f2" },
+              EXPIRED:   { label: "Expiré",           color: "#6b7280", bg: "#f9fafb" },
+            };
+            const vMeta: Record<string, { label: string; color: string; bg: string }> = {
+              APPROVED: { label: "Vérifié",    color: "#047857", bg: "#ecfdf5" },
+              PENDING:  { label: "En attente", color: "#92400e", bg: "#fef3c7" },
+              REJECTED: { label: "Refusé",     color: "#b91c1c", bg: "#fef2f2" },
+            };
+            const filtered = allGarages
+              .filter(g => garageFilter === "ALL" || g.subscriptionStatus === garageFilter)
+              .filter(g => !garageSearch || `${g.name} ${g.city}`.toLowerCase().includes(garageSearch.toLowerCase()));
+
+            return (
+              <>
+                {/* Mobile — cartes empilées */}
+                <div className="sm:hidden space-y-3">
+                  {filtered.map(g => {
+                    const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
+                    const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
+                    return (
+                      <div key={g.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <Link href={`/garage/${g.slug}`} target="_blank" className="min-w-0">
+                            <p className="font-bold text-gray-900 truncate">{g.name}{g.isAmbassador && " ★"}</p>
+                            <p className="text-xs text-gray-400 truncate">{g.city} · {g.owner.email}</p>
+                          </Link>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{g.avgRating ? `${g.avgRating}/5` : "—"} ({g.reviewCount} avis) · {g.appointmentCount} RDV</span>
+                          <span>{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
+                </div>
+
+                {/* Desktop — tableau */}
+                <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-left text-xs text-gray-400 uppercase tracking-wide">
+                          <th className="px-4 py-3 font-semibold">Garage</th>
+                          <th className="px-4 py-3 font-semibold">Ville</th>
+                          <th className="px-4 py-3 font-semibold">Statut</th>
+                          <th className="px-4 py-3 font-semibold">Vérification</th>
+                          <th className="px-4 py-3 font-semibold">Note</th>
+                          <th className="px-4 py-3 font-semibold">RDV</th>
+                          <th className="px-4 py-3 font-semibold">Inscrit</th>
                         </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-            {allGarages.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
-          </div>
+                      </thead>
+                      <tbody>
+                        {filtered.map(g => {
+                          const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
+                          const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
+                          return (
+                            <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <Link href={`/garage/${g.slug}`} target="_blank" className="font-semibold text-gray-900 hover:text-orange-500">
+                                  {g.name}{g.isAmbassador && " ★"}
+                                </Link>
+                                <p className="text-xs text-gray-400">{g.owner.email}</p>
+                              </td>
+                              <td className="px-4 py-3 text-gray-600">{g.city}</td>
+                              <td className="px-4 py-3">
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                              </td>
+                              <td className="px-4 py-3 text-gray-600">{g.avgRating ? `${g.avgRating}/5` : "—"} <span className="text-gray-300">({g.reviewCount})</span></td>
+                              <td className="px-4 py-3 text-gray-600">{g.appointmentCount}</td>
+                              <td className="px-4 py-3 text-gray-400 text-xs">{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
       {/* ── ALERTES ── */}
       {tab === "alertes" && (
         <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 leading-relaxed">
+            <p className="font-semibold mb-1">Quand une alerte se déclenche</p>
+            <p><strong>Avis 1 étoile</strong> — dès qu'un garage reçoit un avis noté 1/5.</p>
+            <p><strong>Note moyenne sous 3/5</strong> — une fois qu'un garage a au moins 5 avis, si sa moyenne passe sous 3,0/5.</p>
+            <p><strong>Série de mauvais avis</strong> — 3 avis notés 2/5 ou moins reçus en moins de 30 jours.</p>
+          </div>
+
           {unreadAlerts.length > 0 && (
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-700">

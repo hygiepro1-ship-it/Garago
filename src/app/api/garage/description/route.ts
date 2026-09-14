@@ -6,7 +6,6 @@ import { sendDescriptionReviewEmail } from "@/lib/email";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
-const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 function validateDescription(text: string): string | null {
   if (text.length > 400) return "La description ne peut pas dépasser 400 caractères.";
@@ -71,18 +70,12 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const token      = process.env.ADMIN_REVIEW_SECRET ?? "";
-  const approveUrl = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=approve&token=${token}`;
-  const rejectUrl  = `${BASE_URL}/api/admin/description/review?garageId=${garage.id}&action=reject&token=${token}`;
-
   try {
     await sendDescriptionReviewEmail({
       garageId:   garage.id,
       garageName: garage.name,
       ownerEmail: garage.owner?.email ?? garage.email ?? "",
       draft:      text,
-      approveUrl,
-      rejectUrl,
     });
   } catch (err) {
     console.error("sendDescriptionReviewEmail failed:", err);
