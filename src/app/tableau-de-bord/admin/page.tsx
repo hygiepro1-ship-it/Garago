@@ -330,24 +330,6 @@ export default function AdminDashboard() {
   const [allGarages,   setAllGarages]   = useState<AdminGarage[]>([]);
   const [garageFilter, setGarageFilter] = useState<string>("ALL");
   const [garageSearch, setGarageSearch] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState("");
-
-  async function handleDeleteGarage(id: string) {
-    setDeletingId(id);
-    setDeleteError("");
-    const res = await fetch(`/api/admin/garages/${id}`, { method: "DELETE" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setDeleteError(data.error ?? "Erreur lors de la suppression.");
-      setDeletingId(null);
-      return;
-    }
-    setAllGarages(prev => prev.filter(g => g.id !== id));
-    setConfirmDeleteId(null);
-    setDeletingId(null);
-  }
 
   // ── Mode maintenance ──────────────────────────────────────────────────────
   const [maintMode,    setMaintMode]    = useState(false);
@@ -731,10 +713,6 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          {deleteError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-4">{deleteError}</div>
-          )}
-
           {(() => {
             const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
               TRIAL:     { label: "Essai",            color: "#1d4ed8", bg: "#eff6ff" },
@@ -770,27 +748,10 @@ export default function AdminDashboard() {
                           <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
                           <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                        <div className="flex items-center justify-between text-xs text-gray-500">
                           <span>{g.avgRating ? `${g.avgRating}/5` : "—"} ({g.reviewCount} avis) · {g.appointmentCount} RDV</span>
                           <span>{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</span>
                         </div>
-                        {confirmDeleteId === g.id ? (
-                          <div className="flex gap-2">
-                            <button onClick={() => handleDeleteGarage(g.id)} disabled={deletingId === g.id}
-                              className="flex-1 text-xs px-3 py-1.5 rounded-lg font-semibold text-white disabled:opacity-50" style={{ background: "#dc2626" }}>
-                              {deletingId === g.id ? "Suppression…" : "Confirmer la suppression"}
-                            </button>
-                            <button onClick={() => setConfirmDeleteId(null)} disabled={deletingId === g.id}
-                              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 font-medium">
-                              Annuler
-                            </button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setConfirmDeleteId(g.id)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium">
-                            Supprimer
-                          </button>
-                        )}
                       </div>
                     );
                   })}
@@ -810,7 +771,6 @@ export default function AdminDashboard() {
                           <th className="px-4 py-3 font-semibold">Note</th>
                           <th className="px-4 py-3 font-semibold">RDV</th>
                           <th className="px-4 py-3 font-semibold">Inscrit</th>
-                          <th className="px-4 py-3 font-semibold"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -835,25 +795,6 @@ export default function AdminDashboard() {
                               <td className="px-4 py-3 text-gray-600">{g.avgRating ? `${g.avgRating}/5` : "—"} <span className="text-gray-300">({g.reviewCount})</span></td>
                               <td className="px-4 py-3 text-gray-600">{g.appointmentCount}</td>
                               <td className="px-4 py-3 text-gray-400 text-xs">{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</td>
-                              <td className="px-4 py-3 text-right whitespace-nowrap">
-                                {confirmDeleteId === g.id ? (
-                                  <div className="flex items-center gap-1.5 justify-end">
-                                    <button onClick={() => handleDeleteGarage(g.id)} disabled={deletingId === g.id}
-                                      className="text-xs px-2.5 py-1 rounded-lg font-semibold text-white disabled:opacity-50" style={{ background: "#dc2626" }}>
-                                      {deletingId === g.id ? "…" : "Confirmer"}
-                                    </button>
-                                    <button onClick={() => setConfirmDeleteId(null)} disabled={deletingId === g.id}
-                                      className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 font-medium">
-                                      Annuler
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button onClick={() => setConfirmDeleteId(g.id)}
-                                    className="text-xs px-2.5 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium">
-                                    Supprimer
-                                  </button>
-                                )}
-                              </td>
                             </tr>
                           );
                         })}
