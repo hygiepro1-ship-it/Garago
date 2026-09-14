@@ -156,6 +156,19 @@ model GarageProfileView {
   @@index([garageId, createdAt])
 }
 
+// Visite anonyme du site (une par session de navigateur, pas par page vue) —
+// alimente le tableau de bord admin (visiteurs vs inscriptions). Aucune donnée
+// personnelle : visitorId est un identifiant aléatoire stocké dans un cookie.
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String
+  path      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([visitorId, createdAt])
+}
+
 model GarageAlert {
   id          String   @id @default(cuid())
   garageId    String

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import ClientLayout from "@/components/ClientLayout";
+import VisitorTracker from "@/components/VisitorTracker";
 
 export const metadata: Metadata = {
   title: "Garago — Trouvez le bon garage pour votre véhicule",
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <Providers>
+          <VisitorTracker />
           <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>

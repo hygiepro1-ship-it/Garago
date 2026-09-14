@@ -89,7 +89,10 @@ export default function ConnexionPage() {
     } else {
       const session = await fetch("/api/auth/session").then((r) => r.json());
       const role = session?.user?.role;
-      router.push(role === "GARAGE_OWNER" ? "/tableau-de-bord/garage" : "/tableau-de-bord/conducteur");
+      const dest = role === "ADMIN" ? "/tableau-de-bord/admin"
+        : role === "GARAGE_OWNER" ? "/tableau-de-bord/garage"
+        : "/tableau-de-bord/conducteur";
+      router.push(dest);
     }
   }
 

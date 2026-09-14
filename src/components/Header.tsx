@@ -11,14 +11,16 @@ import type { Session } from "next-auth";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type UserRole = "GARAGE_OWNER" | "DRIVER" | undefined;
+type UserRole = "ADMIN" | "GARAGE_OWNER" | "DRIVER" | undefined;
 
 function getUserRole(session: Session | null): UserRole {
   return session?.user?.role as UserRole;
 }
 
 function getDashboardHref(role: UserRole): string {
-  return role === "GARAGE_OWNER" ? "/tableau-de-bord/garage" : "/tableau-de-bord/conducteur";
+  if (role === "ADMIN") return "/tableau-de-bord/admin";
+  if (role === "GARAGE_OWNER") return "/tableau-de-bord/garage";
+  return "/tableau-de-bord/conducteur";
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

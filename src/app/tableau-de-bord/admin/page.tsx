@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "alertes" | "descriptions" | "verification" | "suggestions" | "maintenance";
+type Tab = "apercu" | "garages" | "alertes" | "descriptions" | "verification" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -21,6 +21,33 @@ interface PendingGarage {
   description: string | null; descriptionDraft: string | null;
   updatedAt: string;
   owner: { name: string | null; email: string | null };
+}
+
+interface AdminStats {
+  users: { totalDrivers: number; newDrivers30d: number };
+  garages: {
+    total: number; new30d: number;
+    byStatus: Record<string, number>; byVerification: Record<string, number>;
+    noServices: number; noReviews: number;
+    byCity: { city: string; count: number }[];
+  };
+  revenue: { mrr: number; activeMonthly: number; activeAnnual: number; activeBranches: number; trialConversionRate: number | null };
+  marketplace: {
+    totalAppointments: number; appointments30d: number; appointmentsByStatus30d: Record<string, number>;
+    totalReviews: number; avgRating: number | null;
+    topGarages: { id: string; name: string; slug: string; city: string; subscriptionStatus: string; appointmentCount: number; reviewCount: number }[];
+  };
+  referral: { totalAmbassadors: number; totalReferrals: number; totalCommission: number };
+  traffic: { visitors30d: number; visitors7d: number; newSignups30d: number; visitorConversionRate: number | null };
+  queues: { unreadAlerts: number; pendingVerifications: number; pendingDescriptions: number; pendingSuggestions: number };
+}
+
+interface AdminGarage {
+  id: string; name: string; slug: string; city: string | null; province: string | null;
+  subscriptionStatus: string; verificationStatus: string; createdAt: string; isAmbassador: boolean;
+  owner: { name: string | null; email: string | null };
+  appointmentCount: number; reviewCount: number; serviceCount: number; branchCount: number;
+  avgRating: number | null;
 }
 
 interface PendingVerificationGarage {
@@ -52,6 +79,16 @@ const ALERT_TYPE_META: Record<string, { label: string; color: string; bg: string
 const FALLBACK_META = { label: "", color: "#374151", bg: "#f9fafb", border: "#e5e7eb" };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-2xl font-black text-gray-900">{value}</p>
+      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
 
 function AlertCard({ alert, onMarkRead }: { alert: GarageAlert; onMarkRead: (id: string) => void }) {
   const m = ALERT_TYPE_META[alert.type] ?? { ...FALLBACK_META, label: alert.type };
@@ -277,7 +314,7 @@ export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [tab,           setTab]           = useState<Tab>("alertes");
+  const [tab,           setTab]           = useState<Tab>("apercu");
   const [garages,       setGarages]       = useState<PendingGarage[]>([]);
   const [verifications, setVerifications] = useState<PendingVerificationGarage[]>([]);
   const [suggestions,  setSuggestions]  = useState<Suggestion[]>([]);
@@ -286,6 +323,12 @@ export default function AdminDashboard() {
   const [actionId,     setActionId]     = useState<string | null>(null);
   const [noteEdit,     setNoteEdit]     = useState<Record<string, string>>({});
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+
+  // ── Vue d'ensemble + liste complète des garages ───────────────────────────
+  const [stats,        setStats]        = useState<AdminStats | null>(null);
+  const [allGarages,   setAllGarages]   = useState<AdminGarage[]>([]);
+  const [garageFilter, setGarageFilter] = useState<string>("ALL");
+  const [garageSearch, setGarageSearch] = useState("");
 
   // ── Mode maintenance ──────────────────────────────────────────────────────
   const [maintMode,    setMaintMode]    = useState(false);
@@ -347,6 +390,16 @@ export default function AdminDashboard() {
     if (r.ok) setVerifications(await r.json());
   }, []);
 
+  const loadStats = useCallback(async () => {
+    const r = await fetch("/api/admin/stats");
+    if (r.ok) setStats(await r.json());
+  }, []);
+
+  const loadAllGarages = useCallback(async () => {
+    const r = await fetch("/api/admin/garages");
+    if (r.ok) setAllGarages(await r.json());
+  }, []);
+
   const loadAlerts = useCallback(async () => {
     const r = await fetch("/api/admin/alerts");
     if (r.ok) setAlerts(await r.json());
@@ -355,8 +408,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadDescriptions(), loadVerifications(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
-  }, [status, loadDescriptions, loadVerifications, loadSuggestions, loadAlerts, loadMaintenance]);
+    Promise.all([loadStats(), loadAllGarages(), loadDescriptions(), loadVerifications(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
+  }, [status, loadStats, loadAllGarages, loadDescriptions, loadVerifications, loadSuggestions, loadAlerts, loadMaintenance]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {
@@ -435,6 +488,8 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
         {([
+          { id: "apercu",       label: "Vue d'ensemble",  icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>, count: 0,                                                    urgent: false },
+          { id: "garages",      label: "Garages",         icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>, count: allGarages.length,                                     urgent: false },
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
           { id: "verification", label: "Vérifications",   icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>, count: verifications.length,                                  urgent: true  },
@@ -453,6 +508,246 @@ export default function AdminDashboard() {
           </button>
         ))}
       </div>
+
+      {/* ── VUE D'ENSEMBLE ── */}
+      {tab === "apercu" && stats && (
+        <div className="space-y-6">
+          {/* KPI principaux */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Conducteurs inscrits" value={stats.users.totalDrivers} sub={`+${stats.users.newDrivers30d} (30j)`} />
+            <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`} />
+            <StatCard label="Visiteurs (30j)" value={stats.traffic.visitors30d} sub={`${stats.traffic.visitors7d} cette semaine`} />
+            <StatCard label="Revenu récurrent estimé" value={`${stats.revenue.mrr.toLocaleString("fr-CA", { minimumFractionDigits: 0 })} $/mois`} sub="MRR" />
+          </div>
+
+          {/* Entonnoir d'acquisition */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h2 className="font-bold text-gray-900 mb-1">Entonnoir d'acquisition (30 derniers jours)</h2>
+            <p className="text-xs text-gray-400 mb-4">Visiteurs anonymes qui naviguent le site vs ceux qui créent un compte.</p>
+            <div className="flex items-center gap-6 flex-wrap">
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.traffic.visitors30d}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Visiteurs</p>
+              </div>
+              <div className="text-gray-300 text-2xl">→</div>
+              <div>
+                <p className="text-3xl font-black text-gray-900">{stats.traffic.newSignups30d}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Inscriptions</p>
+              </div>
+              <div className="text-gray-300 text-2xl">=</div>
+              <div>
+                <p className="text-3xl font-black" style={{ color: "#f97316" }}>
+                  {stats.traffic.visitorConversionRate !== null ? `${stats.traffic.visitorConversionRate.toFixed(1)}%` : "—"}
+                </p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Taux de conversion</p>
+              </div>
+            </div>
+            {stats.traffic.visitors30d === 0 && (
+              <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d'être activé — ces chiffres se rempliront au fil des prochains jours.</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Statut des garages */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Garages par statut</h2>
+              <div className="space-y-2">
+                {[
+                  { key: "TRIAL", label: "Essai", color: "#1d4ed8", bg: "#eff6ff" },
+                  { key: "ACTIVE", label: "Actif", color: "#047857", bg: "#ecfdf5" },
+                  { key: "PAST_DUE", label: "Paiement échoué", color: "#b91c1c", bg: "#fef2f2" },
+                  { key: "EXPIRED", label: "Expiré", color: "#6b7280", bg: "#f9fafb" },
+                ].map(s => (
+                  <div key={s.key} className="flex items-center justify-between text-sm">
+                    <span className="px-2.5 py-1 rounded-full font-semibold text-xs" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                    <span className="font-bold text-gray-900">{stats.garages.byStatus[s.key] ?? 0}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                <span className="text-gray-500">Taux de conversion essai → payant</span>
+                <span className="font-bold text-gray-900">
+                  {stats.revenue.trialConversionRate !== null ? `${stats.revenue.trialConversionRate.toFixed(0)}%` : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Revenu détaillé */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Revenu récurrent (estimation)</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between"><span className="text-gray-500">Abonnements mensuels actifs</span><span className="font-bold text-gray-900">{stats.revenue.activeMonthly}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Abonnements annuels actifs</span><span className="font-bold text-gray-900">{stats.revenue.activeAnnual}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Succursales facturées</span><span className="font-bold text-gray-900">{stats.revenue.activeBranches}</span></div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-700">Total estimé</span>
+                <span className="text-xl font-black" style={{ color: "#f97316" }}>{stats.revenue.mrr.toLocaleString("fr-CA")} $/mois</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Basé sur les tarifs publics — le montant réel facturé vit dans Stripe.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Santé du marché */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Santé de la place de marché</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between"><span className="text-gray-500">Rendez-vous (30 derniers jours)</span><span className="font-bold text-gray-900">{stats.marketplace.appointments30d}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Rendez-vous — total</span><span className="font-bold text-gray-900">{stats.marketplace.totalAppointments}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Avis clients — total</span><span className="font-bold text-gray-900">{stats.marketplace.totalReviews}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Note moyenne globale</span><span className="font-bold text-gray-900">{stats.marketplace.avgRating ? stats.marketplace.avgRating.toFixed(1) : "—"}/5</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Garages sans aucun service configuré</span><span className="font-bold text-red-600">{stats.garages.noServices}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Garages sans aucun avis</span><span className="font-bold text-gray-900">{stats.garages.noReviews}</span></div>
+              </div>
+            </div>
+
+            {/* Garages par ville — utile pour cibler des campagnes */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-1">Garages par ville</h2>
+              <p className="text-xs text-gray-400 mb-4">Repérez les villes sous-desservies pour cibler l'acquisition de garages, ou sur-desservies pour cibler des campagnes conducteurs.</p>
+              {stats.garages.byCity.length === 0 ? (
+                <p className="text-sm text-gray-400">Aucune donnée pour l'instant.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {stats.garages.byCity.map(c => (
+                    <div key={c.city} className="flex items-center gap-3 text-sm">
+                      <span className="w-28 truncate text-gray-600">{c.city}</span>
+                      <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-2 rounded-full" style={{ width: `${(c.count / stats.garages.byCity[0].count) * 100}%`, background: "#f97316" }} />
+                      </div>
+                      <span className="w-6 text-right font-bold text-gray-900">{c.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Top garages */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Garages les plus actifs</h2>
+              <div className="space-y-2">
+                {stats.marketplace.topGarages.map((g, i) => (
+                  <Link key={g.id} href={`/garage/${g.slug}`} target="_blank"
+                    className="flex items-center justify-between text-sm rounded-xl px-3 py-2 hover:bg-gray-50">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="text-gray-300 font-bold w-4">{i + 1}</span>
+                      <span className="font-semibold text-gray-800 truncate">{g.name}</span>
+                      <span className="text-gray-400 text-xs flex-shrink-0">{g.city}</span>
+                    </span>
+                    <span className="font-bold text-gray-900 flex-shrink-0">{g.appointmentCount} RDV</span>
+                  </Link>
+                ))}
+                {stats.marketplace.topGarages.length === 0 && <p className="text-sm text-gray-400">Aucun rendez-vous enregistré pour l'instant.</p>}
+              </div>
+            </div>
+
+            {/* Parrainage / Ambassadeurs */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Programme de parrainage</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between"><span className="text-gray-500">Garages ambassadeurs (palier 5)</span><span className="font-bold text-gray-900">{stats.referral.totalAmbassadors}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Total de parrainages réussis</span><span className="font-bold text-gray-900">{stats.referral.totalReferrals}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Commissions cumulées</span><span className="font-bold text-gray-900">{stats.referral.totalCommission.toLocaleString("fr-CA")} $</span></div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">À traiter</p>
+                <div className="flex flex-wrap gap-2">
+                  {stats.queues.pendingVerifications > 0 && <button onClick={() => setTab("verification")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>{stats.queues.pendingVerifications} vérification(s)</button>}
+                  {stats.queues.pendingDescriptions > 0 && <button onClick={() => setTab("descriptions")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>{stats.queues.pendingDescriptions} description(s)</button>}
+                  {stats.queues.unreadAlerts > 0 && <button onClick={() => setTab("alertes")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef2f2", color: "#b91c1c" }}>{stats.queues.unreadAlerts} alerte(s)</button>}
+                  {stats.queues.pendingSuggestions > 0 && <button onClick={() => setTab("suggestions")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#eff6ff", color: "#1d4ed8" }}>{stats.queues.pendingSuggestions} suggestion(s)</button>}
+                  {stats.queues.pendingVerifications + stats.queues.pendingDescriptions + stats.queues.unreadAlerts + stats.queues.pendingSuggestions === 0 && (
+                    <span className="text-xs text-gray-400">Rien en attente — tout est à jour ✓</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── GARAGES (liste complète) ── */}
+      {tab === "garages" && (
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <input
+              type="text" placeholder="Rechercher un garage, une ville…"
+              value={garageSearch} onChange={(e) => setGarageSearch(e.target.value)}
+              className="flex-1 min-w-[200px] border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-orange-400"
+            />
+            <select value={garageFilter} onChange={(e) => setGarageFilter(e.target.value)}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">
+              <option value="ALL">Tous les statuts</option>
+              <option value="TRIAL">Essai</option>
+              <option value="ACTIVE">Actif</option>
+              <option value="PAST_DUE">Paiement échoué</option>
+              <option value="EXPIRED">Expiré</option>
+            </select>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-left text-xs text-gray-400 uppercase tracking-wide">
+                    <th className="px-4 py-3 font-semibold">Garage</th>
+                    <th className="px-4 py-3 font-semibold">Ville</th>
+                    <th className="px-4 py-3 font-semibold">Statut</th>
+                    <th className="px-4 py-3 font-semibold">Vérification</th>
+                    <th className="px-4 py-3 font-semibold">Note</th>
+                    <th className="px-4 py-3 font-semibold">RDV</th>
+                    <th className="px-4 py-3 font-semibold">Inscrit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allGarages
+                    .filter(g => garageFilter === "ALL" || g.subscriptionStatus === garageFilter)
+                    .filter(g => !garageSearch || `${g.name} ${g.city}`.toLowerCase().includes(garageSearch.toLowerCase()))
+                    .map(g => {
+                      const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
+                        TRIAL:     { label: "Essai",            color: "#1d4ed8", bg: "#eff6ff" },
+                        ACTIVE:    { label: "Actif",            color: "#047857", bg: "#ecfdf5" },
+                        PAST_DUE:  { label: "Paiement échoué",  color: "#b91c1c", bg: "#fef2f2" },
+                        EXPIRED:   { label: "Expiré",           color: "#6b7280", bg: "#f9fafb" },
+                      };
+                      const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
+                      const vMeta: Record<string, { label: string; color: string; bg: string }> = {
+                        APPROVED: { label: "Vérifié",  color: "#047857", bg: "#ecfdf5" },
+                        PENDING:  { label: "En attente", color: "#92400e", bg: "#fef3c7" },
+                        REJECTED: { label: "Refusé",    color: "#b91c1c", bg: "#fef2f2" },
+                      };
+                      const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
+                      return (
+                        <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <Link href={`/garage/${g.slug}`} target="_blank" className="font-semibold text-gray-900 hover:text-orange-500">
+                              {g.name}{g.isAmbassador && " ★"}
+                            </Link>
+                            <p className="text-xs text-gray-400">{g.owner.email}</p>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">{g.city}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">{g.avgRating ? `${g.avgRating}/5` : "—"} <span className="text-gray-300">({g.reviewCount})</span></td>
+                          <td className="px-4 py-3 text-gray-600">{g.appointmentCount}</td>
+                          <td className="px-4 py-3 text-gray-400 text-xs">{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            {allGarages.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
+          </div>
+        </div>
+      )}
 
       {/* ── ALERTES ── */}
       {tab === "alertes" && (
