@@ -305,7 +305,7 @@ model GarageFavorite {
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id])
-  garage Garage @relation(fields: [garageId], references: [id])
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
 
   @@unique([userId, garageId])
 }

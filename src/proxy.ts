@@ -73,5 +73,14 @@ export async function proxy(req: NextRequest) {
 
   const url = req.nextUrl.clone();
   url.pathname = "/maintenance";
-  return NextResponse.rewrite(url);
+  const res = NextResponse.rewrite(url);
+
+  // Un rewrite est transparent pour le navigateur : l'URL affichée (donc
+  // usePathname() côté client) reste l'ancienne route, pas "/maintenance".
+  // Sans ce cookie, ClientLayout ne peut pas savoir qu'il faut masquer le
+  // Header (boutons connexion/inscription, menu) pendant la maintenance.
+  // Cookie (pas un header de requête) pour rester lisible côté client sans
+  // forcer tout le site en rendu dynamique — voir ClientLayout.tsx.
+  res.cookies.set("gp_maintenance", "1", { path: "/", maxAge: 15, httpOnly: false, sameSite: "lax" });
+  return res;
 }
