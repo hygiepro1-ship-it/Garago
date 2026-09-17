@@ -1030,6 +1030,21 @@ export default function DashboardGaragePage() {
   function setHoraireField(dayIndex: number, field: string, value: string | boolean) {
     setHoraires((prev) => prev.map((h) => h.dayOfWeek === dayIndex ? { ...h, [field]: value } : h));
   }
+
+  // Plafond de durée d'un service = la plus longue journée d'ouverture — un
+  // garage ouvert 12h ne doit pas être limité comme un garage ouvert 8h.
+  // Reflète exactement la règle appliquée côté serveur (/api/garage/services).
+  const maxServiceDurationMin = (() => {
+    const windows = horaires
+      .filter((h) => !h.isClosed)
+      .map((h) => {
+        const [oh, om] = h.openTime.split(":").map(Number);
+        const [ch, cm] = h.closeTime.split(":").map(Number);
+        return (ch * 60 + cm) - (oh * 60 + om);
+      })
+      .filter((m) => m > 0);
+    return windows.length > 0 ? Math.max(...windows) : 1439;
+  })();
   async function saveHoraires() {
     setSaving(true);
     await gfetch("/api/garage/availability", {
@@ -2290,7 +2305,9 @@ export default function DashboardGaragePage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.services}</h2>
-              <p className="text-gray-500 text-sm">Cochez les services que vous offrez et ajoutez vos prix</p>
+              <p className="text-gray-500 text-sm">
+                Cochez les services que vous offrez et ajoutez vos prix — la durée maximale ({maxServiceDurationMin} min) suit vos heures d'ouverture les plus longues
+              </p>
             </div>
             <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
               {saving ? d.saving : t.common.save}
@@ -2312,7 +2329,7 @@ export default function DashboardGaragePage() {
                     <div className="grid grid-cols-1 gap-2 pl-7">
                       <div>
                         <label className="block text-xs text-gray-500 mb-0.5">Durée (min)</label>
-                        <input type="number" min={5} max={480} className={inputClass} placeholder="Ex: 45" value={active.durationMin}
+                        <input type="number" min={5} max={maxServiceDurationMin} className={inputClass} placeholder="Ex: 45" value={active.durationMin}
                           onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, durationMin: e.target.value } : s))} />
                       </div>
                     </div>
