@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
+import { hasOverlap, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     vehicleTireSize,
     vehicleSpecs,
     serviceName,
+    categoryId,
     notes,
     date,
     startTime,
@@ -46,22 +48,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
   }
 
-  // Compute endTime (+60 min)
-  const [h, m] = startTime.split(":").map(Number);
-  const endMin = h * 60 + m + 60;
-  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+  // La durée du RDV vient toujours du service configuré par le garage (jamais
+  // d'une valeur envoyée par le client) — c'est ce qui doit réellement combler
+  // l'agenda, pas un bloc fixe de 60 minutes pour toutes les prestations.
+  let durationMin = DEFAULT_DURATION_MIN;
+  if (categoryId) {
+    const svc = await prisma.garageService.findFirst({
+      where: { garageId, categoryId, active: true },
+      select: { durationMin: true },
+    });
+    if (svc?.durationMin) durationMin = svc.durationMin;
+  }
+  const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
   const sessionUserId = (session?.user as any)?.id ?? null;
 
   // Check-then-create sous isolation Serializable pour empêcher une double réservation
   // du même créneau par deux clients simultanés (Postgres détecte et rejette le conflit).
+  // Le conflit se vérifie par chevauchement d'intervalles, pas par égalité d'heure de
+  // début, puisque deux services peuvent avoir des durées différentes.
   let appt;
   try {
     appt = await prisma.$transaction(async (tx) => {
-      const conflict = await tx.appointment.findFirst({
-        where: { garageId, date, startTime, status: { not: "CANCELLED" } },
+      const sameDay = await tx.appointment.findMany({
+        where: { garageId, date, status: { not: "CANCELLED" } },
+        select: { startTime: true, endTime: true },
       });
-      if (conflict) {
+      if (hasOverlap(startTime, durationMin, sameDay)) {
         throw new Error("SLOT_TAKEN");
       }
       return tx.appointment.create({

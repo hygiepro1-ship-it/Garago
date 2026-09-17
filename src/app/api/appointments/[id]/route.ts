@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification } from "@/lib/email";
+import { hasOverlap, toMinutes } from "@/lib/availability";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -38,6 +39,22 @@ export async function PATCH(
     }
     if (appt.source !== "ONLINE") {
       return NextResponse.json({ error: "Seuls les rendez-vous en ligne peuvent être modifiés ici." }, { status: 403 });
+    }
+  }
+
+  // Un déplacement de date/heure ne doit pas chevaucher un autre RDV du garage —
+  // vérifié par intervalle (durée réelle du RDV déplacé), pas par égalité d'heure.
+  if (date || startTime || endTime) {
+    const newDate      = date ?? appt.date;
+    const newStartTime = startTime ?? appt.startTime;
+    const newEndTime   = endTime ?? appt.endTime;
+    const durationMin  = toMinutes(newEndTime) - toMinutes(newStartTime);
+    const sameDay = await prisma.appointment.findMany({
+      where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { not: "CANCELLED" } },
+      select: { startTime: true, endTime: true },
+    });
+    if (durationMin > 0 && hasOverlap(newStartTime, durationMin, sameDay)) {
+      return NextResponse.json({ error: "Ce créneau chevauche un rendez-vous déjà pris." }, { status: 409 });
     }
   }
 

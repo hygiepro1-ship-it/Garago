@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
               date: { gte: todayStr, lte: endStr },
               status: { not: "CANCELLED" },
             },
-            select: { garageId: true, date: true, startTime: true },
+            select: { garageId: true, date: true, startTime: true, endTime: true },
           }),
         ])
       : [[], []];
@@ -160,12 +160,12 @@ export async function GET(req: NextRequest) {
       if (!byDate.has(b.date)) byDate.set(b.date, []);
       byDate.get(b.date)!.push({ startTime: b.startTime, endTime: b.endTime, allDay: b.allDay });
     }
-    const bookedByGarage = new Map<string, Map<string, Set<string>>>();
+    const bookedByGarage = new Map<string, Map<string, { startTime: string; endTime: string }[]>>();
     for (const a of bookedRows) {
       if (!bookedByGarage.has(a.garageId)) bookedByGarage.set(a.garageId, new Map());
       const byDate = bookedByGarage.get(a.garageId)!;
-      if (!byDate.has(a.date)) byDate.set(a.date, new Set());
-      byDate.get(a.date)!.add(a.startTime);
+      if (!byDate.has(a.date)) byDate.set(a.date, []);
+      byDate.get(a.date)!.push({ startTime: a.startTime, endTime: a.endTime });
     }
 
     const userPos = hasPos ? { lat, lng } : null;

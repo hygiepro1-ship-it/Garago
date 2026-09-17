@@ -895,7 +895,7 @@ export default function DashboardGaragePage() {
   const [manualForm, setManualForm] = useState({
     customerName: "", customerPhone: "", customerEmail: "",
     vehicleYear: "", vehicleMake: "", vehicleModel: "",
-    serviceName: "", date: "", startTime: "", notes: "",
+    serviceName: "", categoryId: "", date: "", startTime: "", notes: "",
   });
   const [savingRdv, setSavingRdv] = useState(false);
 
@@ -1245,7 +1245,7 @@ export default function DashboardGaragePage() {
       const appt = await res.json();
       setAppointments(prev => [appt, ...prev]);
       setShowManualForm(false);
-      setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", date:"", startTime:"", notes:"" });
+      setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", categoryId:"", date:"", startTime:"", notes:"" });
       setSuccess("Rendez-vous ajouté ✓");
       setTimeout(() => setSuccess(""), 3000);
     }
@@ -1346,7 +1346,7 @@ export default function DashboardGaragePage() {
       }
     }
     setShowManualForm(false);
-    setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", date:"", startTime:"", notes:"" });
+    setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", categoryId:"", date:"", startTime:"", notes:"" });
     setSavingRdv(false);
     setSuccess(`Rendez-vous ajoutés pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
     setTimeout(() => setSuccess(""), 3000);
@@ -1368,8 +1368,13 @@ export default function DashboardGaragePage() {
   async function submitReschedule() {
     if (!rescheduleAppt || !rescheduleSlot || !rescheduleDate) return;
     setRescheduleLoading(true);
+    // Conserve la durée d'origine du RDV (définie par la prestation) plutôt
+    // qu'un bloc fixe de 60 minutes.
+    const [oh, om] = rescheduleAppt.startTime.split(":").map(Number);
+    const [eh, em] = rescheduleAppt.endTime.split(":").map(Number);
+    const durationMin = (eh * 60 + em) - (oh * 60 + om);
     const [h, m] = rescheduleSlot.split(":").map(Number);
-    const totalEnd = h * 60 + m + 60;
+    const totalEnd = h * 60 + m + (durationMin > 0 ? durationMin : 60);
     const endTime = `${String(Math.floor(totalEnd / 60)).padStart(2, "0")}:${String(totalEnd % 60).padStart(2, "0")}`;
     const res = await fetch(`/api/appointments/${rescheduleAppt.id}`, {
       method: "PATCH",
@@ -1999,7 +2004,18 @@ export default function DashboardGaragePage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Service</label>
-                        <input className={inputClass} value={manualForm.serviceName} onChange={e=>setManualForm(f=>({...f,serviceName:e.target.value}))} placeholder="Vidange" />
+                        <select className={inputClass} value={manualForm.categoryId}
+                          onChange={e => {
+                            const cat = services.find(s => s.categoryId === e.target.value);
+                            setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
+                          }}>
+                          <option value="">Autre / non précisé</option>
+                          {services.map(s => (
+                            <option key={s.categoryId} value={s.categoryId}>
+                              {s.categoryName}{s.durationMin ? ` (${s.durationMin} min)` : ""}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Heure *</label>

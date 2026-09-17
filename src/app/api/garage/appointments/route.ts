@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import { hasOverlap, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -44,16 +45,32 @@ export async function POST(req: NextRequest) {
   const {
     customerName, customerPhone, customerEmail,
     vehicleYear, vehicleMake, vehicleModel,
-    serviceName, date, startTime, notes,
+    serviceName, categoryId, date, startTime, notes,
   } = body;
 
   if (!customerName || !customerPhone || !date || !startTime) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
   }
 
-  const [h, m] = startTime.split(":").map(Number);
-  const endMin = h * 60 + m + 60;
-  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+  // Même règle de durée que la réservation en ligne : celle configurée par le
+  // garage pour la prestation choisie, pas un bloc fixe de 60 minutes.
+  let durationMin = DEFAULT_DURATION_MIN;
+  if (categoryId) {
+    const svc = await prisma.garageService.findFirst({
+      where: { garageId: garage.id, categoryId, active: true },
+      select: { durationMin: true },
+    });
+    if (svc?.durationMin) durationMin = svc.durationMin;
+  }
+  const endTime = toHHMM(toMinutes(startTime) + durationMin);
+
+  const sameDay = await prisma.appointment.findMany({
+    where: { garageId: garage.id, date, status: { not: "CANCELLED" } },
+    select: { startTime: true, endTime: true },
+  });
+  if (hasOverlap(startTime, durationMin, sameDay)) {
+    return NextResponse.json({ error: "Ce créneau chevauche un rendez-vous déjà pris." }, { status: 409 });
+  }
 
   const appt = await prisma.appointment.create({
     data: {

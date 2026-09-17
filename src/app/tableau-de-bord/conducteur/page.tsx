@@ -433,9 +433,13 @@ export default function DashboardConducteurPage() {
     e.preventDefault();
     if (!rescheduleAppt || !rescheduleSlot) return;
     setRescheduling(true); setRescheduleErr("");
-    // Calcule endTime (+60 min)
+    // Conserve la durée d'origine du RDV (définie par la prestation) plutôt
+    // qu'un bloc fixe de 60 minutes.
+    const [oh, om] = rescheduleAppt.startTime.split(":").map(Number);
+    const [eh, em] = rescheduleAppt.endTime.split(":").map(Number);
+    const durationMin = (eh * 60 + em) - (oh * 60 + om);
     const [h, m] = rescheduleSlot.split(":").map(Number);
-    const endMin = h * 60 + m + 60;
+    const endMin = h * 60 + m + (durationMin > 0 ? durationMin : 60);
     const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
     try {
       const res = await fetch(`/api/appointments/${rescheduleAppt.id}`, {

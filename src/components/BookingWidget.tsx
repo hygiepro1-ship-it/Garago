@@ -10,7 +10,7 @@ interface BookingWidgetProps {
   garageName:   string;
   garageAddress?: string;
   garageCity?:    string;
-  services: Array<{ category: { name: string } }>;
+  services: Array<{ category: { id: string; name: string }; durationMin?: number | null }>;
   availability?: Array<{ dayOfWeek: number; isClosed: boolean }>;
 }
 
@@ -49,6 +49,8 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
 
   const [step, setStep]           = useState<Step>("service");
   const [service, setService]     = useState("");
+  const [serviceCategoryId, setServiceCategoryId] = useState("");
+  const [slotDurationMin, setSlotDurationMin] = useState(60);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // Initialize calMonth without new Date() to avoid SSR/client hydration mismatch
   const [calMonth, setCalMonth]   = useState<Date>(() => {
@@ -123,7 +125,9 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
       .catch(() => setBlockedDates(new Set()));
   }, [calMonth, garageSlug]);
 
-  // Fetch slots when date changes
+  // Fetch slots when date changes — dimensionnés à la durée du service choisi
+  // (le garage la configure par prestation ; sans service précis, l'API retombe
+  // sur une durée par défaut de 60 min).
   useEffect(() => {
     if (!selectedDate) return;
     const dateStr = formatDate(selectedDate);
@@ -131,14 +135,17 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     setSlots([]);
     setSelectedSlot("");
     setClosedDay(false);
-    fetch(`/api/garages/${garageSlug}/slots?date=${dateStr}`)
+    const qs = new URLSearchParams({ date: dateStr });
+    if (serviceCategoryId) qs.set("categoryId", serviceCategoryId);
+    fetch(`/api/garages/${garageSlug}/slots?${qs}`)
       .then(r => r.json())
       .then(d => {
         setSlots(d.slots ?? []);
         setClosedDay(!!d.closed);
+        setSlotDurationMin(d.durationMin ?? 60);
         setLoadingSlots(false);
       });
-  }, [selectedDate, garageSlug]);
+  }, [selectedDate, garageSlug, serviceCategoryId]);
 
   async function handleSubmit() {
     if (!name || !phone || !selectedDate || !selectedSlot) return;
@@ -161,6 +168,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         vehicleTireSize:  selectedVehicle?.tireSize ?? null,
         vehicleSpecs:     selectedVehicle?.specs ?? null,
         serviceName:   service || null,
+        categoryId:    serviceCategoryId || null,
         notes:         notes.trim() || null,
         date:      formatDate(selectedDate!),
         startTime: selectedSlot,
@@ -186,7 +194,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     const gcalDate = selectedDate ? formatDate(selectedDate) : "";
     const gcalStart = gcalDate.replace(/-/g, "") + "T" + (selectedSlot ?? "").replace(":", "") + "00";
     const [sh, sm] = (selectedSlot ?? "00:00").split(":").map(Number);
-    const endMin = sh * 60 + sm + 60;
+    const endMin = sh * 60 + sm + slotDurationMin;
     const gcalEnd = gcalDate.replace(/-/g, "") + "T" + String(Math.floor(endMin / 60)).padStart(2, "0") + String(endMin % 60).padStart(2, "0") + "00";
     const location = [garageAddress, garageCity].filter(Boolean).join(", ");
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
@@ -261,7 +269,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         </div>
 
         <button
-          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); setAppointmentId(null); }}
+          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); setServiceCategoryId(""); setAppointmentId(null); }}
           className="mt-4 w-full text-center text-sm text-orange-500 hover:underline"
         >
           {b.anotherAppt}
@@ -310,21 +318,22 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               {services.length > 0 ? services.map((sv, i) => (
                 <button
                   key={i}
-                  onClick={() => { setService(sv.category.name); setStep("date"); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all font-medium ${
+                  onClick={() => { setService(sv.category.name); setServiceCategoryId(sv.category.id); setStep("date"); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all font-medium flex items-center justify-between gap-2 ${
                     service === sv.category.name
                       ? "border-orange-400 bg-orange-50 text-orange-700"
                       : "border-gray-200 hover:border-orange-300 text-gray-700"
                   }`}
                 >
-                  {sv.category.name}
+                  <span>{sv.category.name}</span>
+                  {sv.durationMin ? <span className="text-xs text-gray-400 flex-shrink-0">~{sv.durationMin} min</span> : null}
                 </button>
               )) : (
                 <p className="text-gray-400 text-sm">{b.noServices}</p>
               )}
             </div>
             <button
-              onClick={() => { setService(""); setStep("date"); }}
+              onClick={() => { setService(""); setServiceCategoryId(""); setStep("date"); }}
               className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
             >
               {b.continueWithout}
