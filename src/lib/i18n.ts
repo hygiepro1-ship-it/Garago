@@ -229,8 +229,7 @@ export const translations = {
       certified:  "✓ Certifié",
       today:      "Auj.",
       tomorrow:   "Dem.",
-      thu:        "Jeu.",
-      fri:        "Ven.",
+      noSlots:    "Aucune disponibilité prochaine",
     },
 
     // ── Agenda ────────────────────────────────────────────────────────────
@@ -853,8 +852,7 @@ export const translations = {
       certified:   "✓ Certified",
       today:       "Today",
       tomorrow:    "Tmrw",
-      thu:         "Thu.",
-      fri:         "Fri.",
+      noSlots:     "No upcoming availability",
     },
 
     // ── Agenda ────────────────────────────────────────────────────────────

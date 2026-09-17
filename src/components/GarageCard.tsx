@@ -18,25 +18,34 @@ interface GarageCardProps {
   };
   highlightService?: string;
   distance?: string;
+  nextAvailability?: { date: string; slots: string[] } | null;
 }
 
-function getNextSlots(slug: string, c: { today: string; tomorrow: string; thu: string; fri: string }): string[] {
-  const seed = slug.charCodeAt(0) + slug.charCodeAt(slug.length - 1);
-  const today  = [`${c.today} 10h00`, `${c.today} 14h30`, `${c.today} 16h00`];
-  const demain = [`${c.tomorrow} 09h00`, `${c.tomorrow} 11h00`, `${c.tomorrow} 14h00`];
-  const later  = [`${c.thu} 10h00`, `${c.fri} 09h30`, `${c.fri} 13h00`];
-  return (seed % 3 === 0 ? today : seed % 3 === 1 ? demain : later).slice(0, 3);
+// "Aujourd'hui" / "Demain" / nom du jour (ex. "jeu.") selon l'écart avec la date
+// du jour courant — calculé côté client pour rester correct quel que soit le
+// fuseau du navigateur et suivre la langue active sans dupliquer de traductions.
+function formatSlotDay(dateStr: string, lang: "fr" | "en", today: string, tomorrow: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((target.getTime() - startOfToday.getTime()) / 86_400_000);
+  if (diffDays === 0) return today;
+  if (diffDays === 1) return tomorrow;
+  return new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { weekday: "short" }).format(target);
 }
 
-export default function GarageCard({ garage, highlightService, distance }: GarageCardProps) {
-  const { t } = useLang();
+export default function GarageCard({ garage, highlightService, distance, nextAvailability }: GarageCardProps) {
+  const { t, lang } = useLang();
   const c = t.card;
 
   const acceptedBrands  = garage.brands.filter((b) => b.accepts).slice(0, 5);
   const services        = garage.services.slice(0, 3);
   const rating          = Math.round(garage.avgRating * 10) / 10;
   const ratingFull      = Math.round(rating);
-  const slots           = getNextSlots(garage.slug, c);
+  const slots           = nextAvailability
+    ? nextAvailability.slots.map((s) => `${formatSlotDay(nextAvailability.date, lang, c.today, c.tomorrow)} ${s}`)
+    : [];
 
   return (
     <Link href={`/garage/${garage.slug}`} className="block group">
@@ -155,9 +164,13 @@ export default function GarageCard({ garage, highlightService, distance }: Garag
             style={{ borderColor: "#f1f5f9", background: "#fafcff" }}>
             <div>
               <p className="text-xs font-black mb-2" style={{ color: "#0b1f3a" }}>{c.nextSlots}</p>
-              <div className="flex flex-wrap sm:flex-col gap-1.5">
-                {slots.map((slot) => <div key={slot} className="slot-pill sm:w-full sm:text-center">{slot}</div>)}
-              </div>
+              {slots.length > 0 ? (
+                <div className="flex flex-wrap sm:flex-col gap-1.5">
+                  {slots.map((slot) => <div key={slot} className="slot-pill sm:w-full sm:text-center">{slot}</div>)}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: "#94a3b8" }}>{c.noSlots}</p>
+              )}
               <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
                 {garage.acceptsWalkIn && <span className="badge badge-green">{c.walkIn}</span>}
                 {garage.appointmentOnly && <span className="badge badge-navy">{c.byAppt}</span>}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateSlots } from "@/lib/availability";
 
 // GET /api/garages/[slug]/slots?date=YYYY-MM-DD
 // Returns available 30-min slots for a given date
@@ -87,19 +88,4 @@ export async function GET(
   });
 
   return NextResponse.json({ slots: available, openTime: avail.openTime, closeTime: avail.closeTime });
-}
-
-function generateSlots(open: string, close: string, step = 60): string[] {
-  const [oh, om] = open.split(":").map(Number);
-  const [ch, cm] = close.split(":").map(Number);
-  const startMin = oh * 60 + om;
-  const endMin   = ch * 60 + cm - step; // last slot starts 'step' min before close
-
-  const result: string[] = [];
-  for (let m = startMin; m <= endMin; m += step) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    result.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
-  }
-  return result;
 }

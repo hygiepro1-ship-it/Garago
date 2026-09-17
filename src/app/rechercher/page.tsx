@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
-import { garageDistance, formatDistance } from "@/lib/geo";
+import { formatDistance } from "@/lib/geo";
 import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
@@ -29,12 +29,8 @@ interface SearchGarage {
   services:  Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
   brands:    Array<{ brand: string; accepts: boolean }>;
   id?:          string;
-  distance_km?: number | null;
-}
-
-function withDistances(garages: SearchGarage[], pos: UserPos | null): SearchGarage[] {
-  if (!pos) return garages;
-  return garages.map((g) => ({ ...g, distance_km: garageDistance(g, pos) }));
+  distanceKm?:  number | null;
+  nextAvailability?: { date: string; slots: string[] } | null;
 }
 
 function SearchContent() {
@@ -80,11 +76,6 @@ function SearchContent() {
 
   const RESULTS_PER_PAGE = 20;
 
-  // Ref plutôt que dépendance directe : la position déclenche déjà un recalcul
-  // local des distances (effet ci-dessous) — pas besoin de tout re-fetch depuis l'API.
-  const userPosRef = useRef(userPos);
-  useEffect(() => { userPosRef.current = userPos; }, [userPos]);
-
   const fetchGarages = useCallback(async (targetPage: number) => {
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
@@ -93,6 +84,12 @@ function SearchContent() {
     if (service)   params.set("service",    service);
     if (city)      params.set("city",       city);
     if (walkInOnly) params.set("walkInOnly", "1");
+    // Avec la position connue, le serveur trie par proximité puis par
+    // disponibilité sur l'ensemble des garages correspondants — voir /api/garages.
+    if (sortByDist && userPos) {
+      params.set("lat", String(userPos.lat));
+      params.set("lng", String(userPos.lng));
+    }
     params.set("page",  String(targetPage));
     params.set("limit", String(RESULTS_PER_PAGE));
     try {
@@ -100,7 +97,6 @@ function SearchContent() {
       const data = await res.json();
       let results: SearchGarage[] = data.garages ?? [];
       if (minRating) results = results.filter((g) => g.avgRating >= parseFloat(minRating));
-      results = withDistances(results, userPosRef.current);
       setGarages((prev) => (targetPage === 1 ? results : [...prev, ...results]));
       setTotal(data.total ?? results.length);
       setHasMore(typeof data.pages === "number" ? targetPage < data.pages : false);
@@ -111,16 +107,13 @@ function SearchContent() {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [make, model, service, city, walkInOnly, minRating]);
+  }, [make, model, service, city, walkInOnly, minRating, sortByDist, userPos]);
 
   useEffect(() => { fetchGarages(1); }, [fetchGarages]);
 
   function loadMore() {
     if (!loadingMore && hasMore) fetchGarages(page + 1);
   }
-  useEffect(() => {
-    if (userPos) setGarages((prev) => withDistances(prev, userPos));
-  }, [userPos]);
 
   // Demande automatique de position au chargement — pour tous les visiteurs
   useEffect(() => {
@@ -148,18 +141,13 @@ function SearchContent() {
   }
 
   function clearLocation() {
+    // Le retrait des lat/lng des paramètres (via la dépendance sortByDist/userPos
+    // de fetchGarages) redéclenche automatiquement un fetch sans tri par distance.
     setUserPos(null); setGeoStatus("idle"); setSortByDist(false);
-    setGarages((prev) => prev.map(({ distance_km: _, ...g }) => g));
   }
 
-  const displayGarages = sortByDist && userPos
-    ? [...garages].sort((a, b) => {
-        if (a.distance_km == null && b.distance_km == null) return 0;
-        if (a.distance_km == null) return 1;
-        if (b.distance_km == null) return -1;
-        return a.distance_km - b.distance_km;
-      })
-    : garages;
+  // Le tri (proximité puis disponibilité) est fait côté serveur — voir /api/garages.
+  const displayGarages = garages;
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -494,7 +482,8 @@ function SearchContent() {
                     key={garage.id}
                     garage={garage}
                     highlightService={selectedService?.name}
-                    distance={garage.distance_km != null ? formatDistance(garage.distance_km) : undefined}
+                    distance={garage.distanceKm != null ? formatDistance(garage.distanceKm) : undefined}
+                    nextAvailability={garage.nextAvailability}
                   />
                 ))}
                 {hasMore && (
