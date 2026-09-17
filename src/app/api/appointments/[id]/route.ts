@@ -30,7 +30,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Interdit" }, { status: 403 });
   }
 
-  // Client ne peut modifier que les RDV ONLINE à plus de 24h
+  // Client ne peut modifier que les RDV ONLINE à plus de 24h, et seulement
+  // pour se déplacer ou s'annuler — jamais changer un statut comme COMPLETED
+  // ni écrire la note de complétion, qui appartiennent au garage.
   if (isClient && !isGarageOwner) {
     const apptDateTime = new Date(`${appt.date}T${appt.startTime}:00`);
     const hoursUntil = (apptDateTime.getTime() - Date.now()) / 3600000;
@@ -39,6 +41,9 @@ export async function PATCH(
     }
     if (appt.source !== "ONLINE") {
       return NextResponse.json({ error: "Seuls les rendez-vous en ligne peuvent être modifiés ici." }, { status: 403 });
+    }
+    if ((status && status !== "CANCELLED") || completionNote !== undefined) {
+      return NextResponse.json({ error: "Action réservée au garage." }, { status: 403 });
     }
   }
 
@@ -49,11 +54,14 @@ export async function PATCH(
     const newStartTime = startTime ?? appt.startTime;
     const newEndTime   = endTime ?? appt.endTime;
     const durationMin  = toMinutes(newEndTime) - toMinutes(newStartTime);
+    if (durationMin <= 0) {
+      return NextResponse.json({ error: "Heure de fin invalide." }, { status: 400 });
+    }
     const sameDay = await prisma.appointment.findMany({
       where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { not: "CANCELLED" } },
       select: { startTime: true, endTime: true },
     });
-    if (durationMin > 0 && wouldExceedCapacity(newStartTime, durationMin, sameDay, appt.garage.capacity ?? 1)) {
+    if (wouldExceedCapacity(newStartTime, durationMin, sameDay, appt.garage.capacity ?? 1)) {
       return NextResponse.json({ error: "Tous les postes du garage sont déjà occupés sur ce créneau." }, { status: 409 });
     }
   }

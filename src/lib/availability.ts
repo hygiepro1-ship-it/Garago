@@ -30,6 +30,12 @@ export const DEFAULT_DURATION_MIN = 60;
  * pour que des RDV de cette durée s'enchaînent sans trou ni chevauchement.
  */
 export function generateSlots(open: string, close: string, durationMin = DEFAULT_DURATION_MIN): string[] {
+  // Une durée nulle ou négative ferait boucler la génération de créneaux à
+  // l'infini (le pas n'avancerait jamais, ou reculerait) — garde défensive
+  // même si l'écriture (durée par service, ou déduite d'un RDV) est déjà
+  // validée en amont, pour qu'une donnée corrompue ne puisse jamais figer
+  // toute une requête de recherche.
+  if (!Number.isFinite(durationMin) || durationMin <= 0) return [];
   const startMin = toMinutes(open);
   const endMin = toMinutes(close) - durationMin; // dernier départ possible avant la fermeture
   const result: string[] = [];

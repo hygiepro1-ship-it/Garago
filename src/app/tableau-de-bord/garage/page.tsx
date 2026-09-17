@@ -2312,7 +2312,7 @@ export default function DashboardGaragePage() {
                     <div className="grid grid-cols-1 gap-2 pl-7">
                       <div>
                         <label className="block text-xs text-gray-500 mb-0.5">Durée (min)</label>
-                        <input type="number" className={inputClass} placeholder="Ex: 45" value={active.durationMin}
+                        <input type="number" min={5} max={480} className={inputClass} placeholder="Ex: 45" value={active.durationMin}
                           onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, durationMin: e.target.value } : s))} />
                       </div>
                     </div>
@@ -2879,7 +2879,7 @@ export default function DashboardGaragePage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Véhicules pris en charge en même temps
                 </label>
-                <input type="number" min={1} className={`${inputClass} max-w-[8rem]`}
+                <input type="number" min={1} max={50} className={`${inputClass} max-w-[8rem]`}
                   value={profileData.capacity ?? 1}
                   onChange={(e) => setProfileData({ ...profileData, capacity: e.target.value })} />
                 <p className="text-xs text-gray-400 mt-1">

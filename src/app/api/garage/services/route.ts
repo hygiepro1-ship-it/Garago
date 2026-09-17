@@ -4,6 +4,15 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
+// Bornée pour éviter qu'une durée nulle/négative (saisie invalide, ou 0) ne
+// puisse un jour faire boucler indéfiniment la génération de créneaux
+// (voir generateSlots) — et qu'une valeur absurde ne bloque une journée entière.
+function sanitizeDuration(v: unknown): number | null {
+  const n = typeof v === "string" ? parseInt(v, 10) : typeof v === "number" ? v : NaN;
+  if (!Number.isFinite(n) || n <= 0) return null; // pas de valeur = durée par défaut (60 min)
+  return Math.min(Math.max(Math.round(n), 5), 480);
+}
+
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -37,7 +46,7 @@ export async function PUT(req: NextRequest) {
           description: s.description,
           priceMin: s.priceMin ? parseFloat(s.priceMin) : null,
           priceMax: s.priceMax ? parseFloat(s.priceMax) : null,
-          durationMin: s.durationMin ? parseInt(s.durationMin) : null,
+          durationMin: sanitizeDuration(s.durationMin),
           active: true,
         },
       });
