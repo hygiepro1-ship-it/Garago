@@ -129,10 +129,14 @@ export default function AgendaPage() {
   // retour de Stripe Checkout, lien direct) tant que le garage n'a pas de
   // moyen de paiement enregistré. Renvoie vers le tableau de bord, qui affiche
   // l'écran bloquant « Ajoutez votre carte ».
+  // Même logique pour les horaires : sans eux, aucun créneau n'est réservable
+  // (voir /api/garages/[slug]/slots) — le garage doit d'abord les configurer
+  // depuis l'onglet Horaires du tableau de bord principal.
   useEffect(() => {
     if (status !== "authenticated") return;
     fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
-      if (g && isCardRequired(g)) router.push("/tableau-de-bord/garage");
+      if (!g) return;
+      if (isCardRequired(g) || (g.availability?.length ?? 0) === 0) router.push("/tableau-de-bord/garage");
     }).catch(() => {});
   }, [status, router]);
 

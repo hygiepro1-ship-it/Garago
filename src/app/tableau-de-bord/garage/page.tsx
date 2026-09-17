@@ -1027,6 +1027,12 @@ export default function DashboardGaragePage() {
     }
   }, [garage]);
 
+  // Force l'onglet Horaires tant qu'aucun horaire n'a jamais été enregistré —
+  // voir hoursConfigured plus bas, qui verrouille aussi la navigation.
+  useEffect(() => {
+    if (garage && (garage.availability?.length ?? 0) === 0) setActiveTab("horaires");
+  }, [garage]);
+
   function setHoraireField(dayIndex: number, field: string, value: string | boolean) {
     setHoraires((prev) => prev.map((h) => h.dayOfWeek === dayIndex ? { ...h, [field]: value } : h));
   }
@@ -1047,10 +1053,15 @@ export default function DashboardGaragePage() {
   })();
   async function saveHoraires() {
     setSaving(true);
-    await gfetch("/api/garage/availability", {
+    const res = await gfetch("/api/garage/availability", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ horaires }),
     });
+    if (res.ok) {
+      // Débloque immédiatement le reste du tableau de bord (voir hoursConfigured)
+      // sans attendre un rechargement complet de la page.
+      setGarage((g: any) => g ? { ...g, availability: horaires.map((h) => ({ ...h })) } : g);
+    }
     setSaving(false);
     setSuccess("Horaires sauvegardés ✓");
     setTimeout(() => setSuccess(""), 3000);
@@ -1469,6 +1480,12 @@ export default function DashboardGaragePage() {
   // Le programme de parrainage / ambassadeur est réservé aux garages abonnés
   const referralUnlocked = garage.subscriptionStatus === "ACTIVE";
 
+  // Un garage sans horaires enregistrés (même une seule fois) n'a aucun créneau
+  // réservable — /api/garages/[slug]/slots le traite comme fermé tous les jours.
+  // On force donc la configuration des horaires avant de débloquer le reste du
+  // tableau de bord, plutôt que de laisser un garage "actif" mais invisible.
+  const hoursConfigured = (garage.availability?.length ?? 0) > 0;
+
   const inputClass = "block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400";
 
   return (
@@ -1679,15 +1696,35 @@ export default function DashboardGaragePage() {
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm font-medium">{success}</div>
       )}
 
+      {!hoursConfigured && (
+        <div className="rounded-2xl p-4 mb-6 flex items-start gap-3" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
+          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <div>
+            <p className="font-bold text-sm" style={{ color: "#9a3412" }}>Configurez vos heures d'ouverture pour activer votre tableau de bord</p>
+            <p className="text-sm mt-0.5" style={{ color: "#c2410c" }}>
+              Tant qu'aucun horaire n'est enregistré, votre garage n'apparaît pas comme disponible pour les
+              conducteurs et ne peut recevoir aucun rendez-vous. Enregistrez vos horaires ci-dessous pour
+              débloquer le reste du tableau de bord.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto mb-6 pb-1">
-        {tabs.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
-            style={activeTab === tab.id ? { background: "#f97316" } : {}}>
-            {tabIcons[tab.id]}{tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const locked = !hoursConfigured && tab.id !== "horaires";
+          return (
+            <button key={tab.id} onClick={() => { if (!locked) setActiveTab(tab.id); }} disabled={locked}
+              title={locked ? "Enregistrez d'abord vos horaires" : undefined}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"} ${locked ? "opacity-40 cursor-not-allowed" : ""}`}
+              style={activeTab === tab.id ? { background: "#f97316" } : {}}>
+              {tabIcons[tab.id]}{tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ══ APERÇU ══════════════════════════════════════════════════════════ */}
