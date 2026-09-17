@@ -179,7 +179,7 @@ export async function GET(req: NextRequest) {
         g.availability,
         blockedByGarage.get(g.id) ?? new Map(),
         bookedByGarage.get(g.id) ?? new Map(),
-        { daysAhead: DAYS_AHEAD, now }
+        { daysAhead: DAYS_AHEAD, now, capacity: g.capacity ?? 1 }
       );
       return {
         ...g,

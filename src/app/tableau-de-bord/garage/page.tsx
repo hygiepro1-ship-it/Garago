@@ -2875,6 +2875,20 @@ export default function DashboardGaragePage() {
                 </label>
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Véhicules pris en charge en même temps
+                </label>
+                <input type="number" min={1} className={`${inputClass} max-w-[8rem]`}
+                  value={profileData.capacity ?? 1}
+                  onChange={(e) => setProfileData({ ...profileData, capacity: e.target.value })} />
+                <p className="text-xs text-gray-400 mt-1">
+                  Nombre de postes de travail / employés pouvant chacun s'occuper d'un véhicule en même temps.
+                  Vos disponibilités affichées aux clients tiennent compte de ce nombre — un même créneau horaire
+                  n'est complet que lorsque tous vos postes sont occupés.
+                </p>
+              </div>
+
               {/* Visibilité du courriel */}
               <div className="rounded-xl p-4" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                 <label className="flex items-center gap-2 cursor-pointer">

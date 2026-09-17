@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
-import { hasOverlap, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -51,14 +51,14 @@ export async function POST(req: NextRequest) {
   // La durée du RDV vient toujours du service configuré par le garage (jamais
   // d'une valeur envoyée par le client) — c'est ce qui doit réellement combler
   // l'agenda, pas un bloc fixe de 60 minutes pour toutes les prestations.
-  let durationMin = DEFAULT_DURATION_MIN;
-  if (categoryId) {
-    const svc = await prisma.garageService.findFirst({
-      where: { garageId, categoryId, active: true },
-      select: { durationMin: true },
-    });
-    if (svc?.durationMin) durationMin = svc.durationMin;
-  }
+  const [svc, garageForCapacity] = await Promise.all([
+    categoryId
+      ? prisma.garageService.findFirst({ where: { garageId, categoryId, active: true }, select: { durationMin: true } })
+      : null,
+    prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true } }),
+  ]);
+  const durationMin = svc?.durationMin ?? DEFAULT_DURATION_MIN;
+  const capacity = garageForCapacity?.capacity ?? 1;
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
   const sessionUserId = (session?.user as any)?.id ?? null;
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         where: { garageId, date, status: { not: "CANCELLED" } },
         select: { startTime: true, endTime: true },
       });
-      if (hasOverlap(startTime, durationMin, sameDay)) {
+      if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
         throw new Error("SLOT_TAKEN");
       }
       return tx.appointment.create({

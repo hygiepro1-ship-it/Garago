@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification } from "@/lib/email";
-import { hasOverlap, toMinutes } from "@/lib/availability";
+import { wouldExceedCapacity, toMinutes } from "@/lib/availability";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -53,8 +53,8 @@ export async function PATCH(
       where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { not: "CANCELLED" } },
       select: { startTime: true, endTime: true },
     });
-    if (durationMin > 0 && hasOverlap(newStartTime, durationMin, sameDay)) {
-      return NextResponse.json({ error: "Ce créneau chevauche un rendez-vous déjà pris." }, { status: 409 });
+    if (durationMin > 0 && wouldExceedCapacity(newStartTime, durationMin, sameDay, appt.garage.capacity ?? 1)) {
+      return NextResponse.json({ error: "Tous les postes du garage sont déjà occupés sur ce créneau." }, { status: 409 });
     }
   }
 

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
-import { hasOverlap, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
     where: { garageId: garage.id, date, status: { not: "CANCELLED" } },
     select: { startTime: true, endTime: true },
   });
-  if (hasOverlap(startTime, durationMin, sameDay)) {
-    return NextResponse.json({ error: "Ce créneau chevauche un rendez-vous déjà pris." }, { status: 409 });
+  if (wouldExceedCapacity(startTime, durationMin, sameDay, garage.capacity ?? 1)) {
+    return NextResponse.json({ error: "Tous vos postes sont déjà occupés sur ce créneau." }, { status: 409 });
   }
 
   const appt = await prisma.appointment.create({

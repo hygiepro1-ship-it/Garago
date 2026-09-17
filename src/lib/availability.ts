@@ -65,9 +65,12 @@ export function computeFreeSlots(
   blocks: BlockedRow[],
   booked: BookedRow[],
   durationMin: number,
-  opts: { isToday?: boolean; now?: Date } = {}
+  opts: { isToday?: boolean; now?: Date; capacity?: number } = {}
 ): string[] {
   if (!avail || avail.isClosed) return [];
+  // Un blocage (vacances, fermeture exceptionnelle) ferme tout le garage, peu
+  // importe le nombre de postes — contrairement à un RDV, qui n'occupe qu'un
+  // poste parmi ceux disponibles en même temps (voir `capacity`).
   if (blocks.some((b) => b.allDay)) return [];
 
   const candidates = generateSlots(avail.openTime, avail.closeTime, durationMin);
@@ -77,7 +80,7 @@ export function computeFreeSlots(
     .map((b) => ({ start: toMinutes(b.startTime), end: toMinutes(b.endTime) }));
   const bookedIntervals = booked.map((a) => ({ start: toMinutes(a.startTime), end: toMinutes(a.endTime) }));
 
-  const { isToday = false, now = new Date() } = opts;
+  const { isToday = false, now = new Date(), capacity = 1 } = opts;
   const nowMinutes = now.getHours() * 60 + now.getMinutes() + 30;
 
   return candidates.filter((s) => {
@@ -85,7 +88,10 @@ export function computeFreeSlots(
     const end = start + durationMin;
     if (isToday && start <= nowMinutes) return false; // passé
     if (blockedIntervals.some((b) => overlaps(start, end, b.start, b.end))) return false;
-    if (bookedIntervals.some((b) => overlaps(start, end, b.start, b.end))) return false;
+    // Un créneau n'est complet que lorsque tous les postes de travail sont
+    // occupés en même temps — pas dès le premier RDV qui le chevauche.
+    const concurrent = bookedIntervals.filter((b) => overlaps(start, end, b.start, b.end)).length;
+    if (concurrent >= capacity) return false;
     return true;
   });
 }
@@ -105,9 +111,9 @@ export function findNextAvailability(
   availability: AvailabilityRow[],
   blockedByDate: Map<string, BlockedRow[]>,
   bookedByDate: Map<string, BookedRow[]>,
-  opts: { daysAhead?: number; now?: Date; maxSlots?: number; durationMin?: number } = {}
+  opts: { daysAhead?: number; now?: Date; maxSlots?: number; durationMin?: number; capacity?: number } = {}
 ): NextAvailability | null {
-  const { daysAhead = 14, now = new Date(), maxSlots = 3, durationMin = DEFAULT_DURATION_MIN } = opts;
+  const { daysAhead = 14, now = new Date(), maxSlots = 3, durationMin = DEFAULT_DURATION_MIN, capacity = 1 } = opts;
 
   for (let offset = 0; offset <= daysAhead; offset++) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
@@ -120,7 +126,7 @@ export function findNextAvailability(
       blockedByDate.get(dateStr) ?? [],
       bookedByDate.get(dateStr) ?? [],
       durationMin,
-      { isToday: offset === 0, now }
+      { isToday: offset === 0, now, capacity }
     );
 
     if (slots.length > 0) {
@@ -130,13 +136,19 @@ export function findNextAvailability(
   return null;
 }
 
-/** true si un nouveau RDV [startTime, startTime+durationMin) chevauche un RDV existant. */
-export function hasOverlap(
+/**
+ * true si réserver [startTime, startTime+durationMin) dépasserait la capacité
+ * du garage — c.-à-d. si au moins `capacity` RDV existants chevauchent déjà ce
+ * nouveau créneau (chacun occupant un poste de travail différent).
+ */
+export function wouldExceedCapacity(
   startTime: string,
   durationMin: number,
-  existing: BookedRow[]
+  existing: BookedRow[],
+  capacity = 1
 ): boolean {
   const start = toMinutes(startTime);
   const end = start + durationMin;
-  return existing.some((a) => overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime)));
+  const concurrent = existing.filter((a) => overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime))).length;
+  return concurrent >= capacity;
 }

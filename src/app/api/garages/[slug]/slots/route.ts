@@ -21,6 +21,7 @@ export async function GET(
     include: { availability: true },
   });
   if (!garage) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const capacity = garage.capacity ?? 1;
 
   // La durée vient toujours d'une donnée déjà connue du serveur (jamais d'une
   // valeur envoyée par le client) : le service configuré par CE garage, ou —
@@ -68,7 +69,7 @@ export async function GET(
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const isToday = date === todayStr;
 
-  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now });
+  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity });
 
   const closed = !avail || avail.isClosed || blockedSlots.some((b) => b.allDay);
 
