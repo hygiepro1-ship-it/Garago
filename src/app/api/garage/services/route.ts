@@ -18,12 +18,21 @@ function sanitizeDuration(v: unknown, maxMinutes: number): number | null {
   return Math.min(Math.max(Math.round(n), 5), maxMinutes);
 }
 
+// Nombre de véhicules pris en charge en même temps : au moins 1 (sinon aucun
+// créneau ne serait jamais réservable), plafonné à une valeur raisonnable, et
+// jamais NaN dans une colonne Int.
+function sanitizeCapacity(v: unknown): number {
+  const n = typeof v === "string" ? parseInt(v, 10) : typeof v === "number" ? v : NaN;
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(Math.round(n), 50);
+}
+
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { services } = await req.json();
+  const { services, capacity } = await req.json();
 
   const garage = await prisma.garage.findFirst({
     where: ownedGarageWhere(userId, readGarageId(req.url)),
@@ -36,6 +45,12 @@ export async function PUT(req: NextRequest) {
     .map((a) => toMinutes(a.closeTime) - toMinutes(a.openTime))
     .filter((m) => m > 0);
   const maxDurationMin = openWindows.length > 0 ? Math.max(...openWindows) : 1439;
+
+  // La capacité se règle avec les services (durée + postes forment ensemble ce
+  // qui remplit l'agenda) — omise du corps de requête, elle reste inchangée.
+  if (capacity !== undefined) {
+    await prisma.garage.update({ where: { id: garage.id }, data: { capacity: sanitizeCapacity(capacity) } });
+  }
 
   await prisma.garageService.deleteMany({ where: { garageId: garage.id } });
 

@@ -8,14 +8,6 @@ import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 
-// Bornée pour éviter qu'une valeur invalide (texte, négatif) ne finisse en NaN
-// dans une colonne Int, ou qu'un nombre absurde ne fausse tout calcul de capacité.
-function sanitizeCapacity(v: unknown): number {
-  const n = typeof v === "string" ? parseInt(v, 10) : typeof v === "number" ? v : NaN;
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.min(Math.round(n), 50);
-}
-
 // ─── Description validation ────────────────────────────────────────────────
 // Only plain descriptive text — no URLs, emails, phone numbers, hashtags, @mentions.
 function validateDescription(text: string | null | undefined): string | null {
@@ -140,7 +132,6 @@ export async function PUT(req: NextRequest) {
       acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
       hourlyRate:      body.hourlyRate != null ? parseFloat(body.hourlyRate) : null,
-      capacity:        sanitizeCapacity(body.capacity),
       latitude:        geoLat,
       longitude:       geoLng,
       coverPosition:   body.coverPosition ?? "center",

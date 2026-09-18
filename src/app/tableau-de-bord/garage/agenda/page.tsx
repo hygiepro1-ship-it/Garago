@@ -49,8 +49,10 @@ interface Appointment {
 
 // ── Utilitaires date ──────────────────────────────────────────────────────────
 
+// Date locale (pas toISOString, qui bascule en UTC : après 20 h au Québec,
+// « aujourd'hui » deviendrait demain dans l'agenda).
 function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function addDays(dateStr: string, n: number): string {
@@ -115,9 +117,14 @@ export default function AgendaPage() {
   const emptyForm = {
     customerName: "", customerPhone: "", customerEmail: "",
     vehicleMake: "", vehicleModel: "", vehicleYear: "",
-    serviceName: "", startTime: "09:00", notes: "",
+    serviceName: "", categoryId: "", startTime: "09:00", notes: "",
   };
   const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState("");
+  const [rescheduleError, setRescheduleError] = useState("");
+  // Services du garage (avec leur durée) — pour que le RDV ajouté occupe la
+  // bonne durée dans l'agenda, comme une réservation en ligne.
+  const [garageServices, setGarageServices] = useState<{ categoryId: string; categoryName?: string; name?: string; durationMin?: number | null }[]>([]);
 
   // Auth guard
   useEffect(() => {
@@ -136,6 +143,7 @@ export default function AgendaPage() {
     if (status !== "authenticated") return;
     fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
       if (!g) return;
+      setGarageServices(Array.isArray(g.services) ? g.services : []);
       if (isCardRequired(g) || (g.availability?.length ?? 0) === 0) router.push("/tableau-de-bord/garage");
     }).catch(() => {});
   }, [status, router]);
@@ -189,6 +197,7 @@ export default function AgendaPage() {
   }
 
   function openReschedule(appt: Appointment) {
+    setRescheduleError("");
     setRescheduleAppt(appt);
     setNewDate(appt.date);
     setNewStart(appt.startTime);
@@ -205,6 +214,11 @@ export default function AgendaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: newDate, startTime: newStart, endTime: newEnd }),
       });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setRescheduleError(d.error ?? "Impossible de déplacer ce rendez-vous.");
+        return;
+      }
       if (res.ok) {
         // Si le RDV est déplacé vers une autre journée, le retirer de la liste actuelle
         if (newDate !== selectedDate) {
@@ -245,12 +259,18 @@ export default function AgendaPage() {
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setFormError("");
     try {
       const res = await fetch("/api/garage/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, date: selectedDate }),
       });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setFormError(d.error ?? "Impossible d'ajouter ce rendez-vous.");
+        return;
+      }
       if (res.ok) {
         const newAppt = await res.json();
         setAppointments(prev =>
@@ -437,7 +457,7 @@ export default function AgendaPage() {
           }}
         >
           <button
-            onClick={() => { setForm(emptyForm); setShowForm(true); }}
+            onClick={() => { setForm(emptyForm); setFormError(""); setShowForm(true); }}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white text-base active:scale-95 transition-transform"
             style={{
               backgroundColor: "#f97316",
@@ -576,6 +596,9 @@ export default function AgendaPage() {
                     />
                   </div>
                 </div>
+                {rescheduleError && (
+                  <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{rescheduleError}</p>
+                )}
                 <div className="pt-1 flex gap-3">
                   <button
                     type="button"
@@ -714,13 +737,21 @@ export default function AgendaPage() {
                 <section>
                   <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{a.serviceTime}</p>
                   <div className="space-y-2.5">
-                    <input
-                      autoComplete="off"
+                    <select
                       style={inputStyle}
-                      placeholder={a.servicePlaceholder}
-                      value={form.serviceName}
-                      onChange={e => setForm({ ...form, serviceName: e.target.value })}
-                    />
+                      value={form.categoryId}
+                      onChange={e => {
+                        const svc = garageServices.find(s => s.categoryId === e.target.value);
+                        setForm({ ...form, categoryId: e.target.value, serviceName: svc ? (svc.categoryName ?? svc.name ?? "") : "" });
+                      }}
+                    >
+                      <option value="">{a.servicePlaceholder}</option>
+                      {garageServices.map(s => (
+                        <option key={s.categoryId} value={s.categoryId}>
+                          {s.categoryName ?? s.name}{s.durationMin ? ` (${s.durationMin} min)` : ""}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex items-center gap-3">
                       <label className="text-sm font-semibold text-gray-600 flex-shrink-0">{a.time}</label>
                       <input
@@ -742,6 +773,10 @@ export default function AgendaPage() {
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                 />
+
+                {formError && (
+                  <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{formError}</p>
+                )}
 
                 {/* Submit */}
                 <button

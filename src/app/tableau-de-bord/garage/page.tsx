@@ -93,6 +93,7 @@ interface Garage {
   referralCount:            number;
   ambassadorTier:           number;
   ambassadorSince:          string | null;
+  capacity?:                number;
   availability:             GarageAvailability[];
   services:                 GarageService[];
   brands:                   GarageBrand[];
@@ -946,15 +947,26 @@ export default function DashboardGaragePage() {
     }
   }
 
+  // Capacité de l'atelier (véhicules pris en charge en même temps) — réglée
+  // ici, avec les durées de services, puisque les deux ensemble déterminent
+  // ce qui remplit l'agenda. Chaîne pour permettre un champ temporairement vide.
+  const [capacity, setCapacity] = useState("1");
+  useEffect(() => { if (garage) setCapacity(String(garage.capacity ?? 1)); }, [garage]);
+
   async function saveServices() {
     setSaving(true);
-    await gfetch("/api/garage/services", {
+    const cap = Math.min(50, Math.max(1, parseInt(capacity, 10) || 1));
+    const res = await gfetch("/api/garage/services", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services }),
+      body: JSON.stringify({ services, capacity: cap }),
     });
+    if (res.ok) {
+      setCapacity(String(cap));
+      setGarage((g: any) => g ? { ...g, capacity: cap } : g);
+    }
     setSaving(false);
-    setSuccess("Services sauvegardés ✓");
+    setSuccess(res.ok ? "Services sauvegardés ✓" : "Erreur lors de la sauvegarde");
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1026,6 +1038,22 @@ export default function DashboardGaragePage() {
       }));
     }
   }, [garage]);
+
+  // Sur téléphone, l'agenda mobile (cartes de rendez-vous, gros boutons) est la
+  // vraie page de travail du garage : on y arrive une fois par session. Le
+  // drapeau évite de piéger l'utilisateur quand il revient au tableau de
+  // bord depuis la flèche « ‹ » de l'agenda ; les retours de paiement (?...)
+  // et les succursales (l'agenda cible le garage principal) sont exclus.
+  useEffect(() => {
+    if (!garage || garage.parentId !== null) return;
+    if ((garage.availability?.length ?? 0) === 0 || isCardRequired(garage)) return;
+    if (window.innerWidth >= 640 || window.location.search) return;
+    try {
+      if (sessionStorage.getItem("gp_mobile_agenda")) return;
+      sessionStorage.setItem("gp_mobile_agenda", "1");
+    } catch { return; }
+    router.replace("/tableau-de-bord/garage/agenda");
+  }, [garage, router]);
 
   // Force l'onglet Horaires tant qu'aucun horaire n'a jamais été enregistré —
   // voir hoursConfigured plus bas, qui verrouille aussi la navigation.
@@ -1714,6 +1742,14 @@ export default function DashboardGaragePage() {
 
       {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto mb-6 pb-1">
+        {hoursConfigured && (
+          <Link href="/tableau-de-bord/garage/agenda"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
+            style={{ background: "#fff4ed", border: "1px solid #fdba74", color: "#c2410c" }}>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Agenda
+          </Link>
+        )}
         {tabs.map((tab) => {
           const locked = !hoursConfigured && tab.id !== "horaires";
           return (
@@ -2350,6 +2386,24 @@ export default function DashboardGaragePage() {
               {saving ? d.saving : t.common.save}
             </button>
           </div>
+          {/* Capacité de l'atelier */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+            <label htmlFor="garage-capacity" className="block text-sm font-bold text-gray-900 mb-1">
+              Véhicules pris en charge en même temps
+            </label>
+            <div className="flex items-center gap-3">
+              <input id="garage-capacity" type="number" inputMode="numeric" min={1} max={50}
+                className={`${inputClass} max-w-[7rem]`}
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)} />
+              <span className="text-sm text-gray-500">{parseInt(capacity, 10) > 1 ? "postes de travail" : "poste de travail"}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même
+              créneau n'est complet que lorsque tous vos postes sont occupés. Enregistrez pour appliquer.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {SERVICE_CATEGORIES.map((cat) => {
               const active = services.find((s) => s.categoryId === cat.id);
@@ -2927,20 +2981,6 @@ export default function DashboardGaragePage() {
                   <input type="checkbox" checked={profileData.appointmentOnly ?? false} onChange={(e) => setProfileData({ ...profileData, appointmentOnly: e.target.checked })} className="accent-orange-500 w-4 h-4" />
                   <span className="text-sm font-medium text-gray-700">Sur rendez-vous seulement</span>
                 </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Véhicules pris en charge en même temps
-                </label>
-                <input type="number" min={1} max={50} className={`${inputClass} max-w-[8rem]`}
-                  value={profileData.capacity ?? 1}
-                  onChange={(e) => setProfileData({ ...profileData, capacity: e.target.value })} />
-                <p className="text-xs text-gray-400 mt-1">
-                  Nombre de postes de travail / employés pouvant chacun s'occuper d'un véhicule en même temps.
-                  Vos disponibilités affichées aux clients tiennent compte de ce nombre — un même créneau horaire
-                  n'est complet que lorsque tous vos postes sont occupés.
-                </p>
               </div>
 
               {/* Visibilité du courriel */}
