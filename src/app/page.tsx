@@ -397,7 +397,7 @@ export default function HomePage() {
                   style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 4px 16px rgba(249,115,22,0.4)" }}>
                   {h.ctaBtn}
                 </Link>
-                <Link href="/tarifs"
+                <Link href="/garagistes"
                   className="px-6 py-3.5 rounded-xl font-bold text-sm border"
                   style={{ color: "rgba(255,255,255,0.55)", borderColor: "rgba(255,255,255,0.15)" }}>
                   {h.ctaPricing}

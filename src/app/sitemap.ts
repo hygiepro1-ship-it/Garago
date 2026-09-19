@@ -9,7 +9,7 @@ const STATIC_ROUTES = [
   "/rechercher",
   "/prestations",
   "/conseils",
-  "/tarifs",
+  "/garagistes",
   "/faq",
   "/inscription/conducteur",
   "/inscription/garage",

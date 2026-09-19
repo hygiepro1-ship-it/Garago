@@ -206,7 +206,7 @@ export default function Header() {
     { label: t.nav.findGarage, href: "/rechercher" },
     { label: t.nav.catalog,    href: "/prestations" },
     { label: t.nav.tips,       href: "/conseils" },
-    { label: t.nav.pricing,    href: "/tarifs" },
+    { label: t.nav.pricing,    href: "/garagistes" },
   ];
 
   return (

@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // L'ancienne page de tarifs est remplacée par la page « Pour les garages » —
+  // la redirection permanente garde les anciens liens et le référencement.
+  async redirects() {
+    return [{ source: "/tarifs", destination: "/garagistes", permanent: true }];
+  },
 };
 
 export default nextConfig;

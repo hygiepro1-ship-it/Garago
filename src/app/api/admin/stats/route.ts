@@ -9,7 +9,7 @@ async function requireAdmin() {
   return session;
 }
 
-// Prix affichés publiquement (voir /tarifs et l'inscription garage) — utilisés
+// Prix affichés publiquement (voir /garagistes et l'inscription garage) — utilisés
 // ici uniquement pour une estimation de revenu récurrent, pas une source de
 // vérité comptable (le vrai montant facturé vit dans Stripe).
 const MONTHLY_PRICE = 109.99;
