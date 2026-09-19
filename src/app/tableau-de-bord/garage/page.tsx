@@ -1039,22 +1039,6 @@ export default function DashboardGaragePage() {
     }
   }, [garage]);
 
-  // Sur téléphone, l'agenda mobile (cartes de rendez-vous, gros boutons) est la
-  // vraie page de travail du garage : on y arrive une fois par session. Le
-  // drapeau évite de piéger l'utilisateur quand il revient au tableau de
-  // bord depuis la flèche « ‹ » de l'agenda ; les retours de paiement (?...)
-  // et les succursales (l'agenda cible le garage principal) sont exclus.
-  useEffect(() => {
-    if (!garage || garage.parentId !== null) return;
-    if ((garage.availability?.length ?? 0) === 0 || isCardRequired(garage)) return;
-    if (window.innerWidth >= 640 || window.location.search) return;
-    try {
-      if (sessionStorage.getItem("gp_mobile_agenda")) return;
-      sessionStorage.setItem("gp_mobile_agenda", "1");
-    } catch { return; }
-    router.replace("/tableau-de-bord/garage/agenda");
-  }, [garage, router]);
-
   // Force l'onglet Horaires tant qu'aucun horaire n'a jamais été enregistré —
   // voir hoursConfigured plus bas, qui verrouille aussi la navigation.
   useEffect(() => {
@@ -1065,20 +1049,6 @@ export default function DashboardGaragePage() {
     setHoraires((prev) => prev.map((h) => h.dayOfWeek === dayIndex ? { ...h, [field]: value } : h));
   }
 
-  // Plafond de durée d'un service = la plus longue journée d'ouverture — un
-  // garage ouvert 12h ne doit pas être limité comme un garage ouvert 8h.
-  // Reflète exactement la règle appliquée côté serveur (/api/garage/services).
-  const maxServiceDurationMin = (() => {
-    const windows = horaires
-      .filter((h) => !h.isClosed)
-      .map((h) => {
-        const [oh, om] = h.openTime.split(":").map(Number);
-        const [ch, cm] = h.closeTime.split(":").map(Number);
-        return (ch * 60 + cm) - (oh * 60 + om);
-      })
-      .filter((m) => m > 0);
-    return windows.length > 0 ? Math.max(...windows) : 1439;
-  })();
   async function saveHoraires() {
     setSaving(true);
     const res = await gfetch("/api/garage/availability", {
@@ -1742,14 +1712,6 @@ export default function DashboardGaragePage() {
 
       {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto mb-6 pb-1">
-        {hoursConfigured && (
-          <Link href="/tableau-de-bord/garage/agenda"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all"
-            style={{ background: "#fff4ed", border: "1px solid #fdba74", color: "#c2410c" }}>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Agenda
-          </Link>
-        )}
         {tabs.map((tab) => {
           const locked = !hoursConfigured && tab.id !== "horaires";
           return (
@@ -2379,7 +2341,7 @@ export default function DashboardGaragePage() {
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.services}</h2>
               <p className="text-gray-500 text-sm">
-                Cochez les services que vous offrez et ajoutez vos prix — la durée maximale ({maxServiceDurationMin} min) suit vos heures d'ouverture les plus longues
+                Cochez les services que vous offrez et ajoutez vos prix
               </p>
             </div>
             <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
@@ -2419,9 +2381,26 @@ export default function DashboardGaragePage() {
                   {active && (
                     <div className="grid grid-cols-1 gap-2 pl-7">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">Durée (min)</label>
-                        <input type="number" min={5} max={maxServiceDurationMin} className={inputClass} placeholder="Ex: 45" value={active.durationMin}
-                          onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, durationMin: e.target.value } : s))} />
+                        <label className="block text-xs text-gray-500 mb-0.5">Durée</label>
+                        {(() => {
+                          const total = parseInt(String(active.durationMin), 10) || 0;
+                          const setTotal = (t: number) =>
+                            setServices(services.map((s) => s.categoryId === cat.id ? { ...s, durationMin: t > 0 ? String(t) : "" } : s));
+                          const hours = Math.floor(total / 60);
+                          const mins  = total % 60;
+                          return (
+                            <div className="flex items-center gap-2">
+                              <input type="number" inputMode="numeric" min={0} aria-label="Heures" className={inputClass} style={{ width: 84 }} placeholder="0"
+                                value={total > 0 ? hours : ""}
+                                onChange={(e) => setTotal(Math.max(0, parseInt(e.target.value, 10) || 0) * 60 + mins)} />
+                              <span className="text-sm text-gray-500">h</span>
+                              <input type="number" inputMode="numeric" min={0} max={59} aria-label="Minutes" className={inputClass} style={{ width: 84 }} placeholder="45"
+                                value={total > 0 ? mins : ""}
+                                onChange={(e) => setTotal(hours * 60 + Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))} />
+                              <span className="text-sm text-gray-500">min</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
