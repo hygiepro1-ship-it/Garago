@@ -892,6 +892,8 @@ export default function DashboardGaragePage() {
 
   // Manual RDV form
   const [showManualForm, setShowManualForm] = useState(false);
+  const [showAddRdv, setShowAddRdv] = useState(false); // ajout depuis « Prochains rendez-vous »
+  const [manualError, setManualError] = useState("");
   const [manualFormDate, setManualFormDate] = useState(""); // pre-fill from calendar click
   const [manualForm, setManualForm] = useState({
     customerName: "", customerPhone: "", customerEmail: "",
@@ -1255,6 +1257,36 @@ export default function DashboardGaragePage() {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
   }
 
+  function openAddRdv() {
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setManualError("");
+    setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", categoryId:"", date: todayStr, startTime:"", notes:"" });
+    setShowAddRdv(true);
+  }
+
+  async function saveManualRdvModal(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingRdv(true);
+    setManualError("");
+    const res = await gfetch("/api/garage/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(manualForm),
+    });
+    if (res.ok) {
+      const appt = await res.json();
+      setAppointments(prev => [appt, ...prev]);
+      setShowAddRdv(false);
+      setSuccess("Rendez-vous ajouté ✓");
+      setTimeout(() => setSuccess(""), 3000);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setManualError(d.error ?? "Impossible d'ajouter ce rendez-vous.");
+    }
+    setSavingRdv(false);
+  }
+
   async function saveManualRdv(e: React.FormEvent) {
     e.preventDefault();
     setSavingRdv(true);
@@ -1265,7 +1297,14 @@ export default function DashboardGaragePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setManualError(d.error ?? "Impossible d'ajouter ce rendez-vous.");
+      setSavingRdv(false);
+      return;
+    }
     if (res.ok) {
+      setManualError("");
       const appt = await res.json();
       setAppointments(prev => [appt, ...prev]);
       setShowManualForm(false);
@@ -1779,7 +1818,14 @@ export default function DashboardGaragePage() {
 
           {/* Upcoming appointments list */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4">Prochains rendez-vous</h3>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h3 className="font-bold text-gray-900">Prochains rendez-vous</h3>
+              <button onClick={openAddRdv}
+                className="text-white px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap"
+                style={{ background: "#f97316" }}>
+                + Ajouter un rendez-vous
+              </button>
+            </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
             ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length === 0 ? (
@@ -2080,6 +2126,7 @@ export default function DashboardGaragePage() {
                         <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
                       </div>
                     </div>
+                    {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
                     <div className="flex gap-2 pt-1">
                       <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
                         {savingRdv ? "Ajout…" : "Ajouter"}
@@ -2551,6 +2598,98 @@ export default function DashboardGaragePage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL AJOUT RDV MANUEL ══════════════════════════════════════════ */}
+      {showAddRdv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(11,31,58,0.55)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAddRdv(false); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[92vh] flex flex-col">
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <div>
+                <h3 className="font-bold text-gray-900">Ajouter un rendez-vous</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Un client qui a appelé ou qui s'est présenté</p>
+              </div>
+              <button onClick={() => setShowAddRdv(false)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors font-bold text-lg">×</button>
+            </div>
+            <form onSubmit={saveManualRdvModal} className="p-6 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Date *</label>
+                  <input className={inputClass} required type="date" value={manualForm.date}
+                    onChange={e => setManualForm(f => ({ ...f, date: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Heure *</label>
+                  <input className={inputClass} required type="time" value={manualForm.startTime}
+                    onChange={e => setManualForm(f => ({ ...f, startTime: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Service</label>
+                <select className={inputClass} value={manualForm.categoryId}
+                  onChange={e => {
+                    const cat = services.find(s => s.categoryId === e.target.value);
+                    setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
+                  }}>
+                  <option value="">Autre / non précisé (1 h)</option>
+                  {services.map(s => {
+                    const t = parseInt(String(s.durationMin), 10) || 0;
+                    const dur = t > 0 ? ` (${t >= 60 ? `${Math.floor(t / 60)} h${t % 60 ? ` ${t % 60}` : ""}` : `${t} min`})` : "";
+                    return <option key={s.categoryId} value={s.categoryId}>{s.categoryName}{dur}</option>;
+                  })}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Nom du client *</label>
+                  <input className={inputClass} required value={manualForm.customerName}
+                    onChange={e => setManualForm(f => ({ ...f, customerName: e.target.value }))} placeholder="Jean Tremblay" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
+                  <input className={inputClass} required type="tel" value={manualForm.customerPhone}
+                    onChange={e => setManualForm(f => ({ ...f, customerPhone: e.target.value }))} placeholder="514 555-0100" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel <span className="font-normal text-gray-400">(optionnel)</span></label>
+                <input className={inputClass} type="email" value={manualForm.customerEmail}
+                  onChange={e => setManualForm(f => ({ ...f, customerEmail: e.target.value }))} placeholder="jean@exemple.com" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Année</label>
+                  <input className={inputClass} inputMode="numeric" value={manualForm.vehicleYear}
+                    onChange={e => setManualForm(f => ({ ...f, vehicleYear: e.target.value }))} placeholder="2020" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                  <input className={inputClass} value={manualForm.vehicleMake}
+                    onChange={e => setManualForm(f => ({ ...f, vehicleMake: e.target.value }))} placeholder="Toyota" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                  <input className={inputClass} value={manualForm.vehicleModel}
+                    onChange={e => setManualForm(f => ({ ...f, vehicleModel: e.target.value }))} placeholder="Camry" />
+                </div>
+              </div>
+              {manualError && (
+                <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{manualError}</p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={savingRdv}
+                  className="flex-1 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+                  {savingRdv ? "Ajout…" : "Ajouter le rendez-vous"}
+                </button>
+                <button type="button" onClick={() => setShowAddRdv(false)}
+                  className="border border-gray-200 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50">Annuler</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
