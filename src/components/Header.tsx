@@ -140,7 +140,7 @@ function UserMenu({ session, role }: UserMenuProps) {
 interface MobileMenuProps {
   open:     boolean;
   session:  Session | null;
-  navItems: { label: string; href: string }[];
+  navItems: { label: string; href: string; highlight?: boolean }[];
   onClose:  () => void;
 }
 
@@ -153,8 +153,8 @@ function MobileMenu({ open, session, navItems, onClose }: MobileMenuProps) {
       <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}
-            className="block px-4 py-3 text-sm font-semibold rounded-xl"
-            style={{ color: "rgba(255,255,255,0.75)" }}
+            className={`block px-4 py-3 text-sm font-semibold rounded-xl${item.highlight ? " nav-attn" : ""}`}
+            style={item.highlight ? undefined : { color: "rgba(255,255,255,0.75)" }}
             onClick={onClose}>
             {item.label}
           </Link>
@@ -202,11 +202,12 @@ export default function Header() {
   const role    = getUserRole(session);
   const isHome  = pathname === "/";
 
+  // « Pour les garages » passe en premier et attire l'œil (animation nav-attn,
+  // voir globals.css) : c'est la porte d'entrée des garagistes vers l'abonnement.
   const NAV = [
-    { label: t.nav.findGarage, href: "/rechercher" },
+    { label: t.nav.pricing,    href: "/garagistes", highlight: true },
     { label: t.nav.catalog,    href: "/prestations" },
     { label: t.nav.tips,       href: "/conseils" },
-    { label: t.nav.pricing,    href: "/garagistes" },
   ];
 
   return (
@@ -229,8 +230,8 @@ export default function Header() {
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-3 py-2 text-sm font-semibold rounded-lg transition-all"
-                style={{
+                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-all${item.highlight ? " nav-attn" : ""}`}
+                style={item.highlight ? undefined : {
                   color: pathname === item.href ? "#f97316" : "rgba(255,255,255,0.6)",
                   background: pathname === item.href ? "rgba(249,115,22,0.1)" : "transparent",
                 }}>

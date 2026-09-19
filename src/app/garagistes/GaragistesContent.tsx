@@ -9,7 +9,6 @@ const SIGNUP = "/inscription/garage";
 // des reproductions du tableau de bord garage : mêmes couleurs, formes et textes.
 const COPY = {
   fr: {
-    eyebrow: "Pour les garagistes du Québec",
     h1a: "Fini les rendez-vous",
     h1b: "pris au téléphone.",
     lead: "Vos clients réservent eux-mêmes en ligne, selon vos heures d'ouverture et la durée de chaque service. Chaque rendez-vous arrive dans votre tableau de bord.",
@@ -58,7 +57,7 @@ const COPY = {
       sub: "Tout est inclus dans les deux. Seule la facturation change.",
       unit: "$ / mois", cta: "Commencer",
       monthly: { name: "Mensuel", amount: "109,99", bullets: ["Sans engagement", "Résiliez quand vous voulez, en un clic", "Facturé chaque mois"] },
-      annual: { name: "Annuel", badge: "Économisez 20 %", amount: "88,00", total: "soit 1 056,00 $ par année", bullets: ["Environ 264 $ d'économie par année", "Un seul paiement par année", "Tarif garanti pendant 12 mois"] },
+      annual: { name: "Annuel", badge: "Économisez 20 %", amount: "88,00", total: "soit 1 055,90 $ par année", bullets: ["Environ 264 $ d'économie par année", "Un seul paiement par année", "Tarif garanti pendant 12 mois"] },
       trialBold: "30 jours gratuits", trialRest: " avec les deux formules · carte requise · rien n'est prélevé avant la fin de l'essai",
       inclTitle: "Tout est inclus",
       incl: [
@@ -86,7 +85,6 @@ const COPY = {
     finalTitle: "Prêt à remplir votre calendrier ?",
   },
   en: {
-    eyebrow: "For Quebec garage owners",
     h1a: "No more booking",
     h1b: "appointments by phone.",
     lead: "Your customers book online themselves, within your opening hours and the real length of each service. Every appointment lands in your dashboard.",
@@ -135,7 +133,7 @@ const COPY = {
       sub: "Everything is included in both. Only the billing changes.",
       unit: "$ / month", cta: "Get started",
       monthly: { name: "Monthly", amount: "109.99", bullets: ["No commitment", "Cancel any time, in one click", "Billed every month"] },
-      annual: { name: "Annual", badge: "Save 20%", amount: "88.00", total: "that's $1,056.00 per year", bullets: ["About $264 saved per year", "One payment per year", "Price locked for 12 months"] },
+      annual: { name: "Annual", badge: "Save 20%", amount: "88.00", total: "that's $1,055.90 per year", bullets: ["About $264 saved per year", "One payment per year", "Price locked for 12 months"] },
       trialBold: "30 days free", trialRest: " with both plans · card required · nothing is charged until the trial ends",
       inclTitle: "Everything is included",
       incl: [
@@ -200,7 +198,6 @@ export default function GaragistesContent() {
         <div className="wrap">
           <div className="hero-grid">
             <div>
-              <p className="eyebrow">{c.eyebrow}</p>
               <h1>{c.h1a}<br /><em>{c.h1b}</em></h1>
               <p className="lead">{c.lead}</p>
               <Link className="btn btn-primary" href={SIGNUP}>{c.cta}</Link>
