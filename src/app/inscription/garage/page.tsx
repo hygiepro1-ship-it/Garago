@@ -122,7 +122,6 @@ const PLANS = [
     features: [
       "Tout inclus dans l'essai",
       "Priorité dans les résultats",
-      'Badge "Garage certifié Garago"',
       "Réponses aux avis clients",
       "Statistiques détaillées",
       "Support prioritaire 7j/7",
