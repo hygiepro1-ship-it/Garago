@@ -243,23 +243,17 @@ select {
   pointer-events: none;
 }
 
-/* ── Lien « Pour les garages » du menu : attire l'œil des garagistes ─────── */
-@keyframes navAttnPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(249,115,22,0.55); }
-  70%  { box-shadow: 0 0 0 10px rgba(249,115,22,0); }
-  100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
-}
-@keyframes navAttnShine {
-  0%   { background-position: 160% 0; }
-  100% { background-position: -60% 0; }
+/* ── Lien « Pour les garages » du menu : lueur orange qui « respire » ─────── */
+@keyframes navAttnGlow {
+  0%   { box-shadow: 0 0 4px rgba(249,115,22,0.25); border-color: rgba(249,115,22,0.4); }
+  100% { box-shadow: 0 0 22px rgba(249,115,22,0.9); border-color: rgba(249,115,22,0.95); }
 }
 .nav-attn {
   color: #fff;
-  border: 1px solid rgba(249,115,22,0.6);
-  background: linear-gradient(110deg, rgba(249,115,22,0.28) 35%, rgba(255,255,255,0.32) 50%, rgba(249,115,22,0.28) 65%);
-  background-size: 250% 100%;
-  animation: navAttnPulse 2.2s ease-out infinite, navAttnShine 3.4s linear infinite;
+  background: rgba(249,115,22,0.2);
+  border: 1px solid rgba(249,115,22,0.4);
+  animation: navAttnGlow 1.8s ease-in-out infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
-  .nav-attn { animation: none; background: rgba(249,115,22,0.22); }
+  .nav-attn { animation: none; box-shadow: 0 0 10px rgba(249,115,22,0.45); border-color: rgba(249,115,22,0.7); }
 }
