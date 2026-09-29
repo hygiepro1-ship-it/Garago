@@ -55,11 +55,17 @@ export const BRANDS: VehicleBrand[] = [
 
   // ── H ─────────────────────────────────────────────────────────────────────
   { name: "Honda",   logoUrl: `${CDN}/honda.png`,                        color: "#e40521" },
+  // Hummer — marque relancée en camion électrique GMC, mais de nombreux VUS
+  // Hummer H2/H3 des années 2000 sont encore sur la route et à entretenir.
+  { name: "Hummer",  logoUrl: `${CDN}/hummer.png`,                       color: "#4a4a4a" },
   // Hyundai 2021 — new geometric H
   { name: "Hyundai", logoUrl: `${WP}/Hyundai_logo.svg`,                  color: "#003087" },
 
   // ── I ─────────────────────────────────────────────────────────────────────
   { name: "Infiniti", logoUrl: `${CDN}/infiniti.png`, color: "#111111" },
+  // Isuzu a quitté le marché nord-américain des véhicules légers en 2009, mais
+  // ses camions et VUS (Rodeo, Trooper, Ascender) roulent encore et se réparent.
+  { name: "Isuzu",    logoUrl: `${CDN}/isuzu.png`,    color: "#cc0000" },
 
   // ── J ─────────────────────────────────────────────────────────────────────
   // Jaguar 2024 — completely redesigned logo
@@ -85,6 +91,9 @@ export const BRANDS: VehicleBrand[] = [
   { name: "Mazda",         logoUrl: `${CDN}/mazda.png`,         color: "#910000" },
   { name: "McLaren",       logoUrl: `${CDN}/mclaren.png`,       color: "#e47216" },
   { name: "Mercedes-Benz", logoUrl: `${CDN}/mercedes-benz.png`, color: "#111111" },
+  // Mercury a fermé en 2011 — encore beaucoup de Sable, Grand Marquis et
+  // Mountaineer sur la route au Canada.
+  { name: "Mercury",       logoUrl: `${CDN}/mercury.png`,       color: "#5a5a5a" },
   { name: "MINI",          logoUrl: `${CDN}/mini.png`,          color: "#000000" },
   { name: "Mitsubishi",    logoUrl: `${CDN}/mitsubishi.png`,    color: "#e60012" },
 
@@ -92,8 +101,14 @@ export const BRANDS: VehicleBrand[] = [
   // Nissan 2020 — flat 2D logo (SVG Wikimedia)
   { name: "Nissan", logoUrl: `${WIKI}/2/23/Nissan_2020_logo.svg`, color: "#c3002f" },
 
+  // ── O ─────────────────────────────────────────────────────────────────────
+  // Oldsmobile a fermé en 2004 — plusieurs modèles encore en circulation.
+  { name: "Oldsmobile", logoUrl: `${CDN}/oldsmobile.png`, color: "#8a0000" },
+
   // ── P ─────────────────────────────────────────────────────────────────────
   { name: "Polestar", logoUrl: `${CDN}/polestar.png`, color: "#0a0a0a" },
+  // Pontiac a fermé en 2010 — Vibe, G6 et Grand Prix encore courants.
+  { name: "Pontiac",  logoUrl: `${CDN}/pontiac.png`,  color: "#8a0000" },
   { name: "Porsche",  logoUrl: `${CDN}/porsche.png`,  color: "#c9a227" },
 
   // ── R ─────────────────────────────────────────────────────────────────────
@@ -102,7 +117,15 @@ export const BRANDS: VehicleBrand[] = [
   { name: "Rolls-Royce", logoUrl: `${CDN}/rolls-royce.png`, color: "#6e1a36" },
 
   // ── S ─────────────────────────────────────────────────────────────────────
-  { name: "Subaru", logoUrl: `${CDN}/subaru.png`, color: "#003087" },
+  // Saab a fermé en 2011 ; Saturn en 2010 — véhicules encore entretenus.
+  { name: "Saab",    logoUrl: `${CDN}/saab.png`,    color: "#003087" },
+  { name: "Saturn",  logoUrl: `${CDN}/saturn.png`,  color: "#8a0000" },
+  // Scion (marque jeunesse de Toyota) a fermé en 2016 — tC, xB, FR-S courants.
+  { name: "Scion",   logoUrl: `${CDN}/scion.png`,   color: "#111111" },
+  { name: "Subaru",  logoUrl: `${CDN}/subaru.png`,  color: "#003087" },
+  // Suzuki a quitté le marché automobile nord-américain en 2013, mais Swift,
+  // SX4 et Grand Vitara restent nombreux à entretenir.
+  { name: "Suzuki",  logoUrl: `${CDN}/suzuki.png`,  color: "#e30016" },
 
   // ── T ─────────────────────────────────────────────────────────────────────
   { name: "Tesla",  logoUrl: `${CDN}/tesla.png`,  color: "#e82127" },
@@ -113,6 +136,8 @@ export const BRANDS: VehicleBrand[] = [
   { name: "Volkswagen", logoUrl: `${WIKI}/6/6d/Volkswagen_logo_2019.svg`, color: "#001e50" },
   // Volvo 2021 — iron mark
   { name: "Volvo",      logoUrl: `${WP}/Volvo-Iron-Mark-Black.svg`,       color: "#003e7e" },
+  // VinFast (Vietnam) est arrivé au Canada en 2024 avec ses VUS électriques.
+  { name: "VinFast",    logoUrl: `${WP}/VinFast_logo.svg`,                color: "#0a0a0a" },
 ];
 
 /** Flat array of brand names — used as the make filter in search & selectors. */
