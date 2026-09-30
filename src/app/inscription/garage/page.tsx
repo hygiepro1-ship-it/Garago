@@ -213,7 +213,8 @@ export default function InscriptionGaragePage() {
   const [savingConfig, setSavingConfig] = useState(false);
 
   // Step 3 — Plan
-  const [selectedPlan, setSelectedPlan] = useState("monthly");
+  // Annuel présélectionné par défaut (−20 %) — le garage peut toujours choisir mensuel.
+  const [selectedPlan, setSelectedPlan] = useState("annual");
   const [startingTrial, setStartingTrial] = useState(false);
 
   async function handleFinish() {

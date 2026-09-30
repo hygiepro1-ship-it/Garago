@@ -1642,13 +1642,13 @@ export default function DashboardGaragePage() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-              className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
-            </button>
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+              className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel (−20 %)"}
+            </button>
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold text-yellow-800 underline hover:no-underline disabled:opacity-60">
-              ou payer annuellement (−20 %)
+              ou payer mensuellement
             </button>
           </div>
         </div>
@@ -1691,13 +1691,13 @@ export default function DashboardGaragePage() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-              className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement"}
-            </button>
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+              className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel (−20 %)"}
+            </button>
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold text-red-700 underline hover:no-underline disabled:opacity-60">
-              ou payer annuellement (−20 %)
+              ou payer mensuellement
             </button>
           </div>
         </div>
@@ -1715,15 +1715,15 @@ export default function DashboardGaragePage() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+            <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
               className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
               style={{ background: "#f97316" }}>
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement maintenant"}
+              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel maintenant (−20 %)"}
             </button>
-            <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+            <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold underline hover:no-underline disabled:opacity-60"
               style={{ color: "#f97316" }}>
-              ou payer annuellement (−20 %)
+              ou payer mensuellement
             </button>
           </div>
         </div>
@@ -3274,13 +3274,13 @@ export default function DashboardGaragePage() {
                   </div>
                 )}
                 <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement — 109,99 $/mois"}
-                  </button>
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    ou payer annuellement (88,00 $/mois, −20 %)
+                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement — 88,00 $/mois (annuel, −20 %)"}
+                  </button>
+                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
+                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    ou payer mensuellement (109,99 $/mois)
                   </button>
                 </div>
               </>
@@ -3337,13 +3337,13 @@ export default function DashboardGaragePage() {
                   Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Activer — 109,99 $/mois"}
-                  </button>
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                    {checkoutLoading ? "Chargement…" : "Activer — 88,00 $/mois (annuel, −20 %)"}
+                  </button>
+                  <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    ou payer annuellement (88,00 $/mois, −20 %)
+                    ou payer mensuellement (109,99 $/mois)
                   </button>
                 </div>
               </>
