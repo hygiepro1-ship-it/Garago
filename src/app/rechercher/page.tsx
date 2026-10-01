@@ -46,6 +46,10 @@ function SearchContent() {
   const [hasMore,   setHasMore]   = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Recherche par nom : "q" ne se met à jour qu'à la soumission (Entrée ou bouton),
+  // jamais à chaque frappe — sinon une requête partirait à chaque lettre tapée.
+  const [nameInput, setNameInput] = useState(searchParams.get("q")       ?? "");
+  const [q,         setQ]         = useState(searchParams.get("q")       ?? "");
   const [make,      setMake]      = useState(searchParams.get("make")    ?? "");
   // Modèle : filtre réel (transmis à l'API). Année : personnalisation client
   // uniquement — un garage n'indique pas les années qu'il traite, seulement les modèles.
@@ -79,6 +83,7 @@ function SearchContent() {
   const fetchGarages = useCallback(async (targetPage: number) => {
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
     if (make)      params.set("make",       make);
     if (model)     params.set("model",      model);
     if (service)   params.set("service",    service);
@@ -107,7 +112,7 @@ function SearchContent() {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [make, model, service, city, walkInOnly, minRating, sortByDist, userPos]);
+  }, [q, make, model, service, city, walkInOnly, minRating, sortByDist, userPos]);
 
   useEffect(() => { fetchGarages(1); }, [fetchGarages]);
 
@@ -149,6 +154,11 @@ function SearchContent() {
   // Le tri (proximité puis disponibilité) est fait côté serveur — voir /api/garages.
   const displayGarages = garages;
 
+  function submitName(e?: React.FormEvent) {
+    e?.preventDefault();
+    setQ(nameInput.trim());
+  }
+
   function applyFilters() {
     const params = new URLSearchParams();
     if (make)    params.set("make",    make);
@@ -162,13 +172,14 @@ function SearchContent() {
   }
 
   function clearAll() {
+    setNameInput(""); setQ("");
     setMake(""); setModel(""); setYear("");
     setService(""); setCity(""); setWalkInOnly(false); setMinRating("");
     router.push("/rechercher");
   }
 
-  const hasFilters   = !!(make || model || year || service || city || walkInOnly || minRating);
-  const activeCount  = [make, model, year, service, city, walkInOnly ? "x" : "", minRating].filter(Boolean).length;
+  const hasFilters   = !!(q || make || model || year || service || city || walkInOnly || minRating);
+  const activeCount  = [q, make, model, year, service, city, walkInOnly ? "x" : "", minRating].filter(Boolean).length;
 
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
@@ -177,6 +188,27 @@ function SearchContent() {
       {/* ── SEARCH BAR ─────────────────────────────────────────────────── */}
       <div className="bg-white" style={{ borderBottom: "1px solid #E2E8F0", boxShadow: "0 1px 4px rgba(15,23,42,0.05)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <form onSubmit={submitName} className="flex flex-wrap gap-2 items-center mb-2">
+            <div className="relative w-full sm:w-64">
+              <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="#94a3b8">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder={s.byName}
+                className="w-full rounded-xl pl-9 pr-3 py-2 text-sm font-semibold border focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+                style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
+              />
+            </div>
+            <button type="submit"
+              className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all flex-shrink-0"
+              style={{ background: "#0b1f3a" }}>
+              {s.searchBtn}
+            </button>
+          </form>
+
           <div className="flex flex-wrap gap-2 items-center">
 
             {/* Vehicle selects — hidden on mobile (use drawer instead) */}

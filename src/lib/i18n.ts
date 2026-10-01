@@ -232,6 +232,7 @@ export const translations = {
 
     // ── Recherche ─────────────────────────────────────────────────────────
     search: {
+      byName:          "Nom du garage",
       year:            "Année",
       make:            "Marque",
       model:           "Modèle",
@@ -766,6 +767,7 @@ export const translations = {
 
     // ── Search ────────────────────────────────────────────────────────────
     search: {
+      byName:          "Garage name",
       year:            "Year",
       make:            "Make",
       model:           "Model",
