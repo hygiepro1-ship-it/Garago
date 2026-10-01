@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest) {
     where: { parentId: null },
     select: {
       id: true, name: true, slug: true, city: true, province: true,
-      subscriptionStatus: true, verificationStatus: true, createdAt: true,
+      subscriptionStatus: true, verificationStatus: true, claimStatus: true, createdAt: true,
       isAmbassador: true,
       owner: { select: { name: true, email: true } },
       reviews: { select: { rating: true } },
@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest) {
       : null;
     return {
       id: g.id, name: g.name, slug: g.slug, city: g.city, province: g.province,
-      subscriptionStatus: g.subscriptionStatus, verificationStatus: g.verificationStatus,
+      subscriptionStatus: g.subscriptionStatus, verificationStatus: g.verificationStatus, claimStatus: g.claimStatus,
       createdAt: g.createdAt, isAmbassador: g.isAmbassador,
       owner: g.owner,
       appointmentCount: g._count.appointments,

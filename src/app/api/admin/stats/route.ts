@@ -25,7 +25,8 @@ export async function GET(_req: NextRequest) {
 
   const [
     totalDrivers, newDrivers30d,
-    totalGarages, newGarages30d,
+    registeredGarages, newRegisteredGarages30d,
+    unclaimedFiches, pendingClaims,
     garagesByStatus, garagesByVerification,
     activeMonthly, activeAnnual, activeBranches,
     trialCohort, convertedCohort,
@@ -42,10 +43,16 @@ export async function GET(_req: NextRequest) {
     prisma.user.count({ where: { role: "DRIVER" } }),
     prisma.user.count({ where: { role: "DRIVER", createdAt: { gte: d30 } } }),
 
-    prisma.garage.count({ where: { parentId: null } }),
-    prisma.garage.count({ where: { parentId: null, createdAt: { gte: d30 } } }),
+    // "Inscrits" = compte réellement activé (claimStatus "activee") — exclut les
+    // fiches pré-créées jamais réclamées ("non_reclamee") et celles en cours de
+    // réclamation ("en_attente"), qui n'ont pas de compte derrière.
+    prisma.garage.count({ where: { parentId: null, claimStatus: "activee" } }),
+    prisma.garage.count({ where: { parentId: null, claimStatus: "activee", createdAt: { gte: d30 } } }),
 
-    prisma.garage.groupBy({ by: ["subscriptionStatus"], where: { parentId: null }, _count: true }),
+    prisma.garage.count({ where: { parentId: null, claimStatus: "non_reclamee" } }),
+    prisma.garage.count({ where: { parentId: null, claimStatus: "en_attente" } }),
+
+    prisma.garage.groupBy({ by: ["subscriptionStatus"], where: { parentId: null, claimStatus: "activee" }, _count: true }),
     prisma.garage.groupBy({ by: ["verificationStatus"], where: { parentId: null }, _count: true }),
 
     prisma.garage.count({ where: { parentId: null, subscriptionStatus: "ACTIVE", stripePriceId: process.env.STRIPE_PRICE_ID } }),
@@ -110,7 +117,7 @@ export async function GET(_req: NextRequest) {
 
   const visitors30d = visitorGroups30d.length;
   const visitors7d  = visitorGroups7d.length;
-  const newSignups30d = newDrivers30d + newGarages30d;
+  const newSignups30d = newDrivers30d + newRegisteredGarages30d;
   const visitorConversionRate = visitors30d > 0 ? (newSignups30d / visitors30d) * 100 : null;
   const trialConversionRate = trialCohort > 0 ? (convertedCohort / trialCohort) * 100 : null;
 
@@ -119,8 +126,10 @@ export async function GET(_req: NextRequest) {
       totalDrivers, newDrivers30d,
     },
     garages: {
-      total: totalGarages,
-      new30d: newGarages30d,
+      total: registeredGarages,
+      new30d: newRegisteredGarages30d,
+      unclaimedFiches,
+      pendingClaims,
       byStatus: groupToMap(garagesByStatus, "subscriptionStatus"),
       byVerification: groupToMap(garagesByVerification, "verificationStatus"),
       noServices: garagesNoServices,

@@ -27,6 +27,7 @@ interface AdminStats {
   users: { totalDrivers: number; newDrivers30d: number };
   garages: {
     total: number; new30d: number;
+    unclaimedFiches: number; pendingClaims: number;
     byStatus: Record<string, number>; byVerification: Record<string, number>;
     noServices: number; noReviews: number;
     byCity: { city: string; count: number }[];
@@ -45,8 +46,8 @@ interface AdminStats {
 
 interface AdminGarage {
   id: string; name: string; slug: string; city: string | null; province: string | null;
-  subscriptionStatus: string; verificationStatus: string; createdAt: string; isAmbassador: boolean;
-  owner: { name: string | null; email: string | null };
+  subscriptionStatus: string; verificationStatus: string; claimStatus: string; createdAt: string; isAmbassador: boolean;
+  owner: { name: string | null; email: string | null } | null;
   appointmentCount: number; reviewCount: number; serviceCount: number; branchCount: number;
   avgRating: number | null;
 }
@@ -602,9 +603,10 @@ export default function AdminDashboard() {
       {tab === "apercu" && stats && (
         <div className="space-y-6">
           {/* KPI principaux */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <StatCard label="Conducteurs inscrits" value={stats.users.totalDrivers} sub={`+${stats.users.newDrivers30d} (30j)`} />
             <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`} />
+            <StatCard label="Fiches non réclamées" value={stats.garages.unclaimedFiches} sub={stats.garages.pendingClaims > 0 ? `${stats.garages.pendingClaims} en cours de réclamation` : "Pas de compte — fiches publiques seulement"} />
             <StatCard label="Visiteurs (30j)" value={stats.traffic.visitors30d} sub={`${stats.traffic.visitors7d} cette semaine`} />
             <StatCard label="Revenu récurrent estimé" value={`${stats.revenue.mrr.toLocaleString("fr-CA", { minimumFractionDigits: 0 })} $/mois`} sub="MRR" />
           </div>
@@ -798,6 +800,8 @@ export default function AdminDashboard() {
               <option value="ACTIVE">Actif</option>
               <option value="PAST_DUE">Paiement échoué</option>
               <option value="EXPIRED">Expiré</option>
+              <option value="NON_RECLAMEE">Fiches non réclamées</option>
+              <option value="EN_ATTENTE">En cours de réclamation</option>
             </select>
           </div>
 
@@ -813,8 +817,17 @@ export default function AdminDashboard() {
               PENDING:  { label: "En attente", color: "#92400e", bg: "#fef3c7" },
               REJECTED: { label: "Refusé",     color: "#b91c1c", bg: "#fef2f2" },
             };
+            const claimMeta: Record<string, { label: string; color: string; bg: string }> = {
+              non_reclamee: { label: "Fiche non réclamée",     color: "#92400e", bg: "#fef3c7" },
+              en_attente:   { label: "Réclamation en cours",   color: "#9a3412", bg: "#fff7ed" },
+            };
             const filtered = allGarages
-              .filter(g => garageFilter === "ALL" || g.subscriptionStatus === garageFilter)
+              .filter(g => {
+                if (garageFilter === "ALL") return true;
+                if (garageFilter === "NON_RECLAMEE") return g.claimStatus === "non_reclamee";
+                if (garageFilter === "EN_ATTENTE") return g.claimStatus === "en_attente";
+                return g.subscriptionStatus === garageFilter;
+              })
               .filter(g => !garageSearch || `${g.name} ${g.city}`.toLowerCase().includes(garageSearch.toLowerCase()));
 
             return (
@@ -824,17 +837,24 @@ export default function AdminDashboard() {
                   {filtered.map(g => {
                     const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
                     const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
+                    const cm = claimMeta[g.claimStatus];
                     return (
                       <div key={g.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <Link href={`/garage/${g.slug}`} target="_blank" className="min-w-0">
                             <p className="font-bold text-gray-900 truncate">{g.name}{g.isAmbassador && " ★"}</p>
-                            <p className="text-xs text-gray-400 truncate">{g.city} · {g.owner.email}</p>
+                            <p className="text-xs text-gray-400 truncate">{g.city} · {g.owner?.email ?? "—"}</p>
                           </Link>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mb-2">
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                          {cm ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: cm.bg, color: cm.color }}>{cm.label}</span>
+                          ) : (
+                            <>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <span>{g.avgRating ? `${g.avgRating}/5` : "—"} ({g.reviewCount} avis) · {g.appointmentCount} RDV</span>
@@ -843,7 +863,7 @@ export default function AdminDashboard() {
                       </div>
                     );
                   })}
-                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun résultat pour ce filtre.</p>}
                 </div>
 
                 {/* Desktop — tableau */}
@@ -865,20 +885,25 @@ export default function AdminDashboard() {
                         {filtered.map(g => {
                           const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
                           const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
+                          const cm = claimMeta[g.claimStatus];
                           return (
                             <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50">
                               <td className="px-4 py-3">
                                 <Link href={`/garage/${g.slug}`} target="_blank" className="font-semibold text-gray-900 hover:text-orange-500">
                                   {g.name}{g.isAmbassador && " ★"}
                                 </Link>
-                                <p className="text-xs text-gray-400">{g.owner.email}</p>
+                                <p className="text-xs text-gray-400">{g.owner?.email ?? "—"}</p>
                               </td>
                               <td className="px-4 py-3 text-gray-600">{g.city}</td>
                               <td className="px-4 py-3">
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                                {cm ? (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: cm.bg, color: cm.color }}>{cm.label}</span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                                )}
                               </td>
                               <td className="px-4 py-3">
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>
+                                {!cm && <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: vm.bg, color: vm.color }}>{vm.label}</span>}
                               </td>
                               <td className="px-4 py-3 text-gray-600">{g.avgRating ? `${g.avgRating}/5` : "—"} <span className="text-gray-300">({g.reviewCount})</span></td>
                               <td className="px-4 py-3 text-gray-600">{g.appointmentCount}</td>
@@ -889,7 +914,7 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
-                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun garage inscrit.</p>}
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun résultat pour ce filtre.</p>}
                 </div>
               </>
             );
