@@ -88,13 +88,15 @@ const FALLBACK_META = { label: "", color: "#374151", bg: "#f9fafb", border: "#e5
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, onClick }: { label: string; value: string | number; sub?: string; onClick?: () => void }) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+    <Tag onClick={onClick}
+      className={`bg-white rounded-2xl border border-gray-200 shadow-sm p-5 text-left w-full ${onClick ? "hover:border-orange-300 hover:shadow-md transition-all cursor-pointer" : ""}`}>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
       <p className="text-2xl font-black text-gray-900">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
-    </div>
+    </Tag>
   );
 }
 
@@ -605,8 +607,11 @@ export default function AdminDashboard() {
           {/* KPI principaux */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <StatCard label="Conducteurs inscrits" value={stats.users.totalDrivers} sub={`+${stats.users.newDrivers30d} (30j)`} />
-            <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`} />
-            <StatCard label="Fiches non réclamées" value={stats.garages.unclaimedFiches} sub={stats.garages.pendingClaims > 0 ? `${stats.garages.pendingClaims} en cours de réclamation` : "Pas de compte — fiches publiques seulement"} />
+            <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`}
+              onClick={() => { setGarageFilter("REGISTERED"); setTab("garages"); }} />
+            <StatCard label="Fiches non actives" value={stats.garages.unclaimedFiches + stats.garages.pendingClaims}
+              sub={stats.garages.pendingClaims > 0 ? `dont ${stats.garages.pendingClaims} en cours de réclamation` : "Pas de compte — fiches publiques seulement"}
+              onClick={() => { setGarageFilter("NON_ACTIVE"); setTab("garages"); }} />
             <StatCard label="Visiteurs (30j)" value={stats.traffic.visitors30d} sub={`${stats.traffic.visitors7d} cette semaine`} />
             <StatCard label="Revenu récurrent estimé" value={`${stats.revenue.mrr.toLocaleString("fr-CA", { minimumFractionDigits: 0 })} $/mois`} sub="MRR" />
           </div>
@@ -796,10 +801,12 @@ export default function AdminDashboard() {
             <select value={garageFilter} onChange={(e) => setGarageFilter(e.target.value)}
               className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">
               <option value="ALL">Tous les statuts</option>
+              <option value="REGISTERED">Garages inscrits (fiches actives)</option>
               <option value="TRIAL">Essai</option>
               <option value="ACTIVE">Actif</option>
               <option value="PAST_DUE">Paiement échoué</option>
               <option value="EXPIRED">Expiré</option>
+              <option value="NON_ACTIVE">Fiches non actives (toutes)</option>
               <option value="NON_RECLAMEE">Fiches non réclamées</option>
               <option value="EN_ATTENTE">En cours de réclamation</option>
             </select>
@@ -824,6 +831,8 @@ export default function AdminDashboard() {
             const filtered = allGarages
               .filter(g => {
                 if (garageFilter === "ALL") return true;
+                if (garageFilter === "REGISTERED") return g.claimStatus === "activee";
+                if (garageFilter === "NON_ACTIVE") return g.claimStatus !== "activee";
                 if (garageFilter === "NON_RECLAMEE") return g.claimStatus === "non_reclamee";
                 if (garageFilter === "EN_ATTENTE") return g.claimStatus === "en_attente";
                 return g.subscriptionStatus === garageFilter;

@@ -36,13 +36,15 @@ export default function UnclaimedGarageView({ garage }: Props) {
           </div>
           <div>
             <h1 className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{garage.name}</h1>
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${garage.address}, ${garage.city}, ${garage.province} ${garage.postalCode}`)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="text-sm text-gray-500 mt-1 flex items-center gap-1.5 hover:text-orange-500 hover:underline w-fit">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
               {garage.address}, {garage.city}, {garage.province} {garage.postalCode}
-            </p>
+            </a>
           </div>
         </div>
 
@@ -121,7 +123,7 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     const res = await fetch(`/api/garages/${slug}/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, role, phone, email, neq: neq || undefined }),
+      body: JSON.stringify({ name, role, phone, email, neq }),
     });
     setSubmitting(false);
     if (res.ok) {
@@ -174,8 +176,10 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
           <input className={inputCls} required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vous@exemple.com" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">NEQ <span className="font-normal text-gray-400">(optionnel)</span></label>
-          <input className={inputCls} value={neq} onChange={e => setNeq(e.target.value)} placeholder="10 chiffres" maxLength={10} />
+          <label className="block text-xs font-semibold text-gray-500 mb-1">NEQ (Numéro d'entreprise du Québec) *</label>
+          <input className={inputCls} required value={neq} onChange={e => setNeq(e.target.value)} placeholder="10 chiffres" maxLength={10}
+            pattern="\d{10}" title="10 chiffres" />
+          <p className="text-xs text-gray-400 mt-1">Exigé pour confirmer que vous êtes bien l'entreprise titulaire de ce garage.</p>
         </div>
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
         <button type="submit" disabled={submitting}

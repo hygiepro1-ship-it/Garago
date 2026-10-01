@@ -15,15 +15,17 @@ export async function POST(
   const role  = String(body.role ?? "").trim();
   const phone = String(body.phone ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
-  const neq   = body.neq ? String(body.neq).replace(/\D/g, "") : null;
+  const neq   = String(body.neq ?? "").replace(/\D/g, "");
 
-  if (!name || !role || !phone || !email) {
+  if (!name || !role || !phone || !email || !neq) {
     return NextResponse.json({ error: "Champs obligatoires manquants." }, { status: 400 });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
   }
-  if (neq && !/^\d{10}$/.test(neq)) {
+  // NEQ obligatoire pour activer une fiche — même exigence que pour l'inscription
+  // d'un nouveau garage, vérifié manuellement par un admin dans les deux cas.
+  if (!/^\d{10}$/.test(neq)) {
     return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis." }, { status: 400 });
   }
 
