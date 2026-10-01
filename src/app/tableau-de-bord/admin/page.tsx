@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "apercu" | "garages" | "alertes" | "descriptions" | "verification" | "reclamations" | "suggestions" | "maintenance";
+type Tab = "apercu" | "garages" | "conducteurs" | "alertes" | "descriptions" | "verification" | "reclamations" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -68,6 +68,12 @@ interface PendingClaimRequest {
   id: string; name: string; role: string; phone: string; email: string; neq: string | null;
   createdAt: string;
   garage: { name: string; slug: string; city: string | null; address: string; phone: string };
+}
+
+interface Driver {
+  id: string; name: string | null; email: string | null; phone: string | null; createdAt: string;
+  marketingConsent: boolean;
+  appointmentCount: number; favoriteCount: number; vehicleCount: number;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -405,6 +411,10 @@ export default function AdminDashboard() {
   const [garageFilter, setGarageFilter] = useState<string>("ALL");
   const [garageSearch, setGarageSearch] = useState("");
 
+  // ── Conducteurs ────────────────────────────────────────────────────────────
+  const [drivers,       setDrivers]       = useState<Driver[]>([]);
+  const [driverSearch,  setDriverSearch]  = useState("");
+
   // ── Mode maintenance ──────────────────────────────────────────────────────
   const [maintMode,    setMaintMode]    = useState(false);
   const [maintMessage, setMaintMessage] = useState("");
@@ -480,6 +490,11 @@ export default function AdminDashboard() {
     if (r.ok) setAllGarages(await r.json());
   }, []);
 
+  const loadDrivers = useCallback(async () => {
+    const r = await fetch("/api/admin/drivers");
+    if (r.ok) setDrivers(await r.json());
+  }, []);
+
   const loadAlerts = useCallback(async () => {
     const r = await fetch("/api/admin/alerts");
     if (r.ok) setAlerts(await r.json());
@@ -488,8 +503,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadStats(), loadAllGarages(), loadDescriptions(), loadVerifications(), loadClaimRequests(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
-  }, [status, loadStats, loadAllGarages, loadDescriptions, loadVerifications, loadClaimRequests, loadSuggestions, loadAlerts, loadMaintenance]);
+    Promise.all([loadStats(), loadAllGarages(), loadDrivers(), loadDescriptions(), loadVerifications(), loadClaimRequests(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
+  }, [status, loadStats, loadAllGarages, loadDrivers, loadDescriptions, loadVerifications, loadClaimRequests, loadSuggestions, loadAlerts, loadMaintenance]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {
@@ -581,6 +596,7 @@ export default function AdminDashboard() {
         {([
           { id: "apercu",       label: "Vue d'ensemble",  icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>, count: 0,                                                    urgent: false },
           { id: "garages",      label: "Garages",         icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>, count: allGarages.length,                                     urgent: false },
+          { id: "conducteurs",  label: "Conducteurs",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, count: drivers.length,                                          urgent: false },
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
           { id: "verification", label: "Vérifications",   icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>, count: verifications.length,                                  urgent: true  },
@@ -606,7 +622,8 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           {/* KPI principaux */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatCard label="Conducteurs inscrits" value={stats.users.totalDrivers} sub={`+${stats.users.newDrivers30d} (30j)`} />
+            <StatCard label="Conducteurs inscrits" value={stats.users.totalDrivers} sub={`+${stats.users.newDrivers30d} (30j)`}
+              onClick={() => setTab("conducteurs")} />
             <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`}
               onClick={() => { setGarageFilter("REGISTERED"); setTab("garages"); }} />
             <StatCard label="Fiches non actives" value={stats.garages.unclaimedFiches + stats.garages.pendingClaims}
@@ -920,6 +937,80 @@ export default function AdminDashboard() {
                             </tr>
                           );
                         })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun résultat pour ce filtre.</p>}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ── CONDUCTEURS ── */}
+      {tab === "conducteurs" && (
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <input
+              type="text" placeholder="Rechercher un conducteur, un courriel…"
+              value={driverSearch} onChange={(e) => setDriverSearch(e.target.value)}
+              className="flex-1 min-w-[200px] border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-orange-400"
+            />
+          </div>
+
+          {(() => {
+            const filtered = drivers.filter(d =>
+              !driverSearch || `${d.name ?? ""} ${d.email ?? ""}`.toLowerCase().includes(driverSearch.toLowerCase())
+            );
+
+            return (
+              <>
+                {/* Mobile — cartes empilées */}
+                <div className="sm:hidden space-y-3">
+                  {filtered.map(d => (
+                    <div key={d.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                      <p className="font-bold text-gray-900 truncate">{d.name ?? "—"}</p>
+                      <a href={`mailto:${d.email}`} className="text-xs text-orange-500 hover:underline break-all">{d.email}</a>
+                      {d.phone && <p className="text-xs text-gray-400">{d.phone}</p>}
+                      <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                        <span>{d.appointmentCount} RDV · {d.favoriteCount} favoris · {d.vehicleCount} véhicule(s)</span>
+                        <span>{new Date(d.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun résultat pour ce filtre.</p>}
+                </div>
+
+                {/* Desktop — tableau */}
+                <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-left text-xs text-gray-400 uppercase tracking-wide">
+                          <th className="px-4 py-3 font-semibold">Nom</th>
+                          <th className="px-4 py-3 font-semibold">Courriel</th>
+                          <th className="px-4 py-3 font-semibold">Téléphone</th>
+                          <th className="px-4 py-3 font-semibold">RDV</th>
+                          <th className="px-4 py-3 font-semibold">Favoris</th>
+                          <th className="px-4 py-3 font-semibold">Véhicules</th>
+                          <th className="px-4 py-3 font-semibold">Inscrit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map(d => (
+                          <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50">
+                            <td className="px-4 py-3 font-semibold text-gray-900">{d.name ?? "—"}</td>
+                            <td className="px-4 py-3">
+                              <a href={`mailto:${d.email}`} className="text-orange-500 hover:underline">{d.email}</a>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">{d.phone ?? "—"}</td>
+                            <td className="px-4 py-3 text-gray-600">{d.appointmentCount}</td>
+                            <td className="px-4 py-3 text-gray-600">{d.favoriteCount}</td>
+                            <td className="px-4 py-3 text-gray-600">{d.vehicleCount}</td>
+                            <td className="px-4 py-3 text-gray-400 text-xs">{new Date(d.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
