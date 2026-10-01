@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 
 /**
@@ -9,6 +10,11 @@ import prisma from "@/lib/prisma";
  * désactiver la maintenance. Les webhooks Stripe, l'authentification et les
  * tâches planifiées (cron) passent toujours par /api et ne sont donc jamais
  * bloqués.
+ *
+ * Un administrateur connecté voit le site normalement même en maintenance —
+ * c'est justement pendant qu'on travaille dessus (création, correction,
+ * ajustements) qu'il faut pouvoir naviguer partout pour tester, pendant que
+ * les visiteurs voient toujours la page de maintenance.
  *
  * Le résultat est mis en cache en mémoire quelques secondes pour éviter une
  * requête base de données à chaque navigation — un délai de quelques
@@ -70,6 +76,11 @@ export async function proxy(req: NextRequest) {
 
   const state = await getMaintenanceState();
   if (!state.active) return NextResponse.next();
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if ((token as any)?.role === "ADMIN") {
+    return NextResponse.next();
+  }
 
   const url = req.nextUrl.clone();
   url.pathname = "/maintenance";
