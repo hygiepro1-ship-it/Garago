@@ -32,6 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       OR: [
         { parentId: null, verificationStatus: "APPROVED", OR: subOr },
         { parent: { verificationStatus: "APPROVED", OR: subOr } },
+        { claimStatus: "non_reclamee", hiddenByReport: false },
       ],
     },
     select: { slug: true, updatedAt: true },

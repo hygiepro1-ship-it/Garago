@@ -866,3 +866,83 @@ export async function sendGarageVerificationDecision(params: GarageVerificationD
 
   await send(params.ownerEmail, subject, body);
 }
+
+// ─── Email: Demande de réclamation de fiche ("Doctolib") ───────────────────────
+
+export interface ClaimRequestNotificationParams {
+  garageId:    string;
+  garageName:  string;
+  garageCity:  string;
+  requesterName:  string;
+  requesterRole:  string;
+  requesterPhone: string;
+  requesterEmail: string;
+  neq?: string | null;
+}
+
+export async function sendClaimRequestNotification(params: ClaimRequestNotificationParams) {
+  if (!canSend()) return;
+
+  const adminUrl = `${BASE_URL}/tableau-de-bord/admin`;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Demande de réclamation de fiche</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Quelqu'un affirme être propriétaire d'une fiche garage pré-créée et demande à l'activer.</p>
+
+    ${infoCard(`
+      ${row("Garage", `${esc(params.garageName)} — ${esc(params.garageCity)}`)}
+      ${row("Nom du demandeur", esc(params.requesterName))}
+      ${row("Rôle", esc(params.requesterRole))}
+      ${row("Téléphone", esc(params.requesterPhone))}
+      ${row("Courriel", esc(params.requesterEmail))}
+      ${row("NEQ", params.neq ? `<span style="font-family:monospace">${esc(params.neq)}</span>` : "Non fourni", true)}
+    `)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Vérifiez l'identité du demandeur (NEQ au Registre des entreprises, pièce justificative demandée par courriel), puis approuvez ou refusez depuis le tableau de bord admin :</p>
+    ${primaryBtn(adminUrl, "Ouvrir le tableau de bord admin")}
+  `;
+
+  await send(ADMIN_EMAIL, `Réclamation de fiche — ${params.garageName}`, body);
+}
+
+export interface ClaimDecisionParams {
+  requesterEmail: string;
+  requesterName:  string;
+  garageName:     string;
+  approved:       boolean;
+  setPasswordUrl?: string;
+  resetCode?:      string;
+}
+
+export async function sendClaimDecision(params: ClaimDecisionParams) {
+  if (!canSend()) return;
+
+  const body = params.approved
+    ? `
+      ${iconBadge("check")}
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">Votre fiche est activée</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour ${esc(params.requesterName)},<br><br>
+        Votre demande pour <strong>${esc(params.garageName)}</strong> a été approuvée. Votre essai gratuit de 30 jours commence maintenant.
+      </p>
+      ${params.resetCode ? `
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Pour créer votre mot de passe, utilisez le code ci-dessous sur la page qui s'ouvrira :<br>
+        <strong style="font-size:20px;letter-spacing:2px;color:#0b1f3a">${esc(params.resetCode)}</strong>
+      </p>` : ""}
+      ${params.setPasswordUrl ? primaryBtn(params.setPasswordUrl, "Créer mon mot de passe") : ""}`
+    : `
+      ${iconBadge("warning")}
+      <h2 style="margin:0 0 12px;font-size:20px;font-weight:800;color:#0b1f3a">Demande refusée</h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#374151">
+        Bonjour ${esc(params.requesterName)},<br><br>
+        Nous n'avons pas pu confirmer que vous êtes le propriétaire de <strong>${esc(params.garageName)}</strong> à partir des informations fournies.<br><br>
+        Pour résoudre la situation, contactez notre équipe à <a href="mailto:${ADMIN_EMAIL}" style="color:#f97316">${ADMIN_EMAIL}</a>.
+      </p>`;
+
+  const subject = params.approved
+    ? `Votre fiche ${params.garageName} est activée — Garago`
+    : `Demande de réclamation refusée — Garago`;
+
+  await send(params.requesterEmail, subject, body);
+}

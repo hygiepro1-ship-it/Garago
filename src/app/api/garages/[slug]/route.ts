@@ -34,6 +34,12 @@ export async function GET(
       return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
     }
 
+    // Fiche non activée masquée suite à une demande de retrait — en attente
+    // de traitement par un admin (voir POST .../report).
+    if (garage.hiddenByReport) {
+      return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
+    }
+
     // Un garage non vérifié (NEQ en attente/refusé) n'est visible que pour son
     // propriétaire (aperçu) ou un admin — pas au public, même par lien direct.
     if (garage.verificationStatus !== "APPROVED") {

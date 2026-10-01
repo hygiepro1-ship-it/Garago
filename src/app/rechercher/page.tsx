@@ -31,6 +31,8 @@ interface SearchGarage {
   id?:          string;
   distanceKm?:  number | null;
   nextAvailability?: { date: string; slots: string[] } | null;
+  claimStatus?: string;
+  phone?:       string;
 }
 
 function SearchContent() {

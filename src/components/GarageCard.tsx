@@ -15,6 +15,8 @@ interface GarageCardProps {
     services: Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
     brands: Array<{ brand: string; accepts: boolean }>;
     acceptsWalkIn: boolean; appointmentOnly: boolean;
+    claimStatus?: string;
+    phone?: string;
   };
   highlightService?: string;
   distance?: string;
@@ -46,6 +48,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
   const slots           = nextAvailability
     ? nextAvailability.slots.map((s) => `${formatSlotDay(nextAvailability.date, lang, c.today, c.tomorrow)} ${s}`)
     : [];
+  const isUnclaimed = garage.claimStatus === "non_reclamee" || garage.claimStatus === "en_attente";
 
   return (
     <Link href={`/garage/${garage.slug}`} className="block group">
@@ -98,6 +101,12 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
           <div className="flex-1 px-4 py-4 min-w-0">
             <div className="flex flex-wrap items-start gap-2 mb-1.5">
               <h3 className="text-base font-black leading-tight" style={{ color: "#0b1f3a" }}>{garage.name}</h3>
+              {isUnclaimed && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold"
+                  style={{ fontSize: 10, background: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0" }}>
+                  Fiche non activée
+                </span>
+              )}
               {garage.isAmbassador && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold"
                   style={{ fontSize: 10, background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>
@@ -150,29 +159,46 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
             )}
           </div>
 
-          {/* DROITE — disponibilités */}
+          {/* DROITE — disponibilités, ou appel direct si la fiche n'est pas activée */}
           <div className="sm:w-48 px-4 py-3 sm:py-4 sm:border-l flex flex-col justify-between"
             style={{ borderColor: "#f1f5f9", background: "#fafcff" }}>
-            <div>
-              <p className="text-xs font-black mb-2" style={{ color: "#0b1f3a" }}>{c.nextSlots}</p>
-              {slots.length > 0 ? (
-                <div className="flex flex-wrap sm:flex-col gap-1.5">
-                  {slots.map((slot) => <div key={slot} className="slot-pill sm:w-full sm:text-center">{slot}</div>)}
+            {isUnclaimed ? (
+              <>
+                <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                  Ce garage ne prend pas encore de rendez-vous en ligne sur Garago.
+                </p>
+                {garage.phone && (
+                  <a href={`tel:${garage.phone}`} onClick={(e) => e.stopPropagation()}
+                    className="mt-3 sm:mt-4 w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90 block"
+                    style={{ background: "#0b1f3a" }}>
+                    📞 {garage.phone}
+                  </a>
+                )}
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-xs font-black mb-2" style={{ color: "#0b1f3a" }}>{c.nextSlots}</p>
+                  {slots.length > 0 ? (
+                    <div className="flex flex-wrap sm:flex-col gap-1.5">
+                      {slots.map((slot) => <div key={slot} className="slot-pill sm:w-full sm:text-center">{slot}</div>)}
+                    </div>
+                  ) : (
+                    <p className="text-xs" style={{ color: "#94a3b8" }}>{c.noSlots}</p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
+                    {garage.acceptsWalkIn && <span className="badge badge-green">{c.walkIn}</span>}
+                    {garage.appointmentOnly && <span className="badge badge-navy">{c.byAppt}</span>}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs" style={{ color: "#94a3b8" }}>{c.noSlots}</p>
-              )}
-              <div className="flex flex-wrap gap-1.5 mt-2 sm:mt-3">
-                {garage.acceptsWalkIn && <span className="badge badge-green">{c.walkIn}</span>}
-                {garage.appointmentOnly && <span className="badge badge-navy">{c.byAppt}</span>}
-              </div>
-            </div>
-            <div className="mt-3 sm:mt-4">
-              <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90"
-                style={{ background: "#f97316" }}>
-                {c.bookAppt}
-              </div>
-            </div>
+                <div className="mt-3 sm:mt-4">
+                  <div className="w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90"
+                    style={{ background: "#f97316" }}>
+                    {c.bookAppt}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

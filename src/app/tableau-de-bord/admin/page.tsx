@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "apercu" | "garages" | "alertes" | "descriptions" | "verification" | "suggestions" | "maintenance";
+type Tab = "apercu" | "garages" | "alertes" | "descriptions" | "verification" | "reclamations" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -61,6 +61,12 @@ interface PendingVerificationGarage {
 interface Suggestion {
   id: string; content: string; authorName: string | null; authorEmail: string | null;
   status: string; adminNote: string | null; createdAt: string;
+}
+
+interface PendingClaimRequest {
+  id: string; name: string; role: string; phone: string; email: string; neq: string | null;
+  createdAt: string;
+  garage: { name: string; slug: string; city: string | null; address: string; phone: string };
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -246,6 +252,70 @@ function VerificationCard({
   );
 }
 
+function ClaimRequestCard({
+  claim, actionId, onAction,
+}: {
+  claim: PendingClaimRequest;
+  actionId: string | null;
+  onAction: (id: string, action: "approve" | "reject") => void;
+}) {
+  const reqUrl = "https://www.registreentreprises.gouv.qc.ca/fr/consulter/rechercher/default.aspx";
+  const dateStr = new Date(claim.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h2 className="font-bold text-gray-900">{claim.garage.name}</h2>
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-semibold">En attente</span>
+          </div>
+          <p className="text-xs text-gray-400">{claim.garage.address}, {claim.garage.city} · {dateStr}</p>
+        </div>
+        <Link href={`/garage/${claim.garage.slug}`} target="_blank"
+          className="text-xs text-orange-500 hover:underline flex-shrink-0">
+          Voir la fiche ↗
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div className="rounded-xl p-4 bg-gray-50 border border-gray-200">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Demandeur</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {claim.name} · {claim.role === "proprietaire" ? "Propriétaire" : "Gérant"}<br />
+            {claim.phone}<br />{claim.email}
+          </p>
+        </div>
+        <div className="rounded-xl p-4 border-2 border-orange-200 bg-orange-50">
+          <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">NEQ</p>
+          {claim.neq ? (
+            <>
+              <p className="text-lg font-mono font-bold text-gray-900 mb-2 select-all">{claim.neq}</p>
+              <a href={reqUrl} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-orange-600 hover:underline font-semibold">
+                Rechercher au Registre des entreprises ↗
+              </a>
+            </>
+          ) : (
+            <p className="text-sm text-gray-500">Non fourni — vérifier la pièce justificative reçue par courriel.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={() => onAction(claim.id, "approve")} disabled={actionId === claim.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold text-white disabled:opacity-50 transition-opacity"
+          style={{ background: "#16a34a" }}>
+          ✓ Approuver
+        </button>
+        <button onClick={() => onAction(claim.id, "reject")} disabled={actionId === claim.id}
+          className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
+          ✗ Refuser
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SuggestionCard({
   suggestion, actionId, noteEdit, onNoteChange, onUpdate,
 }: {
@@ -318,6 +388,7 @@ export default function AdminDashboard() {
   const [tab,           setTab]           = useState<Tab>("apercu");
   const [garages,       setGarages]       = useState<PendingGarage[]>([]);
   const [verifications, setVerifications] = useState<PendingVerificationGarage[]>([]);
+  const [claimRequests, setClaimRequests] = useState<PendingClaimRequest[]>([]);
   const [suggestions,  setSuggestions]  = useState<Suggestion[]>([]);
   const [alerts,       setAlerts]       = useState<GarageAlert[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -391,6 +462,11 @@ export default function AdminDashboard() {
     if (r.ok) setVerifications(await r.json());
   }, []);
 
+  const loadClaimRequests = useCallback(async () => {
+    const r = await fetch("/api/admin/claims");
+    if (r.ok) setClaimRequests(await r.json());
+  }, []);
+
   const loadStats = useCallback(async () => {
     const r = await fetch("/api/admin/stats");
     if (r.ok) setStats(await r.json());
@@ -409,8 +485,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status !== "authenticated") return;
     setLoading(true);
-    Promise.all([loadStats(), loadAllGarages(), loadDescriptions(), loadVerifications(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
-  }, [status, loadStats, loadAllGarages, loadDescriptions, loadVerifications, loadSuggestions, loadAlerts, loadMaintenance]);
+    Promise.all([loadStats(), loadAllGarages(), loadDescriptions(), loadVerifications(), loadClaimRequests(), loadSuggestions(), loadAlerts(), loadMaintenance()]).finally(() => setLoading(false));
+  }, [status, loadStats, loadAllGarages, loadDescriptions, loadVerifications, loadClaimRequests, loadSuggestions, loadAlerts, loadMaintenance]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {
@@ -440,6 +516,17 @@ export default function AdminDashboard() {
       body: JSON.stringify({ action }),
     });
     await loadVerifications();
+    setActionId(null);
+  }
+
+  async function handleClaimDecision(claimId: string, action: "approve" | "reject") {
+    setActionId(claimId);
+    await fetch(`/api/admin/claims/${claimId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    await loadClaimRequests();
     setActionId(null);
   }
 
@@ -494,6 +581,7 @@ export default function AdminDashboard() {
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
           { id: "verification", label: "Vérifications",   icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>, count: verifications.length,                                  urgent: true  },
+          { id: "reclamations", label: "Réclamations",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>, count: claimRequests.length,                                  urgent: true  },
           { id: "suggestions",  label: "Suggestions",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/></svg>, count: suggestions.filter(s => s.status === "PENDING").length, urgent: false },
           { id: "maintenance",  label: "Maintenance",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>, count: maintMode ? 1 : 0,                                    urgent: true  },
         ] as const).map(t => (
@@ -900,6 +988,21 @@ export default function AdminDashboard() {
             </div>
           ) : verifications.map(g => (
             <VerificationCard key={g.id} garage={g} actionId={actionId} onAction={handleVerification} />
+          ))}
+        </div>
+      )}
+
+      {/* ── RÉCLAMATIONS ── */}
+      {tab === "reclamations" && (
+        <div className="space-y-4">
+          {claimRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
+              <svg className="w-10 h-10 mx-auto mb-3 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+              <p className="font-semibold text-gray-900">Aucune demande de réclamation en attente</p>
+              <p className="text-gray-400 text-sm mt-1">Tout est à jour.</p>
+            </div>
+          ) : claimRequests.map(c => (
+            <ClaimRequestCard key={c.id} claim={c} actionId={actionId} onAction={handleClaimDecision} />
           ))}
         </div>
       )}

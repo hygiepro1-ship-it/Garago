@@ -8,6 +8,7 @@ import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
 import StarRating from "@/components/StarRating";
 import BookingWidget from "@/components/BookingWidget";
+import UnclaimedGarageView from "@/components/UnclaimedGarageView";
 import ServiceIcon from "@/components/ServiceIcon";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
@@ -153,6 +154,12 @@ export default function GarageProfilePage() {
         <Link href="/rechercher" className="hover:underline font-semibold" style={{ color: "#f97316" }}>{g.backToSearch}</Link>
       </div>
     );
+  }
+
+  // Fiche pré-créée pas (ou pas encore) réclamée : informations d'entreprise
+  // publiques seulement, aucune réservation — voir UnclaimedGarageView.
+  if (garage.claimStatus === "non_reclamee" || garage.claimStatus === "en_attente") {
+    return <UnclaimedGarageView garage={garage} />;
   }
 
   const coverP = parseImgPos(garage.coverPosition);

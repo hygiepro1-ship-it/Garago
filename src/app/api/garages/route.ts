@@ -34,6 +34,9 @@ export async function GET(req: NextRequest) {
           OR: [
             { parentId: null, verificationStatus: "APPROVED", OR: subOr },
             { parent: { verificationStatus: "APPROVED", OR: subOr } },
+            // Fiches pré-créées ("Doctolib") : visibles dès l'import, sans
+            // abonnement — c'est tout le principe (être trouvé avant de s'abonner).
+            { claimStatus: "non_reclamee", hiddenByReport: false },
           ],
         },
       ],

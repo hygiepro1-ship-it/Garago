@@ -68,7 +68,7 @@ model User {
 
 model Garage {
   id          String  @id @default(cuid())
-  ownerId     String
+  ownerId     String?   // null tant que la fiche n'est pas réclamée (voir claimStatus)
   parentId    String?   // null = garage principal ; sinon succursale rattachée à ce garage
   name        String
   slug        String  @unique
@@ -103,6 +103,12 @@ model Garage {
   neq                String?                 // Numéro d'entreprise du Québec (10 chiffres), fourni à l'inscription
   verificationStatus String    @default("APPROVED") // APPROVED | PENDING | REJECTED — vérification manuelle du NEQ avant visibilité publique
 
+  // Fiches pré-créées (stratégie "Doctolib") : un garage importé à partir de
+  // données publiques existe avant même d'avoir un propriétaire. Non lié à
+  // verificationStatus, qui concerne le NEQ des garages déjà abonnés.
+  claimStatus     String    @default("activee") // non_reclamee | en_attente | activee
+  hiddenByReport  Boolean   @default(false)     // masquée immédiatement sur demande de retrait (fiche non activée)
+
   referralCode          String?  @unique
   referredByCode        String?
   referralRewardGranted Boolean  @default(false)
@@ -128,7 +134,7 @@ model Garage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner        User                 @relation(fields: [ownerId], references: [id])
+  owner        User?                @relation(fields: [ownerId], references: [id])
   parent       Garage?              @relation("GarageBranches", fields: [parentId], references: [id], onDelete: SetNull)
   branches     Garage[]             @relation("GarageBranches")
   services     GarageService[]
@@ -142,9 +148,62 @@ model Garage {
   blockedSlots BlockedSlot[]
   alerts       GarageAlert[]
   profileViews GarageProfileView[]
+  claimRequests ClaimRequest[]
+  reports       GarageReport[]
 
   @@index([ownerId])
   @@index([parentId])
+  @@index([claimStatus])
+}
+
+// ── Fiches pré-créées ("Doctolib") ──────────────────────────────────────────
+
+model ClaimRequest {
+  id          String   @id @default(cuid())
+  garageId    String
+  name        String
+  role        String   // "proprietaire" | "gerant"
+  phone       String
+  email       String
+  neq         String?
+  proofNote   String?  // référence à la pièce justificative (envoyée par courriel pour l'instant)
+  status      String   @default("en_attente") // en_attente | approuvee | refusee
+  reviewNote  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId])
+  @@index([status])
+}
+
+model GarageReport {
+  id            String   @id @default(cuid())
+  garageId      String
+  reason        String   // "usurpation" | "erreur" | "retrait" | "autre"
+  message       String?
+  reporterEmail String?
+  status        String   @default("nouveau") // nouveau | traite
+  createdAt     DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // ex. "claim_request_created", "claim_approved", "claim_rejected", "report_created", "fiche_imported"
+  targetType String   // "Garage" | "ClaimRequest" | "GarageReport"
+  targetId   String
+  actorEmail String?  // courriel de l'admin ou du demandeur, quand applicable
+  detail     String?  // texte libre, contexte additionnel
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }
 
 model GarageProfileView {
