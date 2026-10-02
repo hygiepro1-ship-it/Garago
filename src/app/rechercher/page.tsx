@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
@@ -82,7 +82,14 @@ function SearchContent() {
 
   const RESULTS_PER_PAGE = 20;
 
+  // La position GPS arrive après le premier chargement : deux requêtes se
+  // chevauchent (sans puis avec position). On ignore toute réponse qui n'est
+  // plus la plus récente, sinon la liste non triée pourrait écraser la liste
+  // triée par distance si elle répond en dernier.
+  const requestSeq = useRef(0);
+
   const fetchGarages = useCallback(async (targetPage: number) => {
+    const seq = ++requestSeq.current;
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
@@ -102,6 +109,7 @@ function SearchContent() {
     try {
       const res  = await fetch(`/api/garages?${params}`);
       const data = await res.json();
+      if (seq !== requestSeq.current) return;
       let results: SearchGarage[] = data.garages ?? [];
       if (minRating) results = results.filter((g) => g.avgRating >= parseFloat(minRating));
       setGarages((prev) => (targetPage === 1 ? results : [...prev, ...results]));
@@ -109,6 +117,7 @@ function SearchContent() {
       setHasMore(typeof data.pages === "number" ? targetPage < data.pages : false);
       setPage(targetPage);
     } catch {
+      if (seq !== requestSeq.current) return;
       if (targetPage === 1) { setGarages([]); setTotal(0); }
       setHasMore(false);
     }

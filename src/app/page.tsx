@@ -99,6 +99,11 @@ export default function HomePage() {
   const [location, setLocation] = useState("");
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
+  // Position GPS détectée automatiquement + le nom de ville qu'on en a déduit
+  // pour l'affichage. Tant que le champ garde ce nom, on cherche avec les
+  // coordonnées (tri par distance) plutôt qu'avec la ville comme filtre texte,
+  // qui exclurait les garages des arrondissements (Verdun, Anjou, Lachine…).
+  const [autoPos, setAutoPos] = useState<{ lat: number; lng: number; city: string } | null>(null);
 
   const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
   useEffect(() => {
@@ -120,7 +125,10 @@ export default function HomePage() {
           );
           const data = await res.json();
           const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality;
-          if (city) setLocation(city);
+          if (city) {
+            setLocation(city);
+            setAutoPos({ lat: pos.coords.latitude, lng: pos.coords.longitude, city });
+          }
         } catch { /* silently fail */ }
       },
       () => {},
@@ -159,7 +167,12 @@ export default function HomePage() {
     if (make)     p.set("make",  make);
     if (model)    p.set("model", model);
     if (year)     p.set("year",  year);
-    if (location) p.set("q",     location);
+    if (autoPos && location === autoPos.city) {
+      p.set("lat", String(autoPos.lat));
+      p.set("lng", String(autoPos.lng));
+    } else if (location) {
+      p.set("q", location);
+    }
     router.push(`/rechercher?${p.toString()}`);
   }
 

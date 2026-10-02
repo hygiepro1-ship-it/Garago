@@ -42,14 +42,14 @@ export async function GET(req: NextRequest) {
       ],
     };
 
-    if (city) where.city = { contains: city };
+    if (city) where.city = { contains: city, mode: "insensitive" };
     if (walkInOnly) where.acceptsWalkIn = true;
     if (q) {
       where.AND.push({
         OR: [
-          { name: { contains: q } },
-          { description: { contains: q } },
-          { city: { contains: q } },
+          { name: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { city: { contains: q, mode: "insensitive" } },
         ],
       });
     }
