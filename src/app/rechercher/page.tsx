@@ -304,9 +304,7 @@ function SearchContent() {
           {geoStatus === "error" && <p className="text-red-500">Position introuvable.</p>}
           {geoStatus === "ok" && userPos && (
             <p style={{ color: accuracy != null && accuracy > 150 ? "#b45309" : "#16A34A" }} className="font-semibold">
-              {accuracy != null
-                ? `Position : ± ${Math.round(accuracy)} m${accuracy > 150 ? " — approximative" : ""}`
-                : "Position définie"}
+              {accuracy != null && accuracy > 150 ? "Position approximative" : "Position détectée"}
             </p>
           )}
 
@@ -376,11 +374,8 @@ function SearchContent() {
                       <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#DCFCE7", color: "#16A34A" }}>✓</span>
                       <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{s.locationDetected}</span>
                     </div>
-                    {accuracy != null && (
-                      <p className="text-xs mb-3" style={{ color: accuracy > 150 ? "#b45309" : "#64748b" }}>
-                        Précision : ± {Math.round(accuracy)} m
-                        {accuracy > 150 && " — position approximative."}
-                      </p>
+                    {accuracy != null && accuracy > 150 && (
+                      <p className="text-xs mb-3" style={{ color: "#b45309" }}>Position approximative.</p>
                     )}
                     <div className="flex flex-wrap gap-3 mb-3">
                       <button onClick={requestLocation} className="text-xs font-bold underline" style={{ color: "#f97316" }}>Actualiser ma position</button>
