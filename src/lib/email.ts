@@ -152,7 +152,7 @@ function noteBlock(content: string): string {
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0">
       <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#15803d;
                 text-transform:uppercase;letter-spacing:0.05em">Note du garage</p>
-      <p style="margin:0;font-size:14px;color:#166534;line-height:1.6">${content}</p>
+      <p style="margin:0;font-size:14px;color:#166534;line-height:1.6">${esc(content)}</p>
     </div>`;
 }
 
@@ -204,11 +204,11 @@ function baseLayout(body: string): string {
 /** Renders the standard appointment details card. */
 function appointmentCard(appt: AppointmentDetails): string {
   return infoCard(`
-    ${appt.serviceName ? row("Service", appt.serviceName) : ""}
+    ${appt.serviceName ? row("Service", esc(appt.serviceName)) : ""}
     ${row("Date", fmtDateFr(appt.date))}
-    ${row("Heure", `${appt.startTime} – ${appt.endTime}`)}
-    ${row("Garage", appt.garageName)}
-    ${row("Adresse", appt.garageAddress, true)}
+    ${row("Heure", `${esc(appt.startTime)} – ${esc(appt.endTime)}`)}
+    ${row("Garage", esc(appt.garageName))}
+    ${row("Adresse", esc(appt.garageAddress), true)}
   `);
 }
 
@@ -287,7 +287,7 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
   const body = `
     ${iconBadge("check")}
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rendez-vous confirmé</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre rendez-vous est confirmé.</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre rendez-vous est confirmé.</p>
 
     ${appointmentCard(params)}
 
@@ -339,13 +339,13 @@ export async function sendGarageNewAppointment(params: GarageNewAppointmentParam
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un client vient de réserver via Garago. Voici les détails :</p>
 
     ${infoCard(`
-      ${row("Client", params.customerName)}
-      ${row("Téléphone", `<a href="tel:${params.customerPhone}" style="color:#f97316">${params.customerPhone}</a>`)}
-      ${params.customerEmail ? row("Courriel", params.customerEmail) : ""}
-      ${vehicle ? row("Véhicule", vehicle) : ""}
-      ${params.serviceName ? row("Service", params.serviceName) : ""}
+      ${row("Client", esc(params.customerName))}
+      ${row("Téléphone", `<a href="tel:${esc(params.customerPhone)}" style="color:#f97316">${esc(params.customerPhone)}</a>`)}
+      ${params.customerEmail ? row("Courriel", esc(params.customerEmail)) : ""}
+      ${vehicle ? row("Véhicule", esc(vehicle)) : ""}
+      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
       ${row("Date", fmtDateFr(params.date))}
-      ${row("Heure", `${params.startTime} – ${params.endTime}`, true)}
+      ${row("Heure", `${esc(params.startTime)} – ${esc(params.endTime)}`, true)}
     `)}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">Gérez ce rendez-vous depuis votre tableau de bord :</p>
@@ -376,14 +376,14 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
   const body = `
     ${iconBadge("check")}
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre véhicule est prêt</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, votre véhicule est prêt à être récupéré.</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre véhicule est prêt à être récupéré.</p>
 
     ${params.completionNote ? noteBlock(params.completionNote) : ""}
 
     ${infoCard(`
-      ${row("Garage", params.garageName)}
-      ${row("Adresse", params.garageAddress)}
-      ${row("Téléphone", `<a href="tel:${params.garagePhone}" style="color:#f97316">${params.garagePhone}</a>`, true)}
+      ${row("Garage", esc(params.garageName))}
+      ${row("Adresse", esc(params.garageAddress))}
+      ${row("Téléphone", `<a href="tel:${esc(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
     `)}
 
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>
@@ -407,7 +407,7 @@ export async function sendBookingReminder(params: BookingReminderParams) {
   const body = `
     ${iconBadge("calendar")}
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel — votre rendez-vous est demain</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, voici un rappel de votre rendez-vous prévu demain.</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, voici un rappel de votre rendez-vous prévu demain.</p>
 
     ${appointmentCard(params)}
 
@@ -500,17 +500,17 @@ export async function sendRescheduleNotification(params: RescheduleParams) {
   if (!canSend()) return;
 
   const rescheduledCard = infoCard(`
-    ${params.serviceName ? row("Service", params.serviceName) : ""}
+    ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
     ${row("Nouvelle date", fmtDateFr(params.date))}
-    ${row("Nouvel horaire", `${params.startTime} – ${params.endTime}`)}
-    ${row("Garage", params.garageName)}
-    ${row("Adresse", params.garageAddress, true)}
+    ${row("Nouvel horaire", `${esc(params.startTime)} – ${esc(params.endTime)}`)}
+    ${row("Garage", esc(params.garageName))}
+    ${row("Adresse", esc(params.garageAddress), true)}
   `);
 
   const body = `
     ${iconBadge("calendar")}
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre rendez-vous a été déplacé</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${params.customerName}, le garage a modifié l'horaire de votre rendez-vous.</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, le garage a modifié l'horaire de votre rendez-vous.</p>
 
     ${rescheduledCard}
 

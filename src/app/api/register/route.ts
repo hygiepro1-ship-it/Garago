@@ -107,8 +107,12 @@ export async function POST(req: NextRequest) {
 
     const hashed = await bcrypt.hash(password, 12);
 
+    // Rôle limité aux valeurs permises à l'auto-inscription — jamais le rôle brut
+    // envoyé par le client, qui pourrait sinon demander "ADMIN" directement.
+    const allowedRole = role === "GARAGE_OWNER" ? "GARAGE_OWNER" : "DRIVER";
+
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, role: role ?? "DRIVER", phone, marketingConsent: !!marketingConsent },
+      data: { name, email, password: hashed, role: allowedRole, phone, marketingConsent: !!marketingConsent },
     });
 
     // Code de vérification consommé — plus valide pour une prochaine inscription
