@@ -295,6 +295,37 @@ function SearchContent() {
         </div>
       </div>
 
+      {/* Barre de position — visible sur mobile ET bureau (le panneau latéral est caché sous 1024 px) */}
+      <div className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 pt-4">
+        <div className="bg-white rounded-xl px-4 py-3 text-xs" style={{ border: "1px solid #e2e8f0" }}>
+          {geoStatus === "loading" && <p style={{ color: "#64748b" }}>Localisation en cours…</p>}
+          {geoStatus === "denied" && <p className="text-red-500">{s.locDenied}</p>}
+          {geoStatus === "error" && <p className="text-red-500">Position introuvable.</p>}
+          {geoStatus === "ok" && userPos && (
+            <p style={{ color: accuracy != null && accuracy > 150 ? "#b45309" : "#16A34A" }} className="font-semibold">
+              {accuracy != null
+                ? `Position : ± ${Math.round(accuracy)} m${accuracy > 150 ? " — approximative (activez la localisation précise/GPS)" : ""}`
+                : "Position définie"}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-4 mt-1.5">
+            <button onClick={requestLocation} className="font-bold underline" style={{ color: "#f97316" }}>
+              {geoStatus === "ok" ? "Actualiser ma position" : s.locateMe}
+            </button>
+            <button onClick={() => setShowAddress((v) => !v)} className="font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
+          </div>
+          {showAddress && (
+            <div className="mt-2">
+              <AddressAutocomplete
+                placeholder="Votre adresse"
+                inputClass="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                onSelect={(r) => { setUserPos({ lat: r.lat, lng: r.lng }); setAccuracy(null); setGeoStatus("ok"); setSortByDist(true); setShowAddress(false); }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
 
