@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
 import { getModelsForMake, getYears } from "@/lib/vehicleData";
 import BrandLogo from "@/components/BrandLogo";
+import { getBestPosition } from "@/lib/geolocate";
 import { useLang } from "@/contexts/LanguageContext";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -116,24 +117,22 @@ export default function HomePage() {
   // Auto-géolocalisation à l'arrivée sur le site
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    getBestPosition()
+      .then(async (fix) => {
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${fix.lat}&lon=${fix.lng}&format=json`,
             { headers: { "Accept-Language": "fr" } }
           );
           const data = await res.json();
           const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality;
           if (city) {
             setLocation(city);
-            setAutoPos({ lat: pos.coords.latitude, lng: pos.coords.longitude, city });
+            setAutoPos({ lat: fix.lat, lng: fix.lng, city });
           }
         } catch { /* silently fail */ }
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      })
+      .catch(() => {});
   }, []);
 
   const VEHICLE_MAKES = BRANDS.map(b => b.name);
@@ -145,20 +144,18 @@ export default function HomePage() {
   const handleLocate = useCallback(() => {
     setLocError("");
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    getBestPosition()
+      .then((fix) => {
         setLocating(false);
         const p = new URLSearchParams();
-        p.set("lat", String(pos.coords.latitude));
-        p.set("lng", String(pos.coords.longitude));
+        p.set("lat", String(fix.lat));
+        p.set("lng", String(fix.lng));
         if (make)  p.set("make",  make);
         if (model) p.set("model", model);
         if (year)  p.set("year",  year);
         router.push(`/rechercher?${p.toString()}`);
-      },
-      () => { setLocating(false); setLocError("Localisation refusée."); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      })
+      .catch(() => { setLocating(false); setLocError("Localisation refusée."); });
   }, [make, model, year, router]);
 
   function handleSearch(e: React.FormEvent) {

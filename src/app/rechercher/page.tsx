@@ -8,6 +8,7 @@ import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
+import { getBestPosition } from "@/lib/geolocate";
 import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
@@ -134,26 +135,18 @@ function SearchContent() {
   // Demande automatique de position au chargement — pour tous les visiteurs
   useEffect(() => {
     if (hasInitPos || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGeoStatus("ok");
-        setSortByDist(true);
-      },
-      (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30_000 }
-    );
+    getBestPosition()
+      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setGeoStatus("ok"); setSortByDist(true); })
+      .catch((err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function requestLocation() {
     if (!navigator.geolocation) { setGeoStatus("error"); return; }
     setGeoStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoStatus("ok"); setSortByDist(true); },
-      (err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30_000 }
-    );
+    getBestPosition()
+      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setGeoStatus("ok"); setSortByDist(true); })
+      .catch((err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); });
   }
 
   function clearLocation() {
