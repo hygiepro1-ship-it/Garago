@@ -10,6 +10,7 @@ import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import LocationGuide from "@/components/LocationGuide";
 import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
@@ -319,6 +320,7 @@ function SearchContent() {
               {geoStatus === "ok" ? "Actualiser ma position" : s.locateMe}
             </button>
             <button onClick={() => setShowAddress((v) => !v)} className="font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
+            <LocationGuide />
           </div>
           {showAddress && (
             <div className="mt-2">
@@ -383,6 +385,7 @@ function SearchContent() {
                     <div className="flex flex-wrap gap-3 mb-3">
                       <button onClick={requestLocation} className="text-xs font-bold underline" style={{ color: "#f97316" }}>Actualiser ma position</button>
                       <button onClick={() => setShowAddress((v) => !v)} className="text-xs font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
+                      <LocationGuide className="text-xs" />
                     </div>
                     {showAddress && (
                       <div className="mb-3">
