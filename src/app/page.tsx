@@ -44,10 +44,8 @@ function StatsBar({ stats, labels }: {
   labels: { label: string; value?: string }[];
 }) {
   const items: { value: string; label: string }[] = [];
-  if (stats.garages)   items.push({ value: stats.garages,   label: labels[0].label });
-  if (stats.reviews)   items.push({ value: stats.reviews,   label: labels[1].label });
-  if (stats.avgRating) items.push({ value: stats.avgRating, label: labels[2].label });
-  if (items.length > 0) items.push({ value: labels[3].value!, label: labels[3].label });
+  if (stats.reviews)   items.push({ value: stats.reviews,   label: labels[0].label });
+  if (stats.avgRating) items.push({ value: stats.avgRating, label: labels[1].label });
 
   if (items.length === 0) return null;
   return (

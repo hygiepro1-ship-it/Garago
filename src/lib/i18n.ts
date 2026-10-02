@@ -491,10 +491,8 @@ export const translations = {
       popularItems:     ["Vidange d'huile", "Pneus d'hiver", "Freins", "Diagnostic"],
       popularIds:       ["oil", "tires-winter", "brakes", "electrical"],
       stats: [
-        { value: "—",       label: "garages partenaires" },
         { value: "—",       label: "avis vérifiés" },
         { value: "—",       label: "note moyenne" },
-        { value: "< 2 min", label: "pour réserver" },
       ],
       servicesTitle:    "Services les plus demandés",
       seeAll:           "Voir tous →",
@@ -1026,10 +1024,8 @@ export const translations = {
       popularItems:     ["Oil Change", "Winter Tires", "Brakes", "Diagnostics"],
       popularIds:       ["oil", "tires-winter", "brakes", "electrical"],
       stats: [
-        { value: "—",       label: "partner garages" },
         { value: "—",       label: "verified reviews" },
         { value: "—",       label: "average rating" },
-        { value: "< 2 min", label: "to book" },
       ],
       servicesTitle:    "Most requested services",
       seeAll:           "See all →",
