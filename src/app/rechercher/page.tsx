@@ -9,6 +9,7 @@ import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
@@ -78,6 +79,9 @@ function SearchContent() {
     hasInitPos ? "ok" : "idle"
   );
   const [sortByDist, setSortByDist] = useState(hasInitPos);
+  // Précision (en mètres) du dernier relevé GPS, null si position venue de l'URL ou saisie à la main
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [showAddress, setShowAddress] = useState(false);
 
   const selectedService = SERVICE_CATEGORIES.find((s) => s.id === service);
 
@@ -134,10 +138,12 @@ function SearchContent() {
 
   // Demande automatique de position au chargement — pour tous les visiteurs
   useEffect(() => {
-    if (hasInitPos || !navigator.geolocation) return;
+    if (!navigator.geolocation) return;
+    // Même si l'URL contient déjà une position (lien, retour arrière, accueil),
+    // on la rafraîchit : elle peut dater d'avant un déplacement.
     getBestPosition()
-      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setGeoStatus("ok"); setSortByDist(true); })
-      .catch((err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); });
+      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setAccuracy(fix.accuracy); setGeoStatus("ok"); setSortByDist(true); })
+      .catch((err) => { if (!hasInitPos) setGeoStatus(err.code === 1 ? "denied" : "error"); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -145,7 +151,7 @@ function SearchContent() {
     if (!navigator.geolocation) { setGeoStatus("error"); return; }
     setGeoStatus("loading");
     getBestPosition()
-      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setGeoStatus("ok"); setSortByDist(true); })
+      .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setAccuracy(fix.accuracy); setGeoStatus("ok"); setSortByDist(true); })
       .catch((err) => { setGeoStatus(err.code === 1 ? "denied" : "error"); });
   }
 
@@ -331,6 +337,25 @@ function SearchContent() {
                       <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#DCFCE7", color: "#16A34A" }}>✓</span>
                       <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{s.locationDetected}</span>
                     </div>
+                    {accuracy != null && (
+                      <p className="text-xs mb-3" style={{ color: accuracy > 150 ? "#b45309" : "#64748b" }}>
+                        Précision : ± {Math.round(accuracy)} m
+                        {accuracy > 150 && " — position approximative. Activez la localisation précise (GPS) de votre appareil, ou saisissez votre adresse."}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-3 mb-3">
+                      <button onClick={requestLocation} className="text-xs font-bold underline" style={{ color: "#f97316" }}>Actualiser ma position</button>
+                      <button onClick={() => setShowAddress((v) => !v)} className="text-xs font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
+                    </div>
+                    {showAddress && (
+                      <div className="mb-3">
+                        <AddressAutocomplete
+                          placeholder="Votre adresse"
+                          inputClass="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                          onSelect={(r) => { setUserPos({ lat: r.lat, lng: r.lng }); setAccuracy(null); setSortByDist(true); setShowAddress(false); }}
+                        />
+                      </div>
+                    )}
                     <label className="flex items-center gap-2 cursor-pointer mb-3">
                       <input type="checkbox" checked={sortByDist} onChange={(e) => setSortByDist(e.target.checked)}
                         className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
