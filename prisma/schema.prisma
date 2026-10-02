@@ -413,6 +413,7 @@ model EmailVerificationCode {
   email     String
   code      String
   verified  Boolean  @default(false)
+  attempts  Int      @default(0) // mauvais essais — code invalidé après 5 (anti brute-force)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -423,6 +424,7 @@ model PasswordResetCode {
   id        String   @id @default(cuid())
   email     String
   code      String
+  attempts  Int      @default(0) // mauvais essais — code invalidé après 5 (anti brute-force)
   expiresAt DateTime
   createdAt DateTime @default(now())
 

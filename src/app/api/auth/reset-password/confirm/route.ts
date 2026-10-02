@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
+// Un code à 6 chiffres n'a que 900 000 combinaisons — sans limite de tentatives,
+// il serait brute-forçable dans sa fenêtre de validité. On compte les essais
+// par adresse plutôt que par code : même un attaquant qui redemande un nouveau
+// code ne repart pas à zéro pendant que le précédent est toujours valide.
+const MAX_ATTEMPTS = 5;
+
 export async function POST(req: NextRequest) {
   try {
     const { email, code, newPassword } = await req.json();
@@ -15,11 +21,26 @@ export async function POST(req: NextRequest) {
     }
 
     const record = await prisma.passwordResetCode.findFirst({
-      where: { email, code },
+      where: { email, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "desc" },
     });
 
-    if (!record || record.expiresAt < new Date()) {
+    if (!record) {
+      return NextResponse.json({ error: "Code invalide ou expiré." }, { status: 400 });
+    }
+
+    if (record.attempts >= MAX_ATTEMPTS) {
+      return NextResponse.json(
+        { error: "Trop de tentatives. Demandez un nouveau code." },
+        { status: 429 }
+      );
+    }
+
+    if (record.code !== code) {
+      await prisma.passwordResetCode.update({
+        where: { id: record.id },
+        data: { attempts: { increment: 1 } },
+      });
       return NextResponse.json({ error: "Code invalide ou expiré." }, { status: 400 });
     }
 

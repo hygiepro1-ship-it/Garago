@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendDescriptionDecisionEmail } from "@/lib/email";
 
+// Échappe le texte avant de l'insérer dans la page HTML brute ci-dessous — sans
+// ça, un brouillon de description contenant du balisage s'exécuterait dans le
+// navigateur de quiconque ouvre ce lien (XSS stocké).
+function esc(value: string | null | undefined): string {
+  if (!value) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function htmlPage(body: string, status = 200) {
   return new NextResponse(
     `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Modération — Garago</title>
@@ -41,10 +54,10 @@ export async function GET(req: NextRequest) {
   const label = action === "approve" ? "Approuver" : "Refuser";
   return htmlPage(`
     <h2>Confirmation requise</h2>
-    <p><strong>Garage :</strong> ${garage.name}</p>
-    <p><strong>Description proposée :</strong><br>${garage.descriptionDraft ?? ""}</p>
-    <form method="POST" action="${req.url}">
-      <button type="submit" class="${action === "reject" ? "reject" : ""}">${label} cette description</button>
+    <p><strong>Garage :</strong> ${esc(garage.name)}</p>
+    <p><strong>Description proposée :</strong><br>${esc(garage.descriptionDraft)}</p>
+    <form method="POST" action="${esc(req.url)}">
+      <button type="submit" class="${action === "reject" ? "reject" : ""}">${esc(label)} cette description</button>
     </form>
   `);
 }
@@ -90,7 +103,7 @@ export async function POST(req: NextRequest) {
       approved:   true,
     }).catch(console.error);
 
-    return htmlPage(`<p>✅ Description approuvée pour <strong>${garage.name}</strong>. Elle est maintenant visible publiquement.</p>`);
+    return htmlPage(`<p>✅ Description approuvée pour <strong>${esc(garage.name)}</strong>. Elle est maintenant visible publiquement.</p>`);
   } else {
     await prisma.garage.update({
       where: { id: garageId },
@@ -103,6 +116,6 @@ export async function POST(req: NextRequest) {
       approved:   false,
     }).catch(console.error);
 
-    return htmlPage(`<p>✗ Description refusée pour <strong>${garage.name}</strong>. Le propriétaire a été notifié.</p>`);
+    return htmlPage(`<p>✗ Description refusée pour <strong>${esc(garage.name)}</strong>. Le propriétaire a été notifié.</p>`);
   }
 }
