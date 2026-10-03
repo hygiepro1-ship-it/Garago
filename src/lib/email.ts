@@ -289,9 +289,9 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
   const cal = calendarLinks(params);
 
   const body = `
-    ${iconBadge("check")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rendez-vous confirmé</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre rendez-vous est confirmé.</p>
+    ${iconBadge(params.confirmUrl ? "calendar" : "check")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${params.confirmUrl ? "Rendez-vous réservé : confirmez votre venue" : "Rendez-vous confirmé"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${params.confirmUrl ? "votre créneau est réservé. Confirmez que vous venez pour le garder." : "votre rendez-vous est confirmé."}</p>
 
     ${appointmentCard(params)}
 
