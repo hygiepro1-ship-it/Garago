@@ -24,7 +24,7 @@
     --g-50: #f9fafb;
     --ground: #f8fafc;
     --white: #fff;
-    --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;}
+    --font: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;}
 .gp * {box-sizing: border-box;}
 .gp {margin: 0; background: var(--ground); color: var(--g-700); font-family: var(--font); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;}
 .gp h1, .gp h2, .gp h3, .gp p {margin: 0;}
