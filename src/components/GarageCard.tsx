@@ -168,11 +168,15 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
                   Ce garage ne prend pas encore de rendez-vous en ligne sur Garago.
                 </p>
                 {garage.phone && (
-                  <a href={`tel:${garage.phone}`} onClick={(e) => e.stopPropagation()}
-                    className="mt-3 sm:mt-4 w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90 block"
+                  // Pas de <a> ici : toute la carte est déjà un lien, et deux liens imbriqués
+                  // sont invalides en HTML (erreur d'hydratation React).
+                  <span role="link" tabIndex={0}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${garage.phone}`; }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${garage.phone}`; } }}
+                    className="mt-3 sm:mt-4 w-full py-2.5 rounded-xl text-center text-xs font-bold text-white transition-opacity hover:opacity-90 block cursor-pointer"
                     style={{ background: "#0b1f3a" }}>
-                    📞 {garage.phone}
-                  </a>
+                    Appeler · {garage.phone}
+                  </span>
                 )}
               </>
             ) : (
