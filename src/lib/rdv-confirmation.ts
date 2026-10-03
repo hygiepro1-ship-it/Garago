@@ -117,3 +117,8 @@ export function confirmPageUrl(token: string): string {
   const base = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
   return `${base}/rdv/confirmer/${token}`;
 }
+
+/** Même page, ouverte sur l'écran « Annuler ce rendez-vous ? » (bouton distinct dans les courriels). */
+export function cancelPageUrl(token: string): string {
+  return `${confirmPageUrl(token)}?action=cancel`;
+}

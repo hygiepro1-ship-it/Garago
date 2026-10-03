@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
-import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl } from "@/lib/rdv-confirmation";
+import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
         appointmentId: appt.id,
         // Dernière minute : la confirmation se fait dès ce premier courriel.
         ...(plan.confirmTier === "LAST_MINUTE" && plan.confirmToken && plan.confirmBy
-          ? { confirmUrl: confirmPageUrl(plan.confirmToken), confirmDeadline: `avant ${formatQuebecMoment(plan.confirmBy)}` }
+          ? { confirmUrl: confirmPageUrl(plan.confirmToken), cancelUrl: cancelPageUrl(plan.confirmToken), confirmDeadline: `avant ${formatQuebecMoment(plan.confirmBy)}` }
           : {}),
       }).catch(e => console.error("[BOOKING CONFIRMATION EMAIL]", e))
     );

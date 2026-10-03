@@ -30,6 +30,9 @@ export default function ConfirmerRdvPage() {
   const [info, setInfo] = useState<Info | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  // Le bouton « J'annule » du courriel ouvre cette page avec ?action=cancel.
+  const [wantsCancel, setWantsCancel] = useState(false);
+  useEffect(() => { setWantsCancel(new URLSearchParams(window.location.search).get("action") === "cancel"); }, []);
 
   useEffect(() => {
     fetch(`/api/rdv/${token}`).then((r) => r.json()).then(setInfo).catch(() => setInfo({ state: "invalid" }));
@@ -87,7 +90,22 @@ export default function ConfirmerRdvPage() {
           </>
         )}
 
-        {info.state === "ask" && (
+        {wantsCancel && (info.state === "ask" || info.state === "confirmed") && (
+          <>
+            <h1 className="text-xl font-black" style={{ color: navy }}>Annuler ce rendez-vous ?</h1>
+            {summary}
+            <button onClick={() => act("cancel")} disabled={busy} style={{ ...btnPrimary, background: "#b91c1c" }} className="disabled:opacity-60">
+              {busy ? "…" : "Oui, j'annule"}
+            </button>
+            <button onClick={() => { setWantsCancel(false); act("confirm"); }} disabled={busy} style={btnGhost} className="disabled:opacity-60">
+              Non, je confirme mon rendez-vous
+            </button>
+            <p className="text-xs text-gray-400 mt-4">Annuler libère le créneau pour un autre conducteur.</p>
+            {call}
+          </>
+        )}
+
+        {!wantsCancel && info.state === "ask" && (
           <>
             <h1 className="text-xl font-black" style={{ color: navy }}>Confirmer votre rendez-vous</h1>
             {summary}
@@ -100,7 +118,7 @@ export default function ConfirmerRdvPage() {
           </>
         )}
 
-        {info.state === "confirmed" && (
+        {!wantsCancel && info.state === "confirmed" && (
           <>
             <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-black" style={{ background: "#e6f6ec", color: "#15803d" }}>✓</div>
             <h1 className="text-xl font-black" style={{ color: navy }}>Rendez-vous confirmé</h1>

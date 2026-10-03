@@ -137,6 +137,14 @@ function secondaryBtn(href: string, label: string): string {
   </a>`;
 }
 
+/** Deux boutons distincts côte à côte : confirmer / annuler (courriels de confirmation de rendez-vous). */
+function confirmCancelBtns(confirmUrl: string, cancelUrl: string, confirmLabel = "Je confirme", cancelLabel = "J'annule ma réservation"): string {
+  return `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr>
+    <td style="padding:0 10px 10px 0">${primaryBtn(confirmUrl, confirmLabel)}</td>
+    <td style="padding:0 0 10px 0">${secondaryBtn(cancelUrl, cancelLabel)}</td>
+  </tr></table>`;
+}
+
 /** Phone number button. */
 function phoneBtn(rawPhone: string): string {
   const phone = esc(rawPhone);
@@ -280,6 +288,7 @@ export interface BookingConfirmationParams extends AppointmentDetails {
   appointmentId: string;
   /** Rendez-vous de dernière minute : lien de confirmation + échéance (texte déjà formaté). */
   confirmUrl?:      string;
+  cancelUrl?:       string;
   confirmDeadline?: string;
 }
 
@@ -299,7 +308,7 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
     <div style="background:#fdf1d8;border-radius:12px;padding:16px 18px;margin:0 0 24px">
       <p style="margin:0 0 6px;color:#7a3d00;font-size:15px;font-weight:800">Confirmez votre venue ${esc(params.confirmDeadline ?? "dans l'heure")}</p>
       <p style="margin:0 0 14px;color:#7a3d00;font-size:13px">Ce rendez-vous est très proche. Sans confirmation, le créneau est remis à disposition des autres conducteurs.</p>
-      ${primaryBtn(params.confirmUrl, "Je confirme mon rendez-vous")}
+      ${confirmCancelBtns(params.confirmUrl, params.cancelUrl ?? params.confirmUrl)}
     </div>` : ""}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">
@@ -969,6 +978,7 @@ export interface ConfirmationRequestParams extends AppointmentDetails {
   customerName: string;
   garagePhone:  string;
   confirmUrl:   string;
+  cancelUrl:    string;
   /** Échéance déjà formatée, ex. « jeudi 8 octobre à 20 h 00 ». */
   deadline:     string;
   variant:      "request" | "nudge";
@@ -985,13 +995,13 @@ export async function sendConfirmationRequest(params: ConfirmationRequestParams)
 
     ${appointmentCard(params)}
 
-    <p style="margin:0 0 16px">${primaryBtn(params.confirmUrl, "Je confirme / j'annule")}</p>
+    ${confirmCancelBtns(params.confirmUrl, params.cancelUrl)}
 
     <div style="background:#fdf1d8;border-radius:10px;padding:12px 16px;margin:0 0 20px">
       <p style="margin:0;color:#7a3d00;font-size:13px;font-weight:700">Sans réponse avant ${esc(params.deadline)}, ce créneau sera remis à disposition des autres conducteurs.</p>
     </div>
 
-    <p style="margin:0 0 12px;color:#374151;font-size:14px">Un empêchement ? Annulez en un clic : un autre conducteur pourra prendre votre place.</p>
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">Un empêchement ? Utilisez « J'annule ma réservation » : un autre conducteur pourra prendre votre place.</p>
     ${phoneBtn(params.garagePhone)}
   `;
 

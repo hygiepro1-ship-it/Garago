@@ -3,7 +3,7 @@ import {
   sendConfirmationRequest, sendSlotReleased, sendArrivalReminder, sendGarageSlotReleased,
 } from "@/lib/email";
 import {
-  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, confirmPageUrl,
+  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, confirmPageUrl, cancelPageUrl,
   REQUEST_HOURS_BEFORE, NUDGE_HOURS_BEFORE, ARRIVAL_REMINDER_HOURS_BEFORE,
 } from "@/lib/rdv-confirmation";
 
@@ -65,7 +65,7 @@ export async function processRdvConfirmations(now: Date = new Date()): Promise<R
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), deadline: formatQuebecMoment(deadline), variant: "request" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(deadline), variant: "request" });
           stats.requested++;
         } catch (e) {
           // Courriel non parti : on remet en file plutôt que de risquer de libérer le créneau d'un client jamais prévenu.
@@ -114,7 +114,7 @@ export async function processRdvConfirmations(now: Date = new Date()): Promise<R
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), deadline: formatQuebecMoment(a.confirmBy), variant: "nudge" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(a.confirmBy), variant: "nudge" });
           stats.nudged++;
         } catch (e) {
           await prisma.appointment.updateMany({ where: { id: a.id }, data: { confirmNudgeAt: null } });
