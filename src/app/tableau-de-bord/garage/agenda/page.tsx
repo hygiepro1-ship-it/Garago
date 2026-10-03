@@ -303,7 +303,7 @@ export default function AgendaPage() {
   // Styles inline réutilisables — évitent les classes Tailwind manquantes
   const inputStyle: React.CSSProperties = {
     display: "block", width: "100%",
-    border: "1px solid #e5e7eb", borderRadius: 12,
+    border: "1px solid #e5e7eb", borderRadius: 6,
     padding: "12px 16px", fontSize: 16,         // ≥16px : pas de zoom Android/iOS
     outline: "none", backgroundColor: "white",
     WebkitTapHighlightColor: "transparent",

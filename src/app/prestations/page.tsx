@@ -111,7 +111,7 @@ export default function PrestationsPage() {
               <button key={f.id} onClick={() => setActiveFilter(f.id)}
                 className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-all"
                 style={{
-                  borderRadius:  "99px",
+                  borderRadius:  "4px",
                   background:    active ? "#f97316" : "rgba(255,255,255,0.06)",
                   color:         active ? "#fff"    : "rgba(255,255,255,0.5)",
                   border:        `1.5px solid ${active ? "#f97316" : "rgba(255,255,255,0.1)"}`,
