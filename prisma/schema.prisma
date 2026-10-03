@@ -129,6 +129,7 @@ model Garage {
   acceptsWalkIn   Boolean @default(true)
   appointmentOnly Boolean @default(false)
   hourlyRate      Float?
+  requireConfirmation Boolean @default(true) // le client doit confirmer son rendez-vous par courriel, sinon le créneau est libéré
   capacity        Int     @default(1) // nb de véhicules pris en charge en même temps (postes de travail / employés) — un créneau n'est complet que lorsque tous les postes sont occupés
 
   createdAt DateTime @default(now())
@@ -512,11 +513,22 @@ model Appointment {
   endTime   String // "HH:MM"
 
   // Gestion
-  status        String  @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
+  status        String  @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
   source        String  @default("ONLINE")  // ONLINE | MANUAL
   notes          String?
   completionNote String? // Note du garage au client quand véhicule terminé
   reminderSent   Boolean @default(false)
+
+  // Confirmation par le client (voir src/lib/rdv-confirmation.ts). Les rendez-vous
+  // existants et manuels restent NOT_REQUIRED : la règle ne s'applique qu'aux
+  // nouvelles réservations en ligne.
+  confirmationStatus String    @default("NOT_REQUIRED") // NOT_REQUIRED | SCHEDULED | AWAITING | CONFIRMED | EXPIRED
+  confirmTier        String? // STANDARD | LAST_MINUTE
+  confirmBy          DateTime? // échéance : sans confirmation, le créneau est libéré
+  confirmToken       String?   // aléatoire (192 bits) — sert de lien dans les courriels
+  confirmRequestedAt DateTime?
+  confirmNudgeAt     DateTime?
+  arrivalReminderAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -527,6 +539,8 @@ model Appointment {
   @@index([garageId])
   @@index([userId])
   @@index([garageId, date])
+  @@index([confirmationStatus, date])
+  @@index([confirmToken])
 }
 
 /// Réglages globaux du site — une seule ligne (id fixe "singleton").

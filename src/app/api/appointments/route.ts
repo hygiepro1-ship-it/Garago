@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -55,13 +56,25 @@ export async function POST(req: NextRequest) {
     categoryId
       ? prisma.garageService.findFirst({ where: { garageId, categoryId, active: true }, select: { durationMin: true } })
       : null,
-    prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true } }),
+    prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true, requireConfirmation: true } }),
   ]);
   const durationMin = svc?.durationMin ?? DEFAULT_DURATION_MIN;
   const capacity = garageForCapacity?.capacity ?? 1;
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
   const sessionUserId = (session?.user as any)?.id ?? null;
+
+  // Courriel pour joindre le client : celui saisi, sinon celui de son compte.
+  // On l'enregistre sur le rendez-vous pour que rappels et confirmations
+  // fonctionnent aussi pour les clients connectés qui ne l'ont pas retapé.
+  const contactEmail: string | null = customerEmail || ((session?.user as any)?.email ?? null);
+
+  // Palier de confirmation (standard / dernière minute / aucun) selon le délai.
+  const startInstant = quebecInstant(date, startTime);
+  const plan = planConfirmation(startInstant, new Date(), {
+    enabled: garageForCapacity?.requireConfirmation ?? true,
+    hasEmail: !!contactEmail,
+  });
 
   // Check-then-create sous isolation Serializable pour empêcher une double réservation
   // du même créneau par deux clients simultanés (Postgres détecte et rejette le conflit).
@@ -71,7 +84,7 @@ export async function POST(req: NextRequest) {
   try {
     appt = await prisma.$transaction(async (tx) => {
       const sameDay = await tx.appointment.findMany({
-        where: { garageId, date, status: { not: "CANCELLED" } },
+        where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
         select: { startTime: true, endTime: true },
       });
       if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
@@ -83,7 +96,7 @@ export async function POST(req: NextRequest) {
           userId: sessionUserId,
           customerName,
           customerPhone,
-          customerEmail: customerEmail || null,
+          customerEmail: contactEmail,
           vehicleYear:  vehicleYear  ? Number(vehicleYear)  : null,
           vehicleMake:  vehicleMake  || null,
           vehicleModel: vehicleModel || null,
@@ -98,6 +111,11 @@ export async function POST(req: NextRequest) {
           endTime,
           status: "CONFIRMED",
           source: "ONLINE",
+          confirmationStatus: plan.confirmationStatus,
+          confirmTier:        plan.confirmTier,
+          confirmBy:          plan.confirmBy,
+          confirmToken:       plan.confirmToken,
+          confirmRequestedAt: plan.confirmRequestedAt,
         },
         include: { garage: { include: { owner: { select: { email: true } } } } },
       });
@@ -133,6 +151,10 @@ export async function POST(req: NextRequest) {
         endTime:       appt.endTime,
         serviceName:   appt.serviceName,
         appointmentId: appt.id,
+        // Dernière minute : la confirmation se fait dès ce premier courriel.
+        ...(plan.confirmTier === "LAST_MINUTE" && plan.confirmToken && plan.confirmBy
+          ? { confirmUrl: confirmPageUrl(plan.confirmToken), confirmDeadline: `avant ${formatQuebecMoment(plan.confirmBy)}` }
+          : {}),
       }).catch(e => console.error("[BOOKING CONFIRMATION EMAIL]", e))
     );
   }

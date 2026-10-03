@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
   const sameDay = await prisma.appointment.findMany({
-    where: { garageId: garage.id, date, status: { not: "CANCELLED" } },
+    where: { garageId: garage.id, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
     select: { startTime: true, endTime: true },
   });
   if (wouldExceedCapacity(startTime, durationMin, sameDay, garage.capacity ?? 1)) {

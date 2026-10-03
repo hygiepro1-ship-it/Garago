@@ -16,6 +16,11 @@ export async function PATCH(
   const { id } = await params;
   const { status, notes, date, startTime, endTime, completionNote } = await req.json();
 
+  const ALLOWED_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
+  if (status && !ALLOWED_STATUSES.includes(status)) {
+    return NextResponse.json({ error: "Statut invalide" }, { status: 400 });
+  }
+
   const appt = await prisma.appointment.findUnique({
     where: { id },
     include: { garage: true },
@@ -58,7 +63,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Heure de fin invalide." }, { status: 400 });
     }
     const sameDay = await prisma.appointment.findMany({
-      where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { not: "CANCELLED" } },
+      where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
       select: { startTime: true, endTime: true },
     });
     if (wouldExceedCapacity(newStartTime, durationMin, sameDay, appt.garage.capacity ?? 1)) {

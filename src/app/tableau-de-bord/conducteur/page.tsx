@@ -261,6 +261,7 @@ const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }>
   CONFIRMED: { label: "Confirmé",    color: "#2563eb", bg: "#eff6ff" },
   COMPLETED: { label: "Terminé",     color: "#16a34a", bg: "#f0fdf4" },
   CANCELLED: { label: "Annulé",      color: "#dc2626", bg: "#fef2f2" },
+  NO_SHOW:   { label: "Absent",      color: "#b91c1c", bg: "#fef2f2" },
 };
 
 function canModify(appt: ClientAppt) {

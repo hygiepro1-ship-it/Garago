@@ -59,7 +59,7 @@ export async function GET(
     where: {
       garageId: garage.id,
       date,
-      status: { not: "CANCELLED" },
+      status: { notIn: ["CANCELLED", "NO_SHOW"] },
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: { startTime: true, endTime: true },

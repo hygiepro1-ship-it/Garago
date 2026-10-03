@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendBookingReminder } from "@/lib/email";
+import { quebecDateStr } from "@/lib/rdv-confirmation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,9 @@ export async function GET(req: NextRequest) {
   }
 
   // Find appointments scheduled for tomorrow (24h window) that haven't been reminded
-  const now      = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  // « Demain » au Québec (le serveur tourne en UTC : toISOString() donnerait la
+  // mauvaise date en soirée).
+  const tomorrowStr = quebecDateStr(new Date(Date.now() + 24 * 60 * 60 * 1000)); // "YYYY-MM-DD"
 
   const appointments = await prisma.appointment.findMany({
     where: {
@@ -23,6 +23,9 @@ export async function GET(req: NextRequest) {
       reminderSent: false,
       status:       { in: ["PENDING", "CONFIRMED"] },
       customerEmail: { not: null },
+      // Les réservations soumises à confirmation reçoivent leur propre courriel
+      // (cron rdv-confirmations) : pas de second rappel pour elles.
+      confirmationStatus: "NOT_REQUIRED",
     },
     include: { garage: true },
   });

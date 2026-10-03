@@ -94,6 +94,7 @@ interface Garage {
   ambassadorTier:           number;
   ambassadorSince:          string | null;
   capacity?:                number;
+  requireConfirmation?:     boolean;
   availability:             GarageAvailability[];
   services:                 GarageService[];
   brands:                   GarageBrand[];
@@ -383,6 +384,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }
   CONFIRMED: { bg: "#d1fae5", color: "#065f46", label: "Confirmé"   },
   COMPLETED: { bg: "#ede9fe", color: "#5b21b6", label: "Terminé"    },
   CANCELLED: { bg: "#fee2e2", color: "#991b1b", label: "Annulé"     },
+  NO_SHOW:   { bg: "#fee2e2", color: "#991b1b", label: "Absent"     },
 };
 
 // ─── Ambassador overview card ─────────────────────────────────────────────────
@@ -955,17 +957,21 @@ export default function DashboardGaragePage() {
   const [capacity, setCapacity] = useState("1");
   useEffect(() => { if (garage) setCapacity(String(garage.capacity ?? 1)); }, [garage]);
 
+  // Confirmation obligatoire du client (courriel à −24 h, créneau libéré sans réponse)
+  const [requireConfirmation, setRequireConfirmation] = useState(true);
+  useEffect(() => { if (garage) setRequireConfirmation(garage.requireConfirmation ?? true); }, [garage]);
+
   async function saveServices() {
     setSaving(true);
     const cap = Math.min(50, Math.max(1, parseInt(capacity, 10) || 1));
     const res = await gfetch("/api/garage/services", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services, capacity: cap }),
+      body: JSON.stringify({ services, capacity: cap, requireConfirmation }),
     });
     if (res.ok) {
       setCapacity(String(cap));
-      setGarage((g: any) => g ? { ...g, capacity: cap } : g);
+      setGarage((g: any) => g ? { ...g, capacity: cap, requireConfirmation } : g);
     }
     setSaving(false);
     setSuccess(res.ok ? "Services sauvegardés ✓" : "Erreur lors de la sauvegarde");
@@ -2411,6 +2417,22 @@ export default function DashboardGaragePage() {
               Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même
               créneau n'est complet que lorsque tous vos postes sont occupés. Enregistrez pour appliquer.
             </p>
+          </div>
+
+          {/* Confirmation des rendez-vous */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+            <label htmlFor="garage-require-confirmation" className="flex items-start gap-3 cursor-pointer">
+              <input id="garage-require-confirmation" type="checkbox" checked={requireConfirmation}
+                onChange={(e) => setRequireConfirmation(e.target.checked)} className="w-4 h-4 mt-0.5 accent-orange-500" />
+              <span>
+                <span className="block text-sm font-bold text-gray-900">Demander aux clients de confirmer leur rendez-vous</span>
+                <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
+                  Chaque client reçoit un courriel 24 h avant pour confirmer. Sans réponse, le créneau est remis à
+                  disposition pour d'autres conducteurs (12 h avant le rendez-vous). Les rendez-vous pris moins de 24 h
+                  à l'avance doivent être confirmés dans l'heure. Enregistrez pour appliquer.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -45,6 +45,9 @@ interface Appointment {
   status: string;
   source: string;
   notes?: string;
+  confirmationStatus?: string; // NOT_REQUIRED | SCHEDULED | AWAITING | CONFIRMED | EXPIRED
+  confirmTier?: string | null;
+  confirmBy?: string | null;
 }
 
 // ── Utilitaires date ──────────────────────────────────────────────────────────
@@ -82,6 +85,7 @@ function statusStyle(status: string) {
     CONFIRMED: { bg: "bg-orange-50",  text: "text-orange-700", border: "border-orange-200" },
     COMPLETED: { bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" },
     CANCELLED: { bg: "bg-red-50",    text: "text-red-600",    border: "border-red-200"   },
+    NO_SHOW:   { bg: "bg-red-50",    text: "text-red-700",    border: "border-red-300"   },
   };
   return map[status] ?? map.PENDING;
 }
@@ -812,6 +816,23 @@ function ApptCard({
 }) {
   const ss         = statusStyle(appt.status);
   const isCancelled = appt.status === "CANCELLED";
+  const isNoShow    = appt.status === "NO_SHOW";
+
+  // « Client absent » : proposé 15 minutes après l'heure de début du rendez-vous.
+  const startedLongAgo = Date.now() - new Date(`${appt.date}T${appt.startTime}:00`).getTime() >= 15 * 60 * 1000;
+  const canMarkNoShow  = (appt.status === "PENDING" || appt.status === "CONFIRMED") && startedLongAgo;
+
+  // État de confirmation par le client (courriel envoyé à −24 h, ou dans l'heure pour une dernière minute)
+  const confirmBadge =
+    appt.confirmationStatus === "AWAITING" && appt.confirmBy
+      ? { label: `À confirmer avant ${new Date(appt.confirmBy).toLocaleString("fr-CA", { weekday: "short", hour: "2-digit", minute: "2-digit" })}`, cls: "bg-amber-50 text-amber-700 border-amber-200" }
+      : appt.confirmationStatus === "SCHEDULED"
+      ? { label: "Confirmation demandée 24 h avant", cls: "bg-gray-50 text-gray-600 border-gray-200" }
+      : appt.confirmationStatus === "CONFIRMED"
+      ? { label: appt.confirmTier === "LAST_MINUTE" ? "Confirmé · dernière minute" : "Confirmé par le client", cls: "bg-green-50 text-green-700 border-green-200" }
+      : appt.confirmationStatus === "EXPIRED"
+      ? { label: "Créneau libéré : sans confirmation", cls: "bg-gray-100 text-gray-600 border-gray-300" }
+      : null;
 
   // Libellé statut traduit
   const statusLabel: Record<string, string> = {
@@ -819,6 +840,7 @@ function ApptCard({
     CONFIRMED: a.confirmed,
     COMPLETED: a.completed,
     CANCELLED: a.cancelledStatus,
+    NO_SHOW:   "Absent",
   };
 
   return (
@@ -855,6 +877,11 @@ function ApptCard({
               {appt.source === "ONLINE" && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-semibold border border-violet-200">
                   {a.sourceOnline}
+                </span>
+              )}
+              {confirmBadge && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${confirmBadge.cls}`}>
+                  {confirmBadge.label}
                 </span>
               )}
             </div>
@@ -945,9 +972,29 @@ function ApptCard({
             </p>
           )}
 
-          {/* Actions */}
-          {!isCancelled && (
+          {/* Absent : on peut annuler le statut si le garage s'est trompé */}
+          {isNoShow && (
             <div className="flex gap-2 flex-wrap pt-1">
+              <TapBtn
+                label="Annuler le statut « absent »"
+                bg="#64748b" active="#475569"
+                loading={actionId === appt.id + "CONFIRMED"}
+                onClick={() => onStatus(appt.id, "CONFIRMED")}
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          {!isCancelled && !isNoShow && (
+            <div className="flex gap-2 flex-wrap pt-1">
+              {canMarkNoShow && (
+                <TapBtn
+                  label="🚫 Client absent"
+                  bg="#b91c1c" active="#991b1b"
+                  loading={actionId === appt.id + "NO_SHOW"}
+                  onClick={() => onStatus(appt.id, "NO_SHOW")}
+                />
+              )}
               {appt.status === "PENDING" && (
                 <TapBtn
                   label={a.confirm}

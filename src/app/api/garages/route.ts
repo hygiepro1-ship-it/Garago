@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
             where: {
               garageId: { in: garageIds },
               date: { gte: todayStr, lte: endStr },
-              status: { not: "CANCELLED" },
+              status: { notIn: ["CANCELLED", "NO_SHOW"] },
             },
             select: { garageId: true, date: true, startTime: true, endTime: true },
           }),

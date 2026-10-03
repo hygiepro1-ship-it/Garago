@@ -138,7 +138,8 @@ function secondaryBtn(href: string, label: string): string {
 }
 
 /** Phone number button. */
-function phoneBtn(phone: string): string {
+function phoneBtn(rawPhone: string): string {
+  const phone = esc(rawPhone);
   return `<a href="tel:${phone}"
      style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;
             border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">
@@ -277,6 +278,9 @@ export interface BookingConfirmationParams extends AppointmentDetails {
   customerName:  string;
   garagePhone:   string;
   appointmentId: string;
+  /** Rendez-vous de dernière minute : lien de confirmation + échéance (texte déjà formaté). */
+  confirmUrl?:      string;
+  confirmDeadline?: string;
 }
 
 export async function sendBookingConfirmation(params: BookingConfirmationParams) {
@@ -290,6 +294,13 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre rendez-vous est confirmé.</p>
 
     ${appointmentCard(params)}
+
+    ${params.confirmUrl ? `
+    <div style="background:#fdf1d8;border-radius:12px;padding:16px 18px;margin:0 0 24px">
+      <p style="margin:0 0 6px;color:#7a3d00;font-size:15px;font-weight:800">Confirmez votre venue ${esc(params.confirmDeadline ?? "dans l'heure")}</p>
+      <p style="margin:0 0 14px;color:#7a3d00;font-size:13px">Ce rendez-vous est très proche. Sans confirmation, le créneau est remis à disposition des autres conducteurs.</p>
+      ${primaryBtn(params.confirmUrl, "Je confirme mon rendez-vous")}
+    </div>` : ""}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">
       En cas de question, appelez directement le garage :
@@ -306,7 +317,10 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
     ${secondaryBtn(cal.ics, "Apple Calendar / autre (.ics)")}
   `;
 
-  await send(params.to, `RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  const subject = params.confirmUrl
+    ? `Confirmez dans l'heure — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`
+    : `RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`;
+  await send(params.to, subject, body);
 }
 
 // ─── Email: Nouveau rendez-vous (garage) ──────────────────────────────────────
@@ -945,4 +959,126 @@ export async function sendClaimDecision(params: ClaimDecisionParams) {
     : `Demande de réclamation refusée — Garago`;
 
   await send(params.requesterEmail, subject, body);
+}
+
+
+// ─── Confirmation des rendez-vous : demande, relance, libération ─────────────
+
+export interface ConfirmationRequestParams extends AppointmentDetails {
+  to:           string;
+  customerName: string;
+  garagePhone:  string;
+  confirmUrl:   string;
+  /** Échéance déjà formatée, ex. « jeudi 8 octobre à 20 h 00 ». */
+  deadline:     string;
+  variant:      "request" | "nudge";
+}
+
+export async function sendConfirmationRequest(params: ConfirmationRequestParams) {
+  if (!canSend()) return;
+  const nudge = params.variant === "nudge";
+
+  const body = `
+    ${iconBadge("calendar")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${nudge ? "Dernier rappel : confirmez votre rendez-vous" : "Confirmez votre rendez-vous"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${nudge ? "nous n'avons pas encore reçu votre confirmation." : "votre rendez-vous approche. Un clic suffit pour le garder."}</p>
+
+    ${appointmentCard(params)}
+
+    <p style="margin:0 0 16px">${primaryBtn(params.confirmUrl, "Je confirme / j'annule")}</p>
+
+    <div style="background:#fdf1d8;border-radius:10px;padding:12px 16px;margin:0 0 20px">
+      <p style="margin:0;color:#7a3d00;font-size:13px;font-weight:700">Sans réponse avant ${esc(params.deadline)}, ce créneau sera remis à disposition des autres conducteurs.</p>
+    </div>
+
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">Un empêchement ? Annulez en un clic : un autre conducteur pourra prendre votre place.</p>
+    ${phoneBtn(params.garagePhone)}
+  `;
+
+  await send(
+    params.to,
+    `${nudge ? "Dernier rappel — confirmez" : "Confirmez"} votre rendez-vous — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
+    body,
+  );
+}
+
+export interface SlotReleasedParams extends AppointmentDetails {
+  to:           string;
+  customerName: string;
+  garagePhone:  string;
+  /** Page où le client peut reprendre le créneau s'il est encore libre. */
+  retakeUrl:    string;
+}
+
+export async function sendSlotReleased(params: SlotReleasedParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("warning")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre créneau a été libéré</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, nous n'avons pas reçu votre confirmation : ce créneau est remis à disposition des autres conducteurs.</p>
+
+    ${appointmentCard(params)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Toujours intéressé ? Si le créneau est encore libre, vous pouvez le reprendre en un clic.</p>
+    <p style="margin:0 0 20px">${primaryBtn(params.retakeUrl, "Reprendre ce créneau")}</p>
+    ${phoneBtn(params.garagePhone)}
+  `;
+
+  await send(params.to, `Votre créneau a été libéré — ${params.garageName}`, body);
+}
+
+export interface ArrivalReminderParams extends AppointmentDetails {
+  to:           string;
+  customerName: string;
+  garagePhone:  string;
+  confirmUrl:   string;
+}
+
+export async function sendArrivalReminder(params: ArrivalReminderParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("calendar")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vous arrivez ?</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre rendez-vous a lieu dans environ 2 heures.</p>
+
+    ${appointmentCard(params)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Un imprévu ? Prévenez le garage en annulant ici, pour qu'un autre conducteur profite du créneau.</p>
+    <p style="margin:0 0 20px">${secondaryBtn(params.confirmUrl, "Voir ou annuler mon rendez-vous")}</p>
+    ${phoneBtn(params.garagePhone)}
+  `;
+
+  await send(params.to, `Vous arrivez ? — ${params.garageName} à ${params.startTime}`, body);
+}
+
+export interface GarageSlotReleasedParams {
+  to:           string;
+  garageName:   string;
+  customerName: string;
+  date:         string;
+  startTime:    string;
+  serviceName:  string | null;
+}
+
+export async function sendGarageSlotReleased(params: GarageSlotReleasedParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("bell")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Un créneau a été libéré</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Le client n'a pas confirmé son rendez-vous : le créneau est de nouveau disponible pour les réservations en ligne.</p>
+
+    ${infoCard(`
+      ${row("Client", esc(params.customerName))}
+      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+      ${row("Date", fmtDateFr(params.date))}
+      ${row("Heure", esc(params.startTime), true)}
+    `)}
+
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+  `;
+
+  await send(params.to, `Créneau libéré — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }
