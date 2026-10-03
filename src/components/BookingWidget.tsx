@@ -48,8 +48,14 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const b = t.booking;
 
   const [step, setStep]           = useState<Step>("service");
-  const [service, setService]     = useState("");
-  const [serviceCategoryId, setServiceCategoryId] = useState("");
+  // Plusieurs prestations possibles : la durée réservée est la somme de leurs durées.
+  const [selectedCats, setSelectedCats] = useState<string[]>([]);
+  const service = selectedCats
+    .map((id) => services.find((sv) => sv.category.id === id)?.category.name)
+    .filter(Boolean).join(" + ");
+  const selectedCatsKey = selectedCats.join(",");
+  const estimatedMin = selectedCats.reduce(
+    (sum, id) => sum + (services.find((sv) => sv.category.id === id)?.durationMin ?? 60), 0);
   const [slotDurationMin, setSlotDurationMin] = useState(60);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // Initialize calMonth without new Date() to avoid SSR/client hydration mismatch
@@ -136,7 +142,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     setSelectedSlot("");
     setClosedDay(false);
     const qs = new URLSearchParams({ date: dateStr });
-    if (serviceCategoryId) qs.set("categoryId", serviceCategoryId);
+    if (selectedCatsKey) qs.set("categoryIds", selectedCatsKey);
     fetch(`/api/garages/${garageSlug}/slots?${qs}`)
       .then(r => r.json())
       .then(d => {
@@ -145,7 +151,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         setSlotDurationMin(d.durationMin ?? 60);
         setLoadingSlots(false);
       });
-  }, [selectedDate, garageSlug, serviceCategoryId]);
+  }, [selectedDate, garageSlug, selectedCatsKey]);
 
   async function handleSubmit() {
     if (!name || !phone || !selectedDate || !selectedSlot) return;
@@ -168,7 +174,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         vehicleTireSize:  selectedVehicle?.tireSize ?? null,
         vehicleSpecs:     selectedVehicle?.specs ?? null,
         serviceName:   service || null,
-        categoryId:    serviceCategoryId || null,
+        categoryIds:   selectedCats,
         notes:         notes.trim() || null,
         date:      formatDate(selectedDate!),
         startTime: selectedSlot,
@@ -269,7 +275,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         </div>
 
         <button
-          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setService(""); setServiceCategoryId(""); setAppointmentId(null); }}
+          onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setSelectedCats([]); setAppointmentId(null); }}
           className="mt-4 w-full text-center text-sm text-orange-500 hover:underline"
         >
           {b.anotherAppt}
@@ -315,25 +321,49 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
           <div>
             <p className="text-sm font-semibold text-gray-700 mb-3">{b.whatService}</p>
             <div className="space-y-2">
-              {services.length > 0 ? services.map((sv, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setService(sv.category.name); setServiceCategoryId(sv.category.id); setStep("date"); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all font-medium flex items-center justify-between gap-2 ${
-                    service === sv.category.name
-                      ? "border-orange-400 bg-orange-50 text-orange-700"
-                      : "border-gray-200 hover:border-orange-300 text-gray-700"
-                  }`}
-                >
-                  <span>{sv.category.name}</span>
-                  {sv.durationMin ? <span className="text-xs text-gray-400 flex-shrink-0">~{sv.durationMin} min</span> : null}
-                </button>
-              )) : (
+              {services.length > 0 ? services.map((sv, i) => {
+                const checked = selectedCats.includes(sv.category.id);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={checked}
+                    onClick={() => setSelectedCats((cur) => checked ? cur.filter((id) => id !== sv.category.id) : [...cur, sv.category.id])}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all font-medium flex items-center gap-3 ${
+                      checked
+                        ? "border-orange-400 bg-orange-50 text-orange-700"
+                        : "border-gray-200 hover:border-orange-300 text-gray-700"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 ${checked ? "bg-orange-500 border-orange-500" : "border-gray-300 bg-white"}`} style={{ borderRadius: 4 }}>
+                      {checked && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
+                    </span>
+                    <span className="flex-1">{sv.category.name}</span>
+                    {sv.durationMin ? <span className="text-xs text-gray-400 flex-shrink-0">~{sv.durationMin} min</span> : null}
+                  </button>
+                );
+              }) : (
                 <p className="text-gray-400 text-sm">{b.noServices}</p>
               )}
             </div>
+            {selectedCats.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-gray-500 mb-2">
+                  {selectedCats.length} {selectedCats.length > 1 ? "prestations" : "prestation"} · durée estimée {estimatedMin >= 60 ? `${Math.floor(estimatedMin / 60)} h${estimatedMin % 60 ? ` ${String(estimatedMin % 60).padStart(2, "0")}` : ""}` : `${estimatedMin} min`}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setStep("date")}
+                  className="w-full py-3 text-sm font-bold"
+                  style={{ background: "#f97316", color: "#1c0a00", borderRadius: 5 }}
+                >
+                  Continuer
+                </button>
+              </div>
+            )}
             <button
-              onClick={() => { setService(""); setServiceCategoryId(""); setStep("date"); }}
+              onClick={() => { setSelectedCats([]); setStep("date"); }}
               className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
             >
               {b.continueWithout}

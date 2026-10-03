@@ -13,7 +13,11 @@ export async function GET(
   const { slug } = await params;
   const date       = req.nextUrl.searchParams.get("date");
   const excludeId  = req.nextUrl.searchParams.get("excludeId"); // RDV en cours de déplacement
-  const categoryId = req.nextUrl.searchParams.get("categoryId");
+  // Une ou plusieurs prestations : categoryIds=a,b,c (categoryId seul reste accepté)
+  const categoryIds = Array.from(new Set(
+    (req.nextUrl.searchParams.get("categoryIds") ?? req.nextUrl.searchParams.get("categoryId") ?? "")
+      .split(",").map((s) => s.trim()).filter(Boolean)
+  )).slice(0, 6);
   if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });
 
   const garage = await prisma.garage.findUnique({
@@ -28,12 +32,12 @@ export async function GET(
   // lors d'un déplacement de RDV (excludeId) — la durée du RDV déplacé, pour
   // proposer des créneaux de la même longueur que celui qu'on remplace.
   let durationMin = DEFAULT_DURATION_MIN;
-  if (categoryId) {
-    const svc = await prisma.garageService.findFirst({
-      where: { garageId: garage.id, categoryId, active: true },
+  if (categoryIds.length > 0) {
+    const svcs = await prisma.garageService.findMany({
+      where: { garageId: garage.id, categoryId: { in: categoryIds }, active: true },
       select: { durationMin: true },
     });
-    if (svc?.durationMin) durationMin = svc.durationMin;
+    if (svcs.length > 0) durationMin = svcs.reduce((sum, s) => sum + (s.durationMin ?? DEFAULT_DURATION_MIN), 0);
   } else if (excludeId) {
     const original = await prisma.appointment.findFirst({
       where: { id: excludeId, garageId: garage.id },

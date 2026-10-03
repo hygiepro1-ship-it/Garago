@@ -8,7 +8,7 @@ const CSP = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // 'unsafe-inline' requis — le site utilise des style={{}} inline partout
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
+  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://tile.openstreetmap.org",
   "connect-src 'self' https://nominatim.openstreetmap.org",
   "frame-ancestors 'self'",
   "form-action 'self'",

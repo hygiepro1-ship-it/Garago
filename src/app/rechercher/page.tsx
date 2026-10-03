@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
@@ -11,6 +12,12 @@ import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import LocationGuide from "@/components/LocationGuide";
+
+// La carte (Leaflet) ne se charge que si le visiteur la demande, et jamais côté serveur.
+const GarageMap = dynamic(() => import("@/components/GarageMap"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center text-sm" style={{ color: "#64748b", minHeight: 300 }}>Chargement de la carte…</div>,
+});
 import { useLang } from "@/contexts/LanguageContext";
 
 type UserPos = { lat: number; lng: number };
@@ -32,6 +39,8 @@ interface SearchGarage {
   services:  Array<{ category: { name: string; icon?: string | null }; priceMin?: number | null; priceMax?: number | null }>;
   brands:    Array<{ brand: string; accepts: boolean }>;
   id?:          string;
+  latitude?:    number | null;
+  longitude?:   number | null;
   distanceKm?:  number | null;
   nextAvailability?: { date: string; slots: string[] } | null;
   claimStatus?: string;
@@ -93,6 +102,10 @@ function SearchContent() {
   // plus la plus récente, sinon la liste non triée pourrait écraser la liste
   // triée par distance si elle répond en dernier.
   const requestSeq = useRef(0);
+
+  // Affichage : liste seule, ou liste + carte (carte seule avec fiche sélectionnée sur téléphone)
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
@@ -519,6 +532,19 @@ function SearchContent() {
                 </p>
               </div>
 
+              <div className="inline-flex" role="group" aria-label="Affichage des résultats" style={{ border: "1px solid #cbd3df", borderRadius: 6, overflow: "hidden" }}>
+                {([["list", "Liste"], ["map", "Carte"]] as const).map(([v, label]) => (
+                  <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v}
+                    className="px-4 py-2 text-sm font-bold flex items-center gap-1.5"
+                    style={view === v ? { background: "#0b1f3a", color: "#fff" } : { background: "#fff", color: "#0b1f3a" }}>
+                    {v === "map" && (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                    )}
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {/* Active filter chips */}
               {hasFilters && (
                 <div className="flex flex-wrap gap-1.5">
@@ -572,15 +598,53 @@ function SearchContent() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className={view === "map" ? "grid gap-4 lg:grid-cols-2 lg:items-start" : ""}>
+              {view === "map" && (() => {
+                const mapGarages = displayGarages
+                  .filter((g) => g.latitude != null && g.longitude != null)
+                  .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, online: g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente" }));
+                const picked = displayGarages.find((g) => g.slug === selectedSlug);
+                return (
+                  <div className="lg:order-2 lg:sticky lg:top-4 space-y-3">
+                    <div style={{ height: "min(62vh, 560px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
+                      <GarageMap garages={mapGarages} userPos={userPos}
+                        selectedSlug={selectedSlug}
+                        onSelect={(slug) => {
+                          setSelectedSlug(slug);
+                          if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+                            document.getElementById(`g-${slug}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+                          }
+                        }} />
+                    </div>
+                    <p className="text-xs" style={{ color: "#64748b" }}>
+                      <span style={{ color: "#15803d", fontWeight: 700 }}>●</span> Réservation en ligne &nbsp;
+                      <span style={{ color: "#64748b", fontWeight: 700 }}>●</span> À appeler
+                      {displayGarages.length > mapGarages.length && ` · ${displayGarages.length - mapGarages.length} garage(s) sans position précise`}
+                    </p>
+                    {/* Téléphone : la fiche du repère touché apparaît sous la carte */}
+                    <div className="lg:hidden">
+                      {picked ? (
+                        <GarageCard garage={picked} highlightService={selectedService?.name}
+                          distance={picked.distanceKm != null ? formatDistance(picked.distanceKm) : undefined}
+                          nextAvailability={picked.nextAvailability} />
+                      ) : (
+                        <p className="text-sm" style={{ color: "#47586f" }}>Touchez un repère pour voir le garage.</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className={`space-y-4 ${view === "map" ? "hidden lg:block lg:order-1" : ""}`}>
                 {displayGarages.map((garage) => (
-                  <GarageCard
-                    key={garage.id}
-                    garage={garage}
-                    highlightService={selectedService?.name}
-                    distance={garage.distanceKm != null ? formatDistance(garage.distanceKm) : undefined}
-                    nextAvailability={garage.nextAvailability}
-                  />
+                  <div key={garage.id} id={`g-${garage.slug}`}
+                    style={selectedSlug === garage.slug && view === "map" ? { outline: "2px solid #f97316", outlineOffset: 2, borderRadius: 6 } : undefined}>
+                    <GarageCard
+                      garage={garage}
+                      highlightService={selectedService?.name}
+                      distance={garage.distanceKm != null ? formatDistance(garage.distanceKm) : undefined}
+                      nextAvailability={garage.nextAvailability}
+                    />
+                  </div>
                 ))}
                 {hasMore && (
                   <div className="flex justify-center pt-2">
@@ -591,6 +655,7 @@ function SearchContent() {
                     </button>
                   </div>
                 )}
+              </div>
               </div>
             )}
           </div>

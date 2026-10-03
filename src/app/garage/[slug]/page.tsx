@@ -10,6 +10,8 @@ import StarRating from "@/components/StarRating";
 import BookingWidget from "@/components/BookingWidget";
 import UnclaimedGarageView from "@/components/UnclaimedGarageView";
 import ServiceIcon from "@/components/ServiceIcon";
+import BrandLogo from "@/components/BrandLogo";
+import { languageLabel, parseLanguages } from "@/lib/languages";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
@@ -55,7 +57,7 @@ export default function GarageProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromDashboard = searchParams.get("from") === "dashboard";
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const g = t.garage;
 
   const [garage, setGarage]         = useState<any>(null);
@@ -166,7 +168,8 @@ export default function GarageProfilePage() {
   const logoP  = parseImgPos(garage.logoPosition);
   const acceptedBrands = garage.brands?.filter((b: any) =>  b.accepts) ?? [];
   const refusedBrands  = garage.brands?.filter((b: any) => !b.accepts) ?? [];
-  const garageLangs    = parseGarageLangs(garage.languages);
+  const parsedLangs    = parseLanguages(garage.languages);
+  const garageLangs    = parsedLangs.length > 0 ? parsedLangs : null;
 
   // Group services by category name (same as old code — uses API data directly)
   const servicesByCategory: Record<string, { catName: string; catId: string; services: any[] }> = {};
@@ -363,19 +366,6 @@ export default function GarageProfilePage() {
         {/* ── Main column ── */}
         <div className="order-2 lg:order-none lg:col-span-2 space-y-6">
 
-          {/* Description */}
-          {garage.description && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
-                </svg>
-                {g.about}
-              </h2>
-              <p className="text-gray-600 leading-relaxed">{garage.description}</p>
-            </div>
-          )}
-
           {/* Services */}
           {offeredGroups.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
@@ -416,9 +406,12 @@ export default function GarageProfilePage() {
               {acceptedBrands.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">{g.accepted}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                     {acceptedBrands.map((b: any) => (
-                      <span key={b.brand} className="text-sm bg-green-50 text-green-800 border border-green-200 px-3 py-1 rounded-full font-medium">{b.brand}</span>
+                      <div key={b.brand} className="flex flex-col items-center gap-1.5 p-2.5 bg-white" style={{ border: "1px solid #cfd7e3", borderRadius: 6 }}>
+                        <BrandLogo brand={b.brand} size={40} />
+                        <span className="text-xs font-semibold text-gray-700 text-center leading-tight">{b.brand}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -589,10 +582,10 @@ export default function GarageProfilePage() {
                   </div>
                 )}
                 {garageLangs && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">{g.languages}</span>
-                    <span className="font-semibold text-gray-900">
-                      {garageLangs.map((l: string) => l === "fr" ? "Français" : "English").join(", ")}
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500 flex-shrink-0">{lang === "fr" ? "Langues parlées sur place" : "Languages spoken on site"}</span>
+                    <span className="font-semibold text-gray-900 text-right">
+                      {garageLangs.map((l: string) => languageLabel(l, lang)).join(", ")}
                     </span>
                   </div>
                 )}

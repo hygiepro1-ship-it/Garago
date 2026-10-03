@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       date,
       startTime,
       endTime,
-      notes: notes || null,
+      notes: notes ? String(notes).slice(0, 1000) : null,
       status: "CONFIRMED", // manual = direct confirm
       source: "MANUAL",
     },

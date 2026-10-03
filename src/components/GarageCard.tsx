@@ -53,9 +53,17 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
   const services        = garage.services.slice(0, 3);
   const rating          = Math.round(garage.avgRating * 10) / 10;
   const ratingFull      = Math.round(rating);
-  const slots           = nextAvailability
-    ? nextAvailability.slots.map((s) => `${formatSlotDay(nextAvailability.date, lang, c.today, c.tomorrow)} ${formatSlotTime(s, lang)}`)
-    : [];
+  const slots           = nextAvailability ? nextAvailability.slots.map((s) => formatSlotTime(s, lang)) : [];
+  // « Demain · jeu. 8 oct. » : le jour est dit une seule fois, au-dessus des heures
+  const slotDayLabel    = nextAvailability
+    ? (() => {
+        const [y, m, d] = nextAvailability.date.split("-").map(Number);
+        const short = new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { weekday: "short", day: "numeric", month: "short" }).format(new Date(y, m - 1, d));
+        const word  = formatSlotDay(nextAvailability.date, lang, c.today, c.tomorrow);
+        return word.length > 5 && /^(Aujourd|Demain|Today|Tomorrow)/i.test(word) ? `${word} · ${short}` : short;
+      })()
+    : "";
+  const ratingText      = rating.toFixed(1).replace(".", lang === "fr" ? "," : ".");
   const isUnclaimed = garage.claimStatus === "non_reclamee" || garage.claimStatus === "en_attente";
 
   const fr = lang === "fr";
@@ -86,6 +94,12 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h3 className="text-base font-bold leading-snug" style={{ color: "#0f1e33" }}>{garage.name}</h3>
+                {garage.reviewCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-sm font-bold whitespace-nowrap" style={{ color: "#0f1e33" }}>
+                    <span style={{ color: "#f59e0b" }}>★</span>{ratingText}
+                    <span className="font-normal" style={{ color: "#64748b" }}>({garage.reviewCount})</span>
+                  </span>
+                )}
                 {garage.isAmbassador && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 font-semibold"
                     style={{ fontSize: 11, borderRadius: 3, background: "#fff7ed", color: "#9a3a00", border: "1px solid #fed7aa" }}>
@@ -128,14 +142,9 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
 
           {/* Avis, marques (logos) et services */}
           <div className="flex flex-wrap items-center gap-1.5">
-            {garage.reviewCount > 0 ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold"
-                style={{ borderRadius: 4, border: "1px solid #e3e8ef", color: "#47586f" }}>
-                <span style={{ color: "#f59e0b" }}>★</span> {rating} {fr ? "sur 5" : "of 5"} · {garage.reviewCount} {fr ? (garage.reviewCount > 1 ? "avis" : "avis") : (garage.reviewCount > 1 ? "reviews" : "review")}
-              </span>
-            ) : !isUnclaimed ? (
+            {garage.reviewCount === 0 && !isUnclaimed && (
               <span className="text-xs font-medium" style={{ color: "#64748b" }}>{c.newGarage}</span>
-            ) : null}
+            )}
             {acceptedBrands.map((b, i) => (
               <div key={i} title={b.brand}
                 className="w-7 h-7 flex items-center justify-center bg-white p-0.5"
@@ -173,7 +182,9 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
           ) : (
             <>
               <div>
-                <p className="text-sm font-bold mb-1.5" style={{ color: "#0f1e33" }}>{c.nextSlots}</p>
+                <p className="text-sm font-bold mb-1.5" style={{ color: "#0f1e33" }}>
+                  {slots.length > 0 ? <>{fr ? "Prochain rendez-vous" : "Next appointment"} · <span style={{ color: "#166534" }}>{slotDayLabel}</span></> : c.nextSlots}
+                </p>
                 {slots.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {slots.map((slot) => <div key={slot} className="slot-pill">{slot}</div>)}
