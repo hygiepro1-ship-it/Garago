@@ -16,6 +16,8 @@ export interface MapGarage {
 interface Props {
   garages: MapGarage[];
   userPos: { lat: number; lng: number } | null;
+  /** rayon de recherche autour de l'utilisateur (km) */
+  radiusKm: number;
   selectedSlug: string | null;
   onSelect: (slug: string) => void;
 }
@@ -25,7 +27,7 @@ function pinHtml(color: string, size: number) {
   return `<span style="display:block;width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></span>`;
 }
 
-export default function GarageMap({ garages, userPos, selectedSlug, onSelect }: Props) {
+export default function GarageMap({ garages, userPos, radiusKm, selectedSlug, onSelect }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletNS.Map | null>(null);
   const layerRef = useRef<LeafletNS.LayerGroup | null>(null);
@@ -83,13 +85,14 @@ export default function GarageMap({ garages, userPos, selectedSlug, onSelect }: 
       L.circleMarker([userPos.lat, userPos.lng], { radius: 8, color: "#fff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 })
         .bindTooltip("Vous êtes ici").addTo(layer);
       points.push([userPos.lat, userPos.lng]);
-    }
-
-    if (points.length > 1) map.fitBounds(points, { padding: [30, 30], maxZoom: 15 });
+      // Zoom direct sur la zone de l'utilisateur : le cercle du rayon remplit la carte
+      const circle = L.circle([userPos.lat, userPos.lng], { radius: radiusKm * 1000, color: "#2563eb", weight: 1.5, fillColor: "#2563eb", fillOpacity: 0.05, interactive: false }).addTo(layer);
+      map.fitBounds(circle.getBounds(), { padding: [10, 10] });
+    } else if (points.length > 1) map.fitBounds(points, { padding: [30, 30], maxZoom: 15 });
     else if (points.length === 1) map.setView(points[0], 14);
     // onSelect volontairement hors dépendances : il ne doit pas redessiner la carte
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, garages, userPos]);
+  }, [ready, garages, userPos, radiusKm]);
 
   // Repère sélectionné : plus grand, orange
   useEffect(() => {

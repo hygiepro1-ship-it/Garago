@@ -106,6 +106,7 @@ function SearchContent() {
   // Affichage : liste seule, ou liste + carte (carte seule avec fiche sélectionnée sur téléphone)
   const [view, setView] = useState<"list" | "map">("list");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [radiusKm, setRadiusKm] = useState(15);
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
@@ -598,43 +599,55 @@ function SearchContent() {
                 </button>
               </div>
             ) : (
-              <div className={view === "map" ? "grid gap-4 lg:grid-cols-2 lg:items-start" : ""}>
+              <div className={view === "map" ? "grid gap-4 lg:grid-cols-5 lg:items-start" : ""}>
               {view === "map" && (() => {
-                const mapGarages = displayGarages
+                const inRadius = userPos ? displayGarages.filter((g) => g.distanceKm == null || g.distanceKm <= radiusKm) : displayGarages;
+                const mapGarages = inRadius
                   .filter((g) => g.latitude != null && g.longitude != null)
                   .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, online: g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente" }));
-                const picked = displayGarages.find((g) => g.slug === selectedSlug);
+                const picked = inRadius.find((g) => g.slug === selectedSlug);
                 return (
-                  <div className="lg:order-2 lg:sticky lg:top-4 space-y-3">
-                    <div style={{ height: "min(62vh, 560px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
-                      <GarageMap garages={mapGarages} userPos={userPos}
-                        selectedSlug={selectedSlug}
-                        onSelect={(slug) => {
-                          setSelectedSlug(slug);
-                          if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
-                            document.getElementById(`g-${slug}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
-                          }
-                        }} />
+                  <>
+                    <div className="lg:col-span-3 space-y-3">
+                      {userPos && (
+                        <div className="flex flex-wrap items-center gap-2 text-sm" style={{ color: "#0b1f3a" }}>
+                          <span className="font-bold">Rayon :</span>
+                          {[5, 10, 15, 25, 50].map((r) => (
+                            <button key={r} type="button" onClick={() => setRadiusKm(r)} aria-pressed={radiusKm === r}
+                              className="px-3 py-1.5 text-sm font-bold"
+                              style={{ borderRadius: 6, border: "1px solid #cbd3df", ...(radiusKm === r ? { background: "#0b1f3a", color: "#fff" } : { background: "#fff", color: "#0b1f3a" }) }}>
+                              {r} km
+                            </button>
+                          ))}
+                          <span style={{ color: "#47586f" }}>· {mapGarages.length} garage{mapGarages.length > 1 ? "s" : ""}</span>
+                        </div>
+                      )}
+                      <div style={{ height: "min(62vh, 580px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
+                        <GarageMap garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
+                          selectedSlug={selectedSlug}
+                          onSelect={(slug) => setSelectedSlug(slug)} />
+                      </div>
+                      <p className="text-xs" style={{ color: "#64748b" }}>
+                        <span style={{ color: "#15803d", fontWeight: 700 }}>●</span> Réservation en ligne &nbsp;
+                        <span style={{ color: "#64748b", fontWeight: 700 }}>●</span> À appeler
+                      </p>
                     </div>
-                    <p className="text-xs" style={{ color: "#64748b" }}>
-                      <span style={{ color: "#15803d", fontWeight: 700 }}>●</span> Réservation en ligne &nbsp;
-                      <span style={{ color: "#64748b", fontWeight: 700 }}>●</span> À appeler
-                      {displayGarages.length > mapGarages.length && ` · ${displayGarages.length - mapGarages.length} garage(s) sans position précise`}
-                    </p>
-                    {/* Téléphone : la fiche du repère touché apparaît sous la carte */}
-                    <div className="lg:hidden">
+                    {/* Espace fiche : le garage touché apparaît ici, au format liste */}
+                    <aside className="lg:col-span-2 lg:sticky lg:top-4" aria-live="polite" aria-label="Fiche du garage sélectionné">
                       {picked ? (
                         <GarageCard garage={picked} highlightService={selectedService?.name}
                           distance={picked.distanceKm != null ? formatDistance(picked.distanceKm) : undefined}
                           nextAvailability={picked.nextAvailability} />
                       ) : (
-                        <p className="text-sm" style={{ color: "#47586f" }}>Touchez un repère pour voir le garage.</p>
+                        <div className="p-5 text-sm" style={{ border: "1px dashed #cbd3df", borderRadius: 6, color: "#47586f", background: "#fff" }}>
+                          Touchez un repère sur la carte pour afficher la fiche du garage ici.
+                        </div>
                       )}
-                    </div>
-                  </div>
+                    </aside>
+                  </>
                 );
               })()}
-              <div className={`space-y-4 ${view === "map" ? "hidden lg:block lg:order-1" : ""}`}>
+              <div className={`space-y-4 ${view === "map" ? "hidden" : ""}`}>
                 {displayGarages.map((garage) => (
                   <div key={garage.id} id={`g-${garage.slug}`}
                     style={selectedSlug === garage.slug && view === "map" ? { outline: "2px solid #f97316", outlineOffset: 2, borderRadius: 6 } : undefined}>

@@ -396,22 +396,19 @@ export default function GarageProfilePage() {
 
           {/* Brands */}
           {(acceptedBrands.length > 0 || refusedBrands.length > 0) && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
+              <h2 className="font-bold text-gray-900 text-lg mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
                 </svg>
                 {g.vehicleBrands}
               </h2>
               {acceptedBrands.length > 0 && (
-                <div className="mb-4">
+                <div className="mb-3">
                   <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">{g.accepted}</p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
                     {acceptedBrands.map((b: any) => (
-                      <div key={b.brand} className="flex flex-col items-center gap-1.5 p-2.5 bg-white" style={{ border: "1px solid #cfd7e3", borderRadius: 6 }}>
-                        <BrandLogo brand={b.brand} size={40} />
-                        <span className="text-xs font-semibold text-gray-700 text-center leading-tight">{b.brand}</span>
-                      </div>
+                      <BrandLogo key={b.brand} brand={b.brand} size={60} />
                     ))}
                   </div>
                 </div>
