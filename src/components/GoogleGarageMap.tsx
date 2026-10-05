@@ -10,6 +10,8 @@ interface Props {
   radiusKm: number;
   selectedSlug: string | null;
   onSelect: (slug: string) => void;
+  /** appelé si Google refuse la carte (clé, quota, facturation) : la page bascule sur OpenStreetMap */
+  onFail?: () => void;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -41,7 +43,7 @@ function pin(g: any, PinElement: any, color: string, scale: number) {
   return new PinElement({ background: color, borderColor: "#ffffff", glyphColor: "#ffffff", scale }).element;
 }
 
-export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, selectedSlug, onSelect }: Props) {
+export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, selectedSlug, onSelect, onFail }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const gRef = useRef<any>(null);
   const libs = useRef<any>(null);
@@ -50,11 +52,15 @@ export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, se
   const markers = useRef<Map<string, { marker: any; online: boolean }>>(new Map());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onFailRef = useRef(onFail);
+  onFailRef.current = onFail;
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    // Google appelle cette fonction quand la clé ou le quota est refusé : on laisse la page prendre le relais
+    (window as any).gm_authFailure = () => { if (!cancelled) { setFailed(true); onFailRef.current?.(); } };
     (async () => {
       const g = await loadGoogle(apiKey);
       const [{ Map, Circle }, { AdvancedMarkerElement, PinElement }, { LatLngBounds }] = await Promise.all([
@@ -69,7 +75,7 @@ export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, se
         renderingType: "VECTOR", colorScheme: "LIGHT",
       });
       setReady(true);
-    })().catch((e) => { console.error("[GoogleGarageMap]", e); setFailed(true); });
+    })().catch((e) => { console.error("[GoogleGarageMap]", e); setFailed(true); onFailRef.current?.(); });
     return () => { cancelled = true; };
   }, [apiKey]);
 

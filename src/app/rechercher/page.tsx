@@ -110,6 +110,7 @@ function SearchContent() {
   const [view, setView] = useState<"list" | "map">("list");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [radiusKm, setRadiusKm] = useState(15);
+  const [googleFailed, setGoogleFailed] = useState(false);
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
@@ -626,8 +627,8 @@ function SearchContent() {
                         </div>
                       )}
                       <div style={{ height: "min(62vh, 580px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
-                        {GOOGLE_KEY ? (
-                          <GoogleGarageMap apiKey={GOOGLE_KEY} garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
+                        {GOOGLE_KEY && !googleFailed ? (
+                          <GoogleGarageMap apiKey={GOOGLE_KEY} onFail={() => setGoogleFailed(true)} garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
                             selectedSlug={selectedSlug} onSelect={(slug) => setSelectedSlug(slug)} />
                         ) : (
                           <GarageMap garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
