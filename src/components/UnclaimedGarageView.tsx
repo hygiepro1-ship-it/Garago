@@ -61,9 +61,9 @@ export default function UnclaimedGarageView({ garage }: Props) {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={`tel:${garage.phone}`}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-sm"
-            style={{ background: "#0b1f3a" }}>
-            📞 Appeler · {garage.phone}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm w-full sm:w-auto"
+            style={{ background: "#f97316", color: "#1c0a00" }}>
+            Appeler · {garage.phone}
           </a>
           {garage.claimStatus === "non_reclamee" && (
             <button onClick={() => setShowClaim(true)}

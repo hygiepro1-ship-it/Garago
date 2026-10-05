@@ -10,6 +10,7 @@ import { SERVICE_CATEGORIES } from "@/lib/services";
 import { isCardRequired } from "@/lib/trial-card";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
+import { GARAGE_LANGUAGES, parseLanguages } from "@/lib/languages";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -2132,6 +2133,13 @@ export default function DashboardGaragePage() {
                         <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">(visibles seulement par vous)</span></label>
+                      <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
+                        value={manualForm.notes ?? ""}
+                        onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
+                        placeholder="Ex. : client déjà venu, apporte ses pneus, bruit au freinage…" />
+                    </div>
                     {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
                     <div className="flex gap-2 pt-1">
                       <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
@@ -2700,6 +2708,13 @@ export default function DashboardGaragePage() {
                     onChange={e => setManualForm(f => ({ ...f, vehicleModel: e.target.value }))} placeholder="Camry" />
                 </div>
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">(visibles seulement par vous)</span></label>
+                <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
+                  value={manualForm.notes ?? ""}
+                  onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Ex. : client déjà venu, apporte ses pneus, bruit au freinage…" />
+              </div>
               {manualError && (
                 <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{manualError}</p>
               )}
@@ -3112,6 +3127,31 @@ export default function DashboardGaragePage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Courriel public</label>
                 <input type="email" className={inputClass} value={profileData.email ?? ""} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} />
               </div>
+              {/* Langues parlées sur place */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Langues parlées sur place</label>
+                <p className="text-xs text-gray-400 mb-2">Affichées sur votre profil public pour rassurer les clients.</p>
+                <div className="flex flex-wrap gap-2">
+                  {GARAGE_LANGUAGES.map((l) => {
+                    const current = parseLanguages(profileData.languages);
+                    const on = current.includes(l.code);
+                    return (
+                      <button key={l.code} type="button" role="checkbox" aria-checked={on}
+                        onClick={() => setProfileData({
+                          ...profileData,
+                          languages: JSON.stringify(on ? current.filter((c) => c !== l.code) : [...current, l.code]),
+                        })}
+                        className="px-3 py-1.5 text-sm font-semibold border transition-colors"
+                        style={{ borderRadius: 4, ...(on
+                          ? { background: "#0b1f3a", color: "#fff", borderColor: "#0b1f3a" }
+                          : { background: "#fff", color: "#475569", borderColor: "#cbd5e1" }) }}>
+                        {l.fr}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={profileData.acceptsWalkIn ?? true} onChange={(e) => setProfileData({ ...profileData, acceptsWalkIn: e.target.checked })} className="accent-orange-500 w-4 h-4" />

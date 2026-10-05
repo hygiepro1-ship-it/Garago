@@ -303,7 +303,7 @@ export default function AgendaPage() {
   // Styles inline réutilisables — évitent les classes Tailwind manquantes
   const inputStyle: React.CSSProperties = {
     display: "block", width: "100%",
-    border: "1px solid #e5e7eb", borderRadius: 12,
+    border: "1px solid #e5e7eb", borderRadius: 6,
     padding: "12px 16px", fontSize: 16,         // ≥16px : pas de zoom Android/iOS
     outline: "none", backgroundColor: "white",
     WebkitTapHighlightColor: "transparent",
@@ -770,13 +770,17 @@ export default function AgendaPage() {
                 </section>
 
                 {/* Notes */}
-                <textarea
-                  rows={2}
-                  style={{ ...inputStyle, resize: "none" } as React.CSSProperties}
-                  placeholder={a.notes}
-                  value={form.notes}
-                  onChange={e => setForm({ ...form, notes: e.target.value })}
-                />
+                <section>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Notes</p>
+                  <textarea
+                    rows={4}
+                    maxLength={1000}
+                    style={{ ...inputStyle, resize: "none" } as React.CSSProperties}
+                    placeholder="Ex. : client déjà venu, apporte ses pneus, bruit au freinage… (visible seulement par vous)"
+                    value={form.notes}
+                    onChange={e => setForm({ ...form, notes: e.target.value })}
+                  />
+                </section>
 
                 {formError && (
                   <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{formError}</p>

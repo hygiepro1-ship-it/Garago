@@ -56,7 +56,7 @@ export default function ConfirmerRdvPage() {
   }
 
   const navy = "#0b1f3a";
-  const card: React.CSSProperties = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, boxShadow: "0 4px 24px rgba(11,31,58,0.06)" };
+  const card: React.CSSProperties = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 24px rgba(11,31,58,0.06)" };
 
   if (!info) {
     return <div className="min-h-[60vh] flex items-center justify-center text-sm text-gray-400">Chargement…</div>;
@@ -77,8 +77,8 @@ export default function ConfirmerRdvPage() {
     </a>
   );
 
-  const btnPrimary: React.CSSProperties = { background: "#f97316", color: "#fff", width: "100%", padding: "14px 20px", borderRadius: 12, fontWeight: 800, fontSize: 15 };
-  const btnGhost: React.CSSProperties = { background: "transparent", color: "#475569", width: "100%", padding: "13px 20px", borderRadius: 12, fontWeight: 700, fontSize: 14, border: "1.5px solid #cbd5e1", marginTop: 10 };
+  const btnPrimary: React.CSSProperties = { background: "#f97316", color: "#fff", width: "100%", padding: "14px 20px", borderRadius: 5, fontWeight: 800, fontSize: 15 };
+  const btnGhost: React.CSSProperties = { background: "transparent", color: "#475569", width: "100%", padding: "13px 20px", borderRadius: 5, fontWeight: 700, fontSize: 14, border: "1.5px solid #cbd5e1", marginTop: 10 };
 
   return (
     <div className="max-w-md mx-auto px-4 py-10">

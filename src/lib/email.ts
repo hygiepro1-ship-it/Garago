@@ -77,7 +77,7 @@ function calendarLinks(appt: AppointmentDetails & { appointmentId: string }): { 
 function infoCard(rows: string): string {
   return `
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-bottom:24px">
+           style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:20px;margin-bottom:24px">
       <tr><td>${rows}</td></tr>
     </table>`;
 }
@@ -112,7 +112,7 @@ function iconDataUri(type: keyof typeof ICON_PATHS, color = "#f97316"): string {
 function iconBadge(type: keyof typeof ICON_PATHS): string {
   return `
     <table cellpadding="0" cellspacing="0" style="margin:0 0 16px">
-      <tr><td width="56" height="56" align="center" valign="middle" style="background:#fff7ed;border-radius:16px">
+      <tr><td width="56" height="56" align="center" valign="middle" style="background:#fff7ed;border-radius:6px">
         <img src="${iconDataUri(type)}" width="26" height="26" alt="" style="display:block" />
       </td></tr>
     </table>`;
@@ -122,7 +122,7 @@ function iconBadge(type: keyof typeof ICON_PATHS): string {
 function primaryBtn(href: string, label: string, color = "#f97316"): string {
   return `<a href="${href}"
      style="display:inline-block;background:${color};color:#fff;padding:12px 28px;
-            border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+            border-radius:5px;text-decoration:none;font-weight:700;font-size:14px">
     ${label}
   </a>`;
 }
@@ -131,7 +131,7 @@ function primaryBtn(href: string, label: string, color = "#f97316"): string {
 function secondaryBtn(href: string, label: string): string {
   return `<a href="${href}"
      style="display:inline-block;background:#f1f5f9;color:#0b1f3a;padding:12px 24px;
-            border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;
+            border-radius:5px;text-decoration:none;font-weight:700;font-size:14px;
             border:1px solid #e2e8f0">
     ${label}
   </a>`;
@@ -150,7 +150,7 @@ function phoneBtn(rawPhone: string): string {
   const phone = esc(rawPhone);
   return `<a href="tel:${phone}"
      style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;
-            border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">
+            border-radius:5px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">
     ${phone}
   </a>`;
 }
@@ -158,7 +158,7 @@ function phoneBtn(rawPhone: string): string {
 /** Green note block (e.g. garage completion note). */
 function noteBlock(content: string): string {
   return `
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:24px 0">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:20px;margin:24px 0">
       <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#15803d;
                 text-transform:uppercase;letter-spacing:0.05em">Note du garage</p>
       <p style="margin:0;font-size:14px;color:#166534;line-height:1.6">${esc(content)}</p>
@@ -176,14 +176,15 @@ function baseLayout(body: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Garago</title>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<body style="margin:0;padding:0;background:#f8f9fa;font-family:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
         <!-- Header -->
-        <tr><td style="background:#0b1f3a;border-radius:16px 16px 0 0;padding:20px 32px;text-align:center">
+        <tr><td style="background:#0b1f3a;border-radius:6px 6px 0 0;padding:20px 32px;text-align:center">
           <img src="${BASE_URL}/logo-garago.png" alt="Garago" height="72"
                style="display:block;margin:0 auto;max-height:72px" />
         </td></tr>
@@ -194,7 +195,7 @@ function baseLayout(body: string): string {
         </td></tr>
 
         <!-- Footer -->
-        <tr><td style="background:#f3f4f6;border-radius:0 0 16px 16px;border:1px solid #e5e7eb;
+        <tr><td style="background:#f3f4f6;border-radius:0 0 6px 6px;border:1px solid #e5e7eb;
                        border-top:0;padding:16px 32px;text-align:center">
           <p style="margin:0;color:#9ca3af;font-size:12px">
             Garago Canada — <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
@@ -238,7 +239,7 @@ export async function sendVerificationCode(to: string, code: string) {
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur Garago ! Voici votre code de vérification :</p>
 
     <div style="text-align:center;margin:32px 0">
-      <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
+      <div style="display:inline-block;background:#0b1f3a;border-radius:6px;padding:24px 40px">
         <span style="font-size:44px;font-weight:900;letter-spacing:12px;color:#fff;font-family:monospace">${code}</span>
       </div>
     </div>
@@ -265,7 +266,7 @@ export async function sendPasswordResetCode(to: string, code: string) {
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Voici votre code pour réinitialiser votre mot de passe Garago :</p>
 
     <div style="text-align:center;margin:32px 0">
-      <div style="display:inline-block;background:#0b1f3a;border-radius:16px;padding:24px 40px">
+      <div style="display:inline-block;background:#0b1f3a;border-radius:6px;padding:24px 40px">
         <span style="font-size:44px;font-weight:900;letter-spacing:12px;color:#fff;font-family:monospace">${code}</span>
       </div>
     </div>
@@ -305,7 +306,7 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
     ${appointmentCard(params)}
 
     ${params.confirmUrl ? `
-    <div style="background:#fdf1d8;border-radius:12px;padding:16px 18px;margin:0 0 24px">
+    <div style="background:#fdf1d8;border-radius:6px;padding:16px 18px;margin:0 0 24px">
       <p style="margin:0 0 6px;color:#7a3d00;font-size:15px;font-weight:800">Confirmez votre venue ${esc(params.confirmDeadline ?? "dans l'heure")}</p>
       <p style="margin:0 0 14px;color:#7a3d00;font-size:13px">Ce rendez-vous est très proche. Sans confirmation, le créneau est remis à disposition des autres conducteurs.</p>
       ${confirmCancelBtns(params.confirmUrl, params.cancelUrl ?? params.confirmUrl)}
@@ -569,7 +570,7 @@ export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
     ${infoCard(`
       ${row("De", author)}
       <p style="margin:0 0 16px;font-size:14px"><strong>Contact :</strong> ${contact}</p>
-      <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #e5e7eb">
+      <div style="background:#fff;border-radius:4px;padding:16px;border:1px solid #e5e7eb">
         <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap">${esc(params.content)}</p>
       </div>
     `)}
@@ -600,7 +601,7 @@ export async function sendReviewReport(params: ReviewReportParams) {
 
   const reasonBlock = params.reason ? `
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px;margin-bottom:24px">
+           style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:20px;margin-bottom:24px">
       <tr><td>
         <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;
                   text-transform:uppercase;letter-spacing:0.05em">Motif du signalement</p>
@@ -613,13 +614,13 @@ export async function sendReviewReport(params: ReviewReportParams) {
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Un garage a signalé un avis comme inapproprié ou abusif.</p>
 
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:20px;margin-bottom:24px">
+           style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:20px;margin-bottom:24px">
       <tr><td>
         ${row("Garage", esc(params.garageName))}
         ${row("Auteur de l'avis", esc(params.reviewerName) || "Anonyme")}
         ${row("Note", `${params.reviewRating}/5`)}
         ${params.reviewText ? `
-          <div style="background:#fff;border-radius:8px;padding:16px;border:1px solid #fecdd3;margin-top:8px">
+          <div style="background:#fff;border-radius:4px;padding:16px;border:1px solid #fecdd3;margin-top:8px">
             <p style="margin:0;font-size:14px;line-height:1.7;color:#374151">${esc(params.reviewText)}</p>
           </div>` : ""}
       </td></tr>
@@ -651,7 +652,7 @@ export async function sendWeeklyTips(params: WeeklyTipsParams) {
   if (!canSend() || params.recipients.length === 0) return;
 
   const tipsHtml = params.tips.map((tip) => `
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin-bottom:16px">
       <p style="margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;
                 letter-spacing:0.05em;color:#f97316">
         ${tip.category}
@@ -729,7 +730,7 @@ export async function sendAdminBadReviewAlert(params: BadReviewAlertParams) {
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Une action de votre part pourrait être nécessaire.</p>
 
     <table width="100%" cellpadding="0" cellspacing="0"
-           style="background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;padding:20px;margin-bottom:24px">
+           style="background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;padding:20px;margin-bottom:24px">
       <tr><td>
         <p style="margin:0 0 8px;font-size:16px;font-weight:800;color:#111827">${esc(params.garageName)}</p>
         <p style="margin:0 0 12px;font-size:14px;color:#374151">${lbl.desc}</p>
@@ -767,7 +768,7 @@ export async function sendDescriptionReviewEmail(params: DescriptionReviewParams
     <p style="margin:0 0 16px;font-size:14px;color:#374151"><strong>Propriétaire :</strong> ${esc(params.ownerEmail)}</p>
 
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #f97316;
-                border-radius:8px;padding:16px;margin-bottom:20px">
+                border-radius:4px;padding:16px;margin-bottom:20px">
       <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-wrap">${esc(params.draft)}</p>
     </div>
 
@@ -997,7 +998,7 @@ export async function sendConfirmationRequest(params: ConfirmationRequestParams)
 
     ${confirmCancelBtns(params.confirmUrl, params.cancelUrl)}
 
-    <div style="background:#fdf1d8;border-radius:10px;padding:12px 16px;margin:0 0 20px">
+    <div style="background:#fdf1d8;border-radius:5px;padding:12px 16px;margin:0 0 20px">
       <p style="margin:0;color:#7a3d00;font-size:13px;font-weight:700">Sans réponse avant ${esc(params.deadline)}, ce créneau sera remis à disposition des autres conducteurs.</p>
     </div>
 

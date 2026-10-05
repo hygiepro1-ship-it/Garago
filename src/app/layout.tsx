@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         {/* Viewport mobile — viewport-fit=cover pour les encoches iOS/Android */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* PWA / Add to Home Screen */}
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className="min-h-full flex flex-col antialiased"
         style={{
           fontFamily:
-            "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
           backgroundColor: "#f8fafc",
         }}
       >

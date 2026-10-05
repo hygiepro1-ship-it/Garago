@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     vehicleSpecs,
     serviceName,
     categoryId,
+    categoryIds,
     notes,
     date,
     startTime,
@@ -52,13 +53,25 @@ export async function POST(req: NextRequest) {
   // La durée du RDV vient toujours du service configuré par le garage (jamais
   // d'une valeur envoyée par le client) — c'est ce qui doit réellement combler
   // l'agenda, pas un bloc fixe de 60 minutes pour toutes les prestations.
-  const [svc, garageForCapacity] = await Promise.all([
-    categoryId
-      ? prisma.garageService.findFirst({ where: { garageId, categoryId, active: true }, select: { durationMin: true } })
-      : null,
+  // Une ou plusieurs prestations (categoryIds) ; categoryId seul reste accepté.
+  const wantedCats: string[] = Array.from(new Set(
+    (Array.isArray(categoryIds) ? categoryIds : categoryId ? [categoryId] : [])
+      .filter((c: unknown): c is string => typeof c === "string" && c.length > 0)
+  )).slice(0, 6) as string[];
+  const [svcs, garageForCapacity] = await Promise.all([
+    wantedCats.length
+      ? prisma.garageService.findMany({
+          where: { garageId, categoryId: { in: wantedCats }, active: true },
+          select: { durationMin: true, category: { select: { name: true } } },
+        })
+      : Promise.resolve([] as { durationMin: number | null; category: { name: string } }[]),
     prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true, requireConfirmation: true } }),
   ]);
-  const durationMin = svc?.durationMin ?? DEFAULT_DURATION_MIN;
+  // Durée = somme des durées réglées par le garage ; nom du service recalculé côté serveur.
+  const durationMin = svcs.length
+    ? svcs.reduce((sum, s) => sum + (s.durationMin ?? DEFAULT_DURATION_MIN), 0)
+    : DEFAULT_DURATION_MIN;
+  const resolvedServiceName = svcs.length ? svcs.map((s) => s.category.name).join(" + ") : (serviceName || null);
   const capacity = garageForCapacity?.capacity ?? 1;
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
@@ -104,8 +117,8 @@ export async function POST(req: NextRequest) {
           vehicleVin:      vehicleVin      || null,
           vehicleTireSize: vehicleTireSize || null,
           vehicleSpecs:    vehicleSpecs    || null,
-          serviceName:  serviceName  || null,
-          notes:        notes        || null,
+          serviceName:  resolvedServiceName,
+          notes:        notes ? String(notes).slice(0, 1000) : null,
           date,
           startTime,
           endTime,

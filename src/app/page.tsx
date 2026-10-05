@@ -156,17 +156,47 @@ export default function HomePage() {
       .catch(() => { setLocating(false); setLocError("Localisation refusée."); });
   }, [make, model, year, router]);
 
-  function handleSearch(e: React.FormEvent) {
+  const [postalError, setPostalError] = useState("");
+  const [searching, setSearching] = useState(false);
+
+  // Saisie du code postal canadien : lettres/chiffres seulement, format « A1A 1A1 »
+  function handlePostalInput(v: string) {
+    const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    setLocation(raw.length > 3 ? `${raw.slice(0, 3)} ${raw.slice(3)}` : raw);
+    setPostalError("");
+  }
+
+  async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const p = new URLSearchParams();
+    const compact = location.replace(/\s/g, "");
+    if (compact && !(autoPos && location === autoPos.city)) {
+      if (!/^[ABCEGHJ-NPRSTVXY]\d[A-Z]\d[A-Z]\d$/.test(compact)) {
+        setPostalError(h.postalError);
+        return;
+      }
+      setSearching(true);
+      try {
+        const r = await fetch(`/api/geocode/postal?code=${compact}`);
+        const d = r.ok ? await r.json() : null;
+        if (!d || typeof d.lat !== "number") { setPostalError(h.postalUnknown); setSearching(false); return; }
+        p.set("lat", String(d.lat));
+        p.set("lng", String(d.lng));
+        p.set("cp", `${compact.slice(0, 3)} ${compact.slice(3)}`);
+      } catch { setPostalError(h.postalUnknown); setSearching(false); return; }
+      setSearching(false);
+      if (make)  p.set("make",  make);
+      if (model) p.set("model", model);
+      if (year)  p.set("year",  year);
+      router.push(`/rechercher?${p.toString()}`);
+      return;
+    }
     if (make)     p.set("make",  make);
     if (model)    p.set("model", model);
     if (year)     p.set("year",  year);
     if (autoPos && location === autoPos.city) {
       p.set("lat", String(autoPos.lat));
       p.set("lng", String(autoPos.lng));
-    } else if (location) {
-      p.set("q", location);
     }
     router.push(`/rechercher?${p.toString()}`);
   }
@@ -249,8 +279,9 @@ export default function HomePage() {
                 }
               </button>
               <div className="flex-1 px-2 py-2 sm:py-3">
-                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
-                  placeholder={h.cityPlaceholder}
+                <input type="text" value={location} onChange={(e) => handlePostalInput(e.target.value)}
+                  placeholder={h.cityPlaceholder} aria-label={h.cityLabel} autoComplete="postal-code"
+                  inputMode="text" maxLength={7} aria-invalid={!!postalError}
                   className="block w-full text-sm focus:outline-none bg-transparent text-gray-800"
                   style={{ color: "#374151" }} />
               </div>
@@ -265,7 +296,7 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
-            {locError && <p className="text-xs text-red-500 px-4 pb-2">{locError}</p>}
+            {(postalError || locError) && <p className="text-xs text-red-600 px-4 pb-2" role="alert">{postalError || locError}</p>}
           </form>
         </div>
       </section>
