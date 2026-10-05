@@ -5,11 +5,11 @@ import type { NextConfig } from "next";
 // est correcte avant de l'activer réellement (Content-Security-Policy, sans "-Report-Only").
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self' https://maps.googleapis.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // 'unsafe-inline' requis — le site utilise des style={{}} inline partout
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://tile.openstreetmap.org",
-  "connect-src 'self' https://nominatim.openstreetmap.org",
+  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://tile.openstreetmap.org https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com",
+  "connect-src 'self' https://nominatim.openstreetmap.org https://maps.googleapis.com",
   "frame-ancestors 'self'",
   "form-action 'self'",
   "base-uri 'self'",

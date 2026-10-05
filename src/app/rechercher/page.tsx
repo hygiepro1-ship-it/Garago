@@ -13,6 +13,9 @@ import { getBestPosition } from "@/lib/geolocate";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import LocationGuide from "@/components/LocationGuide";
 
+const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
+const GoogleGarageMap = dynamic(() => import("@/components/GoogleGarageMap"), { ssr: false });
+
 // La carte (Leaflet) ne se charge que si le visiteur la demande, et jamais côté serveur.
 const GarageMap = dynamic(() => import("@/components/GarageMap"), {
   ssr: false,
@@ -623,9 +626,13 @@ function SearchContent() {
                         </div>
                       )}
                       <div style={{ height: "min(62vh, 580px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
-                        <GarageMap garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
-                          selectedSlug={selectedSlug}
-                          onSelect={(slug) => setSelectedSlug(slug)} />
+                        {GOOGLE_KEY ? (
+                          <GoogleGarageMap apiKey={GOOGLE_KEY} garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
+                            selectedSlug={selectedSlug} onSelect={(slug) => setSelectedSlug(slug)} />
+                        ) : (
+                          <GarageMap garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
+                            selectedSlug={selectedSlug} onSelect={(slug) => setSelectedSlug(slug)} />
+                        )}
                       </div>
                       <p className="text-xs" style={{ color: "#64748b" }}>
                         <span style={{ color: "#15803d", fontWeight: 700 }}>●</span> Réservation en ligne &nbsp;
