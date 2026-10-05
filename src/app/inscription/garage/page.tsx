@@ -272,7 +272,7 @@ export default function InscriptionGaragePage() {
       setEmailVerified(false);
       setCodeInput("");
       if (data.devCode) {
-        setCodeSentMsg(`⚠️ Mode développement — code : ${data.devCode}`);
+        setCodeSentMsg(`Mode développement — code : ${data.devCode}`);
         setCodeInput(data.devCode);
         verifyCode(data.devCode);
       } else {
@@ -777,7 +777,7 @@ export default function InscriptionGaragePage() {
                           : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#475569" }
                         }
                       >
-                        {excluded ? "✗ " : ""}{brand}
+                        {excluded ? "" : ""}{brand}
                       </button>
                     );
                   })}

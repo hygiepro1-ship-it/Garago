@@ -272,11 +272,11 @@ export default function GaragistesContent() {
                   <ApptRow a={ph.appts[1]} confirmed={ph.confirmed} online={ph.online} chevronUp />
                   <div className="expanded">
                     <div className="vbox"><p>{c.card.vehicle}</p><strong>2019 Chevrolet Silverado</strong></div>
-                    <div className="chips"><span className="chip tel">📞 (514) 555-0142</span><span className="chip mail">✉️ paul.g@exemple.com</span></div>
-                    <p className="note">📝 {c.card.note}</p>
+                    <div className="chips"><span className="chip tel">(514) 555-0142</span><span className="chip mail">paul.g@exemple.com</span></div>
+                    <p className="note">{c.card.note}</p>
                     <div className="acts">
-                      <span className="act" style={{ background: "#16a34a" }}>✅ {c.card.done}</span>
-                      <span className="act" style={{ background: "#7c3aed" }}>📅 {c.card.move}</span>
+                      <span className="act" style={{ background: "#16a34a" }}>{c.card.done}</span>
+                      <span className="act" style={{ background: "#7c3aed" }}>{c.card.move}</span>
                       <span className="act" style={{ background: "#ef4444" }}>{c.card.cancel}</span>
                     </div>
                   </div>

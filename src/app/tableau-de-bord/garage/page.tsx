@@ -665,7 +665,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
       {stats && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
-            <span className="text-white text-sm font-black">📊 Statistiques avancées</span>
+            <span className="text-white text-sm font-black">Statistiques avancées</span>
             <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
           </div>
           <div className="p-5 space-y-4">
@@ -1863,7 +1863,7 @@ export default function DashboardGaragePage() {
                             )}
                             {(a as any).notes && (
                               <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                                💬 {(a as any).notes}
+                                {(a as any).notes}
                               </p>
                             )}
                           </div>
@@ -1892,7 +1892,7 @@ export default function DashboardGaragePage() {
                               fetchGarageSlots(a.date, a.id);
                             }}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                              📅 Déplacer
+                              Déplacer
                             </button>
                           )}
                           {(a.status === "PENDING" || a.status === "CONFIRMED") && (
@@ -1901,7 +1901,7 @@ export default function DashboardGaragePage() {
                               await updateApptStatus(a.id, "CANCELLED");
                             }}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
-                              ✗ Annuler
+                              Annuler
                             </button>
                           )}
                         </div>
@@ -2222,13 +2222,13 @@ export default function DashboardGaragePage() {
                           <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
                           {(a as any).notes && (
                             <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                              💬 {(a as any).notes}
+                              {(a as any).notes}
                             </p>
                           )}
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {a.status === "PENDING" && <>
                               <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">✓ Confirmer</button>
-                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">✗ Refuser</button>
+                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">Refuser</button>
                             </>}
                             {a.status === "CONFIRMED" && <>
                               <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">✓ Terminé</button>
@@ -2305,7 +2305,7 @@ export default function DashboardGaragePage() {
                             onClick={() => { setReportingId(reportingId === r.id ? null : r.id); setReportReason(""); }}
                             className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
                             style={{ background: reportingId === r.id ? "#fef2f2" : undefined, borderColor: "#fca5a5", color: "#dc2626" }}>
-                            🚩 Signaler
+                            Signaler
                           </button>
                         )}
                         <button
@@ -2315,7 +2315,7 @@ export default function DashboardGaragePage() {
                           }}
                           className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
                           style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                          {r.ownerReply ? "✏️ Modifier" : "💬 Répondre"}
+                          {r.ownerReply ? "Modifier" : "Répondre"}
                         </button>
                       </div>
                     </div>
@@ -2494,7 +2494,7 @@ export default function DashboardGaragePage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.brands}</h2>
-              <p className="text-gray-500 text-sm mt-0.5">Cliquez ✓ pour accepter, ✗ pour refuser.</p>
+              <p className="text-gray-500 text-sm mt-0.5">Cliquez ✓ pour accepter, pour refuser.</p>
             </div>
             <button onClick={saveBrands} disabled={saving}
               className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex-shrink-0" style={{ background: "#f97316" }}>
@@ -2880,7 +2880,7 @@ export default function DashboardGaragePage() {
                       }}
                     />
                     <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">✋ Glisser pour repositionner</span>
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">Glisser pour repositionner</span>
                       <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-mono">{Math.round(coverPos.tx)}% / {Math.round(coverPos.ty)}%</span>
                     </div>
                   </>
@@ -2897,7 +2897,7 @@ export default function DashboardGaragePage() {
                 <div className="space-y-2">
                   {/* Zoom slider */}
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">🔍 Zoom</span>
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Zoom</span>
                     <input
                       type="range" min="0.2" max="3" step="0.01"
                       value={coverPos.zoom}
@@ -2908,7 +2908,7 @@ export default function DashboardGaragePage() {
                   </div>
                   {/* Background color toggle */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">🖼 Fond</span>
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Fond</span>
                     <button type="button"
                       onClick={() => setShowCoverColorPicker(v => !v)}
                       className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium">
@@ -2926,7 +2926,7 @@ export default function DashboardGaragePage() {
                         try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
                       }}
                       className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
-                      🔬 Pipette
+                      Pipette
                     </button>
                   </div>
                   {showCoverColorPicker && (
@@ -2941,7 +2941,7 @@ export default function DashboardGaragePage() {
                       onClick={() => coverInputRef.current?.click()}
                       className="text-xs px-3 py-1.5 rounded-lg font-semibold border"
                       style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                      {uploadingCover ? "Téléchargement…" : "📷 Changer l'image"}
+                      {uploadingCover ? "Téléchargement…" : "Changer l'image"}
                     </button>
                     <button type="button"
                       onClick={() => setCoverPos({ tx: 0, ty: 0, zoom: 1 })}
@@ -2956,7 +2956,7 @@ export default function DashboardGaragePage() {
                 <button type="button" onClick={() => coverInputRef.current?.click()}
                   className="text-sm px-4 py-2 rounded-xl font-semibold border"
                   style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                  {uploadingCover ? "Téléchargement…" : "📷 Télécharger une couverture"}
+                  {uploadingCover ? "Téléchargement…" : "Télécharger une couverture"}
                 </button>
               )}
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
@@ -3022,7 +3022,7 @@ export default function DashboardGaragePage() {
                         />
                       </>
                     ) : (
-                      <div className="w-full h-full bg-gray-50 flex items-center justify-center text-3xl">🔧</div>
+                      <div className="w-full h-full bg-gray-50 flex items-center justify-center"><svg className="w-8 h-8 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94z"/></svg></div>
                     )}
                   </div>
 
@@ -3043,7 +3043,7 @@ export default function DashboardGaragePage() {
                           className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 flex-1 justify-center">
                           <div className="w-3.5 h-3.5 rounded border border-gray-300 flex-shrink-0"
                             style={{ background: logoBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
-                          🖼
+                          Fond
                         </button>
                         {logoBgColor && (
                           <button type="button" onClick={() => { setLogoBgColor(null); setShowLogoColorPicker(false); }}
@@ -3055,7 +3055,7 @@ export default function DashboardGaragePage() {
                             try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
                           }}
                           className="text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500">
-                          🔬
+                          Pipette
                         </button>
                       </div>
                       {showLogoColorPicker && (
@@ -3075,15 +3075,15 @@ export default function DashboardGaragePage() {
                   <p className="text-sm text-gray-600 mb-3">Votre logo apparaît sur votre profil public à côté de votre nom.</p>
                   {garage.logoUrl && (
                     <p className="text-xs text-gray-500 mb-2">
-                      ✋ <strong>Glisser</strong> le logo pour le repositionner<br />
-                      🔍 <strong>Curseur</strong> pour zoomer / dézoomer
+                      <strong>Glisser</strong> le logo pour le repositionner<br />
+                      <strong>Curseur</strong> pour zoomer / dézoomer
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => logoInputRef.current?.click()}
                       className="text-sm px-4 py-2 rounded-xl font-semibold border"
                       style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                      {uploadingLogo ? "Téléchargement…" : "📷 Changer le logo"}
+                      {uploadingLogo ? "Téléchargement…" : "Changer le logo"}
                     </button>
                     {garage.logoUrl && (
                       <button type="button" onClick={() => setLogoPos({ tx: 0, ty: 0, zoom: 1 })}

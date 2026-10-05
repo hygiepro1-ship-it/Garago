@@ -198,7 +198,7 @@ export default function InscriptionConducteurPage() {
       if (!res.ok) { setCodeError(data.error ?? "Erreur lors de l'envoi."); return; }
       setCodeSent(true); setEmailVerified(false); setCodeInput("");
       if (data.devCode) {
-        setCodeSentMsg(`⚠️ Mode développement — code : ${data.devCode}`);
+        setCodeSentMsg(`Mode développement — code : ${data.devCode}`);
         setCodeInput(data.devCode);
         verifyCode(data.devCode);
       } else {
@@ -298,7 +298,7 @@ export default function InscriptionConducteurPage() {
             {error && (
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
                 style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b" }}>
-                ⚠️ {error}
+                {error}
               </div>
             )}
 

@@ -167,7 +167,6 @@ export default function FAQPage() {
             className="px-6 sm:px-8 py-6"
             style={{ background: "linear-gradient(135deg, #0b1f3a 0%, #1a3a6b 100%)" }}
           >
-            <div className="text-2xl mb-2">💬</div>
             <h2 className="text-xl font-black text-white mb-1">{f.askTitle}</h2>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>{f.askSub}</p>
           </div>
@@ -224,7 +223,7 @@ export default function FAQPage() {
                               : { borderColor: "#e2e8f0", background: "#fff", color: "#64748b" }
                           }
                         >
-                          {askerType === "DRIVER" ? `👤 ${f.askerDriver}` : `🔧 ${f.askerGarage}`}
+                          {askerType === "DRIVER" ? `${f.askerDriver}` : `${f.askerGarage}`}
                         </button>
                       );
                     })}

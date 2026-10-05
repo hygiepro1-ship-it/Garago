@@ -309,7 +309,7 @@ function ApptRow({
           <button
             onClick={() => onReschedule(appt)}
             className="text-xs px-3 py-2 rounded-lg font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-          >✏️ Modifier</button>
+          >Modifier</button>
           <button
             onClick={() => onCancel(appt.id)}
             className="text-xs px-3 py-2 rounded-lg font-semibold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
@@ -563,7 +563,7 @@ export default function DashboardConducteurPage() {
       {/* Header */}
       <div className="text-white rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8"
         style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)", border: "1px solid rgba(249,115,22,0.2)" }}>
-        <h1 className="text-xl sm:text-2xl font-extrabold mb-1">{d.title}, {session?.user?.name} 👋</h1>
+        <h1 className="text-xl sm:text-2xl font-extrabold mb-1">{d.title}, {session?.user?.name}</h1>
         <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>{d.subtitle}</p>
       </div>
 
@@ -708,7 +708,7 @@ export default function DashboardConducteurPage() {
                 {rescheduleAppt && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-                      <h3 className="font-black text-gray-900 text-lg mb-1">✏️ Modifier le rendez-vous</h3>
+                      <h3 className="font-black text-gray-900 text-lg mb-1">Modifier le rendez-vous</h3>
                       <p className="text-xs text-gray-400 mb-4">{rescheduleAppt.garage.name}</p>
                       <form onSubmit={submitReschedule} className="space-y-4">
                         {/* Sélection de la date */}
@@ -735,7 +735,7 @@ export default function DashboardConducteurPage() {
                               <p className="text-xs text-gray-400 text-center py-3">Chargement des créneaux…</p>
                             ) : slotsClosed ? (
                               <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fef2f2", color: "#dc2626" }}>
-                                🚫 Le garage est fermé ce jour-là. Choisissez une autre date.
+                                Le garage est fermé ce jour-là. Choisissez une autre date.
                               </div>
                             ) : rescheduleSlots.length === 0 ? (
                               <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fffbeb", color: "#92400e" }}>
@@ -960,7 +960,7 @@ export default function DashboardConducteurPage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>Voir →</Link>
-                        <button onClick={() => removeFav(f.garageId)} className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none" title="Retirer des favoris">♥</button>
+                        <button onClick={() => removeFav(f.garageId)} className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors" title="Retirer des favoris">Retirer</button>
                       </div>
                     </div>
                   ))}
