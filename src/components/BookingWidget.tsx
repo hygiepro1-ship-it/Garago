@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
+import Turnstile, { turnstileActive } from "@/components/Turnstile";
 
 interface BookingWidgetProps {
   garageId:     string;
@@ -44,6 +45,9 @@ function buildCalendar(month: Date) {
 
 export default function BookingWidget({ garageId, garageSlug, garageName, garageAddress, garageCity, services, availability }: BookingWidgetProps) {
   const { data: session } = useSession();
+  const [tsToken, setTsToken] = useState("");
+  const [tsReset, setTsReset] = useState(0);
+  const needCaptcha = turnstileActive && !session?.user;
   const { t } = useLang();
   const b = t.booking;
 
@@ -158,6 +162,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
 
   async function handleSubmit() {
     if (!name || !phone || !emailOk || !selectedDate || !selectedSlot) return;
+    if (needCaptcha && !tsToken) { setError("Cochez la vérification anti-robot."); return; }
     setSubmitting(true);
     setError("");
     const selectedVehicle = userVehicles.find(v => v.id === selectedVehicleId);
@@ -557,9 +562,10 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
 
+            {needCaptcha && <Turnstile onToken={setTsToken} resetKey={tsReset} />}
             <button
               onClick={handleSubmit}
-              disabled={submitting || !name || !phone || !emailOk}
+              disabled={submitting || !name || !phone || !emailOk || (needCaptcha && !tsToken)}
               className="w-full py-3 rounded-xl font-bold text-white text-sm transition hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ backgroundColor: "#f97316" }}
             >

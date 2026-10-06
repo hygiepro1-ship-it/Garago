@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendVerificationCode } from "@/lib/email";
 import { clientIp, isRateLimited } from "@/lib/abuse";
+import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,11 @@ export async function POST(req: NextRequest) {
 
     if (!email || email.length > 120 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email)) {
       return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
+    }
+
+    // Captcha (actif dès que les clés Turnstile sont configurées)
+    if (!(await verifyTurnstile(body?.turnstileToken, clientIp(req)))) {
+      return NextResponse.json({ error: CAPTCHA_ERROR }, { status: 400 });
     }
 
     // Limite par adresse IP : empêche d'utiliser le site pour envoyer des courriels en rafale à des tiers.
