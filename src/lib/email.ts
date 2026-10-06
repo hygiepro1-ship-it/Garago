@@ -603,6 +603,29 @@ export async function sendAdminGarageRenamed(params: { garageId: string; slug: s
   await send(ADMIN_EMAIL, `Changement de nom — ${params.oldName} → ${params.newName}`, body);
 }
 
+// ─── Email: nouvelle succursale (admin) ──────────────────────────────────────
+
+export async function sendAdminBranchCreated(params: { slug: string; branchName: string; branchAddress: string; mainName: string; neq: string | null; ownerEmail: string | null }) {
+  if (!canSend() || !process.env.ADMIN_EMAIL) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Nouvelle succursale ajoutée</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Une succursale est visible publiquement dès sa création, sans vérification préalable. Contrôlez qu'elle appartient bien à l'entreprise.</p>
+
+    ${infoCard(`
+      ${row("Garage principal", esc(params.mainName))}
+      ${row("Succursale", esc(params.branchName))}
+      ${row("Adresse", esc(params.branchAddress))}
+      ${row("NEQ du principal", esc(params.neq) || "—")}
+      ${row("Propriétaire", esc(params.ownerEmail) || "—")}
+    `)}
+
+    ${primaryBtn(`${BASE_URL}/garage/${encodeURIComponent(params.slug)}`, "Voir la succursale")}
+  `;
+
+  await send(ADMIN_EMAIL, `Nouvelle succursale — ${params.branchName}`, body);
+}
+
 // ─── Email: Signalement d'avis (admin) ───────────────────────────────────────
 
 export interface ReviewReportParams {

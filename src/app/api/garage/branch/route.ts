@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { geocodeAddress } from "@/lib/geocode";
 import { getBillingGarage } from "@/lib/garage-access";
+import { cleanText } from "@/lib/abuse";
+import { sendAdminBranchCreated } from "@/lib/email";
 import { MAX_GARAGES_PER_OWNER, syncBranchQuantity } from "@/lib/stripe-branches";
 
 export const dynamic = "force-dynamic";
@@ -44,11 +46,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const name = (body.name ?? "").trim();
-  const address = (body.address ?? "").trim();
-  const city = (body.city ?? "").trim();
-  const postalCode = (body.postalCode ?? "").trim();
-  const phone = (body.phone ?? "").trim();
+  const name = cleanText(body.name, 100);
+  const address = cleanText(body.address, 150);
+  const city = cleanText(body.city, 80);
+  const postalCode = cleanText(body.postalCode, 10);
+  const phone = cleanText(body.phone, 30);
 
   if (!name || !address || !city) {
     return NextResponse.json({ error: "Nom, adresse et ville sont requis." }, { status: 422 });
@@ -65,9 +67,11 @@ export async function POST(req: NextRequest) {
   // Géocodage
   let latitude: number | null = null;
   let longitude: number | null = null;
-  if (body.latitude != null && body.longitude != null) {
-    latitude = parseFloat(body.latitude);
-    longitude = parseFloat(body.longitude);
+  // Coordonnées reçues : acceptées seulement si elles tombent au Canada (sinon recalculées depuis l'adresse)
+  const lat = parseFloat(body.latitude), lng = parseFloat(body.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= 41 && lat <= 84 && lng >= -142 && lng <= -52) {
+    latitude = lat;
+    longitude = lng;
   } else if (address && city) {
     const coords = await geocodeAddress(address, city);
     if (coords) { latitude = coords.latitude; longitude = coords.longitude; }
@@ -96,6 +100,15 @@ export async function POST(req: NextRequest) {
   });
 
   // Facturation du garage supplémentaire si un abonnement est actif
+  // Une succursale est visible tout de suite : on prévient l'administrateur et on garde une trace.
+  await prisma.auditLog.create({
+    data: { action: "branch_created", targetType: "Garage", targetId: branch.id, actorEmail: session.user.email ?? null, detail: `Succursale « ${name} » de « ${principal.name} »` },
+  }).catch(console.error);
+  sendAdminBranchCreated({
+    slug: branch.slug, branchName: name, branchAddress: `${address}, ${city}`, mainName: principal.name,
+    neq: principal.neq ?? null, ownerEmail: session.user.email ?? null,
+  }).catch(console.error);
+
   if (principal.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
     try {
       const { default: Stripe } = await import("stripe");

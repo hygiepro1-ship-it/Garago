@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import { cleanText } from "@/lib/abuse";
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -15,27 +16,40 @@ export async function PUT(req: NextRequest) {
   if (!garage) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
   // Upsert all brands
-  await prisma.garageBrand.deleteMany({ where: { garageId: garage.id } });
-  if (brands?.length > 0) {
-    await prisma.garageBrand.createMany({
-      data: brands.map((b: { brand: string; accepts: boolean; note?: string }) => ({
-        garageId: garage.id,
-        brand: b.brand,
-        accepts: b.accepts,
-        note: b.note,
-      })),
-    });
+  // Validation avant toute écriture (listes bornées, textes nettoyés), puis écriture atomique : une requête
+  // invalide ne doit jamais effacer les marques existantes.
+  if (!Array.isArray(brands) || (brandModels !== undefined && (typeof brandModels !== "object" || brandModels === null || Array.isArray(brandModels)))) {
+    return NextResponse.json({ error: "Données de marques invalides." }, { status: 400 });
   }
-
-  // Modèles précis par marque — absence d'entrée pour une marque = tous les modèles acceptés
-  await prisma.garageBrandModel.deleteMany({ where: { garageId: garage.id } });
-  if (brandModels && typeof brandModels === "object") {
-    const rows = Object.entries(brandModels as Record<string, string[]>)
-      .flatMap(([brand, models]) => (models ?? []).map((model) => ({ garageId: garage.id, brand, model })));
-    if (rows.length > 0) {
-      await prisma.garageBrandModel.createMany({ data: rows });
+  const brandRows: { garageId: string; brand: string; accepts: boolean; note: string | null }[] = [];
+  const seenBrands = new Set<string>();
+  for (const raw of Array.isArray(brands) ? brands.slice(0, 300) : []) {
+    const b = (raw ?? {}) as Record<string, unknown>;
+    const brand = cleanText(b.brand, 50);
+    if (!brand || seenBrands.has(brand)) continue;
+    seenBrands.add(brand);
+    brandRows.push({ garageId: garage.id, brand, accepts: b.accepts === true, note: cleanText(b.note, 200) || null });
+  }
+  const modelRows: { garageId: string; brand: string; model: string }[] = [];
+  if (brandModels && typeof brandModels === "object" && !Array.isArray(brandModels)) {
+    for (const [brandRaw, models] of Object.entries(brandModels as Record<string, unknown>).slice(0, 300)) {
+      const brand = cleanText(brandRaw, 50);
+      if (!brand || !Array.isArray(models)) continue;
+      for (const m of models.slice(0, 300)) {
+        const model = cleanText(m, 60);
+        if (model) modelRows.push({ garageId: garage.id, brand, model });
+      }
     }
   }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.garageBrand.deleteMany({ where: { garageId: garage.id } });
+    if (brandRows.length > 0) await tx.garageBrand.createMany({ data: brandRows });
+    if (brandModels !== undefined) {
+      await tx.garageBrandModel.deleteMany({ where: { garageId: garage.id } });
+      if (modelRows.length > 0) await tx.garageBrandModel.createMany({ data: modelRows });
+    }
+  });
 
   const updated = await prisma.garageBrand.findMany({ where: { garageId: garage.id } });
   return NextResponse.json(updated);
