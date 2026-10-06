@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { clientIp, isRateLimited, isValidEmail, cleanText } from "@/lib/abuse";
 
 const VALID_TYPES = ["DRIVER", "GARAGE"];
 
@@ -13,7 +14,7 @@ function validate(question: string, type: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { type, question, authorName, authorEmail, _hp } = body;
 
   // Honeypot — les bots remplissent ce champ caché, jamais les humains
@@ -21,13 +22,17 @@ export async function POST(req: NextRequest) {
 
   const err = validate(question, type);
   if (err) return NextResponse.json({ error: err }, { status: 400 });
+  if (authorEmail && !isValidEmail(String(authorEmail).trim())) return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
+  if (await isRateLimited(`sq:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Trop de messages. Réessayez plus tard." }, { status: 429 });
+  }
 
   const record = await prisma.supportQuestion.create({
     data: {
       type,
       question:    question.trim(),
-      authorName:  authorName?.trim()  || null,
-      authorEmail: authorEmail?.trim() || null,
+      authorName:  cleanText(authorName, 80)  || null,
+      authorEmail: authorEmail ? String(authorEmail).trim().toLowerCase() : null,
     },
   });
 

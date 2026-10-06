@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { clientIp, isRateLimited } from "@/lib/abuse";
 
 const VALID_REASONS = ["usurpation", "erreur", "retrait", "autre"];
 
@@ -11,6 +12,10 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  // Un « retrait » masque la fiche immédiatement : on limite le débit pour qu'un script ne puisse pas masquer l'annuaire.
+  if (await isRateLimited(`rp:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Trop de signalements. Réessayez plus tard." }, { status: 429 });
+  }
   const body = await req.json().catch(() => ({}));
   const reason = String(body.reason ?? "");
   const message = body.message ? String(body.message).trim().slice(0, 1000) : null;

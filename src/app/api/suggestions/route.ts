@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendAdminNewSuggestion } from "@/lib/email";
+import { clientIp, isRateLimited, isValidEmail, cleanText } from "@/lib/abuse";
 
 // Validate: no URLs, emails, phone numbers in suggestion content
 function validateContent(text: string): string | null {
@@ -12,7 +13,7 @@ function validateContent(text: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { content, authorName, authorEmail, _hp } = body;
 
   // Honeypot — bots fill this hidden field, humans don't
@@ -20,12 +21,17 @@ export async function POST(req: NextRequest) {
 
   const err = validateContent(content);
   if (err) return NextResponse.json({ error: err }, { status: 400 });
+  if (authorEmail && !isValidEmail(String(authorEmail).trim())) return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
+  // Chaque suggestion déclenche un courriel à l'administrateur : on limite le débit par IP.
+  if (await isRateLimited(`sg:${clientIp(req)}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Trop de suggestions. Réessayez plus tard." }, { status: 429 });
+  }
 
   const suggestion = await prisma.suggestion.create({
     data: {
       content:     content.trim(),
-      authorName:  authorName?.trim()  || null,
-      authorEmail: authorEmail?.trim() || null,
+      authorName:  cleanText(authorName, 80)  || null,
+      authorEmail: authorEmail ? String(authorEmail).trim().toLowerCase() : null,
     },
   });
 

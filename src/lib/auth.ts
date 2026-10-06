@@ -42,7 +42,8 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email;
+        // Courriel normalisé : sans cela, varier la casse (A@x.com / a@x.com) contournerait le compteur d'échecs.
+        const email = credentials.email.trim().toLowerCase();
         const since = new Date(Date.now() - LOGIN_WINDOW_MS);
 
         // Anti-brute-force : bloque après trop d'échecs récents sur ce courriel

@@ -570,7 +570,7 @@ export default function DashboardConducteurPage() {
       {/* ── KPI widgets ── */}
       {apptsLoaded && (() => {
         const now = new Date();
-        const todayStr = now.toISOString().slice(0, 10);
+        const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(now);
         const totalRdv = appts.filter(a => a.status !== "CANCELLED").length;
         const prochainRdv = appts
           .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr)
@@ -654,7 +654,7 @@ export default function DashboardConducteurPage() {
           {/* ── Rendez-vous ── */}
           {tab === "rdv" && (() => {
             const now = new Date();
-            const todayStr = now.toISOString().slice(0, 10);
+            const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(now);
             const upcoming  = appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr);
             const active    = appts.filter(a => a.status === "CONFIRMED" && a.date === todayStr);
             const past      = appts.filter(a => a.status === "COMPLETED" || (a.date < todayStr && a.status !== "CANCELLED"));

@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { clientIp, isRateLimited } from "@/lib/abuse";
 
 // Même raisonnement que reset-password/confirm : un code à 6 chiffres est
 // brute-forçable sans limite de tentatives dans sa fenêtre de validité.
 const MAX_ATTEMPTS = 5;
+const MAX_TOTAL_ATTEMPTS = 10; // sur l'ensemble des codes récents de l'adresse (15 min)
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, code } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const code = String(body?.code ?? "").trim();
 
     if (!email || !code) {
       return NextResponse.json({ error: "Données manquantes." }, { status: 400 });
+    }
+
+    if (await isRateLimited(`vc:${clientIp(req)}`, 20, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
+    }
+    const recentCodes = await prisma.emailVerificationCode.findMany({
+      where: { email, createdAt: { gt: new Date(Date.now() - 15 * 60 * 1000) } },
+      select: { attempts: true },
+    });
+    if (recentCodes.reduce((sum, c) => sum + c.attempts, 0) >= MAX_TOTAL_ATTEMPTS) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
     }
 
     const record = await prisma.emailVerificationCode.findFirst({

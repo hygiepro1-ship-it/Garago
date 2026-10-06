@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { garageDistance } from "@/lib/geo";
-import { findNextAvailability, type BlockedRow } from "@/lib/availability";
+import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
             { parent: { verificationStatus: "APPROVED", OR: subOr } },
             // Fiches pré-créées ("Doctolib") : visibles dès l'import, sans
             // abonnement — c'est tout le principe (être trouvé avant de s'abonner).
-            { claimStatus: "non_reclamee", hiddenByReport: false },
+            { claimStatus: { in: ["non_reclamee", "en_attente"] }, hiddenByReport: false },
           ],
         },
       ],
@@ -132,11 +132,8 @@ export async function GET(req: NextRequest) {
     // Dates locales (pas toISOString, qui bascule en UTC — le serveur tourne en
     // UTC alors que les garages/RDV sont tous en heure du Québec) pour rester
     // cohérent avec findNextAvailability, qui calcule ses dates de la même façon.
-    const toLocalDateStr = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const todayStr = toLocalDateStr(now);
-    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + DAYS_AHEAD);
-    const endStr = toLocalDateStr(endDate);
+    const todayStr = quebecToday(now);
+    const endStr = addDaysStr(todayStr, DAYS_AHEAD);
 
     const garageIds = rawGarages.map((g) => g.id);
     const [blockedRows, bookedRows] = garageIds.length

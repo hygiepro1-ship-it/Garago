@@ -1,23 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { clientIp, isRateLimited } from "@/lib/abuse";
 
 // Un code à 6 chiffres n'a que 900 000 combinaisons — sans limite de tentatives,
 // il serait brute-forçable dans sa fenêtre de validité. On compte les essais
 // par adresse plutôt que par code : même un attaquant qui redemande un nouveau
 // code ne repart pas à zéro pendant que le précédent est toujours valide.
 const MAX_ATTEMPTS = 5;
+// Plafond sur l'ensemble des codes récents d'une adresse (15 min), quel que soit le nombre de codes redemandés.
+const MAX_TOTAL_ATTEMPTS = 10;
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, code, newPassword } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const code = String(body?.code ?? "").trim();
+    const newPassword = body?.newPassword;
 
-    if (!email || !code || !newPassword) {
+    if (!email || !code || typeof newPassword !== "string" || !newPassword) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
     if (newPassword.length < 8) {
       return NextResponse.json({ error: "Le mot de passe doit contenir au moins 8 caractères" }, { status: 400 });
+    }
+    if (newPassword.length > 128) {
+      return NextResponse.json({ error: "Le mot de passe est trop long (128 caractères maximum)" }, { status: 400 });
+    }
+
+    // Limite par IP sur les essais de code
+    if (await isRateLimited(`pc:${clientIp(req)}`, 20, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
+    }
+
+    const recentCodes = await prisma.passwordResetCode.findMany({
+      where: { email, createdAt: { gt: new Date(Date.now() - 15 * 60 * 1000) } },
+      select: { attempts: true },
+    });
+    if (recentCodes.reduce((sum, c) => sum + c.attempts, 0) >= MAX_TOTAL_ATTEMPTS) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
     }
 
     const record = await prisma.passwordResetCode.findFirst({

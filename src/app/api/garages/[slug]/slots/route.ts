@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN, quebecToday, dayOfWeekOf } from "@/lib/availability";
 
 // GET /api/garages/[slug]/slots?date=YYYY-MM-DD&categoryId=...
 // Renvoie les créneaux libres pour une date donnée, dimensionnés à la durée
@@ -18,7 +18,7 @@ export async function GET(
     (req.nextUrl.searchParams.get("categoryIds") ?? req.nextUrl.searchParams.get("categoryId") ?? "")
       .split(",").map((s) => s.trim()).filter(Boolean)
   )).slice(0, 6);
-  if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "date required" }, { status: 400 });
 
   const garage = await prisma.garage.findUnique({
     where: { slug },
@@ -50,8 +50,7 @@ export async function GET(
   }
 
   // Day of week: 0=Sun … 6=Sat
-  const jsDate = new Date(date + "T12:00:00");
-  const dow = jsDate.getDay();
+  const dow = dayOfWeekOf(date);
   const avail = garage.availability.find((a) => a.dayOfWeek === dow);
 
   const blockedSlots = await prisma.blockedSlot.findMany({
@@ -70,8 +69,7 @@ export async function GET(
   });
 
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  const isToday = date === todayStr;
+  const isToday = date === quebecToday(now);
 
   const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity });
 
