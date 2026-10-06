@@ -45,6 +45,9 @@ export async function POST(
       user = await prisma.user.create({
         data: { name: claim.name, email: claim.email.toLowerCase(), phone: claim.phone, role: "GARAGE_OWNER" },
       });
+    } else if (user.role === "ADMIN") {
+      // Le courriel de la demande n'est pas vérifié : on refuse plutôt que de rétrograder un administrateur.
+      return NextResponse.json({ error: "Ce courriel appartient à un compte administrateur. Demandez un autre courriel au demandeur." }, { status: 409 });
     } else if (user.role !== "GARAGE_OWNER") {
       user = await prisma.user.update({ where: { id: user.id }, data: { role: "GARAGE_OWNER" } });
     }
