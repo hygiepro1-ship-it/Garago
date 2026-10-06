@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Turnstile, { turnstileActive } from "@/components/Turnstile";
 
 interface Props {
   garage: {
@@ -114,6 +115,8 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [neq, setNeq] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [tsToken, setTsToken] = useState("");
+  const [tsReset, setTsReset] = useState(0);
   const [done, setDone] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -123,9 +126,10 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     const res = await fetch(`/api/garages/${slug}/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, role, phone, email, neq }),
+      body: JSON.stringify({ name, role, phone, email, neq, turnstileToken: tsToken }),
     });
     setSubmitting(false);
+    setTsReset((n) => n + 1);
     if (res.ok) {
       setDone(true);
     } else {
@@ -181,8 +185,9 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
             pattern="\d{10}" title="10 chiffres" />
           <p className="text-xs text-gray-400 mt-1">Exigé pour confirmer que vous êtes bien l'entreprise titulaire de ce garage.</p>
         </div>
+        <Turnstile onToken={setTsToken} resetKey={tsReset} />
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-        <button type="submit" disabled={submitting}
+        <button type="submit" disabled={submitting || (turnstileActive && !tsToken)}
           className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
           {submitting ? "Envoi…" : "Envoyer la demande"}
         </button>

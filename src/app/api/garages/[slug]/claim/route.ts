@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendClaimRequestNotification } from "@/lib/email";
 import { clientIp, isRateLimited, cleanText } from "@/lib/abuse";
+import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 
 // POST /api/garages/[slug]/claim — "Vous êtes le propriétaire ? Activez votre page"
 // Section 3 de la stratégie fiches pré-créées : aucune connexion requise ici, la
@@ -12,6 +13,9 @@ export async function POST(
 ) {
   const { slug } = await params;
   const body = await req.json().catch(() => ({}));
+  if (!(await verifyTurnstile(body.turnstileToken, clientIp(req)))) {
+    return NextResponse.json({ error: CAPTCHA_ERROR }, { status: 400 });
+  }
   // Sans limite, un robot pourrait réclamer toutes les fiches une à une et noyer l'équipe de demandes bidon.
   if (await isRateLimited(`cl:${clientIp(req)}`, 3, 60 * 60 * 1000)) {
     return NextResponse.json({ error: "Trop de demandes. Réessayez plus tard ou contactez-nous." }, { status: 429 });

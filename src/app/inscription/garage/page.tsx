@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Turnstile, { turnstileActive } from "@/components/Turnstile";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -252,6 +253,9 @@ export default function InscriptionGaragePage() {
   }
 
   // ── Send verification code ──────────────────────────────────────────────────
+  const [tsToken, setTsToken] = useState("");
+  const [tsReset, setTsReset] = useState(0);
+
   async function sendCode() {
     setCodeError("");
     setCodeSentMsg("");
@@ -259,15 +263,19 @@ export default function InscriptionGaragePage() {
       setCodeError("Entrez d'abord une adresse courriel valide.");
       return;
     }
+    if (turnstileActive && !tsToken) {
+      setCodeError("Cochez d'abord la vérification anti-robot.");
+      return;
+    }
     setSendingCode(true);
     try {
       const res = await fetch("/api/verify-email/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken: tsToken }),
       });
       const data = await res.json();
-      if (!res.ok) { setCodeError(data.error ?? "Erreur lors de l'envoi."); return; }
+      if (!res.ok) { setTsReset((n) => n + 1); setCodeError(data.error ?? "Erreur lors de l'envoi."); return; }
       setCodeSent(true);
       setEmailVerified(false);
       setCodeInput("");
@@ -279,7 +287,7 @@ export default function InscriptionGaragePage() {
         setCodeSentMsg(`Code envoyé à ${email}`);
       }
     } catch { setCodeError("Erreur réseau."); }
-    finally { setSendingCode(false); }
+    finally { setSendingCode(false); setTsReset((n) => n + 1); }
   }
 
   // ── Verify code ─────────────────────────────────────────────────────────────
@@ -485,6 +493,7 @@ export default function InscriptionGaragePage() {
                             </button>
                           )}
                         </div>
+                        {!emailVerified && <Turnstile onToken={setTsToken} resetKey={tsReset} />}
 
                         {emailVerified && (
                           <p className="text-xs font-semibold text-green-600 mt-1.5 flex items-center gap-1">

@@ -6,6 +6,7 @@ import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 import { computeFreeSlots, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
+import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
@@ -51,6 +52,11 @@ export async function POST(req: NextRequest) {
 
   if (!garageId || !customerName || !customerPhone || !date || !startTime) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
+  }
+
+  // Client non connecté : captcha obligatoire (actif dès que les clés Turnstile sont configurées)
+  if (!session?.user && !(await verifyTurnstile(body.turnstileToken, clientIp(req)))) {
+    return NextResponse.json({ error: CAPTCHA_ERROR }, { status: 400 });
   }
 
   // Validation stricte des champs libres — ils finissent dans des courriels et dans l'agenda du garage.
