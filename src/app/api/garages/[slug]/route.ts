@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { toPublicGarage } from "@/lib/public-garage";
 
 export async function GET(
   _req: NextRequest,
@@ -62,7 +63,7 @@ export async function GET(
     );
 
     return NextResponse.json({
-      ...garage,
+      ...toPublicGarage(garage),
       services,
       avgRating: Math.round(avgRating * 10) / 10,
       reviewCount: garage._count.reviews,
