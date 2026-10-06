@@ -962,13 +962,23 @@ export default function DashboardGaragePage() {
   const [requireConfirmation, setRequireConfirmation] = useState(true);
   useEffect(() => { if (garage) setRequireConfirmation(garage.requireConfirmation ?? true); }, [garage]);
 
+  const [priceTried, setPriceTried] = useState(false);
+
   async function saveServices() {
+    // Chaque service coché doit avoir un prix « à partir de » : c'est le prix minimum que le client voit.
+    const missing = services.filter((s) => !(parseFloat(String(s.priceMin ?? "").replace(",", ".")) > 0));
+    if (missing.length > 0) {
+      setPriceTried(true);
+      setSuccess(`Indiquez le prix « à partir de » pour : ${missing.map((s) => s.categoryName).join(", ")}`);
+      setTimeout(() => setSuccess(""), 6000);
+      return;
+    }
     setSaving(true);
     const cap = Math.min(50, Math.max(1, parseInt(capacity, 10) || 1));
     const res = await gfetch("/api/garage/services", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services, capacity: cap, requireConfirmation }),
+      body: JSON.stringify({ services, capacity: cap, requireConfirmation, requirePrices: true }),
     });
     if (res.ok) {
       setCapacity(String(cap));
@@ -2402,7 +2412,7 @@ export default function DashboardGaragePage() {
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.services}</h2>
               <p className="text-gray-500 text-sm">
-                Cochez les services que vous offrez et ajoutez vos prix
+                Cochez les services que vous offrez et indiquez, pour chacun, le prix « à partir de » : c'est le prix minimum que le client verra
               </p>
             </div>
             <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
@@ -2476,6 +2486,28 @@ export default function DashboardGaragePage() {
                                 onChange={(e) => setTotal(hours * 60 + Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))} />
                               <span className="text-sm text-gray-500">min</span>
                             </div>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        {(() => {
+                          const invalid = priceTried && !(parseFloat(String(active.priceMin ?? "").replace(",", ".")) > 0);
+                          return (
+                            <>
+                              <label htmlFor={`prix-${cat.id}`} className="block text-xs text-gray-500 mb-0.5">
+                                Prix minimum <span className="text-red-600" aria-hidden="true">*</span>
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">À partir de</span>
+                                <input id={`prix-${cat.id}`} type="text" inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" maxLength={9} required
+                                  aria-label={`Prix à partir de, en dollars, pour ${cat.name}`} aria-invalid={invalid}
+                                  className={inputClass} style={{ width: 110, ...(invalid ? { borderColor: "#dc2626" } : {}) }} placeholder="89"
+                                  value={active.priceMin ?? ""}
+                                  onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, priceMin: e.target.value } : s))} />
+                                <span className="text-sm text-gray-600">$</span>
+                              </div>
+                              {invalid && <p className="text-xs mt-1" style={{ color: "#dc2626" }} role="alert">Indiquez le prix minimum de ce service.</p>}
+                            </>
                           );
                         })()}
                       </div>

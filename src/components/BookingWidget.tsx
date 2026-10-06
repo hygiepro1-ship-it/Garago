@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
+import { formatPrice } from "@/lib/price";
 import Turnstile, { turnstileActive } from "@/components/Turnstile";
 
 interface BookingWidgetProps {
@@ -11,7 +12,7 @@ interface BookingWidgetProps {
   garageName:   string;
   garageAddress?: string;
   garageCity?:    string;
-  services: Array<{ category: { id: string; name: string }; durationMin?: number | null }>;
+  services: Array<{ category: { id: string; name: string }; durationMin?: number | null; priceMin?: number | null }>;
   availability?: Array<{ dayOfWeek: number; isClosed: boolean }>;
 }
 
@@ -60,6 +61,8 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const selectedCatsKey = selectedCats.join(",");
   const estimatedMin = selectedCats.reduce(
     (sum, id) => sum + (services.find((sv) => sv.category.id === id)?.durationMin ?? 60), 0);
+  // Prix minimum cumulé : somme des prix « à partir de » des services choisis (le prix final est établi par le garage).
+  const minTotal = selectedCats.reduce((sum, id) => sum + (services.find((sv) => sv.category.id === id)?.priceMin ?? 0), 0);
   const [slotDurationMin, setSlotDurationMin] = useState(60);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // Initialize calMonth without new Date() to avoid SSR/client hydration mismatch
@@ -348,7 +351,10 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                       {checked && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
                     </span>
                     <span className="flex-1">{sv.category.name}</span>
-                    {sv.durationMin ? <span className="text-xs text-gray-400 flex-shrink-0">~{sv.durationMin} min</span> : null}
+                    <span className="flex flex-col items-end flex-shrink-0 leading-tight">
+                      {formatPrice(sv.priceMin) && <span className="text-xs font-bold" style={{ color: "#c2410c" }}>À partir de {formatPrice(sv.priceMin)}</span>}
+                      {sv.durationMin ? <span className="text-xs text-gray-400">~{sv.durationMin} min</span> : null}
+                    </span>
                   </button>
                 );
               }) : (
@@ -360,6 +366,12 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                 <p className="text-xs text-gray-500 mb-2">
                   {selectedCats.length} {selectedCats.length > 1 ? "prestations" : "prestation"} · durée estimée {estimatedMin >= 60 ? `${Math.floor(estimatedMin / 60)} h${estimatedMin % 60 ? ` ${String(estimatedMin % 60).padStart(2, "0")}` : ""}` : `${estimatedMin} min`}
                 </p>
+                {formatPrice(minTotal) && (
+                  <p className="text-sm font-bold mb-2" style={{ color: "#c2410c" }}>
+                    Total à partir de {formatPrice(minTotal)}
+                    <span className="block text-xs font-normal text-gray-500">Prix minimum indicatif : le garage confirme le prix final après inspection.</span>
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setStep("date")}

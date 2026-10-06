@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatPrice } from "@/lib/price";
 import BrandLogo from "@/components/BrandLogo";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
@@ -153,6 +154,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
               <span key={`s${i}`} className="badge badge-navy">
                 <ServiceIcon name={s.category.name} size={12} />
                 {s.category.name}
+                {formatPrice(s.priceMin) && <span style={{ opacity: 0.85, fontWeight: 600 }}> · dès {formatPrice(s.priceMin)}</span>}
               </span>
             ))}
             {garage.services.length > 3 && <span className="badge badge-gray">+{garage.services.length - 3}</span>}
