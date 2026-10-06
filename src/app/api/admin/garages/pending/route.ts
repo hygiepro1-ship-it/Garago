@@ -21,5 +21,12 @@ export async function GET(_req: NextRequest) {
     },
     orderBy: { createdAt: "asc" },
   });
-  return NextResponse.json(garages);
+  // Alerte fraude : ce NEQ est-il déjà utilisé par une autre entreprise (autre propriétaire) ?
+  const withDuplicates = await Promise.all(garages.map(async (g) => {
+    const neqDuplicates = g.neq
+      ? await prisma.garage.count({ where: { neq: g.neq, id: { not: g.id }, ownerId: { not: null }, NOT: { owner: { email: g.owner?.email ?? "" } } } })
+      : 0;
+    return { ...g, neqDuplicates };
+  }));
+  return NextResponse.json(withDuplicates);
 }

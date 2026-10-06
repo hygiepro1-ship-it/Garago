@@ -14,7 +14,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!await requireAdmin()) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   const { id } = await params;
   const { action } = await req.json(); // "approve" | "reject"
 
@@ -31,6 +32,14 @@ export async function POST(
   await prisma.garage.update({
     where: { id },
     data: { verificationStatus: action === "approve" ? "APPROVED" : "REJECTED" },
+  });
+  await prisma.auditLog.create({
+    data: {
+      action: action === "approve" ? "garage_verified" : "garage_rejected",
+      targetType: "Garage", targetId: id,
+      actorEmail: (session.user as any)?.email ?? null,
+      detail: `Vérification du NEQ : ${garage.name}`,
+    },
   });
 
   if (garage.owner?.email) {

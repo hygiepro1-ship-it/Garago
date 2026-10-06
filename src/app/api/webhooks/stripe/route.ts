@@ -71,13 +71,25 @@ export async function POST(req: NextRequest) {
             const newGarage = await prisma.garage.findFirst({
               where: { stripeCustomerId: inv.customer as string },
             });
-            if (newGarage?.referredByCode && !newGarage.referralRewardGranted) {
+            // Récompense accordée une seule fois : on « réserve » l'attribution de façon atomique avant de calculer quoi que ce
+            // soit. Stripe peut livrer deux fois le même événement (ou deux en parallèle) ; sans cela, le parrain
+            // aurait été récompensé deux fois.
+            if (newGarage?.referredByCode && !newGarage.referralRewardGranted
+              && (await prisma.garage.updateMany({ where: { id: newGarage.id, referralRewardGranted: false }, data: { referralRewardGranted: true } })).count === 1) {
               const referrer = await prisma.garage.findUnique({
                 where: { referralCode: newGarage.referredByCode },
               });
               // Le programme de parrainage est réservé aux garages abonnés : un
               // parrain en essai / expiré ne monte pas en palier.
-              if (referrer && referrer.subscriptionStatus === "ACTIVE") {
+              // Auto-parrainage exclu : même propriétaire, même entreprise (NEQ) ou même client Stripe.
+              const selfReferral = !!referrer && (
+                referrer.id === newGarage.id
+                || (!!referrer.ownerId && referrer.ownerId === newGarage.ownerId)
+                || (!!referrer.neq && referrer.neq === newGarage.neq)
+                || (!!referrer.stripeCustomerId && referrer.stripeCustomerId === newGarage.stripeCustomerId)
+              );
+              if (selfReferral) console.warn(`[parrainage] auto-parrainage ignoré : ${newGarage.name}`);
+              if (referrer && !selfReferral && referrer.subscriptionStatus === "ACTIVE") {
                 // Mise à jour compteur + tiers ambassadeur
                 const newCount = (referrer.referralCount ?? 0) + 1;
                 const newTier = newCount >= 20 ? 5 : newCount >= 15 ? 4 : newCount >= 10 ? 3 : newCount >= 6 ? 2 : newCount >= 3 ? 1 : 0;
