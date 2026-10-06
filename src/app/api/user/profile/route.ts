@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { cleanText } from "@/lib/abuse";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -37,7 +38,10 @@ export async function PATCH(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { notifPref, phone, name } = await req.json();
+  const { notifPref, phone: phoneRaw, name: nameRaw } = await req.json().catch(() => ({}));
+  const phone = phoneRaw === undefined ? undefined : cleanText(phoneRaw, 30);
+  const name  = nameRaw  === undefined ? undefined : cleanText(nameRaw, 100);
+  if (name !== undefined && name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
 
   // Validation notifPref (SMS non disponible pour le moment)
   const validPrefs = ["EMAIL"];
