@@ -4,6 +4,17 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { toMinutes } from "@/lib/availability";
+import { SERVICE_CATEGORIES } from "@/lib/services";
+import { cleanText } from "@/lib/abuse";
+
+const KNOWN_CATEGORIES = new Map(SERVICE_CATEGORIES.map((c) => [c.id, c]));
+
+function parsePrice(v: unknown): number | null | "invalid" {
+  if (v === undefined || v === null || v === "") return null;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  if (!Number.isFinite(n) || n < 0 || n > 100000) return "invalid";
+  return Math.round(n * 100) / 100;
+}
 
 // Bornée pour éviter qu'une durée nulle/négative (saisie invalide, ou 0) ne
 // puisse un jour faire boucler indéfiniment la génération de créneaux (voir
@@ -57,35 +68,58 @@ export async function PUT(req: NextRequest) {
     await prisma.garage.update({ where: { id: garage.id }, data: { requireConfirmation } });
   }
 
-  await prisma.garageService.deleteMany({ where: { garageId: garage.id } });
+  // Validation complète AVANT d'effacer quoi que ce soit : une valeur invalide ne doit jamais faire perdre
+  // les services existants du garage (avant, l'effacement précédait la création, sans transaction).
+  // Pas de liste = on ne touche pas aux services (ex. changement de la capacité seule) ; une valeur qui n'est pas
+  // une liste est refusée au lieu d'être traitée comme « liste vide » (ce qui effaçait tous les services).
+  if (services !== undefined && !Array.isArray(services)) {
+    return NextResponse.json({ error: "Liste de services invalide." }, { status: 400 });
+  }
+  const list: unknown[] = Array.isArray(services) ? services : [];
+  if (list.length > 40) return NextResponse.json({ error: "Trop de services (40 maximum)." }, { status: 400 });
+  const prepared: { categoryId: string; name: string; description: string | null; priceMin: number | null; priceMax: number | null; durationMin: number | null }[] = [];
+  const seen = new Set<string>();
+  for (const raw of list) {
+    const s = (raw ?? {}) as Record<string, unknown>;
+    // Seules les catégories officielles sont acceptées : un garage ne peut pas créer de catégories dans la base commune.
+    const known = typeof s.categoryId === "string" ? KNOWN_CATEGORIES.get(s.categoryId) : undefined;
+    if (!known) return NextResponse.json({ error: "Catégorie de service inconnue." }, { status: 400 });
+    if (seen.has(known.id)) continue;
+    seen.add(known.id);
+    const priceMin = parsePrice(s.priceMin);
+    const priceMax = parsePrice(s.priceMax);
+    if (priceMin === "invalid" || priceMax === "invalid") {
+      return NextResponse.json({ error: "Prix invalide (nombre positif attendu)." }, { status: 400 });
+    }
+    if (priceMin !== null && priceMax !== null && priceMin > priceMax) {
+      return NextResponse.json({ error: "Le prix minimum ne peut pas dépasser le prix maximum." }, { status: 400 });
+    }
+    prepared.push({
+      categoryId: known.id,
+      name: cleanText(s.name, 100) || known.name,
+      description: cleanText(s.description, 300) || null,
+      priceMin, priceMax,
+      durationMin: sanitizeDuration(s.durationMin, maxDurationMin),
+    });
+  }
 
-  if (services?.length > 0) {
-    // Ensure service categories exist
-    for (const s of services) {
-      const cat = await prisma.serviceCategory.upsert({
+  if (services !== undefined) await prisma.$transaction(async (tx) => {
+    await tx.garageService.deleteMany({ where: { garageId: garage.id } });
+    for (const s of prepared) {
+      const known = KNOWN_CATEGORIES.get(s.categoryId)!;
+      const cat = await tx.serviceCategory.upsert({
         where: { id: s.categoryId },
         update: {},
-        create: {
-          id: s.categoryId,
-          name: s.categoryName,
-          icon: s.icon,
-        },
+        create: { id: s.categoryId, name: known.name, icon: known.icon },
       });
-
-      await prisma.garageService.create({
+      await tx.garageService.create({
         data: {
-          garageId: garage.id,
-          categoryId: cat.id,
-          name: s.name,
-          description: s.description,
-          priceMin: s.priceMin ? parseFloat(s.priceMin) : null,
-          priceMax: s.priceMax ? parseFloat(s.priceMax) : null,
-          durationMin: sanitizeDuration(s.durationMin, maxDurationMin),
-          active: true,
+          garageId: garage.id, categoryId: cat.id, name: s.name, description: s.description,
+          priceMin: s.priceMin, priceMax: s.priceMax, durationMin: s.durationMin, active: true,
         },
       });
     }
-  }
+  });
 
   const updated = await prisma.garageService.findMany({
     where: { garageId: garage.id },
