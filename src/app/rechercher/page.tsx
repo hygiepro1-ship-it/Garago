@@ -111,6 +111,9 @@ function SearchContent() {
   const [radiusKm, setRadiusKm] = useState(15);
   const [googleFailed, setGoogleFailed] = useState(false);
   const [locLabel, setLocLabel] = useState<string | null>(null);
+  // Filtres de la carte : réservation en ligne / sans rendez-vous (aucun coché = tous les garages)
+  const [mapOnline, setMapOnline] = useState(false);
+  const [mapWalkIn, setMapWalkIn] = useState(false);
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
@@ -506,13 +509,28 @@ function SearchContent() {
               <div className={view === "map" ? "grid gap-4 lg:grid-cols-5 lg:items-start" : ""}>
               {view === "map" && (() => {
                 const inRadius = userPos ? displayGarages.filter((g) => g.distanceKm == null || g.distanceKm <= radiusKm) : displayGarages;
+                const isOnline = (g: SearchGarage) => g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente";
                 const mapGarages = inRadius
+                  .filter((g) => !(mapOnline || mapWalkIn) || (mapOnline && isOnline(g)) || (mapWalkIn && g.acceptsWalkIn))
                   .filter((g) => g.latitude != null && g.longitude != null)
                   .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, online: g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente" }));
-                const picked = inRadius.find((g) => g.slug === selectedSlug);
+                const picked = inRadius.find((g) => g.slug === selectedSlug && mapGarages.some((m) => m.slug === g.slug));
                 return (
                   <>
                     <div className="lg:col-span-5 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2 text-sm" style={{ color: "#0b1f3a" }}>
+                        {([
+                          { on: mapOnline, set: setMapOnline, label: "Réservation en ligne", dot: "#15803d" },
+                          { on: mapWalkIn, set: setMapWalkIn, label: "Sans rendez-vous", dot: "#0b1f3a" },
+                        ]).map((o) => (
+                          <button key={o.label} type="button" onClick={() => o.set(!o.on)} aria-pressed={o.on}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold"
+                            style={{ borderRadius: 6, border: "1px solid #cbd3df", ...(o.on ? { background: "#0b1f3a", color: "#fff" } : { background: "#fff", color: "#0b1f3a" }) }}>
+                            <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: "50%", background: o.on ? "#fff" : o.dot, display: "inline-block" }} />
+                            {o.label}
+                          </button>
+                        ))}
+                      </div>
                       {userPos && (
                         <div className="flex flex-wrap items-center gap-2 text-sm" style={{ color: "#0b1f3a" }}>
                           <span className="font-bold">Rayon :</span>
