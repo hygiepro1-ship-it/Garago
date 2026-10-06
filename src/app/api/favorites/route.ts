@@ -29,8 +29,14 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   const userId = session.user.id;
-  const { garageId } = await req.json();
-  if (!garageId) return NextResponse.json({ error: "garageId requis" }, { status: 400 });
+  const { garageId } = await req.json().catch(() => ({}));
+  if (!garageId || typeof garageId !== "string") return NextResponse.json({ error: "garageId requis" }, { status: 400 });
+  if (!(await prisma.garage.findUnique({ where: { id: garageId }, select: { id: true } }))) {
+    return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
+  }
+  if ((await prisma.garageFavorite.count({ where: { userId } })) >= 200) {
+    return NextResponse.json({ error: "Limite de favoris atteinte." }, { status: 400 });
+  }
 
   const fav = await prisma.garageFavorite.upsert({
     where:  { userId_garageId: { userId, garageId } },
