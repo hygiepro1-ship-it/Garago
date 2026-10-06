@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
     if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
 
     const { date, startTime, endTime, reason, allDay } = await req.json();
-    if (!date) return NextResponse.json({ error: "Date requise" }, { status: 400 });
+    if (!date || typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "Date requise (AAAA-MM-JJ)" }, { status: 400 });
+    const hhmm = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (!allDay && (!hhmm.test(String(startTime)) || !hhmm.test(String(endTime)) || String(startTime) >= String(endTime))) {
+      return NextResponse.json({ error: "Heures invalides" }, { status: 400 });
+    }
 
     const slot = await prisma.blockedSlot.create({
       data: {
@@ -55,7 +59,7 @@ export async function POST(req: NextRequest) {
         date,
         startTime: allDay ? null : startTime,
         endTime: allDay ? null : endTime,
-        reason: reason || null,
+        reason: reason ? String(reason).slice(0, 200) : null,
         allDay: !!allDay,
       },
     });

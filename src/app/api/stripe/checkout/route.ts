@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     await prisma.garage.updateMany({ where: { ownerId: userId }, data: { stripeCustomerId: customerId } });
   }
 
-  const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXTAUTH_URL ?? req.headers.get("origin") ?? "http://localhost:3000";
 
   // Les réductions ambassadeur (paliers 2 et 3) sont ponctuelles et appliquées
   // par le webhook sur l'abonnement actif — pas de réduction à l'inscription.

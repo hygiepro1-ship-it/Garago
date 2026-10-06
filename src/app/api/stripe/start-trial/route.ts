@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const msRemaining = garage.subscriptionEndAt ? garage.subscriptionEndAt.getTime() - Date.now() : 0;
     const trialDays = Math.max(1, Math.ceil(msRemaining / (24 * 60 * 60 * 1000)));
 
-    const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const origin = process.env.NEXTAUTH_URL ?? req.headers.get("origin") ?? "http://localhost:3000";
     const cancelUrl = cancelTo === "wizard"
       ? `${origin}/inscription/garage?step=3&cardError=1`
       : `${origin}/tableau-de-bord/garage?trial=skipped`;

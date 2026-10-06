@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { sendDescriptionReviewEmail } from "@/lib/email";
 import { geocodeAddress } from "@/lib/geocode";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import { cleanText, isValidEmail } from "@/lib/abuse";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 
@@ -50,7 +51,18 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const body   = await req.json();
+  const body   = await req.json().catch(() => ({}));
+
+  // Champs de contact : validés avant d'être enregistrés (ils s'affichent sur la fiche publique et dans des courriels)
+  if (body.email && !isValidEmail(String(body.email).trim())) {
+    return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 422 });
+  }
+  if (body.website && !/^https?:\/\/[^\s<>"']{3,200}$/i.test(String(body.website).trim())) {
+    return NextResponse.json({ error: "Le site web doit commencer par http:// ou https://." }, { status: 422 });
+  }
+  if (body.name !== undefined && cleanText(body.name, 100).length < 2) {
+    return NextResponse.json({ error: "Nom du garage invalide." }, { status: 422 });
+  }
 
   // Validate description content
   const descErr = validateDescription(body.description);
@@ -68,8 +80,9 @@ export async function PUT(req: NextRequest) {
   if (!current) return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
 
   // Géocode l'adresse si elle a changé ou si les coordonnées manquent
-  let geoLat: number | undefined = body.latitude  != null ? parseFloat(body.latitude)  : undefined;
-  let geoLng: number | undefined = body.longitude != null ? parseFloat(body.longitude) : undefined;
+  // Coordonnées : acceptées seulement si elles tombent au Canada (sinon recalculées depuis l'adresse)
+  let geoLat: number | undefined = body.latitude  != null && parseFloat(body.latitude)  >= 41 && parseFloat(body.latitude)  <= 84   ? parseFloat(body.latitude)  : undefined;
+  let geoLng: number | undefined = body.longitude != null && parseFloat(body.longitude) >= -142 && parseFloat(body.longitude) <= -52 ? parseFloat(body.longitude) : undefined;
   if ((geoLat == null || geoLng == null) && body.address && body.city) {
     const coords = await geocodeAddress(body.address, body.city);
     if (coords) { geoLat = coords.latitude; geoLng = coords.longitude; }
@@ -113,15 +126,15 @@ export async function PUT(req: NextRequest) {
   const garage = await prisma.garage.update({
     where: { id: current.id },
     data: {
-      name:    body.name,
-      address: body.address,
-      city:    body.city,
-      postalCode:      body.postalCode,
-      phone:           body.phone,
-      email:           body.email,
-      website:         body.website,
-      yearFounded:     body.yearFounded   ? parseInt(body.yearFounded)   : null,
-      employeeCount:   body.employeeCount ? parseInt(body.employeeCount) : null,
+      name:    body.name !== undefined ? cleanText(body.name, 100) : undefined,
+      address: body.address !== undefined ? cleanText(body.address, 150) : undefined,
+      city:    body.city !== undefined ? cleanText(body.city, 80) : undefined,
+      postalCode:      body.postalCode !== undefined ? cleanText(body.postalCode, 10) : undefined,
+      phone:           body.phone !== undefined ? cleanText(body.phone, 30) : undefined,
+      email:           body.email ? String(body.email).trim().toLowerCase() : body.email === "" ? null : undefined,
+      website:         body.website ? String(body.website).trim() : body.website === "" ? null : undefined,
+      yearFounded:     Number.isInteger(parseInt(body.yearFounded))   && parseInt(body.yearFounded)   >= 1800 && parseInt(body.yearFounded)   <= new Date().getFullYear() ? parseInt(body.yearFounded)   : null,
+      employeeCount:   Number.isInteger(parseInt(body.employeeCount)) && parseInt(body.employeeCount) >= 0 && parseInt(body.employeeCount) <= 100000 ? parseInt(body.employeeCount) : null,
       languages: body.languages != null
         ? (typeof body.languages === "string" ? body.languages : JSON.stringify(body.languages))
         : null,
@@ -131,7 +144,7 @@ export async function PUT(req: NextRequest) {
       emailPublic:     body.emailPublic     ?? false,
       acceptsWalkIn:   body.acceptsWalkIn   ?? true,
       appointmentOnly: body.appointmentOnly ?? false,
-      hourlyRate:      body.hourlyRate != null ? parseFloat(body.hourlyRate) : null,
+      hourlyRate:      body.hourlyRate != null && Number.isFinite(parseFloat(body.hourlyRate)) && parseFloat(body.hourlyRate) >= 0 && parseFloat(body.hourlyRate) < 10000 ? parseFloat(body.hourlyRate) : null,
       latitude:        geoLat,
       longitude:       geoLng,
       coverPosition:   body.coverPosition ?? "center",

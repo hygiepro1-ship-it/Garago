@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
   const phoneDigits = normalizePhone(customerPhone);
   if (name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
   if (!phoneDigits) return NextResponse.json({ error: "Numéro de téléphone invalide (10 chiffres)" }, { status: 400 });
-  if (customerEmail && !isValidEmail(customerEmail)) return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+  const sessionEmail = (session?.user as any)?.email ?? null;
+  if (customerEmail ? !isValidEmail(customerEmail) : !sessionEmail) {
+    return NextResponse.json({ error: customerEmail ? "Adresse courriel invalide" : "Le courriel est obligatoire pour recevoir la confirmation du rendez-vous." }, { status: 400 });
+  }
   if (typeof garageId !== "string" || typeof date !== "string" || typeof startTime !== "string"
       || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
     return NextResponse.json({ error: "Date ou heure invalide" }, { status: 400 });

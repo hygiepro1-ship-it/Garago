@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { garageDistance } from "@/lib/geo";
+import { toPublicGarage } from "@/lib/public-garage";
 import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
 
 export async function GET(req: NextRequest) {
@@ -182,7 +183,7 @@ export async function GET(req: NextRequest) {
         { daysAhead: DAYS_AHEAD, now, capacity: g.capacity ?? 1 }
       );
       return {
-        ...g,
+        ...toPublicGarage(g),
         avgRating: Math.round(avgRating * 10) / 10,
         reviewCount: g._count.reviews,
         distanceKm: userPos ? garageDistance(g, userPos) : null,

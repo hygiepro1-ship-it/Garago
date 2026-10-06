@@ -153,8 +153,11 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
       });
   }, [selectedDate, garageSlug, selectedCatsKey]);
 
+  // Le courriel est obligatoire : la confirmation, le rappel et la remise à disposition du créneau passent par lui.
+  const emailOk = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email.trim());
+
   async function handleSubmit() {
-    if (!name || !phone || !selectedDate || !selectedSlot) return;
+    if (!name || !phone || !emailOk || !selectedDate || !selectedSlot) return;
     setSubmitting(true);
     setError("");
     const selectedVehicle = userVehicles.find(v => v.id === selectedVehicleId);
@@ -491,8 +494,9 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               <input className={inputCls} type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(514) 555-0100" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">{b.email}</label>
-              <input className={inputCls} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jean@exemple.com" />
+              <label className="block text-xs font-semibold text-gray-500 mb-1">{b.email} *</label>
+              <input className={inputCls} type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="jean@exemple.com" autoComplete="email" />
+              <p className="text-xs text-gray-400 mt-1">{b.emailHint}</p>
             </div>
 
             {/* Véhicule — dropdown si l'utilisateur en a, sinon champs libres */}
@@ -555,7 +559,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !name || !phone}
+              disabled={submitting || !name || !phone || !emailOk}
               className="w-full py-3 rounded-xl font-bold text-white text-sm transition hover:opacity-90 disabled:opacity-50 mt-2"
               style={{ backgroundColor: "#f97316" }}
             >

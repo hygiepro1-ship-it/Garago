@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(null, { status: 400 });
   }
 
-  const yearParam = year ? `&modelYear=${year}` : "";
+  const yearParam = /^\d{4}$/.test(year) ? `&modelYear=${year}` : "";
 
   const imaginUrl =
     `https://cdn.imagin.studio/getImage` +
