@@ -57,6 +57,7 @@ interface PendingVerificationGarage {
   address: string; city: string; postalCode: string; phone: string;
   createdAt: string;
   owner: { name: string | null; email: string | null };
+  neqDuplicates?: number;
 }
 
 interface Suggestion {
@@ -239,6 +240,11 @@ function VerificationCard({
         <div className="rounded-xl p-4 border-2 border-orange-200 bg-orange-50">
           <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">NEQ</p>
           <p className="text-lg font-mono font-bold text-gray-900 mb-2 select-all">{garage.neq}</p>
+          {!!garage.neqDuplicates && (
+            <p className="text-xs font-bold mb-2 px-2 py-1 rounded" style={{ background: "#fee2e2", color: "#b91c1c" }} role="alert">
+              Attention : ce NEQ est déjà utilisé par {garage.neqDuplicates} autre(s) garage(s) d'un autre propriétaire.
+            </p>
+          )}
           <a href={reqUrl} target="_blank" rel="noopener noreferrer"
             className="text-xs text-orange-600 hover:underline font-semibold">
             Rechercher au Registre des entreprises ↗

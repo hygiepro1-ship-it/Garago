@@ -370,6 +370,7 @@ export default function DashboardConducteurPage() {
   const [vinLoading, setVinLoading] = useState(false);
   const [vinError,   setVinError]   = useState("");
   const [savingVehicle, setSavingVehicle] = useState(false);
+  const [vehicleError, setVehicleError] = useState("");
   const years  = getYears();
   const models = make ? getModelsForMake(make) : [];
 
@@ -503,6 +504,7 @@ export default function DashboardConducteurPage() {
   async function addVehicle(e: React.FormEvent) {
     e.preventDefault();
     setSavingVehicle(true);
+    setVehicleError("");
     const res = await fetch("/api/vehicles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -513,6 +515,9 @@ export default function DashboardConducteurPage() {
       setVehicles(prev => [...prev, v]);
       setShowAddVehicle(false);
       setYear(""); setMake(""); setModel(""); setTrim(""); setVin(""); setTireSize(""); setVinSpecs(null);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setVehicleError(err?.error || "Impossible d'ajouter le véhicule.");
     }
     setSavingVehicle(false);
   }
@@ -901,6 +906,7 @@ export default function DashboardConducteurPage() {
                       </select>
                     </div>
                   </div>
+                  {vehicleError && <p className="text-sm font-semibold" style={{ color: "#b91c1c" }} role="alert">{vehicleError}</p>}
                   <div className="flex gap-2">
                     <button type="submit" disabled={savingVehicle} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>{savingVehicle ? d.adding : d.add}</button>
                     <button type="button" onClick={() => setShowAddVehicle(false)} className="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">{d.cancel}</button>
