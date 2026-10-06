@@ -581,6 +581,28 @@ export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
   await send(ADMIN_EMAIL, `Nouvelle suggestion — ${author}`, body);
 }
 
+// ─── Email: changement de nom d'un garage (admin) ────────────────────────────
+
+export async function sendAdminGarageRenamed(params: { garageId: string; slug: string; oldName: string; newName: string; neq: string | null; ownerEmail: string | null }) {
+  if (!canSend() || !process.env.ADMIN_EMAIL) return;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Un garage a changé de nom</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Vérifiez que le nouveau nom correspond bien au NEQ du garage (risque d'usurpation).</p>
+
+    ${infoCard(`
+      ${row("Ancien nom", esc(params.oldName))}
+      ${row("Nouveau nom", esc(params.newName))}
+      ${row("NEQ", esc(params.neq) || "—")}
+      ${row("Propriétaire", esc(params.ownerEmail) || "—")}
+    `)}
+
+    ${primaryBtn(`${BASE_URL}/garage/${encodeURIComponent(params.slug)}`, "Voir la fiche")}
+  `;
+
+  await send(ADMIN_EMAIL, `Changement de nom — ${params.oldName} → ${params.newName}`, body);
+}
+
 // ─── Email: Signalement d'avis (admin) ───────────────────────────────────────
 
 export interface ReviewReportParams {

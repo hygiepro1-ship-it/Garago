@@ -2,7 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { sendDescriptionReviewEmail } from "@/lib/email";
+import { sendDescriptionReviewEmail, sendAdminGarageRenamed } from "@/lib/email";
 import { geocodeAddress } from "@/lib/geocode";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { cleanText, isValidEmail } from "@/lib/abuse";
@@ -72,7 +72,7 @@ export async function PUT(req: NextRequest) {
   const current = await prisma.garage.findFirst({
     where: ownedGarageWhere(userId, readGarageId(req.url)),
     select: {
-      id: true, name: true, email: true,
+      id: true, name: true, slug: true, neq: true, email: true, owner: { select: { email: true } },
       description: true, descriptionStatus: true,
       descriptionChanges: true, descriptionChangesYear: true,
     },
@@ -120,6 +120,22 @@ export async function PUT(req: NextRequest) {
       garageName: current.name,
       ownerEmail: current.email ?? userId,
       draft:      newDesc ?? "",
+    }).catch(console.error);
+  }
+
+  // Changement de nom : tracé dans le journal d'audit et signalé à l'administrateur, qui peut vérifier
+  // que le nouveau nom correspond bien au NEQ (empêche l'usurpation d'un autre garage après vérification).
+  const newName = body.name !== undefined ? cleanText(body.name, 100) : null;
+  if (newName && newName !== current.name) {
+    await prisma.auditLog.create({
+      data: {
+        action: "garage_renamed", targetType: "Garage", targetId: current.id,
+        actorEmail: session.user.email ?? null, detail: `« ${current.name} » → « ${newName} »`,
+      },
+    });
+    sendAdminGarageRenamed({
+      garageId: current.id, slug: current.slug, oldName: current.name, newName,
+      neq: current.neq ?? null, ownerEmail: current.owner?.email ?? null,
     }).catch(console.error);
   }
 
