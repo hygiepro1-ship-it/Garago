@@ -119,7 +119,7 @@ function AlertCard({ alert, onMarkRead }: { alert: GarageAlert; onMarkRead: (id:
               <span className="text-xs text-gray-400">
                 {new Date(alert.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
-              {alert.emailSent && <span className="text-xs text-gray-400">· ✉️ courriel envoyé</span>}
+              {alert.emailSent && <span className="text-xs text-gray-400">· courriel envoyé</span>}
             </div>
             <p className="font-bold text-gray-900 text-sm">
               {alert.garage.name}
@@ -198,7 +198,7 @@ function DescriptionCard({
         </button>
         <button onClick={() => onAction(garage.id, "reject")} disabled={actionId === garage.id}
           className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
-          ✗ Refuser
+          Refuser
         </button>
       </div>
     </div>
@@ -254,7 +254,7 @@ function VerificationCard({
         </button>
         <button onClick={() => onAction(garage.id, "reject")} disabled={actionId === garage.id}
           className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
-          ✗ Refuser
+          Refuser
         </button>
       </div>
     </div>
@@ -318,7 +318,7 @@ function ClaimRequestCard({
         </button>
         <button onClick={() => onAction(claim.id, "reject")} disabled={actionId === claim.id}
           className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50">
-          ✗ Refuser
+          Refuser
         </button>
       </div>
     </div>
@@ -1146,7 +1146,6 @@ export default function AdminDashboard() {
 
           {filteredSuggestions.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
-              <div className="text-4xl mb-3">💡</div>
               <p className="font-semibold text-gray-900">Aucune suggestion</p>
               <p className="text-gray-400 text-sm mt-1">Rien à afficher pour ce filtre.</p>
             </div>

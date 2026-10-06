@@ -478,8 +478,8 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
           <div className="space-y-3">
             {/* Summary */}
             <div className="bg-orange-50 rounded-xl p-3 border border-orange-100 text-xs text-orange-700 mb-4">
-              {service && <p>🔧 <strong>{service}</strong></p>}
-              <p>📅 <strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> à <strong>{selectedSlot}</strong></p>
+              {service && <p><strong>{service}</strong></p>}
+              <p><strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> à <strong>{selectedSlot}</strong></p>
             </div>
 
             <div>

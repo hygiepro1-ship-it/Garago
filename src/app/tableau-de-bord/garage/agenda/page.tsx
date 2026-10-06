@@ -408,7 +408,6 @@ export default function AgendaPage() {
             </div>
           ) : active.length === 0 && cancelled.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-              <span className="text-6xl mb-4">🎉</span>
               <p className="font-black text-gray-800 text-lg">{a.noAppts}</p>
               <p className="text-sm text-gray-400 mt-1">{a.noApptsSub}</p>
             </div>
@@ -495,7 +494,7 @@ export default function AgendaPage() {
               </div>
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
                 <div>
-                  <h2 className="font-black text-gray-900 text-lg">✅ Terminer le rendez-vous</h2>
+                  <h2 className="font-black text-gray-900 text-lg">Terminer le rendez-vous</h2>
                   <p className="text-xs text-gray-400">{completeAppt.customerName} · {completeAppt.startTime}</p>
                 </div>
                 <button
@@ -530,7 +529,7 @@ export default function AgendaPage() {
                     disabled={completing}
                     className="flex-1 py-3.5 rounded-2xl font-black text-white active:scale-95 transition-transform disabled:opacity-60"
                     style={{ backgroundColor: "#16a34a", touchAction: "manipulation" }}
-                  >{completing ? "…" : "✅ Confirmer"}</button>
+                  >{completing ? "…" : "Confirmer"}</button>
                 </div>
               </form>
             </div>
@@ -558,7 +557,7 @@ export default function AgendaPage() {
               </div>
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
                 <div>
-                  <h2 className="font-black text-gray-900 text-lg">📅 Déplacer le rendez-vous</h2>
+                  <h2 className="font-black text-gray-900 text-lg">Déplacer le rendez-vous</h2>
                   <p className="text-xs text-gray-400">{rescheduleAppt.customerName}</p>
                 </div>
                 <button
@@ -691,8 +690,9 @@ export default function AgendaPage() {
                           href={`tel:${form.customerPhone}`}
                           className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl text-xl active:bg-green-100"
                           style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}
+                          aria-label="Appeler"
                         >
-                          📞
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>
                         </a>
                       )}
                     </div>
@@ -951,7 +951,7 @@ function ApptCard({
                 touchAction: "manipulation",
               }}
             >
-              📞 {appt.customerPhone}
+              {appt.customerPhone}
             </a>
             {appt.customerEmail && (
               <a
@@ -964,7 +964,7 @@ function ApptCard({
                   touchAction: "manipulation",
                 }}
               >
-                ✉️ {appt.customerEmail}
+                {appt.customerEmail}
               </a>
             )}
           </div>
@@ -972,7 +972,7 @@ function ApptCard({
           {/* Notes */}
           {appt.notes && (
             <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-              📝 {appt.notes}
+              {appt.notes}
             </p>
           )}
 
@@ -993,7 +993,7 @@ function ApptCard({
             <div className="flex gap-2 flex-wrap pt-1">
               {canMarkNoShow && (
                 <TapBtn
-                  label="🚫 Client absent"
+                  label="Client absent"
                   bg="#b91c1c" active="#991b1b"
                   loading={actionId === appt.id + "NO_SHOW"}
                   onClick={() => onStatus(appt.id, "NO_SHOW")}
@@ -1009,7 +1009,7 @@ function ApptCard({
               )}
               {(appt.status === "PENDING" || appt.status === "CONFIRMED") && (
                 <TapBtn
-                  label="✅ Terminer"
+                  label="Terminer"
                   bg="#16a34a" active="#15803d"
                   loading={false}
                   onClick={() => onComplete(appt)}
@@ -1017,7 +1017,7 @@ function ApptCard({
               )}
               {appt.status !== "COMPLETED" && (
                 <TapBtn
-                  label="📅 Déplacer"
+                  label="Déplacer"
                   bg="#7c3aed" active="#6d28d9"
                   loading={false}
                   onClick={() => onReschedule(appt)}

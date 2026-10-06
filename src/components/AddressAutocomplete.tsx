@@ -213,7 +213,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
         </div>
         {postalCenter && (
           <p className="text-xs text-green-600 pl-1 mt-1">
-            📍 {[postalCenter.district, postalCenter.city, postalCenter.province].filter(Boolean).join(", ")}
+            {[postalCenter.district, postalCenter.city, postalCenter.province].filter(Boolean).join(", ")}
           </p>
         )}
         {postalErr && (
@@ -266,7 +266,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
                     style={{ backgroundColor: isActive ? "#fff7ed" : "#fff" }}
                   >
                     <div className="flex items-start gap-2">
-                      <span className="mt-0.5 text-gray-300 flex-shrink-0" style={{ fontSize: 13 }}>📍</span>
+                      <span className="mt-0.5 text-gray-300 flex-shrink-0" style={{ fontSize: 13 }}><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-900 truncate">{mainLine}</p>
                         {subLine && <p className="text-xs text-gray-500 mt-0.5 truncate">{subLine}</p>}

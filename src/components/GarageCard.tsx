@@ -124,14 +124,9 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
           </div>
 
           {/* État : toujours en mots, avec une icône */}
+          {!isUnclaimed && (
           <div>
-            {isUnclaimed ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-bold"
-                style={{ borderRadius: 4, background: "#eef1f5", color: "#475569", border: "1px solid #cbd3df" }}>
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>
-                {fr ? "À appeler" : "Call to book"}
-              </span>
-            ) : (
+            {(
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-bold"
                 style={{ borderRadius: 4, background: "#e8f6ee", color: "#15803d", border: "1px solid #a6dbb9" }}>
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>
@@ -139,6 +134,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
               </span>
             )}
           </div>
+          )}
 
           {/* Avis, marques (logos) et services */}
           <div className="flex flex-wrap items-center gap-1.5">

@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       approved:   true,
     }).catch(console.error);
 
-    return htmlPage(`<p>✅ Description approuvée pour <strong>${esc(garage.name)}</strong>. Elle est maintenant visible publiquement.</p>`);
+    return htmlPage(`<p>Description approuvée pour <strong>${esc(garage.name)}</strong>. Elle est maintenant visible publiquement.</p>`);
   } else {
     await prisma.garage.update({
       where: { id: garageId },
@@ -116,6 +116,6 @@ export async function POST(req: NextRequest) {
       approved:   false,
     }).catch(console.error);
 
-    return htmlPage(`<p>✗ Description refusée pour <strong>${esc(garage.name)}</strong>. Le propriétaire a été notifié.</p>`);
+    return htmlPage(`<p>Description refusée pour <strong>${esc(garage.name)}</strong>. Le propriétaire a été notifié.</p>`);
   }
 }

@@ -10,8 +10,7 @@ import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
-import AddressAutocomplete from "@/components/AddressAutocomplete";
-import LocationGuide from "@/components/LocationGuide";
+import LocationPicker from "@/components/LocationPicker";
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 const GoogleGarageMap = dynamic(() => import("@/components/GoogleGarageMap"), { ssr: false });
@@ -111,6 +110,10 @@ function SearchContent() {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [radiusKm, setRadiusKm] = useState(15);
   const [googleFailed, setGoogleFailed] = useState(false);
+  const [locLabel, setLocLabel] = useState<string | null>(null);
+  // Filtres de la carte : réservation en ligne / sans rendez-vous (aucun coché = tous les garages)
+  const [mapOnline, setMapOnline] = useState(false);
+  const [mapWalkIn, setMapWalkIn] = useState(false);
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
@@ -231,11 +234,12 @@ function SearchContent() {
                 style={{ borderColor: "#e2e8f0", color: "#0b1f3a", background: "#f8fafc" }}
               />
             </div>
-            <button type="submit"
-              className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all flex-shrink-0"
-              style={{ background: "#0b1f3a" }}>
-              {s.searchBtn}
-            </button>
+            <LocationPicker
+              geoStatus={geoStatus} accuracy={accuracy} label={locLabel} active={!!userPos}
+              onLocate={() => { setLocLabel(null); requestLocation(); }}
+              onAddress={(r) => { setLocLabel([r.streetAddress, r.city].filter(Boolean).join(", ") || r.displayName); setUserPos({ lat: r.lat, lng: r.lng }); setAccuracy(null); setGeoStatus("ok"); setSortByDist(true); }}
+              onDisable={() => { setLocLabel(null); clearLocation(); }}
+            />
           </form>
 
           <div className="flex flex-wrap gap-2 items-center">
@@ -314,41 +318,6 @@ function SearchContent() {
         </div>
       </div>
 
-      {/* Barre de position — visible sur mobile ET bureau (le panneau latéral est caché sous 1024 px) */}
-      <div className="lg:hidden max-w-6xl mx-auto px-4 sm:px-6 pt-4">
-        <div className="bg-white rounded-xl px-4 py-3 text-xs" style={{ border: "1px solid #e2e8f0" }}>
-          {geoStatus === "loading" && <p style={{ color: "#64748b" }}>Localisation en cours…</p>}
-          {geoStatus === "denied" && <p className="text-red-500">{s.locDenied}</p>}
-          {geoStatus === "error" && <p className="text-red-500">Position introuvable.</p>}
-          {geoStatus === "ok" && userPos && (
-            <p style={{ color: accuracy != null && accuracy > 150 ? "#b45309" : "#16A34A" }} className="font-semibold">
-              {accuracy != null && accuracy > 150 ? "Position approximative" : "Position détectée"}
-            </p>
-          )}
-
-          {geoStatus === "ok" && accuracy != null && accuracy > 150 && (
-            <p className="mt-1 leading-relaxed" style={{ color: "#64748b" }}>
-              Votre appareil ne partage qu&apos;une position approximative. iPhone : Réglages › Confidentialité et sécurité › Service de localisation › Sites web de Safari › activer « Position précise ». Android : autoriser la « position précise » pour le navigateur. Ou saisissez votre adresse ci-dessous.
-            </p>
-          )}
-          <div className="flex flex-wrap gap-4 mt-1.5">
-            <button onClick={requestLocation} className="font-bold underline" style={{ color: "#f97316" }}>
-              {geoStatus === "ok" ? "Actualiser ma position" : s.locateMe}
-            </button>
-            <button onClick={() => setShowAddress((v) => !v)} className="font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
-            <LocationGuide />
-          </div>
-          {showAddress && (
-            <div className="mt-2">
-              <AddressAutocomplete
-                placeholder="Votre adresse"
-                inputClass="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                onSelect={(r) => { setUserPos({ lat: r.lat, lng: r.lng }); setAccuracy(null); setGeoStatus("ok"); setSortByDist(true); setShowAddress(false); }}
-              />
-            </div>
-          )}
-        </div>
-      </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
@@ -356,71 +325,6 @@ function SearchContent() {
           {/* ── SIDEBAR ──────────────────────────────────────────────────── */}
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-64 flex-shrink-0 space-y-4">
-
-            {/* Location */}
-            <div className="bg-white rounded-2xl overflow-hidden"
-              style={{ border: `1px solid ${geoStatus === "ok" ? "#86EFAC" : "#e2e8f0"}`, boxShadow: "0 2px 8px rgba(31,62,106,0.06)" }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid #e2e8f0" }}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#f97316" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <p className="text-xs font-black" style={{ color: "#0b1f3a" }}>{s.location}</p>
-              </div>
-              <div className="p-4">
-                {geoStatus !== "ok" ? (
-                  <>
-                    <p className="text-xs mb-3 leading-relaxed" style={{ color: "#94a3b8" }}>
-                      Affichez les garages les plus proches de vous en premier.
-                    </p>
-                    <button
-                      onClick={requestLocation}
-                      disabled={geoStatus === "loading"}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                      style={{ background: "#f97316" }}
-                    >
-                      {geoStatus === "loading"
-                        ? <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> {s.locating}</>
-                        : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg> {s.locateMe}</>
-                      }
-                    </button>
-                    {geoStatus === "denied" && <p className="text-xs text-red-500 mt-2">{s.locDenied}</p>}
-                  </>
-                ) : (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#DCFCE7", color: "#16A34A" }}>✓</span>
-                      <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{s.locationDetected}</span>
-                    </div>
-                    {accuracy != null && accuracy > 150 && (
-                      <p className="text-xs mb-3" style={{ color: "#b45309" }}>Position approximative.</p>
-                    )}
-                    <div className="flex flex-wrap gap-3 mb-3">
-                      <button onClick={requestLocation} className="text-xs font-bold underline" style={{ color: "#f97316" }}>Actualiser ma position</button>
-                      <button onClick={() => setShowAddress((v) => !v)} className="text-xs font-bold underline" style={{ color: "#0b1f3a" }}>Saisir mon adresse</button>
-                      <LocationGuide className="text-xs" />
-                    </div>
-                    {showAddress && (
-                      <div className="mb-3">
-                        <AddressAutocomplete
-                          placeholder="Votre adresse"
-                          inputClass="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                          onSelect={(r) => { setUserPos({ lat: r.lat, lng: r.lng }); setAccuracy(null); setSortByDist(true); setShowAddress(false); }}
-                        />
-                      </div>
-                    )}
-                    <label className="flex items-center gap-2 cursor-pointer mb-3">
-                      <input type="checkbox" checked={sortByDist} onChange={(e) => setSortByDist(e.target.checked)}
-                        className="w-4 h-4 rounded" style={{ accentColor: "#f97316" }} />
-                      <span className="text-sm font-semibold" style={{ color: "#0b1f3a" }}>{s.sortByDist}</span>
-                    </label>
-                    <button onClick={clearLocation} className="text-xs underline" style={{ color: "#94a3b8" }}>
-                      {s.disable}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Filters */}
             <div className="bg-white rounded-2xl overflow-hidden"
@@ -531,7 +435,6 @@ function SearchContent() {
                       <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
                       {total !== 1 ? s.garagesFound : s.garageFound}
                       {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{[make, model].filter(Boolean).join(" ")}</strong></span>}
-                      {sortByDist && userPos && <span style={{ color: "#00A884" }}> · {s.sortedByDist}</span>}
                     </>
                   )}
                 </p>
@@ -606,13 +509,28 @@ function SearchContent() {
               <div className={view === "map" ? "grid gap-4 lg:grid-cols-5 lg:items-start" : ""}>
               {view === "map" && (() => {
                 const inRadius = userPos ? displayGarages.filter((g) => g.distanceKm == null || g.distanceKm <= radiusKm) : displayGarages;
+                const isOnline = (g: SearchGarage) => g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente";
                 const mapGarages = inRadius
+                  .filter((g) => !(mapOnline || mapWalkIn) || (mapOnline && isOnline(g)) || (mapWalkIn && g.acceptsWalkIn))
                   .filter((g) => g.latitude != null && g.longitude != null)
                   .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, online: g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente" }));
-                const picked = inRadius.find((g) => g.slug === selectedSlug);
+                const picked = inRadius.find((g) => g.slug === selectedSlug && mapGarages.some((m) => m.slug === g.slug));
                 return (
                   <>
-                    <div className="lg:col-span-3 space-y-3">
+                    <div className="lg:col-span-5 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2 text-sm" style={{ color: "#0b1f3a" }}>
+                        {([
+                          { on: mapOnline, set: setMapOnline, label: "Réservation en ligne", dot: "#15803d" },
+                          { on: mapWalkIn, set: setMapWalkIn, label: "Sans rendez-vous", dot: "#0b1f3a" },
+                        ]).map((o) => (
+                          <button key={o.label} type="button" onClick={() => o.set(!o.on)} aria-pressed={o.on}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold"
+                            style={{ borderRadius: 6, border: "1px solid #cbd3df", ...(o.on ? { background: "#0b1f3a", color: "#fff" } : { background: "#fff", color: "#0b1f3a" }) }}>
+                            <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: "50%", background: o.on ? "#fff" : o.dot, display: "inline-block" }} />
+                            {o.label}
+                          </button>
+                        ))}
+                      </div>
                       {userPos && (
                         <div className="flex flex-wrap items-center gap-2 text-sm" style={{ color: "#0b1f3a" }}>
                           <span className="font-bold">Rayon :</span>
@@ -626,7 +544,7 @@ function SearchContent() {
                           <span style={{ color: "#47586f" }}>· {mapGarages.length} garage{mapGarages.length > 1 ? "s" : ""}</span>
                         </div>
                       )}
-                      <div style={{ height: "min(62vh, 580px)", border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
+                      <div className="relative" style={{ height: "min(78vh, 760px)", minHeight: 420, border: "1px solid #cfd7e3", borderRadius: 6, overflow: "hidden" }}>
                         {GOOGLE_KEY && !googleFailed ? (
                           <GoogleGarageMap apiKey={GOOGLE_KEY} onFail={() => setGoogleFailed(true)} garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
                             selectedSlug={selectedSlug} onSelect={(slug) => setSelectedSlug(slug)} />
@@ -634,24 +552,28 @@ function SearchContent() {
                           <GarageMap garages={mapGarages} userPos={userPos} radiusKm={radiusKm}
                             selectedSlug={selectedSlug} onSelect={(slug) => setSelectedSlug(slug)} />
                         )}
+                        {/* Fiche posée directement sur la carte (bas de la carte sur téléphone, coin gauche sur ordinateur) */}
+                        {picked && (
+                          <div className="absolute z-10 left-2 right-2 bottom-2 sm:right-auto sm:left-3 sm:bottom-3 sm:w-[400px] overflow-auto"
+                            style={{ maxHeight: "calc(100% - 24px)" }} aria-live="polite" aria-label="Fiche du garage sélectionné">
+                            <div className="relative">
+                              <button type="button" onClick={() => setSelectedSlug(null)} aria-label="Fermer la fiche"
+                                className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center bg-white font-bold"
+                                style={{ borderRadius: 6, border: "1px solid #cbd3df", color: "#0b1f3a" }}>
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                              </button>
+                              <GarageCard garage={picked} highlightService={selectedService?.name}
+                                distance={picked.distanceKm != null ? formatDistance(picked.distanceKm) : undefined}
+                                nextAvailability={picked.nextAvailability} />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs" style={{ color: "#64748b" }}>
                         <span style={{ color: "#15803d", fontWeight: 700 }}>●</span> Réservation en ligne &nbsp;
-                        <span style={{ color: "#64748b", fontWeight: 700 }}>●</span> À appeler
+                        <span style={{ color: "#64748b", fontWeight: 700 }}>●</span> À appeler &nbsp;·&nbsp; Touchez un repère pour afficher la fiche du garage.
                       </p>
                     </div>
-                    {/* Espace fiche : le garage touché apparaît ici, au format liste */}
-                    <aside className="lg:col-span-2 lg:sticky lg:top-4" aria-live="polite" aria-label="Fiche du garage sélectionné">
-                      {picked ? (
-                        <GarageCard garage={picked} highlightService={selectedService?.name}
-                          distance={picked.distanceKm != null ? formatDistance(picked.distanceKm) : undefined}
-                          nextAvailability={picked.nextAvailability} />
-                      ) : (
-                        <div className="p-5 text-sm" style={{ border: "1px dashed #cbd3df", borderRadius: 6, color: "#47586f", background: "#fff" }}>
-                          Touchez un repère sur la carte pour afficher la fiche du garage ici.
-                        </div>
-                      )}
-                    </aside>
                   </>
                 );
               })()}
