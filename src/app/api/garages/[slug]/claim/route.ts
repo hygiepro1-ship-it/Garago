@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendClaimRequestNotification } from "@/lib/email";
+import { clientIp, isRateLimited, cleanText } from "@/lib/abuse";
 
 // POST /api/garages/[slug]/claim — "Vous êtes le propriétaire ? Activez votre page"
 // Section 3 de la stratégie fiches pré-créées : aucune connexion requise ici, la
@@ -11,9 +12,13 @@ export async function POST(
 ) {
   const { slug } = await params;
   const body = await req.json().catch(() => ({}));
-  const name  = String(body.name ?? "").trim();
-  const role  = String(body.role ?? "").trim();
-  const phone = String(body.phone ?? "").trim();
+  // Sans limite, un robot pourrait réclamer toutes les fiches une à une et noyer l'équipe de demandes bidon.
+  if (await isRateLimited(`cl:${clientIp(req)}`, 3, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Trop de demandes. Réessayez plus tard ou contactez-nous." }, { status: 429 });
+  }
+  const name  = cleanText(body.name, 80);
+  const role  = cleanText(body.role, 60);
+  const phone = cleanText(body.phone, 30);
   const email = String(body.email ?? "").trim().toLowerCase();
   const neq   = String(body.neq ?? "").replace(/\D/g, "");
 

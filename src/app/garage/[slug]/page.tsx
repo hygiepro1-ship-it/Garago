@@ -67,6 +67,7 @@ export default function GarageProfilePage() {
   const [isFav, setIsFav]           = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const [reviewRating, setReviewRating]     = useState(5);
   const [reviewTitle, setReviewTitle]       = useState("");
   const [reviewComment, setReviewComment]   = useState("");
@@ -116,6 +117,7 @@ export default function GarageProfilePage() {
   async function submitReview(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setReviewError("");
     const res = await fetch("/api/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -126,6 +128,9 @@ export default function GarageProfilePage() {
       setGarage((g: any) => ({ ...g, reviews: [review, ...g.reviews] }));
       setShowReviewForm(false);
       setReviewTitle(""); setReviewComment("");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setReviewError(err?.error || "Impossible d'enregistrer votre avis. Réessayez.");
     }
     setSubmitting(false);
   }
@@ -478,6 +483,7 @@ export default function GarageProfilePage() {
                     value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
                     placeholder={g.commentPlaceholder} />
                 </div>
+                {reviewError && <p className="text-sm font-semibold" style={{ color: "#b91c1c" }} role="alert">{reviewError}</p>}
                 <div className="flex gap-2 pt-1">
                   <button type="submit" disabled={submitting}
                     className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"

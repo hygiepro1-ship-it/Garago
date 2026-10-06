@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendVerificationCode } from "@/lib/email";
+import { clientIp, isRateLimited } from "@/lib/abuse";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const email = String(body?.email ?? "").trim().toLowerCase();
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || email.length > 120 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email)) {
       return NextResponse.json({ error: "Adresse courriel invalide." }, { status: 400 });
     }
 
-    // Rate-limit : max 3 envois en 15 min par adresse
+    // Limite par adresse IP : empêche d'utiliser le site pour envoyer des courriels en rafale à des tiers.
+    if (await isRateLimited(`vs:${clientIp(req)}`, 8, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
+    }
+
+    // Rate-limit : max 3 envois en 15 min par adresse. Les anciens codes sont conservés (et non
+    // supprimés) : sinon le compte ne dépasserait jamais 1, et chaque nouvel envoi remettrait à zéro
+    // le compteur de tentatives — ce qui permettrait de deviner le code à volonté.
     const recent = await prisma.emailVerificationCode.count({
       where: { email, createdAt: { gt: new Date(Date.now() - 15 * 60 * 1000) } },
     });
@@ -20,9 +29,6 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
-
-    // Supprimer les anciens codes pour ce courriel
-    await prisma.emailVerificationCode.deleteMany({ where: { email } });
 
     // Générer un code à 6 chiffres
     const code = String(Math.floor(100000 + Math.random() * 900000));

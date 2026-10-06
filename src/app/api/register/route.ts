@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { geocodeAddress } from "@/lib/geocode";
 import { sendGarageVerificationRequest } from "@/lib/email";
+import { isValidEmail, cleanText } from "@/lib/abuse";
 
 // 32-char alphabet — no ambiguous chars (0/O, 1/I/L removed)
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -24,13 +25,16 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      firstName, lastName, name: nameRaw, email, password, role, phone,
+      firstName, lastName, name: nameRaw, email: emailRaw, password, role, phone,
       marketingConsent,
       garageName, garageAddress, garageCity, garagePostalCode, garagePhone,
       garageLat, garageLng, garageNeq,
       referredByCode,
       _hp,
     } = body;
+
+    // Courriel normalisé (minuscules) : la même adresse ne peut pas être inscrite deux fois en variant la casse.
+    const email = String(emailRaw ?? "").trim().toLowerCase();
 
     // Honeypot — les bots remplissent ce champ caché, jamais les humains
     if (_hp) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
@@ -59,8 +63,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
-    if (password.length < 8) {
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+    }
+    if (typeof password !== "string" || password.length < 8) {
       return NextResponse.json({ error: "Le mot de passe doit contenir au moins 8 caractères" }, { status: 400 });
+    }
+    // bcrypt ne lit que les 72 premiers octets, et un mot de passe géant coûte du calcul inutile.
+    if (password.length > 128) {
+      return NextResponse.json({ error: "Le mot de passe est trop long (128 caractères maximum)" }, { status: 400 });
+    }
+    if (String(name).trim().length < 2 || String(name).length > 100) {
+      return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
     }
 
     const existing = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
@@ -112,14 +126,14 @@ export async function POST(req: NextRequest) {
     const allowedRole = role === "GARAGE_OWNER" ? "GARAGE_OWNER" : "DRIVER";
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, role: allowedRole, phone, marketingConsent: !!marketingConsent },
+      data: { name: cleanText(name, 100), email, password: hashed, role: allowedRole, phone: phone ? cleanText(phone, 30) : phone, marketingConsent: !!marketingConsent },
     });
 
     // Code de vérification consommé — plus valide pour une prochaine inscription
     await prisma.emailVerificationCode.deleteMany({ where: { email } });
 
     if (role === "GARAGE_OWNER" && garageName) {
-      const baseSlug = slugify(garageName);
+      const baseSlug = slugify(cleanText(garageName, 100)) || "garage";
       let slug = baseSlug;
       let i = 1;
       while (await prisma.garage.findUnique({ where: { slug } })) {
@@ -133,8 +147,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Géocode l'adresse si lat/lng non fournis par le formulaire
-      let finalLat: number | null = garageLat  ? parseFloat(garageLat)  : null;
-      let finalLng: number | null = garageLng ? parseFloat(garageLng) : null;
+      // Coordonnées reçues du client : acceptées seulement si elles tombent au Canada (sinon recalculées).
+      const okLat = (v: number) => Number.isFinite(v) && v >= 41 && v <= 84;
+      const okLng = (v: number) => Number.isFinite(v) && v >= -142 && v <= -52;
+      let finalLat: number | null = garageLat != null && okLat(parseFloat(garageLat)) ? parseFloat(garageLat) : null;
+      let finalLng: number | null = garageLng != null && okLng(parseFloat(garageLng)) ? parseFloat(garageLng) : null;
+      if (finalLat == null || finalLng == null) { finalLat = null; finalLng = null; }
       if ((finalLat == null || finalLng == null) && garageAddress && garageCity) {
         const coords = await geocodeAddress(garageAddress, garageCity);
         if (coords) { finalLat = coords.latitude; finalLng = coords.longitude; }
@@ -143,12 +161,12 @@ export async function POST(req: NextRequest) {
       const garage = await prisma.garage.create({
         data: {
           ownerId: user.id,
-          name: garageName,
+          name: cleanText(garageName, 100),
           slug,
-          address: garageAddress ?? "",
-          city: garageCity ?? "",
-          postalCode: garagePostalCode ?? "",
-          phone: garagePhone ?? phone ?? "",
+          address: cleanText(garageAddress, 150),
+          city: cleanText(garageCity, 80),
+          postalCode: cleanText(garagePostalCode, 10),
+          phone: cleanText(garagePhone ?? phone, 30),
           latitude:  finalLat,
           longitude: finalLng,
           subscriptionStatus: "TRIAL",

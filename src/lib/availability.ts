@@ -25,6 +25,35 @@ function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number): b
 
 export const DEFAULT_DURATION_MIN = 60;
 
+// Le serveur tourne en UTC alors que les garages et les rendez-vous sont en heure du
+// Québec : « aujourd'hui » et « maintenant » se calculent toujours dans ce fuseau.
+const QUEBEC_TZ = "America/Toronto";
+
+/** "YYYY-MM-DD" du jour courant au Québec. */
+export function quebecToday(at: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ }).format(at);
+}
+
+/** Minutes écoulées depuis minuit, heure du Québec. */
+export function quebecMinutes(at: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: QUEBEC_TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(at);
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  return h * 60 + m;
+}
+
+/** Ajoute des jours à une date "YYYY-MM-DD" (calendrier pur, sans fuseau). */
+export function addDaysStr(date: string, days: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Jour de la semaine (0 = dimanche) d'une date "YYYY-MM-DD". */
+export function dayOfWeekOf(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
 /**
  * Heures de départ candidates entre `open` et `close`, espacées de `durationMin`
  * pour que des RDV de cette durée s'enchaînent sans trou ni chevauchement.
@@ -87,7 +116,7 @@ export function computeFreeSlots(
   const bookedIntervals = booked.map((a) => ({ start: toMinutes(a.startTime), end: toMinutes(a.endTime) }));
 
   const { isToday = false, now = new Date(), capacity = 1 } = opts;
-  const nowMinutes = now.getHours() * 60 + now.getMinutes() + 30;
+  const nowMinutes = quebecMinutes(now) + 30;
 
   return candidates.filter((s) => {
     const start = toMinutes(s);
@@ -121,10 +150,10 @@ export function findNextAvailability(
 ): NextAvailability | null {
   const { daysAhead = 14, now = new Date(), maxSlots = 3, durationMin = DEFAULT_DURATION_MIN, capacity = 1 } = opts;
 
+  const baseDay = quebecToday(now);
   for (let offset = 0; offset <= daysAhead; offset++) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const dow = d.getDay();
+    const dateStr = addDaysStr(baseDay, offset);
+    const dow = dayOfWeekOf(dateStr);
     const avail = availability.find((a) => a.dayOfWeek === dow);
 
     const slots = computeFreeSlots(

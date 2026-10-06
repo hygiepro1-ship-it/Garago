@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { cleanText, isValidEmail } from "@/lib/abuse";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -51,6 +52,13 @@ export async function POST(req: NextRequest) {
   if (!customerName || !customerPhone || !date || !startTime) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
   }
+  if (typeof date !== "string" || typeof startTime !== "string"
+      || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
+    return NextResponse.json({ error: "Date ou heure invalide" }, { status: 400 });
+  }
+  if (customerEmail && !isValidEmail(customerEmail)) {
+    return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+  }
 
   // Même règle de durée que la réservation en ligne : celle configurée par le
   // garage pour la prestation choisie, pas un bloc fixe de 60 minutes.
@@ -76,13 +84,13 @@ export async function POST(req: NextRequest) {
     data: {
       garageId: garage.id,
       userId: null,
-      customerName,
-      customerPhone,
-      customerEmail: customerEmail || null,
-      vehicleYear:  vehicleYear  ? Number(vehicleYear)  : null,
-      vehicleMake:  vehicleMake  || null,
-      vehicleModel: vehicleModel || null,
-      serviceName:  serviceName  || null,
+      customerName: cleanText(customerName, 80),
+      customerPhone: cleanText(customerPhone, 30),
+      customerEmail: customerEmail ? String(customerEmail).toLowerCase() : null,
+      vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
+      vehicleMake:  cleanText(vehicleMake, 60)  || null,
+      vehicleModel: cleanText(vehicleModel, 60) || null,
+      serviceName:  cleanText(serviceName, 120) || null,
       date,
       startTime,
       endTime,

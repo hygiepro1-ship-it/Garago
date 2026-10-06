@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
-import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { computeFreeSlots, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { activeSubscriptionOr } from "@/lib/garage-access";
+import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
 import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
@@ -24,7 +26,8 @@ export async function GET() {
 // POST /api/appointments — client booking (online)
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
 
   const {
     garageId,
@@ -48,6 +51,58 @@ export async function POST(req: NextRequest) {
 
   if (!garageId || !customerName || !customerPhone || !date || !startTime) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
+  }
+
+  // Validation stricte des champs libres — ils finissent dans des courriels et dans l'agenda du garage.
+  const name = cleanText(customerName, 80);
+  const phoneDigits = normalizePhone(customerPhone);
+  if (name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
+  if (!phoneDigits) return NextResponse.json({ error: "Numéro de téléphone invalide (10 chiffres)" }, { status: 400 });
+  if (customerEmail && !isValidEmail(customerEmail)) return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+  if (typeof garageId !== "string" || typeof date !== "string" || typeof startTime !== "string"
+      || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
+    return NextResponse.json({ error: "Date ou heure invalide" }, { status: 400 });
+  }
+  const today = quebecToday();
+  if (date < today || date > addDaysStr(today, 120)) {
+    return NextResponse.json({ error: "Cette date n'est pas disponible à la réservation." }, { status: 400 });
+  }
+
+  // Seul un garage actif (réclamé, NEQ vérifié, abonnement valide) peut recevoir des réservations en ligne :
+  // les fiches non activées n'ont personne pour les honorer.
+  const subOr = activeSubscriptionOr();
+  const eligible = await prisma.garage.findFirst({
+    where: {
+      id: garageId,
+      claimStatus: "activee",
+      ownerId: { not: null },
+      OR: [
+        { parentId: null, verificationStatus: "APPROVED", AND: [{ OR: subOr }] },
+        { parent: { verificationStatus: "APPROVED", AND: [{ OR: subOr }] } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (!eligible) return NextResponse.json({ error: "Ce garage n'accepte pas de réservation en ligne." }, { status: 400 });
+
+  // Plafond de rendez-vous à venir par client (téléphone ou courriel) — évite qu'une même personne
+  // n'accapare des créneaux dans plusieurs garages.
+  // Téléphone enregistré sous une forme unique « (514) 555-0142 » pour que le plafond soit fiable.
+  const phoneStd = `(${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
+  const identity: Record<string, unknown>[] = [{ customerPhone: phoneStd }];
+  if (customerEmail) identity.push({ customerEmail: { equals: String(customerEmail).toLowerCase(), mode: "insensitive" } });
+  const upcoming = await prisma.appointment.count({
+    where: { date: { gte: today }, status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] }, OR: identity as any },
+  });
+  if (upcoming >= 4) {
+    return NextResponse.json({ error: "Vous avez déjà plusieurs rendez-vous à venir. Annulez-en un avant d'en réserver un autre." }, { status: 429 });
+  }
+
+  // Anti-abus (après validation : une faute de frappe ne consomme pas le quota) : une réservation en ligne
+  // ne demande pas de compte, donc on limite le débit par adresse IP pour empêcher qu'un script ne
+  // remplisse l'agenda d'un garage ou n'envoie des courriels en rafale à des tiers.
+  if (await isRateLimited(`bk:${clientIp(req)}`, 6, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Trop de réservations en peu de temps. Réessayez plus tard." }, { status: 429 });
   }
 
   // La durée du RDV vient toujours du service configuré par le garage (jamais
@@ -96,29 +151,35 @@ export async function POST(req: NextRequest) {
   let appt;
   try {
     appt = await prisma.$transaction(async (tx) => {
-      const sameDay = await tx.appointment.findMany({
-        where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-        select: { startTime: true, endTime: true },
-      });
-      if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
-        throw new Error("SLOT_TAKEN");
-      }
+      const [sameDay, blocks, availRow] = await Promise.all([
+        tx.appointment.findMany({
+          where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+          select: { startTime: true, endTime: true },
+        }),
+        tx.blockedSlot.findMany({ where: { garageId, date }, select: { startTime: true, endTime: true, allDay: true } }),
+        tx.garageAvailability.findFirst({ where: { garageId, dayOfWeek: dayOfWeekOf(date) } }),
+      ]);
+      // Le créneau doit figurer parmi ceux réellement offerts : heures d'ouverture, blocages
+      // (vacances), jour fermé, capacité et heure déjà passée — un client ne peut pas forcer
+      // un horaire en contournant l'interface.
+      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: date === today, now: new Date(), capacity });
+      if (!free.includes(startTime)) throw new Error("SLOT_TAKEN");
       return tx.appointment.create({
         data: {
           garageId,
           userId: sessionUserId,
-          customerName,
-          customerPhone,
-          customerEmail: contactEmail,
-          vehicleYear:  vehicleYear  ? Number(vehicleYear)  : null,
-          vehicleMake:  vehicleMake  || null,
-          vehicleModel: vehicleModel || null,
-          vehicleTrim:     vehicleTrim     || null,
-          vehicleVin:      vehicleVin      || null,
-          vehicleTireSize: vehicleTireSize || null,
-          vehicleSpecs:    vehicleSpecs    || null,
-          serviceName:  resolvedServiceName,
-          notes:        notes ? String(notes).slice(0, 1000) : null,
+          customerName: name,
+          customerPhone: phoneStd,
+          customerEmail: contactEmail ? contactEmail.toLowerCase() : null,
+          vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
+          vehicleMake:  cleanText(vehicleMake, 60)  || null,
+          vehicleModel: cleanText(vehicleModel, 60) || null,
+          vehicleTrim:     cleanText(vehicleTrim, 80)     || null,
+          vehicleVin:      cleanText(vehicleVin, 20)      || null,
+          vehicleTireSize: cleanText(vehicleTireSize, 30) || null,
+          vehicleSpecs:    cleanText(vehicleSpecs, 300)    || null,
+          serviceName:  resolvedServiceName ? cleanText(resolvedServiceName, 120) : null,
+          notes:        notes ? String(notes).replace(/[ --]/g, " ").slice(0, 1000) : null,
           date,
           startTime,
           endTime,
