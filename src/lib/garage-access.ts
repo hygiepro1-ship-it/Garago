@@ -46,6 +46,15 @@ export const PAST_DUE_GRACE_DAYS = 7;
  * Fragment `where` : l'abonnement du garage le rend visible dans la recherche
  * — actif, en essai, ou impayé mais encore dans la période de grâce.
  */
+/** Nombre de rendez-vous à venir (non annulés, non terminés) pour ces garages — date du jour au Québec. */
+export async function countUpcomingAppointments(garageIds: string[]): Promise<number> {
+  if (garageIds.length === 0) return 0;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
+  return prisma.appointment.count({
+    where: { garageId: { in: garageIds }, date: { gte: today }, status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] } },
+  });
+}
+
 export function activeSubscriptionOr() {
   const graceCutoff = new Date(Date.now() - PAST_DUE_GRACE_DAYS * 24 * 60 * 60 * 1000);
   return [

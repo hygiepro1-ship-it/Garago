@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { syncBranchQuantity } from "@/lib/stripe-branches";
+import { countUpcomingAppointments } from "@/lib/garage-access";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,15 @@ export async function DELETE(
     return NextResponse.json(
       { error: "Le garage principal ne peut pas être retiré ici. Utilisez « Supprimer mon compte » ou changez de garage principal." },
       { status: 400 },
+    );
+  }
+
+  // Supprimer la succursale effacerait aussi ses rendez-vous : des clients se présenteraient à un garage disparu.
+  const upcoming = await countUpcomingAppointments([branch.id]);
+  if (upcoming > 0) {
+    return NextResponse.json(
+      { error: `Cette succursale a ${upcoming} rendez-vous à venir. Annulez-les ou terminez-les avant de la retirer.` },
+      { status: 409 },
     );
   }
 

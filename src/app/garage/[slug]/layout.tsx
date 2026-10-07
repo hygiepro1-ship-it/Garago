@@ -10,11 +10,14 @@ export async function generateMetadata(
 
   const garage = await prisma.garage.findUnique({
     where: { slug },
-    select: { name: true, city: true, province: true, description: true, logoUrl: true },
+    select: { name: true, city: true, province: true, description: true, logoUrl: true, hiddenByReport: true, verificationStatus: true, claimStatus: true },
   });
 
-  if (!garage) {
-    return { title: "Garage introuvable — Garago" };
+  // Fiche masquée, ou garage dont le NEQ n'est pas encore vérifié : la page publique renvoie « introuvable », donc
+  // le titre et la description ne doivent pas révéler son nom non plus (ni être indexés).
+  const hidden = !garage || garage.hiddenByReport || (garage.claimStatus === "activee" && garage.verificationStatus !== "APPROVED");
+  if (!garage || hidden) {
+    return { title: "Garage introuvable — Garago", robots: { index: false, follow: false } };
   }
 
   const title = `${garage.name} — ${garage.city}, ${garage.province} | Garago`;
