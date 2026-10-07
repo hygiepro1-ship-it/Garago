@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { unsubscribeUrl } from "@/lib/unsubscribe";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -199,6 +200,7 @@ function baseLayout(body: string): string {
                        border-top:0;padding:16px 32px;text-align:center">
           <p style="margin:0;color:#9ca3af;font-size:12px">
             Garago Canada — <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
+            · <a href="mailto:info@garagopro.ca" style="color:#f97316;text-decoration:none">info@garagopro.ca</a>
           </p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">
             Pour annuler ou modifier, contactez directement le garage.
@@ -650,7 +652,7 @@ export async function sendReviewReport(params: ReviewReportParams) {
       <tr><td>
         <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;
                   text-transform:uppercase;letter-spacing:0.05em">Motif du signalement</p>
-        <p style="margin:0;font-size:14px;line-height:1.7;color:#78350f;white-space:pre-wrap">${params.reason}</p>
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#78350f;white-space:pre-wrap">${esc(params.reason)}</p>
       </td></tr>
     </table>` : "";
 
@@ -707,9 +709,9 @@ export async function sendWeeklyTips(params: WeeklyTipsParams) {
     </div>
   `).join("");
 
-  const prefsUrl = `${BASE_URL}/tableau-de-bord`;
-
-  const body = `
+  // Un courriel par destinataire : chacun reçoit SON lien de désabonnement (obligatoire selon la LCAP) et l'en-tête
+  // « List-Unsubscribe » en un clic exigé par Gmail, Outlook et Yahoo pour les envois groupés.
+  const bodyFor = (email: string) => `
     <h2 style="margin:0 0 6px;color:#0b1f3a;font-size:24px;font-weight:800">Vos conseils auto de la semaine</h2>
     <p style="margin:0 0 28px;color:#6b7280;font-size:15px">Deux conseils sélectionnés pour vous aider à prendre soin de votre véhicule.</p>
 
@@ -721,21 +723,30 @@ export async function sendWeeklyTips(params: WeeklyTipsParams) {
 
     ${HR}
     <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">
-      Vous recevez cet email car vous avez accepté les communications marketing de Garago.<br>
-      <a href="${prefsUrl}" style="color:#f97316">Gérer mes préférences</a>
+      Vous recevez ce courriel car vous avez accepté les communications de Garago.<br>
+      <a href="${unsubscribeUrl(email)}" style="color:#f97316">Se désabonner</a> en un clic, à tout moment.
     </p>
   `;
 
-  const BATCH_SIZE = 50;
+  // Envoi par lots (API groupée de Resend) : l'envoi de 50 courriels en parallèle dépasse la limite de débit
+  // de Resend, et les échecs étaient avalés en silence alors que les conseils étaient marqués « envoyés ».
+  const BATCH_SIZE = 100;
+  let failed = 0;
   for (let i = 0; i < params.recipients.length; i += BATCH_SIZE) {
     const batch = params.recipients.slice(i, i + BATCH_SIZE);
-    await Promise.all(
-      batch.map(({ email }) =>
-        send(email, "Vos 2 conseils auto de la semaine — Garago", body)
-          .catch((e) => console.error(`[WEEKLY TIP] Échec pour ${email}:`, e))
-      )
-    );
+    const payload = batch.map(({ email }) => ({
+      from: FROM, to: email, subject: "Vos 2 conseils auto de la semaine — Garago", html: baseLayout(bodyFor(email)),
+      headers: { "List-Unsubscribe": `<${unsubscribeUrl(email)}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+    }));
+    try {
+      const { error } = await getResend().batch.send(payload);
+      if (error) { failed += batch.length; console.error("[WEEKLY TIP] Échec du lot :", error); }
+    } catch (e) {
+      failed += batch.length;
+      console.error("[WEEKLY TIP] Échec du lot :", e);
+    }
   }
+  if (failed > 0) console.error(`[WEEKLY TIP] ${failed} courriel(s) non envoyé(s) sur ${params.recipients.length}`);
 }
 
 // ─── Email: Alerte mauvais avis (admin) ───────────────────────────────────────
