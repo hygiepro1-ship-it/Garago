@@ -43,7 +43,7 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { services, capacity, requireConfirmation } = await req.json();
+  const { services, capacity, requireConfirmation, requirePrices } = await req.json();
 
   const garage = await prisma.garage.findFirst({
     where: ownedGarageWhere(userId, readGarageId(req.url)),
@@ -101,6 +101,15 @@ export async function PUT(req: NextRequest) {
       priceMin, priceMax,
       durationMin: sanitizeDuration(s.durationMin, maxDurationMin),
     });
+  }
+
+  // Le tableau de bord exige un prix « à partir de » pour chaque service (le client voit le prix minimum).
+  // L'inscription initiale n'envoie pas ce drapeau : le garage complète ses prix ensuite.
+  if (requirePrices === true && services !== undefined) {
+    const missing = prepared.filter((s) => s.priceMin === null || s.priceMin <= 0).map((s) => s.name);
+    if (missing.length > 0) {
+      return NextResponse.json({ error: `Indiquez le prix « à partir de » pour : ${missing.join(", ")}.` }, { status: 400 });
+    }
   }
 
   if (services !== undefined) await prisma.$transaction(async (tx) => {

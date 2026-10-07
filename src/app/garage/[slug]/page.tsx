@@ -11,6 +11,7 @@ import BookingWidget from "@/components/BookingWidget";
 import UnclaimedGarageView from "@/components/UnclaimedGarageView";
 import ServiceIcon from "@/components/ServiceIcon";
 import BrandLogo from "@/components/BrandLogo";
+import { formatPrice } from "@/lib/price";
 import { languageLabel, parseLanguages } from "@/lib/languages";
 import { SERVICE_CATEGORIES } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
@@ -389,6 +390,9 @@ export default function GarageProfilePage() {
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{catName}</p>
+                      {formatPrice(services[0]?.priceMin) && (
+                        <p className="text-xs font-bold mt-0.5" style={{ color: "#c2410c" }}>À partir de {formatPrice(services[0]?.priceMin)}</p>
+                      )}
                       {services[0]?.durationMin && (
                         <p className="text-xs text-gray-400 mt-0.5">{services[0].durationMin} min</p>
                       )}
