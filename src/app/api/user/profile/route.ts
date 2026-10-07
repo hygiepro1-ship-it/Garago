@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { cleanText } from "@/lib/abuse";
 import { countUpcomingAppointments } from "@/lib/garage-access";
+import bcrypt from "bcryptjs";
+import { isRateLimited } from "@/lib/abuse";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -18,6 +20,8 @@ export async function GET() {
       email:     true,
       phone:     true,
       notifPref: true,
+      marketingConsent: true,
+      password: true,
       vehicles: {
         orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
         select: {
@@ -29,8 +33,9 @@ export async function GET() {
   });
 
   if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
-
-  return NextResponse.json(user);
+  // Le hachage du mot de passe ne sort jamais du serveur : on indique seulement si le compte en a un.
+  const { password, ...safe } = user;
+  return NextResponse.json({ ...safe, hasPassword: !!password });
 }
 
 // PATCH /api/user/profile — mise à jour notifPref et/ou phone
@@ -39,7 +44,7 @@ export async function PATCH(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { notifPref, phone: phoneRaw, name: nameRaw } = await req.json().catch(() => ({}));
+  const { notifPref, phone: phoneRaw, name: nameRaw, marketingConsent } = await req.json().catch(() => ({}));
   const phone = phoneRaw === undefined ? undefined : cleanText(phoneRaw, 30);
   const name  = nameRaw  === undefined ? undefined : cleanText(nameRaw, 100);
   if (name !== undefined && name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
@@ -54,6 +59,7 @@ export async function PATCH(req: NextRequest) {
     where: { id: userId },
     data: {
       ...(notifPref !== undefined ? { notifPref } : {}),
+      ...(typeof marketingConsent === "boolean" ? { marketingConsent } : {}),
       ...(phone     !== undefined ? { phone }     : {}),
       ...(name      !== undefined ? { name }      : {}),
     },
@@ -64,11 +70,24 @@ export async function PATCH(req: NextRequest) {
 }
 
 // DELETE /api/user/profile — suppression définitive du compte
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
+
+  // Suppression irréversible : on redemande le mot de passe (une session ouverte sur un poste partagé ou volée
+  // ne doit pas suffire). Les comptes sans mot de passe (connexion Google) en sont dispensés.
+  const account = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } });
+  if (account?.password) {
+    if (await isRateLimited(`dp:${userId}`, 5, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Trop de tentatives. Réessayez dans 15 minutes." }, { status: 429 });
+    }
+    const body = await req.json().catch(() => ({}));
+    const ok = typeof body?.password === "string" && (await bcrypt.compare(body.password, account.password));
+    if (!ok) return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 403 });
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
