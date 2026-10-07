@@ -15,8 +15,10 @@ export async function GET(req: NextRequest) {
     const year = searchParams.get("year");
     const q = searchParams.get("q");
     const walkInOnly = searchParams.get("walkInOnly") === "1";
-    const page = parseInt(searchParams.get("page") ?? "1");
-    const limit = parseInt(searchParams.get("limit") ?? "12");
+    // Pagination bornée : sans plafond, « limit=100000 » permettait d'aspirer tout l'annuaire en une requête
+    // (et une valeur non numérique faisait planter la requête).
+    const page = Math.min(Math.max(parseInt(searchParams.get("page") ?? "1") || 1, 1), 500);
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "12") || 12, 1), 50);
 
     // Position du conducteur — quand elle est fournie, le tri se fait par
     // proximité puis par disponibilité (voir plus bas), pas par ambassadeur/popularité.

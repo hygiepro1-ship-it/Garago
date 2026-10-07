@@ -12,6 +12,8 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: {
     strategy: "jwt",
+    // 14 jours (au lieu de 30 par défaut) : une session volée ou oubliée sur un poste partagé expire plus vite.
+    maxAge: 14 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/connexion",
@@ -84,6 +86,20 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id   = user.id;
+        token.checkedAt = Date.now();
+        return token;
+      }
+      // Le rôle est relu en base au plus toutes les 5 minutes : un compte supprimé est déconnecté, et un changement
+      // de rôle (ex. fiche réclamée et approuvée) s'applique sans attendre l'expiration de la session.
+      if (token.id && (!token.checkedAt || Date.now() - (token.checkedAt as number) > 5 * 60 * 1000)) {
+        try {
+          const fresh = await prisma.user.findUnique({ where: { id: token.id as string }, select: { role: true } });
+          if (!fresh) return {} as typeof token; // compte supprimé : session invalide
+          token.role = fresh.role;
+          token.checkedAt = Date.now();
+        } catch {
+          // Base momentanément injoignable : on garde la session telle quelle (ne pas déconnecter tout le monde).
+        }
       }
       return token;
     },
