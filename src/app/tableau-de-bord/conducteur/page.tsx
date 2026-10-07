@@ -332,10 +332,48 @@ export default function DashboardConducteurPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  const [deletePwd, setDeletePwd] = useState("");
+
+  // ── Profil, consentement et mot de passe ──────────────────────────────────
+  const [prof, setProf] = useState<{ name: string; phone: string; marketing: boolean; hasPassword: boolean } | null>(null);
+  const [profMsg, setProfMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pwd, setPwd] = useState({ current: "", next: "" });
+  const [pwdMsg, setPwdMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => {
+    if (tab !== "preferences" || prof) return;
+    fetch("/api/user/profile").then(r => r.json()).then(u => {
+      if (u && !u.error) setProf({ name: u.name ?? "", phone: u.phone ?? "", marketing: !!u.marketingConsent, hasPassword: !!u.hasPassword });
+    });
+  }, [tab, prof]);
+
+  async function saveProfile(next: Partial<{ name: string; phone: string; marketing: boolean }>) {
+    if (!prof) return;
+    const merged = { ...prof, ...next };
+    setProf(merged);
+    const res = await fetch("/api/user/profile", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: merged.name, phone: merged.phone, marketingConsent: merged.marketing }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setProfMsg(res.ok ? { ok: true, text: "Enregistré." } : { ok: false, text: data.error ?? "Impossible d'enregistrer." });
+  }
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPwdMsg(null);
+    const res = await fetch("/api/user/password", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: pwd.current, newPassword: pwd.next }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) { setPwd({ current: "", next: "" }); setPwdMsg({ ok: true, text: "Mot de passe modifié." }); }
+    else setPwdMsg({ ok: false, text: data.error ?? "Impossible de changer le mot de passe." });
+  }
+
   async function deleteAccount() {
     setDeleting(true);
     setDeleteError("");
-    const res = await fetch("/api/user/profile", { method: "DELETE" });
+    const res = await fetch("/api/user/profile", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: deletePwd }) });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
@@ -788,9 +826,60 @@ export default function DashboardConducteurPage() {
 
           {/* ── Préférences de notification ── */}
           {tab === "preferences" && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Préférences de notification</h2>
-              <p className="text-sm text-gray-500">Vous recevez vos confirmations et rappels de rendez-vous par courriel.</p>
+            <div className="space-y-4">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <h2 className="font-bold text-gray-900 text-lg mb-1">Mon profil</h2>
+                {prof ? (
+                  <form onSubmit={(e) => { e.preventDefault(); saveProfile({}); }} className="grid gap-3 sm:grid-cols-2 mt-3">
+                    <div>
+                      <label htmlFor="pf-name" className="block text-xs font-semibold text-gray-600 mb-1">Nom complet</label>
+                      <input id="pf-name" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={prof.name} onChange={(e) => setProf({ ...prof, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <label htmlFor="pf-phone" className="block text-xs font-semibold text-gray-600 mb-1">Téléphone</label>
+                      <input id="pf-phone" type="tel" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={prof.phone} onChange={(e) => setProf({ ...prof, phone: e.target.value })} />
+                    </div>
+                    <div className="sm:col-span-2 flex items-center gap-3">
+                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>Enregistrer</button>
+                      {profMsg && <span className="text-sm font-semibold" role="status" style={{ color: profMsg.ok ? "#15803d" : "#b91c1c" }}>{profMsg.text}</span>}
+                    </div>
+                  </form>
+                ) : <p className="text-sm text-gray-400 mt-2">Chargement…</p>}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                <h2 className="font-bold text-gray-900 text-lg mb-1">Préférences de notification</h2>
+                <p className="text-sm text-gray-500 mb-4">Vous recevez toujours vos confirmations et rappels de rendez-vous par courriel.</p>
+                {prof && (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 mt-0.5 accent-orange-500" checked={prof.marketing} onChange={(e) => saveProfile({ marketing: e.target.checked })} />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-semibold">Recevoir les conseils auto par courriel</span>
+                      <span className="block text-xs text-gray-500">Un courriel par semaine au plus. Vous pouvez vous désabonner en tout temps, ici ou par le lien dans chaque courriel.</span>
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              {prof?.hasPassword && (
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                  <h2 className="font-bold text-gray-900 text-lg mb-1">Mot de passe</h2>
+                  <form onSubmit={changePassword} className="grid gap-3 sm:grid-cols-2 mt-3">
+                    <div>
+                      <label htmlFor="pw-cur" className="block text-xs font-semibold text-gray-600 mb-1">Mot de passe actuel</label>
+                      <input id="pw-cur" type="password" autoComplete="current-password" required className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />
+                    </div>
+                    <div>
+                      <label htmlFor="pw-new" className="block text-xs font-semibold text-gray-600 mb-1">Nouveau mot de passe (8 caractères minimum)</label>
+                      <input id="pw-new" type="password" autoComplete="new-password" required minLength={8} maxLength={128} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
+                    </div>
+                    <div className="sm:col-span-2 flex items-center gap-3">
+                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#0b1f3a" }}>Changer le mot de passe</button>
+                      {pwdMsg && <span className="text-sm font-semibold" role="status" style={{ color: pwdMsg.ok ? "#15803d" : "#b91c1c" }}>{pwdMsg.text}</span>}
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
 
@@ -809,7 +898,13 @@ export default function DashboardConducteurPage() {
               ) : (
                 <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
                   <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible.</p>
-                  {deleteError && <p className="text-xs text-red-600 mb-3">{deleteError}</p>}
+                  {prof?.hasPassword && (
+                    <div className="mb-3">
+                      <label htmlFor="del-pwd" className="block text-xs font-semibold text-red-800 mb-1">Entrez votre mot de passe pour confirmer</label>
+                      <input id="del-pwd" type="password" autoComplete="current-password" className="w-full border border-red-300 rounded-xl px-3 py-2 text-sm bg-white" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} />
+                    </div>
+                  )}
+                  {deleteError && <p className="text-xs text-red-600 mb-3" role="alert">{deleteError}</p>}
                   <div className="flex gap-3">
                     <button onClick={deleteAccount} disabled={deleting}
                       className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">

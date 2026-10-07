@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import PasswordChangeCard from "@/components/PasswordChangeCard";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -774,11 +775,13 @@ export default function DashboardGaragePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [deletePwd, setDeletePwd] = useState("");
 
   async function deleteAccount() {
     setDeleting(true);
     setDeleteError("");
-    const res = await fetch("/api/user/profile", { method: "DELETE" });
+    // Mot de passe redemandé : une session ouverte ne doit pas suffire à effacer un compte (comptes Google exemptés).
+    const res = await fetch("/api/user/profile", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: deletePwd }) });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
@@ -3555,6 +3558,8 @@ export default function DashboardGaragePage() {
             </div>
           )}
 
+          <PasswordChangeCard />
+
           {/* ── Zone de suppression du compte ── */}
           <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
             <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
@@ -3569,7 +3574,11 @@ export default function DashboardGaragePage() {
             ) : (
               <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
                 <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible et annule votre abonnement.</p>
-                {deleteError && <p className="text-xs text-red-600 mb-3">{deleteError}</p>}
+                <div className="mb-3">
+                  <label htmlFor="del-pwd-g" className="block text-xs font-semibold text-red-800 mb-1">Entrez votre mot de passe pour confirmer (laissez vide si vous vous connectez avec Google)</label>
+                  <input id="del-pwd-g" type="password" autoComplete="current-password" className="w-full border border-red-300 rounded-xl px-3 py-2 text-sm bg-white" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} />
+                </div>
+                {deleteError && <p className="text-xs text-red-600 mb-3" role="alert">{deleteError}</p>}
                 <div className="flex gap-3">
                   <button onClick={deleteAccount} disabled={deleting}
                     className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">
