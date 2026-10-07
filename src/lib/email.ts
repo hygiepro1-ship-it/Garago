@@ -89,32 +89,31 @@ function row(label: string, value: string, last = false): string {
 }
 
 // ─── Icônes de marque ─────────────────────────────────────────────────────────
-// Un seul jeu d'icônes (trait orange, même style que le reste du site), rendues
-// en SVG intégré — plus fiable et cohérent visuellement que des emoji, dont le
-// rendu varie selon le système d'exploitation du destinataire.
+// Un seul jeu d'icônes (trait orange, même style que le reste du site), servies comme de vrais fichiers PNG
+// hébergés sur le site (public/email). Les images SVG intégrées (data:) ne s'affichent ni dans Gmail ni dans
+// Outlook : le destinataire verrait une case vide. Les emoji, eux, varient selon l'appareil du destinataire.
 
-const ICON_PATHS = {
-  check:    '<path d="M20 6L9 17l-5-5"/>',
-  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-  bell:     '<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>',
-  card:     '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
-  warning:  '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-} as const;
+type IconType = "check" | "calendar" | "bell" | "card" | "warning";
 
-function iconDataUri(type: keyof typeof ICON_PATHS, color = "#f97316"): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[type]}</svg>`;
-  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+function iconUrl(type: IconType): string {
+  return `${BASE_URL}/email/${type}.png`;
+}
+
+/** Lien téléphonique valide (« tel:+15145551001 ») à partir d'un numéro écrit à la main. */
+function telHref(raw: string): string {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  return digits.length === 10 ? `tel:+1${digits}` : digits.length === 11 && digits.startsWith("1") ? `tel:+${digits}` : `tel:${digits}`;
 }
 
 /** Badge rond avec une seule icône de marque, affiché au-dessus du titre d'un
  * courriel destiné au client/garage — jamais utilisé dans les courriels
  * internes (admin) ni à côté des lignes de détail, pour garder le nombre
  * d'icônes au minimum. */
-function iconBadge(type: keyof typeof ICON_PATHS): string {
+function iconBadge(type: IconType): string {
   return `
     <table cellpadding="0" cellspacing="0" style="margin:0 0 16px">
       <tr><td width="56" height="56" align="center" valign="middle" style="background:#fff7ed;border-radius:6px">
-        <img src="${iconDataUri(type)}" width="26" height="26" alt="" style="display:block" />
+        <img src="${iconUrl(type)}" width="26" height="26" alt="" style="display:block;border:0" />
       </td></tr>
     </table>`;
 }
@@ -149,7 +148,7 @@ function confirmCancelBtns(confirmUrl: string, cancelUrl: string, confirmLabel =
 /** Phone number button. */
 function phoneBtn(rawPhone: string): string {
   const phone = esc(rawPhone);
-  return `<a href="tel:${phone}"
+  return `<a href="${telHref(rawPhone)}"
      style="display:inline-block;background:#1e3a5f;color:#fff;padding:12px 24px;
             border-radius:5px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:24px">
     ${phone}
@@ -186,8 +185,8 @@ function baseLayout(body: string): string {
 
         <!-- Header -->
         <tr><td style="background:#0b1f3a;border-radius:6px 6px 0 0;padding:20px 32px;text-align:center">
-          <img src="${BASE_URL}/logo-garago.png" alt="Garago" height="72"
-               style="display:block;margin:0 auto;max-height:72px" />
+          <img src="${BASE_URL}/garago_logo_transparent_1.png" alt="Garago" height="72"
+               style="display:block;margin:0 auto;max-height:72px;border:0" />
         </td></tr>
 
         <!-- Body -->
@@ -201,9 +200,6 @@ function baseLayout(body: string): string {
           <p style="margin:0;color:#9ca3af;font-size:12px">
             Garago Canada — <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
             · <a href="mailto:info@garagopro.ca" style="color:#f97316;text-decoration:none">info@garagopro.ca</a>
-          </p>
-          <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">
-            Pour annuler ou modifier, contactez directement le garage.
           </p>
         </td></tr>
 
@@ -366,7 +362,7 @@ export async function sendGarageNewAppointment(params: GarageNewAppointmentParam
 
     ${infoCard(`
       ${row("Client", esc(params.customerName))}
-      ${row("Téléphone", `<a href="tel:${esc(params.customerPhone)}" style="color:#f97316">${esc(params.customerPhone)}</a>`)}
+      ${row("Téléphone", `<a href="${telHref(params.customerPhone)}" style="color:#f97316">${esc(params.customerPhone)}</a>`)}
       ${params.customerEmail ? row("Courriel", esc(params.customerEmail)) : ""}
       ${vehicle ? row("Véhicule", esc(vehicle)) : ""}
       ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
@@ -409,7 +405,7 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
     ${infoCard(`
       ${row("Garage", esc(params.garageName))}
       ${row("Adresse", esc(params.garageAddress))}
-      ${row("Téléphone", `<a href="tel:${esc(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
+      ${row("Téléphone", `<a href="${telHref(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
     `)}
 
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>

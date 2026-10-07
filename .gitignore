@@ -53,3 +53,4 @@ prisma/*.db-shm
 prisma/*.db-wal
 
 .vercel
+apercu-courriels/
