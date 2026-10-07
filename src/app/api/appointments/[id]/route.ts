@@ -2,7 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendVehicleReady, sendRescheduleNotification } from "@/lib/email";
+import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, sendCancelledByCustomer } from "@/lib/email";
 import { wouldExceedCapacity, computeFreeSlots, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
 import { quebecInstant, planConfirmation } from "@/lib/rdv-confirmation";
 
@@ -135,6 +135,32 @@ export async function PATCH(
     },
     include: { garage: true },
   });
+
+  // ── Annulation : l'autre partie doit toujours être prévenue ──────────────────────
+  // Garage qui annule -> courriel au client ; client qui annule -> courriel au garage.
+  if (status === "CANCELLED" && appt.status !== "CANCELLED") {
+    const jobs: Promise<void>[] = [];
+    if (isGarageOwner) {
+      const acct = updated.userId ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { email: true } }) : null;
+      const to = updated.customerEmail || acct?.email || null;
+      if (to) {
+        jobs.push(sendCancelledByGarage({
+          to, customerName: updated.customerName, garageName: updated.garage.name, garagePhone: updated.garage.phone ?? "",
+          serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
+        }).catch((e) => console.error("[CANCELLED BY GARAGE EMAIL]", e)));
+      }
+    } else {
+      const owner = await prisma.user.findUnique({ where: { id: updated.garage.ownerId ?? "" }, select: { email: true } });
+      const to = updated.garage.email || owner?.email || null;
+      if (to) {
+        jobs.push(sendCancelledByCustomer({
+          to, garageName: updated.garage.name, customerName: updated.customerName, customerPhone: updated.customerPhone,
+          serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
+        }).catch((e) => console.error("[CANCELLED BY CUSTOMER EMAIL]", e)));
+      }
+    }
+    await Promise.all(jobs);
+  }
 
   // ── Notification "déplacement" quand le garage change la date/heure ──────────
   const isReschedule = isGarageOwner && !!(date || startTime);

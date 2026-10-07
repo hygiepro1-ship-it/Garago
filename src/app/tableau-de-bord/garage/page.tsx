@@ -1840,11 +1840,17 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="font-bold text-gray-900">Prochains rendez-vous</h3>
-              <button onClick={openAddRdv}
-                className="text-white px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap"
-                style={{ background: "#f97316" }}>
-                + Ajouter un rendez-vous
-              </button>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <Link href={selectedGarageId() ? `/tableau-de-bord/garage/agenda?g=${encodeURIComponent(selectedGarageId() as string)}` : "/tableau-de-bord/garage/agenda"}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap border border-gray-300 text-gray-700 hover:bg-gray-50">
+                  Ouvrir l'agenda →
+                </Link>
+                <button onClick={openAddRdv}
+                  className="text-white px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap"
+                  style={{ background: "#f97316" }}>
+                  + Ajouter un rendez-vous
+                </button>
+              </div>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>

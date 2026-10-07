@@ -50,6 +50,18 @@ interface Appointment {
   confirmBy?: string | null;
 }
 
+// Garage sélectionné (succursale) : paramètre ?g= de l'URL, comme dans le tableau de bord principal.
+// Sans lui, toutes les requêtes ciblent le garage principal — une succursale n'avait donc pas d'agenda propre.
+function selectedGarageId(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("g");
+}
+function gfetch(path: string, init?: RequestInit) {
+  const g = selectedGarageId();
+  if (!g) return fetch(path, init);
+  return fetch(`${path}${path.includes("?") ? "&" : "?"}g=${encodeURIComponent(g)}`, init);
+}
+
 // ── Utilitaires date ──────────────────────────────────────────────────────────
 
 // Date locale (pas toISOString, qui bascule en UTC : après 20 h au Québec,
@@ -145,7 +157,7 @@ export default function AgendaPage() {
   // depuis l'onglet Horaires du tableau de bord principal.
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
+    gfetch("/api/garage/profile").then(r => r.ok ? r.json() : null).then(g => {
       if (!g) return;
       setGarageServices(Array.isArray(g.services) ? g.services : []);
       if (isCardRequired(g) || (g.availability?.length ?? 0) === 0) router.push("/tableau-de-bord/garage");
@@ -156,7 +168,7 @@ export default function AgendaPage() {
   const loadAppointments = useCallback(async (date: string) => {
     setLoading(true);
     try {
-      const res  = await fetch(`/api/garage/appointments?from=${date}&to=${date}`);
+      const res  = await gfetch(`/api/garage/appointments?from=${date}&to=${date}`);
       const data = await res.json();
       setAppointments(Array.isArray(data) ? data : []);
     } finally {
@@ -167,6 +179,31 @@ export default function AgendaPage() {
   useEffect(() => {
     if (status === "authenticated") loadAppointments(selectedDate);
   }, [selectedDate, status, loadAppointments]);
+
+  // Semaine (lundi à dimanche) autour de la date affichée : nombre de rendez-vous actifs par jour
+  const weekStart = (() => {
+    const d = new Date(selectedDate + "T12:00:00");
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return toDateStr(d);
+  })();
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const [weekCounts, setWeekCounts] = useState<Record<string, number>>({});
+  const loadWeek = useCallback(async (anyDate: string) => {
+    const d = new Date(anyDate + "T12:00:00");
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    const from = toDateStr(d);
+    const to = addDays(from, 6);
+    try {
+      const res = await gfetch(`/api/garage/appointments?from=${from}&to=${to}`);
+      const data = await res.json();
+      const counts: Record<string, number> = {};
+      if (Array.isArray(data)) for (const ap of data) if (ap.status !== "CANCELLED" && ap.status !== "NO_SHOW") counts[ap.date] = (counts[ap.date] ?? 0) + 1;
+      setWeekCounts(counts);
+    } catch { /* la semaine est un confort : l'agenda du jour reste utilisable */ }
+  }, []);
+  useEffect(() => {
+    if (status === "authenticated") loadWeek(selectedDate);
+  }, [weekStart, status, loadWeek]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function navigate(delta: number) {
     setExpandedId(null);
@@ -243,18 +280,31 @@ export default function AgendaPage() {
     }
   }
 
+  const [actionError, setActionError] = useState("");
+
   async function changeStatus(id: string, newStatus: string) {
     setActionId(id + newStatus);
+    setActionError("");
     try {
-      await fetch(`/api/appointments/${id}`, {
+      const res = await fetch(`/api/appointments/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      // L'état affiché ne change que si le serveur a réellement accepté (avant : mise à jour « optimiste »,
+      // même quand la requête échouait — l'agenda mentait).
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setActionError(d.error ?? "Action impossible. Réessayez.");
+        return;
+      }
       setAppointments(prev =>
         prev.map(ap => ap.id === id ? { ...ap, status: newStatus } : ap)
       );
+      loadWeek(selectedDate);
       if (newStatus === "CANCELLED") setExpandedId(null);
+    } catch {
+      setActionError("Erreur réseau. Réessayez.");
     } finally {
       setActionId(null);
     }
@@ -265,7 +315,7 @@ export default function AgendaPage() {
     setSaving(true);
     setFormError("");
     try {
-      const res = await fetch("/api/garage/appointments", {
+      const res = await gfetch("/api/garage/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, date: selectedDate }),
@@ -282,6 +332,7 @@ export default function AgendaPage() {
         );
         setForm(emptyForm);
         setShowForm(false);
+        loadWeek(selectedDate);
       }
     } finally {
       setSaving(false);
@@ -337,10 +388,12 @@ export default function AgendaPage() {
             paddingTop: "env(safe-area-inset-top)",
           }}
         >
+          <h1 className="sr-only">{a.title}</h1>
           {/* Barre du haut */}
           <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <Link
-              href="/tableau-de-bord/garage"
+              href={selectedGarageId() ? `/tableau-de-bord/garage?g=${encodeURIComponent(selectedGarageId() as string)}` : "/tableau-de-bord/garage"}
+              aria-label="Retour au tableau de bord"
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 text-xl font-bold"
               style={{ touchAction: "manipulation" }}
             >
@@ -363,6 +416,7 @@ export default function AgendaPage() {
           {/* Navigation date */}
           <div className="flex items-center justify-between px-4 pb-3 pt-1">
             <button
+              aria-label="Jour précédent"
               onClick={() => navigate(-1)}
               className="w-11 h-11 flex items-center justify-center rounded-xl bg-gray-100 text-gray-700 text-2xl font-bold active:bg-gray-200"
               style={{ touchAction: "manipulation" }}
@@ -378,12 +432,39 @@ export default function AgendaPage() {
               )}
             </div>
             <button
+              aria-label="Jour suivant"
               onClick={() => navigate(1)}
               className="w-11 h-11 flex items-center justify-center rounded-xl bg-gray-100 text-gray-700 text-2xl font-bold active:bg-gray-200"
               style={{ touchAction: "manipulation" }}
             >
               ›
             </button>
+          </div>
+
+          {/* Semaine : un coup d'œil sur les rendez-vous de chaque jour, et accès direct à une date */}
+          <div className="px-4 pb-2">
+            <div className="flex gap-1.5" role="group" aria-label="Jours de la semaine">
+              {weekDays.map((d) => {
+                const n = weekCounts[d] ?? 0;
+                const sel = d === selectedDate;
+                const dt = new Date(d + "T12:00:00");
+                return (
+                  <button key={d} type="button" onClick={() => { setExpandedId(null); setSelectedDate(d); }} aria-pressed={sel}
+                    aria-label={`${formatDateLabel(d, lang)}, ${n} rendez-vous`}
+                    className="flex-1 flex flex-col items-center py-1.5 rounded-xl text-center"
+                    style={{ touchAction: "manipulation", background: sel ? "#0b1f3a" : "#f1f5f9", color: sel ? "#fff" : "#0b1f3a" }}>
+                    <span className="text-[10px] font-bold uppercase opacity-70">{dt.toLocaleDateString(lang === "fr" ? "fr-CA" : "en-CA", { weekday: "short" }).replace(".", "")}</span>
+                    <span className="text-sm font-black leading-tight">{dt.getDate()}</span>
+                    <span className="text-[10px] font-bold" style={{ color: sel ? "#fdba74" : n > 0 ? "#c2410c" : "#94a3b8" }}>{n > 0 ? n : "·"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <label className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+              Aller à une date
+              <input type="date" value={selectedDate} onChange={(e) => { if (e.target.value) { setExpandedId(null); setSelectedDate(e.target.value); } }}
+                className="border border-gray-200 rounded-lg px-2 py-1 text-gray-700" />
+            </label>
           </div>
 
           {/* Compteur */}
@@ -402,6 +483,12 @@ export default function AgendaPage() {
 
         {/* ── Liste des RDV ───────────────────────────────────────────────── */}
         <div className="flex-1 px-4 py-4 space-y-3 pb-32">
+          {actionError && (
+            <div className="rounded-xl px-4 py-3 text-sm font-semibold flex items-start justify-between gap-3" role="alert" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
+              <span>{actionError}</span>
+              <button type="button" onClick={() => setActionError("")} aria-label="Fermer le message" className="font-black">×</button>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <p className="text-gray-400 text-sm">{a.loading}</p>
@@ -468,7 +555,6 @@ export default function AgendaPage() {
               touchAction: "manipulation",
             }}
           >
-            <span className="text-xl leading-none">+</span>
             {a.newAppt}
           </button>
         </div>
@@ -818,6 +904,7 @@ function ApptCard({
   actionId: string | null;
   a: ReturnType<typeof useLang>["t"]["agenda"];
 }) {
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const ss         = statusStyle(appt.status);
   const isCancelled = appt.status === "CANCELLED";
   const isNoShow    = appt.status === "NO_SHOW";
@@ -1023,13 +1110,32 @@ function ApptCard({
                   onClick={() => onReschedule(appt)}
                 />
               )}
-              {appt.status !== "COMPLETED" && (
+              {appt.status !== "COMPLETED" && !confirmCancel && (
                 <TapBtn
                   label={a.cancel}
                   bg="#ef4444" active="#dc2626"
-                  loading={actionId === appt.id + "CANCELLED"}
-                  onClick={() => onStatus(appt.id, "CANCELLED")}
+                  loading={false}
+                  onClick={() => setConfirmCancel(true)}
                 />
+              )}
+              {appt.status !== "COMPLETED" && confirmCancel && (
+                <div className="w-full rounded-xl p-3 space-y-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+                  <p className="text-sm font-bold text-red-800">Annuler ce rendez-vous ? Le client sera prévenu par courriel.</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <TapBtn
+                      label="Oui, annuler"
+                      bg="#dc2626" active="#b91c1c"
+                      loading={actionId === appt.id + "CANCELLED"}
+                      onClick={() => { onStatus(appt.id, "CANCELLED"); setConfirmCancel(false); }}
+                    />
+                    <TapBtn
+                      label="Non, garder"
+                      bg="#64748b" active="#475569"
+                      loading={false}
+                      onClick={() => setConfirmCancel(false)}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           )}

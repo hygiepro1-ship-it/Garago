@@ -579,6 +579,74 @@ export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
   await send(ADMIN_EMAIL, `Nouvelle suggestion — ${author}`, body);
 }
 
+// ─── Emails: annulation d'un rendez-vous ─────────────────────────────────────
+
+export interface AppointmentCancelledParams {
+  to:            string;
+  customerName:  string;
+  garageName:    string;
+  garagePhone:   string;
+  serviceName:   string | null;
+  date:          string;
+  startTime:     string;
+}
+
+/** Le GARAGE annule : le client doit en être informé (sinon il se présente pour rien). */
+export async function sendCancelledByGarage(params: AppointmentCancelledParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("warning")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre rendez-vous a été annulé</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${esc(params.garageName)} a dû annuler votre rendez-vous. Nous sommes désolés pour le dérangement.</p>
+
+    ${infoCard(`
+      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+      ${row("Date", fmtDateFr(params.date))}
+      ${row("Heure", esc(params.startTime), true)}
+    `)}
+
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Vous pouvez joindre le garage pour convenir d'une autre date, ou choisir un autre créneau en ligne :</p>
+    <p style="margin:0 0 20px">${primaryBtn(`${BASE_URL}/rechercher`, "Trouver un autre créneau")}</p>
+    ${phoneBtn(params.garagePhone)}
+  `;
+
+  await send(params.to, `Rendez-vous annulé — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+}
+
+export interface CancelledByCustomerParams {
+  to:            string;
+  garageName:    string;
+  customerName:  string;
+  customerPhone: string;
+  serviceName:   string | null;
+  date:          string;
+  startTime:     string;
+}
+
+/** Le CLIENT annule : le garage doit le savoir pour réorganiser sa journée. */
+export async function sendCancelledByCustomer(params: CancelledByCustomerParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("bell")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Un client a annulé son rendez-vous</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Le créneau est de nouveau disponible pour les réservations en ligne.</p>
+
+    ${infoCard(`
+      ${row("Client", esc(params.customerName))}
+      ${row("Téléphone", `<a href="${telHref(params.customerPhone)}" style="color:#f97316">${esc(params.customerPhone)}</a>`)}
+      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+      ${row("Date", fmtDateFr(params.date))}
+      ${row("Heure", esc(params.startTime), true)}
+    `)}
+
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+  `;
+
+  await send(params.to, `Rendez-vous annulé par le client — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+}
+
 // ─── Email: changement de nom d'un garage (admin) ────────────────────────────
 
 export async function sendAdminGarageRenamed(params: { garageId: string; slug: string; oldName: string; newName: string; neq: string | null; ownerEmail: string | null }) {
