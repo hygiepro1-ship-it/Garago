@@ -200,6 +200,7 @@ function baseLayout(body: string): string {
                        border-top:0;padding:16px 32px;text-align:center">
           <p style="margin:0;color:#9ca3af;font-size:12px">
             Garago Canada — <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
+            · <a href="mailto:info@garagopro.ca" style="color:#f97316;text-decoration:none">info@garagopro.ca</a>
           </p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:11px">
             Pour annuler ou modifier, contactez directement le garage.
