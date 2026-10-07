@@ -416,6 +416,7 @@ export default function AdminDashboard() {
   const [allGarages,   setAllGarages]   = useState<AdminGarage[]>([]);
   const [garageFilter, setGarageFilter] = useState<string>("ALL");
   const [garageSearch, setGarageSearch] = useState("");
+  const [garagePage, setGaragePage] = useState(1);
 
   // ── Conducteurs ────────────────────────────────────────────────────────────
   const [drivers,       setDrivers]       = useState<Driver[]>([]);
@@ -818,10 +819,10 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <input
               type="text" placeholder="Rechercher un garage, une ville…"
-              value={garageSearch} onChange={(e) => setGarageSearch(e.target.value)}
+              value={garageSearch} onChange={(e) => { setGarageSearch(e.target.value); setGaragePage(1); }}
               className="flex-1 min-w-[200px] border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-orange-400"
             />
-            <select value={garageFilter} onChange={(e) => setGarageFilter(e.target.value)}
+            <select value={garageFilter} onChange={(e) => { setGarageFilter(e.target.value); setGaragePage(1); }}
               className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">
               <option value="ALL">Tous les statuts</option>
               <option value="REGISTERED">Garages inscrits (fiches actives)</option>
@@ -862,11 +863,17 @@ export default function AdminDashboard() {
               })
               .filter(g => !garageSearch || `${g.name} ${g.city}`.toLowerCase().includes(garageSearch.toLowerCase()));
 
+            // Pagination : 25 garages par page (la liste complète dépasse déjà 400 fiches)
+            const PAGE_SIZE = 25;
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+            const page = Math.min(garagePage, totalPages);
+            const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
             return (
               <>
                 {/* Mobile — cartes empilées */}
                 <div className="sm:hidden space-y-3">
-                  {filtered.map(g => {
+                  {pageItems.map(g => {
                     const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
                     const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
                     const cm = claimMeta[g.claimStatus];
@@ -898,6 +905,22 @@ export default function AdminDashboard() {
                   {filtered.length === 0 && <p className="text-sm text-gray-400 text-center py-12">Aucun résultat pour ce filtre.</p>}
                 </div>
 
+                {/* Pagination */}
+                {filtered.length > PAGE_SIZE && (
+                  <nav className="flex flex-wrap items-center justify-between gap-3 mt-4" aria-label="Pagination des garages">
+                    <p className="text-sm text-gray-500">
+                      {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} sur {filtered.length} garages
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => setGaragePage(Math.max(1, page - 1))} disabled={page === 1}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white disabled:opacity-40">Précédent</button>
+                      <span className="text-sm text-gray-600">Page {page} / {totalPages}</span>
+                      <button type="button" onClick={() => setGaragePage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
+                        className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white disabled:opacity-40">Suivant</button>
+                    </div>
+                  </nav>
+                )}
+
                 {/* Desktop — tableau */}
                 <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
@@ -914,7 +937,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filtered.map(g => {
+                        {pageItems.map(g => {
                           const sm = statusMeta[g.subscriptionStatus] ?? { label: g.subscriptionStatus, color: "#374151", bg: "#f9fafb" };
                           const vm = vMeta[g.verificationStatus] ?? vMeta.PENDING;
                           const cm = claimMeta[g.claimStatus];
