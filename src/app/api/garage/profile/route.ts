@@ -93,7 +93,9 @@ export async function PUT(req: NextRequest) {
 
   let descFields: Record<string, unknown> = {};
 
-  if (!sameAsApproved) {
+  // Sans description dans la requête, on ne touche à rien (évite de consommer un des 4 changements annuels et
+  // d'envoyer à l'administrateur un brouillon vide à chaque sauvegarde du profil).
+  if (body.description !== undefined && !sameAsApproved) {
     // Yearly limit check
     const thisYear = new Date().getFullYear();
     const sameYear = current.descriptionChangesYear === thisYear;

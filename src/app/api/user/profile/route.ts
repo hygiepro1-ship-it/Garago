@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { cleanText } from "@/lib/abuse";
+import { countUpcomingAppointments } from "@/lib/garage-access";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -78,6 +79,14 @@ export async function DELETE() {
       where: { ownerId: userId },
       select: { id: true, stripeCustomerId: true },
     });
+    // La suppression efface les garages et leurs rendez-vous : on refuse tant qu'il reste des clients attendus.
+    const upcoming = await countUpcomingAppointments(garages.map((g) => g.id));
+    if (upcoming > 0) {
+      return NextResponse.json(
+        { error: `Vous avez ${upcoming} rendez-vous à venir. Annulez-les ou terminez-les avant de supprimer votre compte, pour ne pas laisser des clients sans réponse.` },
+        { status: 409 }
+      );
+    }
     const stripeCustomerId = garages.find((g) => g.stripeCustomerId)?.stripeCustomerId ?? null;
 
     if (stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
