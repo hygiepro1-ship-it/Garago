@@ -216,7 +216,7 @@ export default function HomePage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
 
           <div className="mb-2 sm:mb-4" style={{ display: "flex", justifyContent: "center" }}>
-            <img src="/garago_logo_transparent_1.png?v=3" alt="Garago"
+            <img src="/logo-garago-700.webp" width={700} height={217} alt="Garago" fetchPriority="high" decoding="async"
               style={{ maxHeight: "clamp(115px, 20vw, 160px)", maxWidth: "70%", width: "auto", height: "auto", display: "block" }} />
           </div>
 
