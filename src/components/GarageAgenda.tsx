@@ -10,6 +10,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import AgendaWeekView, { type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import AgendaMonthView from "@/components/AgendaMonthView";
 
 export interface AgendaAppointment {
   id: string;
@@ -140,6 +141,22 @@ export default function GarageAgenda({
   const today = toDateStr(new Date());
   const [weekStart, setWeekStart] = useState(mondayOf(today));
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Vue « semaine » (détail, demi-heure par demi-heure) ou « mois » (charge de chaque jour).
+  const [view, setView] = useState<"week" | "month">("week");
+  const [monthRef, setMonthRef] = useState({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 });
+  const shiftMonth = (delta: number) => setMonthRef(({ year, month }) => {
+    const d = new Date(year, month + delta, 1);
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+  function showWeekOf(date: string) {
+    setWeekStart(mondayOf(date));
+    setView("week");
+  }
+  function switchView(v: "week" | "month") {
+    // On reste sur la même période en changeant de vue.
+    if (v === "month") setMonthRef({ year: Number(days[3].slice(0, 4)), month: Number(days[3].slice(5, 7)) - 1 });
+    setView(v);
+  }
 
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
   const [saving, setSaving] = useState(false);
@@ -216,6 +233,7 @@ export default function GarageAgenda({
     }
   }
 
+  const monthLabel = new Date(monthRef.year, monthRef.month, 1).toLocaleDateString("fr-CA", { month: "long", year: "numeric" });
   const weekLabel = `${new Date(days[0] + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} – ${new Date(days[6] + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}`;
   const navBtn = "w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 font-bold";
   const actionBtn = "px-3 py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-50";
@@ -225,19 +243,30 @@ export default function GarageAgenda({
   })();
 
   return (
-    <section id="agenda" className="space-y-2" aria-label="Agenda de la semaine">
+    <section id="agenda" className="space-y-2" aria-label="Agenda">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <h2 className="font-bold text-gray-900">Agenda</h2>
-          <button type="button" className={navBtn} aria-label="Semaine précédente" onClick={() => setWeekStart(addDays(weekStart, -7))}>‹</button>
-          <span className="text-sm font-semibold text-gray-700 min-w-[150px] text-center">{weekLabel}</span>
-          <button type="button" className={navBtn} aria-label="Semaine suivante" onClick={() => setWeekStart(addDays(weekStart, 7))}>›</button>
-          <button type="button" onClick={() => setWeekStart(mondayOf(today))}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Cette semaine</button>
+          <div className="flex gap-1" role="group" aria-label="Affichage de l'agenda">
+            {([["week", "Semaine"], ["month", "Mois"]] as const).map(([v, text]) => (
+              <button key={v} type="button" onClick={() => switchView(v)} aria-pressed={view === v}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold"
+                style={{ background: view === v ? "#0b1f3a" : "#f1f5f9", color: view === v ? "#fff" : "#0b1f3a" }}>
+                {text}
+              </button>
+            ))}
+          </div>
+          <button type="button" className={navBtn} aria-label={view === "week" ? "Semaine précédente" : "Mois précédent"}
+            onClick={() => (view === "week" ? setWeekStart(addDays(weekStart, -7)) : shiftMonth(-1))}>‹</button>
+          <span className="text-sm font-semibold text-gray-700 min-w-[150px] text-center first-letter:uppercase">{view === "week" ? weekLabel : monthLabel}</span>
+          <button type="button" className={navBtn} aria-label={view === "week" ? "Semaine suivante" : "Mois suivant"}
+            onClick={() => (view === "week" ? setWeekStart(addDays(weekStart, 7)) : shiftMonth(1))}>›</button>
+          <button type="button" onClick={() => { setWeekStart(mondayOf(today)); setMonthRef({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }); }}
+            className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Aujourd&apos;hui</button>
         </div>
         <div className="flex items-center gap-3">
           <a href={exportHref} className="text-xs font-semibold underline text-gray-600" title="Télécharger tous vos rendez-vous dans un fichier Excel">Exporter (Excel)</a>
-          <button type="button" onClick={() => openForm(today >= days[0] && today <= days[6] ? today : days[0], "09:00")}
+          <button type="button" onClick={() => openForm(view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0], "09:00")}
             className="text-white px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#f97316" }}>
             + Rendez-vous
           </button>
@@ -258,17 +287,31 @@ export default function GarageAgenda({
         </div>
       )}
 
-      <AgendaWeekView
-        days={days}
-        appointments={weekAppts.map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }))}
-        availability={availability}
-        capacity={capacity}
-        blocked={blocked}
-        lang={lang}
-        rowHeight={22}
-        onPickSlot={openForm}
-        onPickAppointment={(a) => openAppointment(a.id)}
-      />
+      {view === "week" ? (
+        <AgendaWeekView
+          days={days}
+          appointments={weekAppts.map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }))}
+          availability={availability}
+          capacity={capacity}
+          blocked={blocked}
+          lang={lang}
+          rowHeight={22}
+          onPickSlot={openForm}
+          onPickAppointment={(a) => openAppointment(a.id)}
+        />
+      ) : (
+        <AgendaMonthView
+          year={monthRef.year}
+          month={monthRef.month}
+          appointments={appointments.map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }))}
+          availability={availability}
+          capacity={capacity}
+          blocked={blocked}
+          lang={lang}
+          onPickDay={showWeekOf}
+          onPickAppointment={(a) => openAppointment(a.id)}
+        />
+      )}
 
       {/* ── Prise de rendez-vous ── */}
       {form && (
