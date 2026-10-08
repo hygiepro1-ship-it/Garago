@@ -1809,10 +1809,42 @@ export default function DashboardGaragePage() {
         <div className="space-y-6">
           {/* Stats grid */}
           {(() => {
-            const totalThisMonth = appointments.filter(a => a.date?.startsWith(new Date().toISOString().slice(0, 7))).length;
-            const confirmedThisMonth = appointments.filter(a => a.date?.startsWith(new Date().toISOString().slice(0, 7)) && a.status === "CONFIRMED").length;
-            const tauxRdv = totalThisMonth > 0 ? Math.round((confirmedThisMonth / totalThisMonth) * 100) : 0;
-            const tauxRemplissage = rdvLoaded && appointments.length > 0 ? Math.min(100, Math.round((appointments.filter(a => a.status !== "CANCELLED").length / Math.max(appointments.length, 1)) * 100)) : null;
+            // Dates locales (pas toISOString, qui bascule en UTC le soir).
+            const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            const minutesOf = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+            const nowLocal = new Date();
+            const thisMonth = ymd(nowLocal).slice(0, 7);
+
+            // Taux de confirmation : parmi les rendez-vous du mois pour lesquels une confirmation a été
+            // demandée et dont on connaît l'issue, part de ceux que le client a confirmés (lien ou téléphone).
+            const asked = appointments.filter(a => a.date?.startsWith(thisMonth) && (
+              ["CONFIRMED", "NO_RESPONSE", "EXPIRED"].includes(a.confirmationStatus) || (a.cancelledBy === "CLIENT" && a.confirmRequestedAt)
+            ));
+            const confirmedByClient = asked.filter(a => a.confirmationStatus === "CONFIRMED" && a.cancelledBy !== "CLIENT").length;
+            const tauxConfirmation = rdvLoaded && asked.length > 0 ? Math.round((confirmedByClient / asked.length) * 100) : null;
+
+            // Taux de remplissage : heures réservées cette semaine (lundi à dimanche) sur les heures
+            // d'ouverture, journées et plages bloquées déduites, multipliées par le nombre de postes.
+            const monday = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), nowLocal.getDate() - ((nowLocal.getDay() + 6) % 7), 12);
+            const weekDates = Array.from({ length: 7 }, (_, i) => { const x = new Date(monday); x.setDate(monday.getDate() + i); return x; });
+            const posts = garage.capacity ?? 1;
+            let openMin = 0;
+            for (const day of weekDates) {
+              const h = garage.availability.find(av => av.dayOfWeek === day.getDay());
+              if (!h || h.isClosed) continue;
+              const blocks = blockedSlots.filter(b => b.date === ymd(day));
+              if (blocks.some(b => b.allDay || !b.startTime || !b.endTime)) continue;
+              const open = minutesOf(h.openTime), close = minutesOf(h.closeTime);
+              let free = close - open;
+              for (const b of blocks) free -= Math.max(0, Math.min(close, minutesOf(b.endTime)) - Math.max(open, minutesOf(b.startTime)));
+              openMin += Math.max(0, free) * posts;
+            }
+            const weekSet = new Set(weekDates.map(ymd));
+            const bookedMin = appointments
+              .filter(a => weekSet.has(a.date) && a.status !== "CANCELLED" && a.status !== "NO_SHOW")
+              .reduce((sum, a) => sum + Math.max(0, minutesOf(a.endTime) - minutesOf(a.startTime)), 0);
+            const tauxRemplissage = rdvLoaded && openMin > 0 ? Math.min(100, Math.round((bookedMin / openMin) * 100)) : null;
+            const hoursLabel = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, "0")}` : ""}`;
 
             return (
               <>
@@ -1831,10 +1863,12 @@ export default function DashboardGaragePage() {
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#0b1f3a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Taux de RDV</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Taux de confirmation</span>
                     </div>
-                    <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{rdvLoaded ? `${tauxRdv}` : "—"}<span className="text-base font-semibold text-gray-400">{rdvLoaded ? "%" : ""}</span></p>
-                    <p className="text-xs text-gray-400 mt-1">confirmés ce mois</p>
+                    <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{tauxConfirmation !== null ? `${tauxConfirmation}` : "—"}<span className="text-base font-semibold text-gray-400">{tauxConfirmation !== null ? "%" : ""}</span></p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {asked.length > 0 ? `${confirmedByClient} client${confirmedByClient > 1 ? "s" : ""} sur ${asked.length} ont confirmé ce mois` : "aucune demande de confirmation ce mois"}
+                    </p>
                   </div>
 
                   {/* Taux de remplissage */}
@@ -1849,7 +1883,9 @@ export default function DashboardGaragePage() {
                         <div className="h-1.5 rounded-full transition-all" style={{ width: `${tauxRemplissage}%`, background: tauxRemplissage > 70 ? "#f97316" : "#0b1f3a" }} />
                       </div>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">créneaux non-annulés</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {openMin > 0 ? `${hoursLabel(bookedMin)} réservées sur ${hoursLabel(openMin)} ouvertes cette semaine` : "aucune heure d'ouverture cette semaine"}
+                    </p>
                   </div>
                 </div>
               </>
