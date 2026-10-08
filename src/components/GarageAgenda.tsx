@@ -235,8 +235,8 @@ export default function GarageAgenda({
 
   const monthLabel = new Date(monthRef.year, monthRef.month, 1).toLocaleDateString("fr-CA", { month: "long", year: "numeric" });
   const weekLabel = `${new Date(days[0] + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} – ${new Date(days[6] + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}`;
-  const navBtn = "w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 font-bold";
-  const actionBtn = "px-3 py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-50";
+  const navBtn = "w-11 h-11 sm:w-8 sm:h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 font-bold";
+  const actionBtn = "px-3 py-2.5 min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-50";
   const exportHref = (() => {
     const g = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("g");
     return g ? `/api/garage/appointments/export?g=${encodeURIComponent(g)}` : "/api/garage/appointments/export";
@@ -250,7 +250,7 @@ export default function GarageAgenda({
           <div className="flex gap-1" role="group" aria-label="Affichage de l'agenda">
             {([["week", "Semaine"], ["month", "Mois"]] as const).map(([v, text]) => (
               <button key={v} type="button" onClick={() => switchView(v)} aria-pressed={view === v}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-bold"
+                className="px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold"
                 style={{ background: view === v ? "#0b1f3a" : "#f1f5f9", color: view === v ? "#fff" : "#0b1f3a" }}>
                 {text}
               </button>
@@ -262,12 +262,12 @@ export default function GarageAgenda({
           <button type="button" className={navBtn} aria-label={view === "week" ? "Semaine suivante" : "Mois suivant"}
             onClick={() => (view === "week" ? setWeekStart(addDays(weekStart, 7)) : shiftMonth(1))}>›</button>
           <button type="button" onClick={() => { setWeekStart(mondayOf(today)); setMonthRef({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }); }}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Aujourd&apos;hui</button>
+            className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Aujourd&apos;hui</button>
         </div>
         <div className="flex items-center gap-3">
-          <a href={exportHref} className="text-xs font-semibold underline text-gray-600" title="Télécharger tous vos rendez-vous dans un fichier Excel">Exporter (Excel)</a>
+          <a href={exportHref} className="text-xs font-semibold underline text-gray-600 inline-flex items-center min-h-[44px] sm:min-h-0" title="Télécharger tous vos rendez-vous dans un fichier Excel">Exporter (Excel)</a>
           <button type="button" onClick={() => openForm(view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0], "09:00")}
-            className="text-white px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#f97316" }}>
+            className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#f97316" }}>
             + Rendez-vous
           </button>
         </div>
@@ -280,7 +280,7 @@ export default function GarageAgenda({
           </span>
           {toCall.map((a) => (
             <button key={a.id} type="button" onClick={() => { setWeekStart(mondayOf(a.date)); openAppointment(a.id); }}
-              className="text-xs font-semibold px-2 py-1 rounded-lg bg-white border border-orange-200 text-gray-800">
+              className="text-xs font-semibold px-3 min-h-[44px] sm:min-h-0 sm:px-2 sm:py-1 rounded-lg bg-white border border-orange-200 text-gray-800">
               {a.customerName} · {new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric" })} {a.startTime}
             </button>
           ))}

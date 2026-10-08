@@ -97,8 +97,80 @@ export default function AgendaWeekView({
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const locale = lang === "fr" ? "fr-CA" : "en-CA";
 
+  // Étiquette en mots (jamais la couleur seule) pour la liste du téléphone
+  const stateLabel = (a: WeekAppointment) =>
+    a.status === "NO_SHOW" ? "Client absent"
+    : a.status === "COMPLETED" ? "Terminé"
+    : a.confirmationStatus === "NO_RESPONSE" ? "À appeler"
+    : a.confirmationStatus === "CONFIRMED" ? "Confirmé par le client"
+    : a.confirmationStatus === "AWAITING" ? "En attente de réponse"
+    : a.confirmationStatus === "SCHEDULED" ? "Message à venir"
+    : a.status === "PENDING" ? "En attente" : "Prévu";
+
+  // Première plage libre du jour (pour le bouton « + Rendez-vous » de la liste du téléphone)
+  const firstFree = (d: string): string => {
+    const hours = hoursOf(d);
+    if (!hours) return "09:00";
+    const dayAppts = active.filter((a) => a.date === d && a.status !== "NO_SHOW");
+    for (let m = hours.open; m + STEP <= hours.close; m += STEP) {
+      const past = d < todayStr || (d === todayStr && m < nowMin);
+      const busy = dayAppts.filter((a) => toMin(a.startTime) < m + STEP && toMin(a.endTime) > m).length;
+      const isBlocked = blocked.some((b) => b.date === d && (b.allDay || !b.startTime || !b.endTime || (toMin(b.startTime) < m + STEP && toMin(b.endTime) > m)));
+      if (!past && !isBlocked && busy < capacity) return toHHMM(m);
+    }
+    return toHHMM(hours.open);
+  };
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+      {/* Téléphone : une liste par jour (7 colonnes ne tiennent pas sur 375 px de large) */}
+      <div className="sm:hidden divide-y divide-gray-100">
+        {days.map((d) => {
+          const dt = new Date(d + "T12:00:00");
+          const closed = !hoursOf(d);
+          const list = active.filter((a) => a.date === d).sort((x, y) => x.startTime.localeCompare(y.startTime));
+          const past = d < todayStr;
+          return (
+            <section key={d} aria-label={dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
+              style={{ background: d === selectedDate ? "#f8fafc" : undefined }}>
+              <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: d === todayStr ? "#fff7ed" : "#f8fafc" }}>
+                <div className="min-w-0">
+                  <p className="text-sm font-black capitalize" style={{ color: closed ? "#94a3b8" : "#0b1f3a" }}>
+                    {dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
+                    {d === todayStr && <span className="ml-2 text-[11px] font-bold" style={{ color: "#c2410c" }}>Aujourd&apos;hui</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">{closed ? "Fermé" : list.length === 0 ? "Aucun rendez-vous" : `${list.length} rendez-vous`}</p>
+                </div>
+                {!closed && !past && (
+                  <button type="button" onClick={() => onPickSlot(d, firstFree(d))}
+                    className="shrink-0 min-h-[44px] px-3 rounded-lg text-sm font-bold border border-gray-300 bg-white text-gray-800"
+                    style={{ touchAction: "manipulation" }}>
+                    + Rendez-vous
+                  </button>
+                )}
+              </div>
+              {list.map((a) => {
+                const c = apptColors(a);
+                return (
+                  <button key={a.id} type="button" onClick={() => onPickAppointment(a)}
+                    className="w-full text-left flex items-center gap-3 px-3 min-h-[56px] py-2"
+                    style={{ borderLeft: `4px solid ${c.border}`, background: c.bg, color: c.text, touchAction: "manipulation" }}>
+                    <span className="text-sm font-black tabular-nums shrink-0">{a.startTime}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold truncate">{a.customerName}</span>
+                      <span className="block text-xs truncate">{a.serviceName ? `${a.serviceName} · ` : ""}{stateLabel(a)}</span>
+                    </span>
+                    <span aria-hidden="true" className="text-lg">›</span>
+                  </button>
+                );
+              })}
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Ordinateur et tablette : la grille horaire */}
+      <div className="hidden sm:block overflow-x-auto">
       <div style={{ minWidth: 620 }}>
         {/* En-tête : jours */}
         <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))" }}>
@@ -179,6 +251,7 @@ export default function AgendaWeekView({
             );
           })}
         </div>
+      </div>
       </div>
 
       {/* Légende */}
