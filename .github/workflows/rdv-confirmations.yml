@@ -1,0 +1,39 @@
+# Fait avancer la confirmation des rendez-vous toutes les 15 minutes : envoi des
+# textos et courriels 48 h avant, alerte « client à appeler » 24 h avant.
+# Le forfait Vercel Hobby limite ses tâches planifiées à une fois par jour ; cet
+# appel externe prend le relais. Le secret CRON_SECRET (Settings → Secrets and
+# variables → Actions) doit être le même que celui du projet Vercel.
+name: Confirmations de rendez-vous
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: rdv-confirmations
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Appeler la tâche de confirmation
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::Le secret CRON_SECRET n'est pas défini dans ce dépôt : la tâche n'a pas été appelée."
+            exit 1
+          fi
+          code=$(curl -sS -o reponse.json -w "%{http_code}" --max-time 90 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://garagopro.ca/api/cron/rdv-confirmations")
+          cat reponse.json; echo
+          if [ "$code" != "200" ]; then
+            echo "::error::La tâche a répondu $code."
+            exit 1
+          fi
