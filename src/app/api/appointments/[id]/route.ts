@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, sendCancelledByCustomer } from "@/lib/email";
 import { wouldExceedCapacity, computeFreeSlots, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
-import { quebecInstant, planConfirmation } from "@/lib/rdv-confirmation";
+import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
+import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
+import { sendRescheduleSMS, sendCancelledByGarageSMS } from "@/lib/sms";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -65,6 +67,11 @@ export async function PATCH(
     }
   }
 
+  // « Confirmé par téléphone » : le garage a joint lui-même un client qui n'avait pas répondu.
+  const phoneConfirmed = body.phoneConfirmed === true && isGarageOwner
+    && ["SCHEDULED", "AWAITING", "NO_RESPONSE"].includes(appt.confirmationStatus)
+    && appt.status !== "CANCELLED" && appt.status !== "COMPLETED";
+
   // Un déplacement de date/heure ne doit pas chevaucher un autre RDV du garage —
   // vérifié par intervalle (durée réelle du RDV déplacé), pas par égalité d'heure.
   const movesAppt = !!(date || startTime || endTime);
@@ -110,14 +117,19 @@ export async function PATCH(
   // l'ancienne date pourrait libérer le créneau (ou rester muet) à la nouvelle date.
   const resetConfirmation = movesAppt && (date || startTime) && appt.status !== "CANCELLED" && appt.status !== "COMPLETED"
     ? (() => {
-        const plan = planConfirmation(quebecInstant(date ?? appt.date, startTime ?? appt.startTime), new Date(), {
-          enabled: appt.garage.requireConfirmation ?? true,
-          hasEmail: !!appt.customerEmail,
-        });
+        const newStart = quebecInstant(date ?? appt.date, startTime ?? appt.startTime);
+        const enabled = appt.garage.requireConfirmation ?? true;
+        const plan = appt.source === "MANUAL"
+          ? planManualConfirmation(newStart, new Date(), {
+              enabled,
+              reachable: appt.contactChannel === "SMS" || (appt.contactChannel === "EMAIL" && !!appt.customerEmail),
+            })
+          : planConfirmation(newStart, new Date(), { enabled, hasEmail: !!appt.customerEmail });
         return {
           confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier, confirmBy: plan.confirmBy,
           confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
           confirmNudgeAt: null, arrivalReminderAt: null, reminderSent: false,
+          confirmedVia: null, confirmRespondedAt: null, noResponseAt: null,
         };
       })()
     : {};
@@ -132,6 +144,9 @@ export async function PATCH(
       ...(newEndTimeForClient           ? { endTime: newEndTimeForClient } : endTime ? { endTime } : {}),
       ...(completionNote !== undefined  ? { completionNote } : {}),
       ...resetConfirmation,
+      ...(phoneConfirmed ? { confirmationStatus: "CONFIRMED", confirmedVia: "PHONE", confirmRespondedAt: appt.confirmRespondedAt ?? new Date() } : {}),
+      ...(status === "CANCELLED" && appt.status !== "CANCELLED" ? { cancelledBy: isGarageOwner ? "GARAGE" : "CLIENT", cancelledAt: new Date() } : {}),
+      ...(status && status !== "CANCELLED" && appt.status === "CANCELLED" ? { cancelledBy: null, cancelledAt: null } : {}),
     },
     include: { garage: true },
   });
@@ -143,7 +158,12 @@ export async function PATCH(
     if (isGarageOwner) {
       const acct = updated.userId ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { email: true } }) : null;
       const to = updated.customerEmail || acct?.email || null;
-      if (to) {
+      if (updated.contactChannel === "SMS") {
+        jobs.push(sendCancelledByGarageSMS({
+          to: updated.customerPhone, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
+          garagePhone: updated.garage.phone ?? "", date: updated.date, startTime: updated.startTime,
+        }).catch((e) => console.error("[CANCELLED BY GARAGE SMS]", e)));
+      } else if (to) {
         jobs.push(sendCancelledByGarage({
           to, customerName: updated.customerName, garageName: updated.garage.name, garagePhone: updated.garage.phone ?? "",
           serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
@@ -181,7 +201,14 @@ export async function PATCH(
 
     const reschedulePromises: Promise<void>[] = [];
 
-    if (recipientEmail) {
+    if (updated.contactChannel === "SMS") {
+      reschedulePromises.push(
+        sendRescheduleSMS({
+          to: updated.customerPhone, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
+          garagePhone, date: updated.date, startTime: updated.startTime,
+        }).catch(e => console.error("[RESCHEDULE SMS]", e))
+      );
+    } else if (recipientEmail) {
       reschedulePromises.push(
         sendRescheduleNotification({
           to:           recipientEmail,
@@ -198,6 +225,11 @@ export async function PATCH(
     }
 
     await Promise.all(reschedulePromises);
+
+    // Déplacé à moins de 48 h : la demande de confirmation part tout de suite.
+    if (updated.confirmTier === "MANUAL" && updated.confirmationStatus === "SCHEDULED") {
+      await processRdvConfirmations(new Date(), updated.id).catch(e => console.error("[RESCHEDULE CONFIRMATION]", e));
+    }
   }
 
   // ── Notifications "véhicule prêt" quand le garage marque COMPLETED

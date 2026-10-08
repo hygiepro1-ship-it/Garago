@@ -29,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const subOr = activeSubscriptionOr();
   const garages = await prisma.garage.findMany({
     where: {
+      hiddenByReport: false,
       OR: [
         { parentId: null, verificationStatus: "APPROVED", OR: subOr },
         { parent: { verificationStatus: "APPROVED", OR: subOr } },

@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 import { cleanText, isValidEmail } from "@/lib/abuse";
+import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
+import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
+import { toE164 } from "@/lib/sms";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -48,6 +51,9 @@ export async function POST(req: NextRequest) {
     vehicleYear, vehicleMake, vehicleModel,
     serviceName, categoryId, date, startTime, notes,
   } = body;
+  // Moyen choisi par le client au téléphone pour recevoir la demande de confirmation.
+  const contactChannel: "SMS" | "EMAIL" | null = body.contactChannel === "SMS" || body.contactChannel === "EMAIL" ? body.contactChannel : null;
+  const language = body.language === "en" ? "en" : "fr";
 
   if (!customerName || !customerPhone || !date || !startTime) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
@@ -58,6 +64,12 @@ export async function POST(req: NextRequest) {
   }
   if (customerEmail && !isValidEmail(customerEmail)) {
     return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+  }
+  if (contactChannel === "EMAIL" && !customerEmail) {
+    return NextResponse.json({ error: "Entrez le courriel du client pour lui envoyer la confirmation par courriel." }, { status: 400 });
+  }
+  if (contactChannel === "SMS" && !toE164(String(customerPhone))) {
+    return NextResponse.json({ error: "Entrez un numéro de cellulaire à 10 chiffres pour envoyer la confirmation par texto." }, { status: 400 });
   }
 
   // Même règle de durée que la réservation en ligne : celle configurée par le
@@ -70,6 +82,12 @@ export async function POST(req: NextRequest) {
     });
     if (svc?.durationMin) durationMin = svc.durationMin;
   }
+  // Durée estimée par le garage au moment de la prise de rendez-vous : elle prime.
+  const customDuration = Number(body.durationMin);
+  if (Number.isInteger(customDuration) && customDuration >= 10 && customDuration <= 600) durationMin = customDuration;
+  if (toMinutes(startTime) + durationMin > 24 * 60) {
+    return NextResponse.json({ error: "Ce rendez-vous dépasse minuit : réduisez la durée." }, { status: 400 });
+  }
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
   const sameDay = await prisma.appointment.findMany({
@@ -79,6 +97,10 @@ export async function POST(req: NextRequest) {
   if (wouldExceedCapacity(startTime, durationMin, sameDay, garage.capacity ?? 1)) {
     return NextResponse.json({ error: "Tous vos postes sont déjà occupés sur ce créneau." }, { status: 409 });
   }
+
+  const now = new Date();
+  const start = quebecInstant(date, startTime);
+  const plan = planManualConfirmation(start, now, { enabled: garage.requireConfirmation ?? true, reachable: contactChannel !== null });
 
   const appt = await prisma.appointment.create({
     data: {
@@ -97,8 +119,19 @@ export async function POST(req: NextRequest) {
       notes: notes ? String(notes).slice(0, 1000) : null,
       status: "CONFIRMED", // manual = direct confirm
       source: "MANUAL",
+      contactChannel,
+      language,
+      confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier,
+      confirmBy: plan.confirmBy, confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
     },
   });
+
+  // À moins de 48 h, la demande de confirmation part tout de suite (sinon la tâche planifiée s'en charge).
+  if (plan.confirmTier === "MANUAL" && start.getTime() - now.getTime() <= MANUAL_REQUEST_HOURS_BEFORE * 60 * 60 * 1000) {
+    await processRdvConfirmations(now, appt.id).catch((e) => console.error("[MANUAL CONFIRMATION]", e));
+    const fresh = await prisma.appointment.findUnique({ where: { id: appt.id } });
+    return NextResponse.json(fresh ?? appt, { status: 201 });
+  }
 
   return NextResponse.json(appt, { status: 201 });
 }

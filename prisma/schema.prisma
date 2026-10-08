@@ -107,7 +107,7 @@ model Garage {
   // données publiques existe avant même d'avoir un propriétaire. Non lié à
   // verificationStatus, qui concerne le NEQ des garages déjà abonnés.
   claimStatus     String    @default("activee") // non_reclamee | en_attente | activee
-  hiddenByReport  Boolean   @default(false)     // masquée immédiatement sur demande de retrait (fiche non activée)
+  hiddenByReport  Boolean   @default(false)     // masquée du public : demande de retrait d'une fiche non activée, ou garage activé hors vitrine (projet pilote)
 
   referralCode          String?  @unique
   referredByCode        String?
@@ -130,6 +130,7 @@ model Garage {
   appointmentOnly Boolean @default(false)
   hourlyRate      Float?
   requireConfirmation Boolean @default(true) // le client doit confirmer son rendez-vous par courriel, sinon le créneau est libéré
+  onlineBooking   Boolean @default(true) // false : le garage ne reçoit que les rendez-vous qu'il saisit lui-même (ex. projet pilote) — aucune réservation depuis le site
   capacity        Int     @default(1) // nb de véhicules pris en charge en même temps (postes de travail / employés) — un créneau n'est complet que lorsque tous les postes sont occupés
 
   createdAt DateTime @default(now())
@@ -522,9 +523,19 @@ model Appointment {
   // Confirmation par le client (voir src/lib/rdv-confirmation.ts). Les rendez-vous
   // existants et manuels restent NOT_REQUIRED : la règle ne s'applique qu'aux
   // nouvelles réservations en ligne.
-  confirmationStatus String    @default("NOT_REQUIRED") // NOT_REQUIRED | SCHEDULED | AWAITING | CONFIRMED | EXPIRED
-  confirmTier        String? // STANDARD | LAST_MINUTE
-  confirmBy          DateTime? // échéance : sans confirmation, le créneau est libéré
+  confirmationStatus String    @default("NOT_REQUIRED") // NOT_REQUIRED | SCHEDULED | AWAITING | CONFIRMED | EXPIRED | NO_RESPONSE
+  confirmTier        String? // STANDARD | LAST_MINUTE | MANUAL (saisi par le garage : jamais libéré automatiquement)
+  confirmBy          DateTime? // échéance : sans confirmation, le créneau est libéré (MANUAL : le garage est prévenu pour appeler)
+
+  // Rendez-vous saisis par le garage : moyen de joindre le client, langue des
+  // messages, et suivi des réponses (statistiques du projet pilote).
+  contactChannel     String? // SMS | EMAIL | null = aucun message
+  language           String    @default("fr") // fr | en
+  confirmedVia       String? // LINK (le client a cliqué) | PHONE (le garage a appelé)
+  confirmRespondedAt DateTime? // première réponse du client (confirmation ou annulation)
+  noResponseAt       DateTime? // sans réponse à l'échéance : le garage a été prévenu
+  cancelledBy        String? // CLIENT | GARAGE | SYSTEM
+  cancelledAt        DateTime?
   confirmToken       String?   // aléatoire (192 bits) — sert de lien dans les courriels
   confirmRequestedAt DateTime?
   confirmNudgeAt     DateTime?

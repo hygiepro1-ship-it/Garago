@@ -1,25 +1,30 @@
 import { prisma } from "@/lib/prisma";
 import {
   sendConfirmationRequest, sendSlotReleased, sendArrivalReminder, sendGarageSlotReleased,
+  sendManualConfirmationRequest, sendGarageNoResponse,
 } from "@/lib/email";
+import { sendConfirmationRequestSMS } from "@/lib/sms";
 import {
-  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, confirmPageUrl, cancelPageUrl,
-  REQUEST_HOURS_BEFORE, NUDGE_HOURS_BEFORE, ARRIVAL_REMINDER_HOURS_BEFORE,
+  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, manualDeadline, confirmPageUrl, cancelPageUrl, shortConfirmUrl,
+  REQUEST_HOURS_BEFORE, NUDGE_HOURS_BEFORE, ARRIVAL_REMINDER_HOURS_BEFORE, MANUAL_REQUEST_HOURS_BEFORE,
 } from "@/lib/rdv-confirmation";
 
 const HOUR = 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
 
-export interface RdvRunStats { requested: number; nudged: number; released: number; arrivalReminders: number; errors: number }
+export interface RdvRunStats { requested: number; nudged: number; released: number; arrivalReminders: number; toCall: number; errors: number }
 
 /**
  * Fait avancer le cycle de confirmation de tous les rendez-vous concernés.
  * Appelée toutes les ~15 minutes par /api/cron/rdv-confirmations. Chaque étape
  * « réserve » sa ligne avec un updateMany conditionnel avant d'envoyer le
  * courriel : deux exécutions qui se chevauchent n'envoient jamais deux fois.
+ *
+ * `onlyId` : ne traite qu'un rendez-vous (appelé à la création d'un rendez-vous
+ * manuel à moins de 48 h, pour que le message parte sans attendre la tâche).
  */
-export async function processRdvConfirmations(now: Date = new Date()): Promise<RdvRunStats> {
-  const stats: RdvRunStats = { requested: 0, nudged: 0, released: 0, arrivalReminders: 0, errors: 0 };
+export async function processRdvConfirmations(now: Date = new Date(), onlyId?: string): Promise<RdvRunStats> {
+  const stats: RdvRunStats = { requested: 0, nudged: 0, released: 0, arrivalReminders: 0, toCall: 0, errors: 0 };
   const yesterday = quebecDateStr(new Date(now.getTime() - 24 * HOUR));
 
   const rows = await prisma.appointment.findMany({
@@ -27,6 +32,7 @@ export async function processRdvConfirmations(now: Date = new Date()): Promise<R
       confirmationStatus: { in: ["SCHEDULED", "AWAITING", "CONFIRMED"] },
       status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] },
       date: { gte: yesterday },
+      ...(onlyId ? { id: onlyId } : {}),
     },
     include: {
       garage: { select: { name: true, phone: true, address: true, city: true, email: true, owner: { select: { email: true } } } },
@@ -51,6 +57,68 @@ export async function processRdvConfirmations(now: Date = new Date()): Promise<R
     };
 
     try {
+      // 0. Rendez-vous saisis par le garage : texto ou courriel à −48 h, garage prévenu à −24 h.
+      //    Le créneau n'est jamais libéré automatiquement.
+      if (a.confirmTier === "MANUAL") {
+        const garageTo = a.garage.email || a.garage.owner?.email;
+        const callGarage = async (undelivered: boolean) => {
+          stats.toCall++;
+          if (!garageTo) return;
+          await sendGarageNoResponse({ to: garageTo, customerName: a.customerName, customerPhone: a.customerPhone, date: a.date, startTime: a.startTime, serviceName: a.serviceName, undelivered })
+            .catch((e) => { stats.errors++; console.error("[rdv] sendGarageNoResponse", e); });
+        };
+
+        if (a.confirmationStatus === "SCHEDULED") {
+          if (start.getTime() - now.getTime() > MANUAL_REQUEST_HOURS_BEFORE * HOUR) continue;
+          const deadline = manualDeadline(start, now);
+          if (!deadline) {
+            await prisma.appointment.updateMany({ where: { id: a.id, confirmationStatus: "SCHEDULED" }, data: { confirmationStatus: "NOT_REQUIRED" } });
+            continue;
+          }
+          const claimed = await prisma.appointment.updateMany({
+            where: { id: a.id, confirmationStatus: "SCHEDULED" },
+            data: { confirmationStatus: "AWAITING", confirmBy: deadline, confirmRequestedAt: now },
+          });
+          if (claimed.count !== 1) continue;
+          try {
+            const lang = a.language === "en" ? "en" : "fr";
+            if (a.contactChannel === "SMS") {
+              await sendConfirmationRequestSMS({ to: a.customerPhone, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime, url: shortConfirmUrl(token) });
+            } else if (a.contactChannel === "EMAIL" && a.customerEmail) {
+              await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token) });
+            } else {
+              throw new Error("Aucun moyen de contact utilisable");
+            }
+            stats.requested++;
+          } catch (e) {
+            // Message non parti (numéro invalide, ligne fixe, service en panne) : inutile
+            // d'attendre une réponse qui ne viendra pas, le garage est prévenu tout de suite.
+            stats.errors++;
+            console.error(`[rdv] demande de confirmation non remise pour ${a.id}`, e);
+            await prisma.appointment.updateMany({
+              where: { id: a.id, confirmationStatus: "AWAITING" },
+              data: { confirmationStatus: "NO_RESPONSE", noResponseAt: now, confirmRequestedAt: null },
+            });
+            await callGarage(true);
+          }
+          continue;
+        }
+
+        if (a.confirmationStatus === "AWAITING" && a.confirmBy && a.confirmBy.getTime() <= now.getTime()) {
+          // Rendez-vous imminent ou commencé : trop tard pour appeler, on clôt simplement la demande.
+          if (start.getTime() - now.getTime() < 30 * MINUTE) {
+            await prisma.appointment.updateMany({ where: { id: a.id, confirmationStatus: "AWAITING" }, data: { confirmationStatus: "NOT_REQUIRED" } });
+            continue;
+          }
+          const claimed = await prisma.appointment.updateMany({
+            where: { id: a.id, confirmationStatus: "AWAITING" },
+            data: { confirmationStatus: "NO_RESPONSE", noResponseAt: now },
+          });
+          if (claimed.count === 1) await callGarage(false);
+        }
+        continue;
+      }
+
       // 1. Demande de confirmation à −24 h (rendez-vous STANDARD)
       if (a.confirmationStatus === "SCHEDULED") {
         if (start.getTime() - now.getTime() > REQUEST_HOURS_BEFORE * HOUR) continue;

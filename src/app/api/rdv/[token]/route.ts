@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { wouldExceedCapacity, toMinutes } from "@/lib/availability";
 import { quebecInstant, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
+import { sendCancelledByCustomer } from "@/lib/email";
 
 // Page publique de confirmation : le jeton (192 bits aléatoires, reçu par
 // courriel) tient lieu d'authentification. On n'expose que ce qui est utile à
@@ -13,7 +14,7 @@ async function load(token: string) {
   if (!/^[a-f0-9]{48}$/.test(token)) return null;
   return prisma.appointment.findFirst({
     where: { confirmToken: token },
-    include: { garage: { select: { name: true, address: true, city: true, phone: true, capacity: true } } },
+    include: { garage: { select: { name: true, address: true, city: true, phone: true, capacity: true, email: true, owner: { select: { email: true } } } } },
   });
 }
 
@@ -50,6 +51,10 @@ async function describe(a: Loaded, now = new Date()) {
     date: a.date, startTime: a.startTime, endTime: a.endTime,
     serviceName: a.serviceName,
     confirmBy: a.confirmBy,
+    // Rendez-vous pris au téléphone : la page parle la langue choisie par le garage et
+    // renvoie vers le garage (pas vers la recherche d'autres garages) après une annulation.
+    language: a.language === "en" ? "en" : "fr",
+    manual: a.source === "MANUAL",
   };
 }
 
@@ -75,13 +80,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   if (action === "confirm") {
     // Tant que la tâche planifiée n'a pas libéré le créneau, la confirmation reste possible.
     await prisma.appointment.updateMany({
-      where: { id: a.id, ...live, confirmationStatus: { in: ["AWAITING", "SCHEDULED"] } },
-      data: { confirmationStatus: "CONFIRMED" },
+      where: { id: a.id, ...live, confirmationStatus: { in: ["AWAITING", "SCHEDULED", "NO_RESPONSE"] } },
+      data: { confirmationStatus: "CONFIRMED", confirmedVia: "LINK", confirmRespondedAt: a.confirmRespondedAt ?? new Date() },
     });
   } else if (action === "cancel") {
     const start = quebecInstant(a.date, a.startTime);
     if (start.getTime() > Date.now()) {
-      await prisma.appointment.updateMany({ where: { id: a.id, ...live }, data: { status: "CANCELLED" } });
+      const now = new Date();
+      const done = await prisma.appointment.updateMany({
+        where: { id: a.id, ...live },
+        data: { status: "CANCELLED", cancelledBy: "CLIENT", cancelledAt: now, confirmRespondedAt: a.confirmRespondedAt ?? now },
+      });
+      // Le garage doit le savoir tout de suite pour redonner le créneau.
+      const garageTo = a.garage.email || a.garage.owner?.email;
+      if (done.count === 1 && garageTo) {
+        await sendCancelledByCustomer({
+          to: garageTo, garageName: a.garage.name, customerName: a.customerName, customerPhone: a.customerPhone,
+          serviceName: a.serviceName, date: a.date, startTime: a.startTime,
+        }).catch((e) => console.error("[rdv] sendCancelledByCustomer", e));
+      }
     }
   } else if (action === "retake") {
     try {
@@ -97,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         if (wouldExceedCapacity(fresh.startTime, duration, sameDay, fresh.garage.capacity ?? 1)) throw new Error("SLOT_TAKEN");
         await tx.appointment.update({
           where: { id: fresh.id },
-          data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null },
+          data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null, cancelledBy: null, cancelledAt: null },
         });
       }, { isolationLevel: "Serializable" });
     } catch (e: any) {

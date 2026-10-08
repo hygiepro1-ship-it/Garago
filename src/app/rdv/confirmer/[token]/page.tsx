@@ -13,17 +13,50 @@ interface Info {
   startTime?: string;
   endTime?: string;
   serviceName?: string | null;
+  language?: "fr" | "en";
+  manual?: boolean; // rendez-vous pris au téléphone, saisi par le garage
   error?: string;
 }
 
 const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const DAYS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
 
-function fmtDate(d: string) {
+function fmtDate(d: string, lang: "fr" | "en" = "fr") {
   const [y, m, day] = d.split("-").map(Number);
+  if (lang === "en") {
+    return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString("en-CA", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  }
   const dow = new Date(Date.UTC(y, m - 1, day)).getUTCDay();
   return `${DAYS[dow]} ${day} ${MONTHS[m - 1]} ${y}`;
 }
+
+// Textes de la page, dans la langue choisie par le garage pour ce client.
+const TEXTS = {
+  fr: {
+    appointment: "Rendez-vous", call: "Appeler le garage",
+    cancelTitle: "Annuler ce rendez-vous ?", cancelYes: "Oui, j'annule", cancelNo: "Non, je confirme mon rendez-vous",
+    cancelNote: "Annuler libère le créneau pour un autre conducteur.",
+    askTitle: "Confirmer votre rendez-vous", confirm: "Je confirme", mustCancel: "Je dois annuler",
+    confirmedTitle: "Rendez-vous confirmé", confirmedSub: "Merci, le garage vous attend.", cancelAfter: "Finalement, j'annule",
+    cancelledTitle: "Rendez-vous annulé",
+    cancelledSub: "Ce rendez-vous est annulé. Vous pouvez en réserver un nouveau à tout moment.",
+    cancelledManual: "Ce rendez-vous est annulé, le garage est prévenu. Pour en reprendre un, appelez le garage.",
+    rebook: "Réserver un autre créneau",
+    pastTitle: "Rendez-vous passé", pastSub: "Ce rendez-vous n'est plus modifiable.",
+  },
+  en: {
+    appointment: "Appointment", call: "Call the garage",
+    cancelTitle: "Cancel this appointment?", cancelYes: "Yes, cancel it", cancelNo: "No, I confirm my appointment",
+    cancelNote: "Cancelling frees the time slot for another driver.",
+    askTitle: "Confirm your appointment", confirm: "I confirm", mustCancel: "I need to cancel",
+    confirmedTitle: "Appointment confirmed", confirmedSub: "Thank you, the garage is expecting you.", cancelAfter: "Actually, I need to cancel",
+    cancelledTitle: "Appointment cancelled",
+    cancelledSub: "This appointment is cancelled. You can book a new one at any time.",
+    cancelledManual: "This appointment is cancelled and the garage has been notified. To book a new one, call the garage.",
+    rebook: "Book another time",
+    pastTitle: "Past appointment", pastSub: "This appointment can no longer be changed.",
+  },
+};
 
 export default function ConfirmerRdvPage() {
   const { token } = useParams<{ token: string }>();
@@ -62,10 +95,13 @@ export default function ConfirmerRdvPage() {
     return <div className="min-h-[60vh] flex items-center justify-center text-sm text-gray-400">Chargement…</div>;
   }
 
+  const lang = info.language === "en" ? "en" : "fr";
+  const tx = TEXTS[lang];
+
   const summary = info.garageName && (
     <div className="text-left rounded-xl p-4 my-5" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
-      <p className="text-sm font-bold text-gray-900">{info.serviceName ?? "Rendez-vous"}</p>
-      <p className="text-sm text-gray-700 mt-1">{info.date && fmtDate(info.date)} · {info.startTime} – {info.endTime}</p>
+      <p className="text-sm font-bold text-gray-900">{info.serviceName ?? tx.appointment}</p>
+      <p className="text-sm text-gray-700 mt-1">{info.date && fmtDate(info.date, lang)} · {info.startTime} – {info.endTime}</p>
       <p className="text-sm text-gray-700">{info.garageName}</p>
       <p className="text-xs text-gray-500 mt-1">{info.garageAddress}</p>
     </div>
@@ -73,7 +109,7 @@ export default function ConfirmerRdvPage() {
 
   const call = info.garagePhone && (
     <a href={`tel:${info.garagePhone}`} className="block mt-3 text-sm font-semibold underline" style={{ color: navy }}>
-      Appeler le garage · {info.garagePhone}
+      {tx.call} · {info.garagePhone}
     </a>
   );
 
@@ -92,28 +128,28 @@ export default function ConfirmerRdvPage() {
 
         {wantsCancel && (info.state === "ask" || info.state === "confirmed") && (
           <>
-            <h1 className="text-xl font-black" style={{ color: navy }}>Annuler ce rendez-vous ?</h1>
+            <h1 className="text-xl font-black" style={{ color: navy }}>{tx.cancelTitle}</h1>
             {summary}
             <button onClick={() => act("cancel")} disabled={busy} style={{ ...btnPrimary, background: "#b91c1c" }} className="disabled:opacity-60">
-              {busy ? "…" : "Oui, j'annule"}
+              {busy ? "…" : tx.cancelYes}
             </button>
             <button onClick={() => { setWantsCancel(false); act("confirm"); }} disabled={busy} style={btnGhost} className="disabled:opacity-60">
-              Non, je confirme mon rendez-vous
+              {tx.cancelNo}
             </button>
-            <p className="text-xs text-gray-400 mt-4">Annuler libère le créneau pour un autre conducteur.</p>
+            <p className="text-xs text-gray-400 mt-4">{tx.cancelNote}</p>
             {call}
           </>
         )}
 
         {!wantsCancel && info.state === "ask" && (
           <>
-            <h1 className="text-xl font-black" style={{ color: navy }}>Confirmer votre rendez-vous</h1>
+            <h1 className="text-xl font-black" style={{ color: navy }}>{tx.askTitle}</h1>
             {summary}
             <button onClick={() => act("confirm")} disabled={busy} style={btnPrimary} className="disabled:opacity-60">
-              {busy ? "…" : "Je confirme"}
+              {busy ? "…" : tx.confirm}
             </button>
-            <button onClick={() => act("cancel")} disabled={busy} style={btnGhost} className="disabled:opacity-60">Je dois annuler</button>
-            <p className="text-xs text-gray-400 mt-4">Annuler libère le créneau pour un autre conducteur.</p>
+            <button onClick={() => act("cancel")} disabled={busy} style={btnGhost} className="disabled:opacity-60">{tx.mustCancel}</button>
+            <p className="text-xs text-gray-400 mt-4">{tx.cancelNote}</p>
             {call}
           </>
         )}
@@ -121,10 +157,10 @@ export default function ConfirmerRdvPage() {
         {!wantsCancel && info.state === "confirmed" && (
           <>
             <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-black" style={{ background: "#e6f6ec", color: "#15803d" }}>✓</div>
-            <h1 className="text-xl font-black" style={{ color: navy }}>Rendez-vous confirmé</h1>
-            <p className="text-sm text-gray-500 mt-1">Merci, le garage vous attend.</p>
+            <h1 className="text-xl font-black" style={{ color: navy }}>{tx.confirmedTitle}</h1>
+            <p className="text-sm text-gray-500 mt-1">{tx.confirmedSub}</p>
             {summary}
-            <button onClick={() => act("cancel")} disabled={busy} style={btnGhost} className="disabled:opacity-60">Finalement, j'annule</button>
+            <button onClick={() => act("cancel")} disabled={busy} style={btnGhost} className="disabled:opacity-60">{tx.cancelAfter}</button>
             {call}
           </>
         )}
@@ -149,17 +185,20 @@ export default function ConfirmerRdvPage() {
 
         {info.state === "cancelled" && (
           <>
-            <h1 className="text-xl font-black" style={{ color: navy }}>Rendez-vous annulé</h1>
-            <p className="text-sm text-gray-500 mt-2">Ce rendez-vous est annulé. Vous pouvez en réserver un nouveau à tout moment.</p>
+            <h1 className="text-xl font-black" style={{ color: navy }}>{tx.cancelledTitle}</h1>
+            <p className="text-sm text-gray-500 mt-2">{info.manual ? tx.cancelledManual : tx.cancelledSub}</p>
             {summary}
-            <a href="/rechercher" style={{ ...btnPrimary, display: "block", textDecoration: "none" }}>Réserver un autre créneau</a>
+            {/* Client du garage (rendez-vous pris au téléphone) : on le renvoie vers son garage, pas vers la recherche. */}
+            {info.manual
+              ? call
+              : <a href="/rechercher" style={{ ...btnPrimary, display: "block", textDecoration: "none" }}>{tx.rebook}</a>}
           </>
         )}
 
         {(info.state === "closed" || info.state === "past") && (
           <>
-            <h1 className="text-xl font-black" style={{ color: navy }}>Rendez-vous passé</h1>
-            <p className="text-sm text-gray-500 mt-2">Ce rendez-vous n'est plus modifiable.</p>
+            <h1 className="text-xl font-black" style={{ color: navy }}>{tx.pastTitle}</h1>
+            <p className="text-sm text-gray-500 mt-2">{tx.pastSub}</p>
             {summary}
           </>
         )}

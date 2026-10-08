@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AdminPilotStats from "@/components/AdminPilotStats";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "apercu" | "garages" | "conducteurs" | "alertes" | "descriptions" | "verification" | "reclamations" | "suggestions" | "maintenance";
+type Tab = "apercu" | "garages" | "pilote" | "conducteurs" | "alertes" | "descriptions" | "verification" | "reclamations" | "suggestions" | "maintenance";
 
 interface GarageAlert {
   id: string; type: string; message: string;
@@ -415,6 +416,8 @@ export default function AdminDashboard() {
   const [stats,        setStats]        = useState<AdminStats | null>(null);
   const [allGarages,   setAllGarages]   = useState<AdminGarage[]>([]);
   const [garageFilter, setGarageFilter] = useState<string>("ALL");
+  // Garage dont on consulte les résultats du projet pilote (ouvert depuis l'onglet Garages).
+  const [pilotGarage,  setPilotGarage]  = useState<{ id: string; name: string } | null>(null);
   const [garageSearch, setGarageSearch] = useState("");
   const [garagePage, setGaragePage] = useState(1);
 
@@ -603,6 +606,7 @@ export default function AdminDashboard() {
         {([
           { id: "apercu",       label: "Vue d'ensemble",  icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>, count: 0,                                                    urgent: false },
           { id: "garages",      label: "Garages",         icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>, count: allGarages.length,                                     urgent: false },
+          { id: "pilote",       label: "Projet pilote",   icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>, count: 0, urgent: false },
           { id: "conducteurs",  label: "Conducteurs",     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, count: drivers.length,                                          urgent: false },
           { id: "alertes",      label: "Alertes qualité", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, count: unreadAlerts.length,                                 urgent: true  },
           { id: "descriptions", label: "Descriptions",    icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>, count: garages.length,                                      urgent: false },
@@ -899,6 +903,10 @@ export default function AdminDashboard() {
                           <span>{g.avgRating ? `${g.avgRating}/5` : "—"} ({g.reviewCount} avis) · {g.appointmentCount} RDV</span>
                           <span>{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</span>
                         </div>
+                        {!cm && (
+                          <button type="button" onClick={() => { setPilotGarage({ id: g.id, name: g.name }); setTab("pilote"); }}
+                            className="mt-2 text-xs font-semibold underline text-orange-600">Résultats du projet pilote</button>
+                        )}
                       </div>
                     );
                   })}
@@ -948,6 +956,10 @@ export default function AdminDashboard() {
                                   {g.name}{g.isAmbassador && " ★"}
                                 </Link>
                                 <p className="text-xs text-gray-400">{g.owner?.email ?? "—"}</p>
+                                {!cm && (
+                                  <button type="button" onClick={() => { setPilotGarage({ id: g.id, name: g.name }); setTab("pilote"); }}
+                                    className="text-xs font-semibold underline text-orange-600">Résultats du projet pilote</button>
+                                )}
                               </td>
                               <td className="px-4 py-3 text-gray-600">{g.city}</td>
                               <td className="px-4 py-3">
@@ -976,6 +988,9 @@ export default function AdminDashboard() {
           })()}
         </div>
       )}
+
+      {/* ── PROJET PILOTE ── */}
+      {tab === "pilote" && <AdminPilotStats garage={pilotGarage} onShowAll={() => setPilotGarage(null)} />}
 
       {/* ── CONDUCTEURS ── */}
       {tab === "conducteurs" && (

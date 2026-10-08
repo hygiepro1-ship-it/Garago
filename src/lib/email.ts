@@ -220,8 +220,11 @@ function appointmentCard(appt: AppointmentDetails): string {
   `);
 }
 
-async function send(to: string | string[], subject: string, body: string) {
-  await getResend().emails.send({ from: FROM, to, subject, html: baseLayout(body) });
+/** `fromName` : nom affiché comme expéditeur (ex. le garage), l'adresse d'envoi restant celle de Garago. */
+async function send(to: string | string[], subject: string, body: string, fromName?: string) {
+  const address = FROM.match(/<([^>]+)>/)?.[1] ?? FROM;
+  const from = fromName ? `${fromName.replace(/[<>"\r\n]/g, " ").trim()} <${address}>` : FROM;
+  await getResend().emails.send({ from, to, subject, html: baseLayout(body) });
 }
 
 // ─── Email: Vérification de compte ───────────────────────────────────────────
@@ -1212,4 +1215,105 @@ export async function sendGarageSlotReleased(params: GarageSlotReleasedParams) {
   `;
 
   await send(params.to, `Créneau libéré — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+}
+
+// ─── Rendez-vous saisis par le garage : confirmation demandée au client ───────
+
+const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function fmtDateLang(dateStr: string, lang: "fr" | "en"): string {
+  if (lang === "fr") return fmtDateFr(dateStr);
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return `${MONTHS_EN[m - 1]} ${d}, ${y}`;
+}
+
+export interface ManualConfirmationRequestParams extends AppointmentDetails {
+  to:           string;
+  lang:         "fr" | "en";
+  customerName: string;
+  garagePhone:  string;
+  confirmUrl:   string;
+  cancelUrl:    string;
+}
+
+/**
+ * Courriel envoyé 48 h avant un rendez-vous pris au téléphone. Il part au nom du
+ * garage (le client ne connaît pas Garago) et ne menace jamais de libérer le
+ * créneau : sans réponse, c'est le garage qui appelle.
+ */
+export async function sendManualConfirmationRequest(params: ManualConfirmationRequestParams) {
+  if (!canSend()) throw new Error("Courriel non configuré (RESEND_API_KEY absente)");
+  const en = params.lang === "en";
+
+  const card = infoCard(`
+    ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+    ${row("Date", fmtDateLang(params.date, params.lang))}
+    ${row(en ? "Time" : "Heure", esc(params.startTime))}
+    ${row("Garage", esc(params.garageName))}
+    ${row(en ? "Address" : "Adresse", esc(params.garageAddress), true)}
+  `);
+
+  const body = `
+    ${iconBadge("calendar")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Please confirm your appointment" : "Confirmez votre rendez-vous"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, your appointment at ${esc(params.garageName)} is coming up. One click lets us know you will be there.`
+      : `Bonjour ${esc(params.customerName)}, votre rendez-vous chez ${esc(params.garageName)} approche. Un clic suffit pour nous dire que vous serez là.`}</p>
+
+    ${card}
+
+    ${en
+      ? confirmCancelBtns(params.confirmUrl, params.cancelUrl, "I confirm", "I need to cancel")
+      : confirmCancelBtns(params.confirmUrl, params.cancelUrl, "Je confirme", "Je dois annuler")}
+
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">${en ? "Need another time? Call the garage:" : "Besoin d'un autre moment ? Appelez le garage :"}</p>
+    ${phoneBtn(params.garagePhone)}
+  `;
+
+  await send(
+    params.to,
+    en
+      ? `Please confirm your appointment — ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+      : `Confirmez votre rendez-vous — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
+    body,
+    params.garageName,
+  );
+}
+
+export interface GarageNoResponseParams {
+  to:            string;
+  customerName:  string;
+  customerPhone: string;
+  date:          string;
+  startTime:     string;
+  serviceName:   string | null;
+  /** Le message n'a pas pu partir (numéro invalide, ligne fixe, adresse refusée). */
+  undelivered?:  boolean;
+}
+
+/** Le client n'a pas répondu à la demande de confirmation : le garage doit l'appeler. Le créneau reste réservé. */
+export async function sendGarageNoResponse(params: GarageNoResponseParams) {
+  if (!canSend()) return;
+
+  const body = `
+    ${iconBadge("bell")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Client à appeler : rendez-vous non confirmé</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${params.undelivered
+      ? "Le message de confirmation n'a pas pu être remis à ce client (numéro ou adresse invalide)."
+      : "Ce client n'a pas répondu à la demande de confirmation."} Le rendez-vous reste à votre agenda : un appel suffit pour vérifier qu'il vient.</p>
+
+    ${infoCard(`
+      ${row("Client", esc(params.customerName))}
+      ${row("Téléphone", `<a href="${telHref(params.customerPhone)}" style="color:#f97316">${esc(params.customerPhone)}</a>`)}
+      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+      ${row("Date", fmtDateFr(params.date))}
+      ${row("Heure", esc(params.startTime), true)}
+    `)}
+
+    <p style="margin:0 0 20px">${phoneBtn(params.customerPhone)}</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">Après l'appel, indiquez dans l'agenda « Confirmé par téléphone » ou annulez le rendez-vous.</p>
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+  `;
+
+  await send(params.to, `À appeler — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }

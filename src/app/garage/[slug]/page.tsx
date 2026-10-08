@@ -524,6 +524,15 @@ export default function GarageProfilePage() {
 
           {/* Booking widget */}
           <div className="lg:sticky lg:top-6">
+            {garage.onlineBooking === false ? (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 text-center">
+                <h3 className="font-bold text-gray-900 text-sm mb-1">Rendez-vous par téléphone</h3>
+                <p className="text-sm text-gray-500 mb-4">Ce garage prend ses rendez-vous par téléphone.</p>
+                <a href={`tel:${garage.phone}`} className="block w-full py-3 rounded-xl font-bold text-white" style={{ background: "#f97316" }}>
+                  {garage.phone}
+                </a>
+              </div>
+            ) : (
             <div style={isOwner ? { opacity: 0.5, pointerEvents: "none", userSelect: "none" } : undefined}>
               {isOwner && (
                 <p className="text-center text-xs text-gray-400 mb-2 italic">Aperçu uniquement — vous ne pouvez pas prendre rendez-vous avec vous-même.</p>
@@ -538,6 +547,7 @@ export default function GarageProfilePage() {
                 availability={garage.availability ?? []}
               />
             </div>
+            )}
 
             {/* Hours */}
             {garage.availability?.length > 0 && (
