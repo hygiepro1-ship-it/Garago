@@ -644,7 +644,7 @@ export async function sendCancelledByCustomer(params: CancelledByCustomerParams)
       ${row("Heure", esc(params.startTime), true)}
     `)}
 
-    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
   await send(params.to, `Rendez-vous annulé par le client — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
@@ -1211,7 +1211,7 @@ export async function sendGarageSlotReleased(params: GarageSlotReleasedParams) {
       ${row("Heure", esc(params.startTime), true)}
     `)}
 
-    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
   await send(params.to, `Créneau libéré — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
@@ -1312,7 +1312,7 @@ export async function sendGarageNoResponse(params: GarageNoResponseParams) {
 
     <p style="margin:0 0 20px">${phoneBtn(params.customerPhone)}</p>
     <p style="margin:0 0 16px;color:#374151;font-size:14px">Après l'appel, indiquez dans l'agenda « Confirmé par téléphone » ou annulez le rendez-vous.</p>
-    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage/agenda`, "Ouvrir mon agenda")}
+    ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
   await send(params.to, `À appeler — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);

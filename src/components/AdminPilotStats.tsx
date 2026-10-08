@@ -9,7 +9,7 @@ interface PilotGarage {
   total: number; withoutMessage: number;
   sent: number; settled: number; pending: number; undelivered: number;
   clientConfirmed: number; clientCancelled: number; cancelledEarly: number; medianNoticeHours: number | null;
-  noReply: number; noReplyPhoneConfirmed: number; noReplyLateAnswer: number;
+  answered: number; noReply: number; noReplyPhoneConfirmed: number; noReplyLateAnswer: number;
   garageCancelled: number; medianResponseMinutes: number | null;
   past: number; noShows: number;
   pastConfirmed: number; noShowsConfirmed: number; pastUnconfirmed: number; noShowsUnconfirmed: number;
@@ -100,7 +100,7 @@ export default function AdminPilotStats({ garage, onShowAll }: {
       )}
       {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
       {garages && garages.length === 0 && (
-        <p className="text-sm text-gray-500 bg-white rounded-2xl border border-gray-200 p-6 text-center">Aucun rendez-vous saisi par un garage sur cette période.</p>
+        <p className="text-sm text-gray-500 bg-white rounded-2xl border border-gray-200 p-6 text-center">Aucun garage en projet pilote et aucun rendez-vous saisi par un garage sur cette période.</p>
       )}
 
       {garages?.map((g) => (
@@ -114,15 +114,27 @@ export default function AdminPilotStats({ garage, onShowAll }: {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Metric label="Confirmés par le client" value={pct(g.clientConfirmed, g.settled)} tone="good"
-              sub={`${g.clientConfirmed} sur ${g.settled} demandes arrivées à échéance`} />
+          {g.settled === 0 && (
+            <p className="text-xs text-gray-500 bg-white rounded-xl border border-gray-200 px-3 py-2">
+              Aucune demande de confirmation n&apos;est encore arrivée à échéance sur cette période : les taux s&apos;afficheront dès les premières réponses.
+            </p>
+          )}
+
+          {/* Réponse au message de confirmation : les deux taux se complètent (100 % à eux deux) */}
+          <div className="grid grid-cols-2 gap-3">
+            <Metric label="Taux de réponse au message" value={pct(g.answered, g.settled)} tone="good"
+              sub={`${g.answered} clients ont répondu sur ${g.settled} demandes arrivées à échéance`} />
+            <Metric label="Taux de non-réponse" value={pct(g.noReply, g.settled)} tone={g.noReply > 0 ? "bad" : undefined}
+              sub={`${g.noReply} à appeler · ${g.noReplyPhoneConfirmed} confirmés par téléphone · ${g.noReplyLateAnswer} ont répondu après l'échéance`} />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Metric label="Taux de confirmation" value={pct(g.clientConfirmed, g.settled)} tone="good"
+              sub={`${g.clientConfirmed} rendez-vous confirmés par le client`} />
             <Metric label="Taux d'annulation" value={pct(g.clientCancelled, g.settled)}
               sub={`${g.clientCancelled} annulés par le client, dont ${g.cancelledEarly} au moins 24 h avant`} />
-            <Metric label="Sans réponse" value={pct(g.noReply, g.settled)} tone={g.noReply > 0 ? "bad" : undefined}
-              sub={`${g.noReply} à appeler · ${g.noReplyPhoneConfirmed} confirmés par téléphone · ${g.noReplyLateAnswer} ont répondu après`} />
-            <Metric label="Clients absents" value={pct(g.noShows, g.past)} tone={g.noShows > 0 ? "bad" : undefined}
-              sub={`${g.noShows} sur ${g.past} rendez-vous passés`} />
+            <Metric label="Taux d'absence" value={pct(g.noShows, g.past)} tone={g.noShows > 0 ? "bad" : undefined}
+              sub={`${g.noShows} clients absents sur ${g.past} rendez-vous passés`} />
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700">

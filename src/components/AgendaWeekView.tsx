@@ -20,8 +20,10 @@ export interface WeekAppointment {
 
 export interface WeekAvailability { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }
 
+/** Plage bloquée par le garage (vacances, congé, pause). */
+export interface WeekBlock { date: string; startTime?: string | null; endTime?: string | null; allDay?: boolean }
+
 const STEP = 30;     // minutes par ligne
-const ROW_H = 30;    // pixels par ligne
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
@@ -59,17 +61,20 @@ function layout(appts: WeekAppointment[]): { appt: WeekAppointment; lane: number
 }
 
 export default function AgendaWeekView({
-  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment,
+  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30,
 }: {
   days: string[];                       // 7 dates "YYYY-MM-DD", du lundi au dimanche
   appointments: WeekAppointment[];
   availability: WeekAvailability[];
   capacity: number;
-  selectedDate: string;
+  selectedDate?: string;
   lang: string;
+  blocked?: WeekBlock[];
+  rowHeight?: number;                   // pixels par demi-heure
   onPickSlot: (date: string, time: string) => void;
   onPickAppointment: (appt: WeekAppointment) => void;
 }) {
+  const ROW_H = rowHeight;
   const active = appointments.filter((a) => a.status !== "CANCELLED");
   const hoursOf = (date: string) => {
     const dow = new Date(date + "T12:00:00").getDay();
@@ -116,7 +121,7 @@ export default function AgendaWeekView({
         <div className="grid" style={{ gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))" }}>
           <div>
             {rows.map((m) => (
-              <div key={m} className="text-[11px] text-gray-400 text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "14px" }}>
+              <div key={m} className="text-[11px] text-gray-400 text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px" }}>
                 {m % 60 === 0 ? toHHMM(m) : ""}
               </div>
             ))}
@@ -132,7 +137,8 @@ export default function AgendaWeekView({
                   const open = !!hours && m >= hours.open && m + STEP <= hours.close;
                   const past = d < todayStr || (d === todayStr && m < nowMin);
                   const busy = holding.filter((a) => toMin(a.startTime) < m + STEP && toMin(a.endTime) > m).length;
-                  const free = open && !past && busy < capacity;
+                  const isBlocked = blocked.some((b) => b.date === d && (b.allDay || !b.startTime || !b.endTime || (toMin(b.startTime) < m + STEP && toMin(b.endTime) > m)));
+                  const free = open && !past && !isBlocked && busy < capacity;
                   const label = `${new Date(d + "T12:00:00").toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}, ${toHHMM(m)}`;
                   return free ? (
                     <button key={m} type="button" onClick={() => onPickSlot(d, toHHMM(m))}
@@ -141,14 +147,15 @@ export default function AgendaWeekView({
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (
                     <div key={m} aria-hidden="true"
-                      style={{ height: ROW_H, background: open ? "#fff" : "#f1f5f9", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
+                      style={{ height: ROW_H, background: open && !isBlocked ? "#fff" : "#f1f5f9", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
                   );
                 })}
 
                 {layout(dayAppts).map(({ appt, lane, lanes }) => {
                   const c = apptColors(appt);
                   const top = ((toMin(appt.startTime) - from) / STEP) * ROW_H;
-                  const height = Math.max(((toMin(appt.endTime) - toMin(appt.startTime)) / STEP) * ROW_H - 2, 20);
+                  const height = Math.max(((toMin(appt.endTime) - toMin(appt.startTime)) / STEP) * ROW_H - 2, 16);
+                  const oneLine = height < 30;
                   return (
                     <button key={appt.id} type="button" onClick={() => onPickAppointment(appt)}
                       title={`${appt.startTime}–${appt.endTime} · ${appt.customerName}${appt.serviceName ? ` · ${appt.serviceName}` : ""}`}
@@ -157,8 +164,14 @@ export default function AgendaWeekView({
                         top: top + 1, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - 4px)`,
                         background: c.bg, borderLeft: `3px solid ${c.border}`, color: c.text, touchAction: "manipulation",
                       }}>
-                      <span className="block text-[10px] font-bold tabular-nums leading-tight">{appt.startTime}</span>
-                      <span className="block text-[11px] font-semibold leading-tight truncate">{appt.customerName}</span>
+                      {oneLine ? (
+                        <span className="block text-[11px] font-semibold leading-tight truncate"><span className="font-bold tabular-nums">{appt.startTime}</span> {appt.customerName}</span>
+                      ) : (
+                        <>
+                          <span className="block text-[10px] font-bold tabular-nums leading-tight">{appt.startTime}</span>
+                          <span className="block text-[11px] font-semibold leading-tight truncate">{appt.customerName}</span>
+                        </>
+                      )}
                     </button>
                   );
                 })}
@@ -174,7 +187,7 @@ export default function AgendaWeekView({
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />Rendez-vous</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé par le client</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé ou bloqué</span>
       </div>
     </div>
   );
