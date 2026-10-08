@@ -14,6 +14,7 @@ import BrandLogo from "@/components/BrandLogo";
 import { GARAGE_LANGUAGES, parseLanguages } from "@/lib/languages";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
+import GarageAgenda from "@/components/GarageAgenda";
 
 /**
  * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
@@ -75,7 +76,9 @@ interface Garage {
   parentId:                 string | null;
   slug:                     string;
   name:                     string;
+  address?:                 string | null;
   city:                     string | null;
+  postalCode?:              string | null;
   province:                 string | null;
   description:              string | null;
   descriptionDraft:         string | null;
@@ -713,7 +716,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
 }
 
 export default function DashboardGaragePage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const d = t.dash;
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -1557,7 +1560,7 @@ export default function DashboardGaragePage() {
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
-              {garage.city}, {garage.province}
+              {[garage.address, garage.city, [garage.province, garage.postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1840,17 +1843,7 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="font-bold text-gray-900">Prochains rendez-vous</h3>
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <Link href={selectedGarageId() ? `/tableau-de-bord/garage/agenda?g=${encodeURIComponent(selectedGarageId() as string)}` : "/tableau-de-bord/garage/agenda"}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap border border-gray-300 text-gray-700 hover:bg-gray-50">
-                  Ouvrir l'agenda →
-                </Link>
-                <button onClick={openAddRdv}
-                  className="text-white px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap"
-                  style={{ background: "#f97316" }}>
-                  + Ajouter un rendez-vous
-                </button>
-              </div>
+              <a href="#agenda" className="text-sm font-semibold underline text-gray-600 whitespace-nowrap">Voir le calendrier ↓</a>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
@@ -1930,6 +1923,17 @@ export default function DashboardGaragePage() {
               </div>
             )}
           </div>
+
+          {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
+          <GarageAgenda
+            appointments={appointments}
+            services={garage.services as any[]}
+            availability={garage.availability}
+            capacity={garage.capacity ?? 1}
+            blocked={blockedSlots}
+            lang={lang}
+            onReload={loadCalendarData}
+          />
 
           {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
           {referralUnlocked ? (
@@ -2086,12 +2090,6 @@ export default function DashboardGaragePage() {
                   </h3>
                 )}
                 <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => { setManualForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowManualForm(true); setShowBlockForm(false); }}
-                    className="text-white text-sm px-4 py-2 rounded-xl font-semibold"
-                    style={{ background: "#f97316" }}>
-                    {isMultiSelect ? `+ RDV sur ${selectedDays.length} jours` : "+ Nouveau RDV"}
-                  </button>
                   <button
                     onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
                     className="text-sm px-4 py-2 rounded-xl font-semibold border"

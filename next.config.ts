@@ -40,7 +40,11 @@ const nextConfig: NextConfig = {
   // L'ancienne page de tarifs est remplacée par la page « Pour les garages » —
   // la redirection permanente garde les anciens liens et le référencement.
   async redirects() {
-    return [{ source: "/tarifs", destination: "/garagistes", permanent: true }];
+    return [
+      { source: "/tarifs", destination: "/garagistes", permanent: true },
+      // L'agenda est intégré au tableau de bord du garage (anciens liens des courriels, favoris).
+      { source: "/tableau-de-bord/garage/agenda", destination: "/tableau-de-bord/garage", permanent: false },
+    ];
   },
 };
 
