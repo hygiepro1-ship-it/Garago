@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
-import { cleanText, isValidEmail } from "@/lib/abuse";
+import { cleanText, isValidEmail, isRateLimited } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { toE164 } from "@/lib/sms";
@@ -68,8 +68,18 @@ export async function POST(req: NextRequest) {
   if (contactChannel === "EMAIL" && !customerEmail) {
     return NextResponse.json({ error: "Entrez le courriel du client pour lui envoyer la confirmation par courriel." }, { status: 400 });
   }
-  if (contactChannel === "SMS" && !toE164(String(customerPhone))) {
-    return NextResponse.json({ error: "Entrez un numéro de cellulaire à 10 chiffres pour envoyer la confirmation par texto." }, { status: 400 });
+  if (contactChannel === "SMS") {
+    const e164 = toE164(String(customerPhone));
+    if (!e164) {
+      return NextResponse.json({ error: "Les textos ne partent que vers un numéro canadien à 10 chiffres. Choisissez le courriel, ou corrigez le numéro." }, { status: 400 });
+    }
+    // Chaque texto est facturé à Garago : plafond par garage et par numéro destinataire (compte piraté, saisie en rafale).
+    if (await isRateLimited(`smsg:${garage.id}`, 60, 24 * 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Limite de textos atteinte pour aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
+    }
+    if (await isRateLimited(`smsn:${e164}`, 3, 24 * 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Ce numéro a déjà reçu plusieurs textos aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
+    }
   }
 
   // Même règle de durée que la réservation en ligne : celle configurée par le

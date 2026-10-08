@@ -13,12 +13,22 @@ export function smsConfigured(): boolean {
   return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
 }
 
-/** Numéro nord-américain → E.164 (+1XXXXXXXXXX), ou null s'il n'a pas 10 chiffres. */
+// Indicatifs régionaux canadiens. Le plan de numérotation nord-américain (+1) couvre aussi des tarifs spéciaux
+// (900, 976) et des pays des Caraïbes où un texto coûte beaucoup plus cher et où la fraude « un coup de sonnerie »
+// sévit : on n'envoie des textos qu'aux numéros canadiens, ce qui borne aussi le coût d'un abus.
+const CANADIAN_AREA_CODES = new Set([
+  "204", "226", "236", "249", "250", "257", "263", "289", "306", "343", "354", "365", "367", "368", "382", "403",
+  "416", "418", "428", "431", "437", "438", "450", "468", "474", "506", "514", "519", "548", "579", "581", "584",
+  "587", "604", "613", "639", "647", "672", "683", "705", "709", "742", "753", "778", "780", "782", "807", "819",
+  "825", "867", "873", "879", "902", "905", "942",
+]);
+
+/** Numéro canadien → E.164 (+1XXXXXXXXXX), ou null s'il n'a pas 10 chiffres ou n'est pas un indicatif canadien. */
 export function toE164(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+  const national = digits.length === 10 ? digits : digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : null;
+  if (!national || !CANADIAN_AREA_CODES.has(national.slice(0, 3))) return null;
+  return `+1${national}`;
 }
 
 // Alphabet GSM-7 : tant qu'un texto n'en sort pas, il fait 160 caractères. Un seul
