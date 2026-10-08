@@ -21,6 +21,9 @@ import GarageAgenda from "@/components/GarageAgenda";
  * routes API via `?g=<id>` — lu depuis l'URL de la page (paramètre `g`).
  * Sans paramètre, les routes ciblent le garage principal du propriétaire.
  */
+function quebecTodayStr(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
+}
 function selectedGarageId(): string | null {
   if (typeof window === "undefined") return null;
   return new URLSearchParams(window.location.search).get("g");
@@ -1900,12 +1903,12 @@ export default function DashboardGaragePage() {
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
-            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length === 0 ? (
+            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr()).length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-6">Aucun rendez-vous à venir.</p>
             ) : (
               <div className="space-y-2">
                 {appointments
-                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED")
+                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr())
                   .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
                   .slice(0, 10)
                   .map(a => {
@@ -1988,61 +1991,13 @@ export default function DashboardGaragePage() {
             onReload={loadCalendarData}
           />
 
-          {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
-          {referralUnlocked ? (
-            <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Code de parrainage</p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
-                  {garage.referralCode ?? "—"}
-                </span>
-                {garage.referralCode && (
-                  <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                    Copier
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-3">Partagez ce code — le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Programme de parrainage</p>
-              <p className="text-sm text-gray-600 mb-3">
-                Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).
-              </p>
-              <button type="button" onClick={() => setActiveTab("abonnement")}
-                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
-                Voir l&apos;abonnement
-              </button>
-            </div>
-          )}
-
-          {/* Bloc 2 — Programme Ambassadeur (réservé aux abonnés) */}
-          {referralUnlocked && (
-            <AmbassadorOverviewCard
-              tier={garage.ambassadorTier ?? 0}
-              onViewDetails={() => setActiveTab("ambassadeur")}
-            />
-          )}
-
-          {/* Suggestion link */}
-          <Link
-            href="/suggestions"
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl border-2 text-sm font-semibold transition-all hover:opacity-80"
-            style={{ borderColor: "#f97316", color: "#f97316", background: "rgba(249,115,22,0.05)" }}
-          >
-            {d.suggestionLink}
-          </Link>
-
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
           {/* Calendar header */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #f1f5f9" }}>
               <div>
                 <h2 className="font-bold text-gray-900 text-lg">
-                  {MONTH_NAMES_FR[calMonth]} {calYear}
+                  Disponibilités et absences · {MONTH_NAMES_FR[calMonth]} {calYear}
                 </h2>
                 <p className="hidden sm:block text-gray-500 text-sm">Cliquez pour sélectionner · recliquez pour désélectionner · <kbd className="bg-gray-100 px-1 rounded text-xs">Maj</kbd>+clic pour une plage</p>
                 <p className="sm:hidden text-gray-500 text-xs">Touchez un jour pour le sélectionner</p>
@@ -2339,6 +2294,54 @@ export default function DashboardGaragePage() {
               )}
             </div>
           )}
+
+          {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
+          {referralUnlocked ? (
+            <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Code de parrainage</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
+                  {garage.referralCode ?? "—"}
+                </span>
+                {garage.referralCode && (
+                  <button type="button"
+                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                    Copier
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">Partagez ce code — le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Programme de parrainage</p>
+              <p className="text-sm text-gray-600 mb-3">
+                Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).
+              </p>
+              <button type="button" onClick={() => setActiveTab("abonnement")}
+                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
+                Voir l&apos;abonnement
+              </button>
+            </div>
+          )}
+
+          {/* Bloc 2 — Programme Ambassadeur (réservé aux abonnés) */}
+          {referralUnlocked && (
+            <AmbassadorOverviewCard
+              tier={garage.ambassadorTier ?? 0}
+              onViewDetails={() => setActiveTab("ambassadeur")}
+            />
+          )}
+
+          {/* Suggestion link */}
+          <Link
+            href="/suggestions"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl border-2 text-sm font-semibold transition-all hover:opacity-80"
+            style={{ borderColor: "#f97316", color: "#f97316", background: "rgba(249,115,22,0.05)" }}
+          >
+            {d.suggestionLink}
+          </Link>
 
           {/* Reviews with reply + moderation */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
