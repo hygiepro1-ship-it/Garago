@@ -8,6 +8,9 @@ import { randomBytes } from "crypto";
  *  - LAST_MINUTE (2 h à 24 h avant) : confirmation exigée dans l'heure suivant la
  *    réservation, puis un dernier courriel « vous arrivez ? » à −2 h.
  *  - Moins de 2 h avant : aucune confirmation, la réservation vaut engagement.
+ *  - MANUAL (rendez-vous saisi par le garage, pris au téléphone) : texto ou
+ *    courriel à −48 h. Sans réponse à −24 h, le créneau n'est PAS libéré : le
+ *    garage est prévenu pour appeler lui-même le client.
  */
 
 export const QUEBEC_TZ = "America/Toronto";
@@ -19,6 +22,8 @@ export const LAST_MINUTE_WINDOW_MIN = 60;
 export const LAST_MINUTE_MAX_HOURS = 24;
 export const EXPRESS_MAX_HOURS = 2;
 export const ARRIVAL_REMINDER_HOURS_BEFORE = 2;
+export const MANUAL_REQUEST_HOURS_BEFORE = 48;
+export const MANUAL_CALL_HOURS_BEFORE = 24;
 
 const HOUR = 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -70,7 +75,7 @@ export function newConfirmToken(): string {
 
 export interface ConfirmationPlan {
   confirmationStatus: "NOT_REQUIRED" | "SCHEDULED" | "AWAITING";
-  confirmTier: "STANDARD" | "LAST_MINUTE" | null;
+  confirmTier: "STANDARD" | "LAST_MINUTE" | "MANUAL" | null;
   confirmBy: Date | null;
   confirmToken: string | null;
   confirmRequestedAt: Date | null;
@@ -113,9 +118,37 @@ export function standardDeadline(start: Date, now: Date): Date | null {
   return by > now.getTime() ? new Date(by) : null;
 }
 
+/**
+ * Rendez-vous saisi par le garage. `reachable` : le client a choisi un moyen de
+ * contact utilisable (texto avec téléphone, ou courriel avec adresse). Le message
+ * part à −48 h, ou tout de suite si le rendez-vous est plus proche.
+ */
+export function planManualConfirmation(start: Date, now: Date, opts: { enabled: boolean; reachable: boolean }): ConfirmationPlan {
+  if (!opts.enabled || !opts.reachable) return NONE;
+  if ((start.getTime() - now.getTime()) / HOUR <= EXPRESS_MAX_HOURS) return NONE;
+  return { confirmationStatus: "SCHEDULED", confirmTier: "MANUAL", confirmBy: null, confirmToken: newConfirmToken(), confirmRequestedAt: null };
+}
+
+/**
+ * Moment où le garage est prévenu qu'un client MANUAL n'a pas répondu : −24 h,
+ * mais au moins 2 h après l'envoi pour un rendez-vous pris à la dernière minute.
+ * Retourne null si le rendez-vous est trop proche pour demander une confirmation.
+ */
+export function manualDeadline(start: Date, now: Date): Date | null {
+  let by = start.getTime() - MANUAL_CALL_HOURS_BEFORE * HOUR;
+  if (by < now.getTime() + 2 * HOUR) by = Math.min(now.getTime() + 2 * HOUR, start.getTime() - HOUR);
+  return by > now.getTime() ? new Date(by) : null;
+}
+
 export function confirmPageUrl(token: string): string {
   const base = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
   return `${base}/rdv/confirmer/${token}`;
+}
+
+/** Lien court pour les textos (chaque caractère compte) : redirige vers la page de confirmation. */
+export function shortConfirmUrl(token: string): string {
+  const base = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
+  return `${base}/c/${token}`;
 }
 
 /** Même page, ouverte sur l'écran « Annuler ce rendez-vous ? » (bouton distinct dans les courriels). */

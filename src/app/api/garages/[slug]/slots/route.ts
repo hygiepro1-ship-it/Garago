@@ -25,6 +25,8 @@ export async function GET(
     include: { availability: true },
   });
   if (!garage) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Réservation en ligne fermée pour ce garage : aucun créneau n'est proposé au public.
+  if (!garage.onlineBooking) return NextResponse.json({ slots: [], closed: true, durationMin: DEFAULT_DURATION_MIN });
   const capacity = garage.capacity ?? 1;
 
   // La durée vient toujours d'une donnée déjà connue du serveur (jamais d'une

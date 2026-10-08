@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
     where: {
       id: garageId,
       claimStatus: "activee",
+      onlineBooking: true,
       ownerId: { not: null },
       OR: [
         { parentId: null, verificationStatus: "APPROVED", AND: [{ OR: subOr }] },

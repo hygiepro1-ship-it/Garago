@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
     const subOr = activeSubscriptionOr();
     const where: any = {
       AND: [
+        // Fiche masquée (demande de retrait, ou garage activé hors vitrine comme un projet pilote).
+        { hiddenByReport: false },
         {
           OR: [
             { parentId: null, verificationStatus: "APPROVED", OR: subOr },
