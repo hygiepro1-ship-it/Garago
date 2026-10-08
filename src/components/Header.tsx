@@ -218,7 +218,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <img src="/garago_logo_transparent_1.png?v=3" alt="Garago" className="h-11 w-auto object-contain" />
+            <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-11 w-auto object-contain" />
           </Link>
 
           {/* Search — hidden on homepage */}

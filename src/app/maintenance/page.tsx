@@ -17,7 +17,7 @@ export default async function MaintenancePage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0b1f3a" }}>
       <div className="w-full max-w-md text-center">
-        <img src="/garago_logo_transparent_1.png?v=3" alt="Garago" className="h-12 w-auto object-contain mx-auto mb-8" />
+        <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-12 w-auto object-contain mx-auto mb-8" />
 
         <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "rgba(249,115,22,0.15)" }}>
           <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">

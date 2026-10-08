@@ -185,7 +185,7 @@ function baseLayout(body: string): string {
 
         <!-- Header -->
         <tr><td style="background:#0b1f3a;border-radius:6px 6px 0 0;padding:20px 32px;text-align:center">
-          <img src="${BASE_URL}/garago_logo_transparent_1.png" alt="Garago" height="72"
+          <img src="${BASE_URL}/email/logo.png" alt="Garago" height="72"
                style="display:block;margin:0 auto;max-height:72px;border:0" />
         </td></tr>
 
