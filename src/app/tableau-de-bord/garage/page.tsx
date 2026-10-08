@@ -1208,10 +1208,10 @@ export default function DashboardGaragePage() {
   // ── RDV / Calendar ─────────────────────────────────────────────────────
   useEffect(() => {
     if (activeTab === "apercu" && !rdvLoaded && garage) {
-      const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
       Promise.all([
         gfetch("/api/garage/appointments").then(r => r.json()),
-        gfetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
+        // Tous les blocages, pas seulement ceux du mois affiché : l'agenda navigue de semaine en semaine.
+        gfetch("/api/blocked-slots").then(r => r.json()),
       ]).then(([appts, blocks]) => {
         setAppointments(Array.isArray(appts) ? appts : []);
         setBlockedSlots(Array.isArray(blocks) ? blocks : []);
@@ -1222,10 +1222,9 @@ export default function DashboardGaragePage() {
 
   async function loadCalendarData() {
     if (!garage) return;
-    const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
     const [appts, blocks] = await Promise.all([
       gfetch("/api/garage/appointments").then(r => r.json()),
-      gfetch(`/api/blocked-slots?month=${monthStr}`).then(r => r.json()),
+      gfetch("/api/blocked-slots").then(r => r.json()),
     ]);
     setAppointments(Array.isArray(appts) ? appts : []);
     setBlockedSlots(Array.isArray(blocks) ? blocks : []);
@@ -1272,11 +1271,18 @@ export default function DashboardGaragePage() {
   }
 
   async function updateApptStatus(id: string, newStatus: string) {
-    await fetch(`/api/appointments/${id}`, {
+    const res = await fetch(`/api/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
-    });
+    }).catch(() => null);
+    // L'écran ne change que si le serveur a réellement enregistré : sinon la
+    // modification « disparaîtrait » au rechargement de la page.
+    if (!res || !res.ok) {
+      const d = res ? await res.json().catch(() => ({})) : {};
+      window.alert(d.error ?? "Le changement n'a pas pu être enregistré. Réessayez.");
+      return;
+    }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
   }
 
@@ -1353,6 +1359,9 @@ export default function DashboardGaragePage() {
       setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
       setSuccess("Créneau bloqué ✓");
       setTimeout(() => setSuccess(""), 3000);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      window.alert(d.error ?? "Impossible de bloquer ce créneau.");
     }
     setSavingBlock(false);
   }
@@ -1360,6 +1369,7 @@ export default function DashboardGaragePage() {
   async function deleteBlockSlot(id: string) {
     const res = await fetch(`/api/blocked-slots/${id}`, { method: "DELETE" });
     if (res.ok) setBlockedSlots(prev => prev.filter(s => s.id !== id));
+    else window.alert("Ce blocage n'a pas pu être retiré. Réessayez.");
   }
 
   // ── Multi-day selection helpers ───────────────────────────────────────────
@@ -1399,6 +1409,8 @@ export default function DashboardGaragePage() {
   async function saveBulkBlock(e: React.FormEvent) {
     e.preventDefault();
     setSavingBlock(true);
+    let saved = 0;
+    let failure = "";
     for (const date of selectedDays) {
       const res = await gfetch("/api/blocked-slots", {
         method: "POST",
@@ -1408,12 +1420,17 @@ export default function DashboardGaragePage() {
       if (res.ok) {
         const slot = await res.json();
         setBlockedSlots(prev => [...prev, slot]);
+        saved++;
+      } else {
+        const d = await res.json().catch(() => ({}));
+        failure = d.error ?? "Impossible de bloquer ces journées.";
       }
     }
+    setSavingBlock(false);
+    if (saved === 0) { window.alert(failure); return; }
     setShowBlockForm(false);
     setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
-    setSavingBlock(false);
-    setSuccess(`Créneaux bloqués pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
+    setSuccess(`Créneaux bloqués pour ${saved} jour${saved > 1 ? "s" : ""} ✓`);
     setTimeout(() => setSuccess(""), 3000);
   }
 

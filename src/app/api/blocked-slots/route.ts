@@ -7,7 +7,7 @@ import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "GARAGE_OWNER") {
+    if (!session?.user || !["GARAGE_OWNER", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "GARAGE_OWNER") {
+    if (!session?.user || !["GARAGE_OWNER", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
