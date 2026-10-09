@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 /**
  * Vue « semaine » de l'agenda du garage : une colonne par jour, une ligne par
  * demi-heure. Les plages encore disponibles (garage ouvert, un poste libre, pas
@@ -27,12 +29,12 @@ const STEP = 30;     // minutes par ligne
 // Journées déjà passées : fines hachures, pour les distinguer d'un simple « complet »
 // sans masquer les anciens rendez-vous posés dessus. La journée en cours n'est
 // jamais hachurée, même pour ses heures déjà écoulées.
-const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
+export const PAST_HATCH ="repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
-function apptColors(a: WeekAppointment): { bg: string; border: string; text: string } {
+export function apptColors(a: WeekAppointment): { bg: string; border: string; text: string } {
   if (a.status === "COMPLETED") return { bg: "#f0fdf4", border: "#86efac", text: "#166534" };
   if (a.status === "NO_SHOW") return { bg: "#fef2f2", border: "#fca5a5", text: "#991b1b" };
   if (a.confirmationStatus === "NO_RESPONSE") return { bg: "#fff1f2", border: "#f87171", text: "#991b1b" };
@@ -65,8 +67,16 @@ function layout(appts: WeekAppointment[]): { appt: WeekAppointment; lane: number
 }
 
 export default function AgendaWeekView({
-  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30,
+  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay,
 }: {
+  /**
+   * Garage à plusieurs postes : chaque demi-heure affiche le nombre de postes pris
+   * (« 5/8 ») au lieu d'empiler les rendez-vous côte à côte, illisibles au-delà de
+   * deux ou trois. Le détail se lit dans la vue « jour » (voir AgendaDayView).
+   */
+  byLoad?: boolean;
+  /** Clic sur l'en-tête d'un jour (ou sur une plage complète) : ouvrir la journée poste par poste. */
+  onPickDay?: (date: string) => void;
   days: string[];                       // 7 dates "YYYY-MM-DD", du lundi au dimanche
   appointments: WeekAppointment[];
   availability: WeekAvailability[];
@@ -110,6 +120,13 @@ export default function AgendaWeekView({
     : a.confirmationStatus === "AWAITING" || a.confirmationStatus === "SCHEDULED" ? "À confirmer"
     : a.status === "PENDING" ? "En attente" : "Prévu";
 
+  // Téléphone : journées affichées ou masquées. Sans choix du garage, seule la journée en cours
+  // est ouverte (ou le premier jour ouvert, pour une autre semaine).
+  const [shownDays, setShownDays] = useState<Record<string, boolean>>({});
+  const firstShown = days.includes(todayStr) ? todayStr : days.find((d) => hoursOf(d)) ?? days[0];
+  const isShown = (d: string) => shownDays[d] ?? d === firstShown;
+  const allShown = days.every(isShown);
+
   // Première plage libre du jour (pour le bouton « + Rendez-vous » de la liste du téléphone)
   const firstFree = (d: string): string => {
     const hours = hoursOf(d);
@@ -126,24 +143,42 @@ export default function AgendaWeekView({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-      {/* Téléphone : une liste par jour (7 colonnes ne tiennent pas sur 375 px de large) */}
+      {/* Téléphone : une liste par jour (7 colonnes ne tiennent pas sur 375 px de large).
+          Chaque journée se masque d'un toucher sur son en-tête, pour ne pas faire défiler
+          des pages de rendez-vous ; seule la journée en cours est ouverte au départ. */}
       <div className="sm:hidden divide-y divide-gray-100">
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+          <p className="text-xs text-gray-500">Touchez une journée pour l&apos;afficher ou la masquer.</p>
+          <button type="button" onClick={() => setShownDays(Object.fromEntries(days.map((d) => [d, !allShown])))}
+            className="shrink-0 min-h-[44px] px-2 text-xs font-bold underline text-gray-700" style={{ touchAction: "manipulation" }}>
+            {allShown ? "Tout masquer" : "Tout afficher"}
+          </button>
+        </div>
         {days.map((d) => {
           const dt = new Date(d + "T12:00:00");
           const closed = !hoursOf(d);
           const list = active.filter((a) => a.date === d).sort((x, y) => x.startTime.localeCompare(y.startTime));
           const past = d < todayStr;
+          const shown = isShown(d);
+          const toCall = list.filter((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED").length;
           return (
             <section key={d} aria-label={dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
               style={{ background: d === selectedDate ? "#f8fafc" : undefined }}>
               <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: d === todayStr ? "#fff7ed" : "#f8fafc" }}>
-                <div className="min-w-0">
-                  <p className="text-sm font-black capitalize" style={{ color: closed ? "#94a3b8" : "#0b1f3a" }}>
-                    {dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
-                    {d === todayStr && <span className="ml-2 text-[11px] font-bold" style={{ color: "#c2410c" }}>Aujourd&apos;hui</span>}
-                  </p>
-                  <p className="text-xs text-gray-500">{closed ? "Fermé" : list.length === 0 ? "Aucun rendez-vous" : `${list.length} rendez-vous`}</p>
-                </div>
+                <button type="button" onClick={() => setShownDays({ ...shownDays, [d]: !shown })} aria-expanded={shown} disabled={list.length === 0}
+                  className="min-w-0 flex-1 flex items-center gap-2 text-left min-h-[44px]" style={{ touchAction: "manipulation" }}>
+                  {list.length > 0 && <span aria-hidden="true" className="text-gray-500 text-xs w-3 shrink-0">{shown ? "▾" : "▸"}</span>}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-black capitalize" style={{ color: closed ? "#94a3b8" : "#0b1f3a" }}>
+                      {dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
+                      {d === todayStr && <span className="ml-2 text-[11px] font-bold" style={{ color: "#c2410c" }}>Aujourd&apos;hui</span>}
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      {closed && list.length === 0 ? "Fermé" : list.length === 0 ? "Aucun rendez-vous" : `${list.length} rendez-vous`}
+                      {toCall > 0 && <span className="font-bold" style={{ color: "#b91c1c" }}> · {toCall} à appeler</span>}
+                    </span>
+                  </span>
+                </button>
                 {!closed && !past && (
                   <button type="button" onClick={() => onPickSlot(d, firstFree(d))}
                     className="shrink-0 min-h-[44px] px-3 rounded-lg text-sm font-bold border border-gray-300 bg-white text-gray-800"
@@ -152,7 +187,7 @@ export default function AgendaWeekView({
                   </button>
                 )}
               </div>
-              {list.map((a) => {
+              {shown && list.map((a) => {
                 const c = apptColors(a);
                 return (
                   <button key={a.id} type="button" onClick={() => onPickAppointment(a)}
@@ -181,13 +216,23 @@ export default function AgendaWeekView({
           {days.map((d) => {
             const dt = new Date(d + "T12:00:00");
             const closed = !hoursOf(d);
-            return (
-              <div key={d} className="py-2 text-center border-l border-gray-100"
-                style={{ background: d === selectedDate ? "#0b1f3a" : d === todayStr ? "#fff7ed" : undefined, color: d === selectedDate ? "#fff" : closed ? "#94a3b8" : "#0b1f3a" }}>
-                <p className="text-[11px] font-bold uppercase opacity-70">{dt.toLocaleDateString(locale, { weekday: "short" }).replace(".", "")}</p>
-                <p className="text-sm font-black leading-tight">{dt.getDate()}</p>
-                {closed && <p className="text-[10px] font-semibold">Fermé</p>}
-              </div>
+            const style = { background: d === selectedDate ? "#0b1f3a" : d === todayStr ? "#fff7ed" : undefined, color: d === selectedDate ? "#fff" : closed ? "#94a3b8" : "#0b1f3a" };
+            const content = (
+              <>
+                <span className="block text-[11px] font-bold uppercase opacity-70">{dt.toLocaleDateString(locale, { weekday: "short" }).replace(".", "")}</span>
+                <span className="block text-sm font-black leading-tight">{dt.getDate()}</span>
+                {closed && <span className="block text-[10px] font-semibold">Fermé</span>}
+              </>
+            );
+            return onPickDay ? (
+              <button key={d} type="button" onClick={() => onPickDay(d)} style={style}
+                title="Voir cette journée poste par poste"
+                aria-label={`Voir la journée du ${dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}`}
+                className="py-2 text-center border-l border-gray-100 hover:underline">
+                {content}
+              </button>
+            ) : (
+              <div key={d} className="py-2 text-center border-l border-gray-100" style={style}>{content}</div>
             );
           })}
         </div>
@@ -215,6 +260,42 @@ export default function AgendaWeekView({
                   const isBlocked = blocked.some((b) => b.date === d && (b.allDay || !b.startTime || !b.endTime || (toMin(b.startTime) < m + STEP && toMin(b.endTime) > m)));
                   const free = open && !past && !isBlocked && busy < capacity;
                   const label = `${new Date(d + "T12:00:00").toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}, ${toHHMM(m)}`;
+                  if (byLoad && (busy > 0 || free)) {
+                    // Postes pris sur cette demi-heure : « 5/8 », teinté selon la place qui reste.
+                    const left = capacity - busy;
+                    const tone = !free && left > 0 ? "past" : left <= 0 ? "full" : left <= Math.max(1, Math.floor(capacity / 4)) ? "tight" : "free";
+                    const c = {
+                      free:  { bg: "#f0fdf4", text: "#15803d", pip: "#0b1f3a" },
+                      tight: { bg: "#fff7ed", text: "#9a3412", pip: "#0b1f3a" },
+                      full:  { bg: "#e8edf3", text: "#475569", pip: "#64748b" },
+                      past:  { bg: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", text: "#64748b", pip: "#94a3b8" },
+                    }[tone];
+                    const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
+                    const taken = `${busy} ${busy > 1 ? "postes pris" : "poste pris"} sur ${capacity}`;
+                    return (
+                      <button key={m} type="button" onClick={() => (free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
+                        title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · voir la journée`}
+                        aria-label={`${label} : ${taken}${toCall ? ", un client à appeler" : ""}. ${free ? "Ajouter un rendez-vous" : "Voir la journée"}`}
+                        className="flex w-full items-center justify-between gap-1 px-1.5 text-[11px] font-bold tabular-nums hover:brightness-95 focus-visible:brightness-95"
+                        style={{ height: ROW_H, background: c.bg, color: c.text, borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #ffffff`, touchAction: "manipulation" }}>
+                        {capacity <= 10 ? (
+                          <span className="flex gap-[2px]" aria-hidden="true">
+                            {Array.from({ length: capacity }, (_, i) => (
+                              <i key={i} className="block rounded-[1px]" style={{ width: 5, height: Math.min(11, ROW_H - 8), background: i < busy ? c.pip : "rgba(11,31,58,0.14)" }} />
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="block flex-1 max-w-[64px] rounded-full overflow-hidden" aria-hidden="true" style={{ height: 5, background: "rgba(11,31,58,0.14)" }}>
+                            <i className="block h-full" style={{ width: `${Math.min(100, (busy / capacity) * 100)}%`, background: c.pip }} />
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 whitespace-nowrap">
+                          {toCall && <i aria-hidden="true" className="block w-1.5 h-1.5 rounded-full" style={{ background: "#dc2626" }} />}
+                          {left <= 0 ? "Complet" : `${busy}/${capacity}`}
+                        </span>
+                      </button>
+                    );
+                  }
                   return free ? (
                     <button key={m} type="button" onClick={() => onPickSlot(d, toHHMM(m))}
                       aria-label={`Disponible : ${label}. Ajouter un rendez-vous`}
@@ -226,7 +307,7 @@ export default function AgendaWeekView({
                   );
                 })}
 
-                {layout(dayAppts).map(({ appt, lane, lanes }) => {
+                {!byLoad && layout(dayAppts).map(({ appt, lane, lanes }) => {
                   const c = apptColors(appt);
                   const top = ((toMin(appt.startTime) - from) / STEP) * ROW_H;
                   const height = Math.max(((toMin(appt.endTime) - toMin(appt.startTime)) / STEP) * ROW_H - 2, 16);
@@ -259,10 +340,22 @@ export default function AgendaWeekView({
 
       {/* Légende : un mot par couleur */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />À confirmer</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
+        {byLoad ? (
+          <>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />De la place</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }} />Presque complet</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#e8edf3", border: "1px solid #cbd5e1" }} />Complet</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-2 h-2 rounded-full" style={{ background: "#dc2626" }} />Client à appeler</span>
+            <span className="hidden sm:inline">Cliquez un jour pour le voir poste par poste.</span>
+          </>
+        ) : (
+          <>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />À confirmer</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
+          </>
+        )}
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />Passé</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
       </div>

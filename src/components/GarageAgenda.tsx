@@ -10,7 +10,10 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import AgendaWeekView, { type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import AgendaDayView from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
+import { findNextFreeStart } from "@/lib/availability";
+import type { CustomerMatch } from "@/lib/customers";
 
 export interface AgendaAppointment {
   id: string;
@@ -47,6 +50,7 @@ const addDays = (date: string, n: number) => { const d = new Date(date + "T12:00
 const mondayOf = (date: string) => { const d = new Date(date + "T12:00:00"); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return toDateStr(d); };
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+const shortDate = (date: string) => new Date(date + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
 const longDate = (date: string) => new Date(date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "En attente", CONFIRMED: "Prévu", COMPLETED: "Terminé", CANCELLED: "Annulé", NO_SHOW: "Client absent" };
@@ -120,6 +124,7 @@ function DurationPicker({ value, onChange, idPrefix }: { value: number; onChange
 }
 
 const EMPTY_FORM = {
+  customerId: "", // fiche choisie dans le carnet de clients du garage, s'il y en a une
   customerName: "", customerPhone: "", customerEmail: "",
   vehicleYear: "", vehicleMake: "", vehicleModel: "",
   categoryId: "", serviceName: "", date: "", startTime: "09:00", durationMin: 60,
@@ -143,8 +148,17 @@ export default function GarageAgenda({
   const today = toDateStr(new Date());
   const [weekStart, setWeekStart] = useState(mondayOf(today));
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  // Vue « semaine » (détail, demi-heure par demi-heure) ou « mois » (charge de chaque jour).
-  const [view, setView] = useState<"week" | "month">("week");
+  // Vue « jour » (une colonne par poste), « semaine » (demi-heure par demi-heure) ou « mois » (charge de chaque jour).
+  const [view, setView] = useState<"day" | "week" | "month">("week");
+  const [dayRef, setDayRef] = useState(today);
+  // À partir de trois postes, des rendez-vous côte à côte dans une colonne de la semaine
+  // deviennent illisibles : la semaine montre alors les postes pris, et le détail se lit au jour.
+  const byLoad = capacity >= 3;
+  function showDay(date: string) {
+    setDayRef(date);
+    setWeekStart(mondayOf(date));
+    setView("day");
+  }
   const [monthRef, setMonthRef] = useState({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 });
   const shiftMonth = (delta: number) => setMonthRef(({ year, month }) => {
     const d = new Date(year, month + delta, 1);
@@ -154,15 +168,52 @@ export default function GarageAgenda({
     setWeekStart(mondayOf(date));
     setView("week");
   }
-  function switchView(v: "week" | "month") {
+  function switchView(v: "day" | "week" | "month") {
     // On reste sur la même période en changeant de vue.
-    if (v === "month") setMonthRef({ year: Number(days[3].slice(0, 4)), month: Number(days[3].slice(5, 7)) - 1 });
+    const ref = view === "day" ? dayRef : days[3];
+    if (v === "month") setMonthRef({ year: Number(ref.slice(0, 4)), month: Number(ref.slice(5, 7)) - 1 });
+    if (v === "week" && view === "day") setWeekStart(mondayOf(dayRef));
+    if (v === "day" && view === "week") setDayRef(today >= days[0] && today <= days[6] ? today : days[0]);
+    if (v === "day" && view === "month") {
+      const first = `${monthRef.year}-${String(monthRef.month + 1).padStart(2, "0")}-01`;
+      setDayRef(today.slice(0, 7) === first.slice(0, 7) ? today : first);
+    }
     setView(v);
   }
+  const shift = (delta: number) => {
+    if (view === "day") setDayRef(addDays(dayRef, delta));
+    else if (view === "week") setWeekStart(addDays(weekStart, delta * 7));
+    else shiftMonth(delta);
+  };
+  const unit = view === "day" ? "Jour" : view === "week" ? "Semaine" : "Mois";
 
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  // L'heure proposée suit la date tant que le garage ne l'a pas choisie lui-même.
+  const [timeTouched, setTimeTouched] = useState(false);
+
+  // Carnet de clients : dès que le garage tape un nom, ses clients déjà venus sont proposés.
+  const [matches, setMatches] = useState<CustomerMatch[]>([]);
+  const [matchIdx, setMatchIdx] = useState(-1);
+  const [nameFocused, setNameFocused] = useState(false);
+  const [known, setKnown] = useState<CustomerMatch | null>(null);
+  const nameQuery = form && !known ? form.customerName.trim() : "";
+  useEffect(() => {
+    if (nameQuery.length < 2) return;
+    let stale = false;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await gfetch("/api/garage/customers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: nameQuery }) });
+        const found = res.ok ? await res.json() : [];
+        if (stale) return;
+        setMatches(Array.isArray(found) ? found : []);
+        setMatchIdx(-1);
+      } catch { /* sans carnet, le formulaire se remplit à la main comme avant */ }
+    }, 180);
+    return () => { stale = true; clearTimeout(timer); };
+  }, [nameQuery]);
+  const showMatches = nameFocused && nameQuery.length >= 2 && matches.length > 0;
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "move" | "complete" | "cancel">("view");
@@ -179,9 +230,47 @@ export default function GarageAgenda({
 
   const serviceName = (s: AgendaService) => s.categoryName ?? s.category?.name ?? s.name ?? "";
 
-  function openForm(date: string, time: string) {
+  /** Prochaine heure réellement libre à partir de `fromDate` (ou ce jour-là seulement). */
+  function nextFree(fromDate: string, durationMin: number, sameDayOnly = false) {
+    const now = new Date();
+    return findNextFreeStart(
+      availability, blocked,
+      appointments.filter((a) => a.status !== "CANCELLED" && a.status !== "NO_SHOW"),
+      { fromDate, today, nowMin: now.getHours() * 60 + now.getMinutes(), durationMin, capacity, daysAhead: sameDayOnly ? 0 : 60 },
+    );
+  }
+
+  function resetForm(date: string, time: string, touched: boolean) {
     setFormError("");
+    setKnown(null);
+    setMatches([]);
+    setTimeTouched(touched);
     setForm({ ...EMPTY_FORM, date, startTime: time });
+  }
+
+  /** Clic sur une plage du calendrier : le garage a choisi lui-même la date et l'heure. */
+  function openForm(date: string, time: string) {
+    resetForm(date, time, true);
+  }
+
+  /** Bouton « + Rendez-vous » : le formulaire s'ouvre sur la prochaine disponibilité (ex. demain à l'ouverture). */
+  function openFormAtNextFree(fromDate: string) {
+    const slot = nextFree(fromDate, EMPTY_FORM.durationMin);
+    resetForm(slot?.date ?? fromDate, slot?.time ?? EMPTY_FORM.startTime, false);
+  }
+
+  function pickCustomer(c: CustomerMatch) {
+    if (!form) return;
+    const v = c.vehicles[0];
+    setKnown(c);
+    setMatches([]);
+    setForm({
+      ...form,
+      customerId: c.id, customerName: c.name, customerPhone: c.phone, customerEmail: c.email ?? "",
+      language: c.language === "en" ? "en" : "fr",
+      contactChannel: c.contactChannel === "NONE" ? "" : c.contactChannel === "SMS" || c.contactChannel === "EMAIL" ? c.contactChannel : form.contactChannel,
+      vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "",
+    });
   }
 
   function openAppointment(id: string) {
@@ -207,6 +296,7 @@ export default function GarageAgenda({
         return;
       }
       setWeekStart(mondayOf(form.date));
+      setDayRef(form.date);
       setForm(null);
       await onReload();
     } catch {
@@ -250,7 +340,7 @@ export default function GarageAgenda({
         <div className="flex items-center gap-2">
           <h2 className="font-bold text-gray-900">Agenda</h2>
           <div className="flex gap-1" role="group" aria-label="Affichage de l'agenda">
-            {([["week", "Semaine"], ["month", "Mois"]] as const).map(([v, text]) => (
+            {([["day", "Jour"], ["week", "Semaine"], ["month", "Mois"]] as const).map(([v, text]) => (
               <button key={v} type="button" onClick={() => switchView(v)} aria-pressed={view === v}
                 className="px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold"
                 style={{ background: view === v ? "#0b1f3a" : "#f1f5f9", color: view === v ? "#fff" : "#0b1f3a" }}>
@@ -258,12 +348,12 @@ export default function GarageAgenda({
               </button>
             ))}
           </div>
-          <button type="button" className={navBtn} aria-label={view === "week" ? "Semaine précédente" : "Mois précédent"}
-            onClick={() => (view === "week" ? setWeekStart(addDays(weekStart, -7)) : shiftMonth(-1))}>‹</button>
-          <span className="text-sm font-semibold text-gray-700 min-w-[150px] text-center first-letter:uppercase">{view === "week" ? weekLabel : monthLabel}</span>
-          <button type="button" className={navBtn} aria-label={view === "week" ? "Semaine suivante" : "Mois suivant"}
-            onClick={() => (view === "week" ? setWeekStart(addDays(weekStart, 7)) : shiftMonth(1))}>›</button>
-          <button type="button" onClick={() => { setWeekStart(mondayOf(today)); setMonthRef({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }); }}
+          <button type="button" className={navBtn} aria-label={`${unit} précédent${view === "week" ? "e" : ""}`}
+            onClick={() => shift(-1)}>‹</button>
+          <span className="text-sm font-semibold text-gray-700 min-w-[150px] text-center first-letter:uppercase">{view === "day" ? longDate(dayRef) : view === "week" ? weekLabel : monthLabel}</span>
+          <button type="button" className={navBtn} aria-label={`${unit} suivant${view === "week" ? "e" : ""}`}
+            onClick={() => shift(1)}>›</button>
+          <button type="button" onClick={() => { setDayRef(today); setWeekStart(mondayOf(today)); setMonthRef({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }); }}
             className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Aujourd&apos;hui</button>
         </div>
         <div className="flex items-center gap-3">
@@ -273,7 +363,7 @@ export default function GarageAgenda({
             </span>
           )}
           <a href={exportHref} className="text-xs font-semibold underline text-gray-600 inline-flex items-center min-h-[44px] sm:min-h-0" title="Télécharger tous vos rendez-vous dans un fichier Excel">Exporter (Excel)</a>
-          <button type="button" onClick={() => openForm(view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0], "09:00")}
+          <button type="button" onClick={() => openFormAtNextFree(view === "day" ? dayRef : view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0])}
             className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#f97316" }}>
             + Rendez-vous
           </button>
@@ -286,7 +376,7 @@ export default function GarageAgenda({
             {toCall.length === 1 ? "1 client à appeler (sans réponse) :" : `${toCall.length} clients à appeler (sans réponse) :`}
           </span>
           {toCall.map((a) => (
-            <button key={a.id} type="button" onClick={() => { setWeekStart(mondayOf(a.date)); openAppointment(a.id); }}
+            <button key={a.id} type="button" onClick={() => { setWeekStart(mondayOf(a.date)); setDayRef(a.date); openAppointment(a.id); }}
               className="text-xs font-semibold px-3 min-h-[44px] sm:min-h-0 sm:px-2 sm:py-1 rounded-lg bg-white border border-orange-200 text-gray-800">
               {a.customerName} · {new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric" })} {a.startTime}
             </button>
@@ -294,7 +384,18 @@ export default function GarageAgenda({
         </div>
       )}
 
-      {view === "week" ? (
+      {view === "day" ? (
+        <AgendaDayView
+          date={dayRef}
+          appointments={appointments.filter((a) => a.date === dayRef).map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }))}
+          availability={availability}
+          capacity={capacity}
+          blocked={blocked}
+          lang={lang}
+          onPickSlot={openForm}
+          onPickAppointment={(a) => openAppointment(a.id)}
+        />
+      ) : view === "week" ? (
         <AgendaWeekView
           days={days}
           appointments={weekAppts.map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }))}
@@ -303,6 +404,8 @@ export default function GarageAgenda({
           blocked={blocked}
           lang={lang}
           rowHeight={22}
+          byLoad={byLoad}
+          onPickDay={showDay}
           onPickSlot={openForm}
           onPickAppointment={(a) => openAppointment(a.id)}
         />
@@ -324,9 +427,54 @@ export default function GarageAgenda({
       {form && (
         <Dialog title="Nouveau rendez-vous" subtitle={form.date ? longDate(form.date) : undefined} onClose={() => setForm(null)} wide>
           <form onSubmit={submitForm} className="grid grid-cols-6 gap-x-2 gap-y-2">
-            <div className="col-span-6 sm:col-span-2">
+            <div className="col-span-6 sm:col-span-2 relative">
               <label className={label} htmlFor="rdv-name">Nom du client</label>
-              <input id="rdv-name" required autoFocus autoComplete="off" className={input} value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+              <input id="rdv-name" required autoFocus autoComplete="off" className={input} value={form.customerName}
+                role="combobox" aria-autocomplete="list" aria-expanded={showMatches} aria-controls="rdv-name-matches"
+                aria-activedescendant={showMatches && matchIdx >= 0 ? `rdv-match-${matchIdx}` : undefined}
+                onFocus={() => setNameFocused(true)} onBlur={() => setNameFocused(false)}
+                onChange={(e) => {
+                  // Le nom change : ce n'est plus (forcément) le client choisi dans le carnet.
+                  setKnown(null);
+                  if (e.target.value.trim().length < 2) setMatches([]);
+                  setForm({ ...form, customerName: e.target.value, customerId: "" });
+                }}
+                onKeyDown={(e) => {
+                  if (!showMatches) return;
+                  if (e.key === "ArrowDown") { e.preventDefault(); setMatchIdx((i) => (i + 1) % matches.length); }
+                  else if (e.key === "ArrowUp") { e.preventDefault(); setMatchIdx((i) => (i <= 0 ? matches.length - 1 : i - 1)); }
+                  else if (e.key === "Enter" && matchIdx >= 0) { e.preventDefault(); pickCustomer(matches[matchIdx]); }
+                  else if (e.key === "Escape") { e.stopPropagation(); setMatches([]); }
+                }} />
+              {showMatches && (
+                <ul id="rdv-name-matches" role="listbox" aria-label="Clients déjà venus"
+                  className="absolute z-10 left-0 top-full mt-1 w-[min(22rem,calc(100vw-3.5rem))] bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden">
+                  {matches.map((c, i) => {
+                    const v = c.vehicles[0];
+                    const car = v ? [v.year, v.make, v.model].filter(Boolean).join(" ") : "";
+                    return (
+                      <li key={c.id} id={`rdv-match-${i}`} role="option" aria-selected={i === matchIdx}
+                        // mousedown : avant que le champ ne perde le focus et que la liste ne se referme
+                        onMouseDown={(e) => { e.preventDefault(); pickCustomer(c); }} onMouseEnter={() => setMatchIdx(i)}
+                        className="px-2.5 py-2 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        style={{ background: i === matchIdx ? "#fff7ed" : undefined }}>
+                        <span className="flex items-baseline justify-between gap-2">
+                          <span className="text-sm font-bold text-gray-900 truncate">{c.name}</span>
+                          <span className="text-xs text-gray-600 tabular-nums flex-shrink-0">{c.phone}</span>
+                        </span>
+                        <span className="block text-[11px] text-gray-500 truncate">
+                          {[car, c.lastDate ? `dernier rendez-vous le ${shortDate(c.lastDate)}` : ""].filter(Boolean).join(" · ") || "Aucun rendez-vous encore"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {known && (
+                <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#15803d" }}>
+                  Déjà client{known.lastDate ? ` · dernier rendez-vous le ${shortDate(known.lastDate)}` : ""}
+                </p>
+              )}
             </div>
             <div className="col-span-3 sm:col-span-2">
               <label className={label} htmlFor="rdv-phone">Téléphone</label>
@@ -339,11 +487,17 @@ export default function GarageAgenda({
 
             <div className="col-span-3 sm:col-span-2">
               <label className={label} htmlFor="rdv-date">Date</label>
-              <input id="rdv-date" required type="date" className={input} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <input id="rdv-date" required type="date" className={input} value={form.date}
+                onChange={(e) => {
+                  // Nouvelle date : l'heure passe à la première plage libre de ce jour-là, sauf si le garage l'a déjà choisie.
+                  const date = e.target.value;
+                  const slot = !timeTouched && date >= today ? nextFree(date, form.durationMin, true) : null;
+                  setForm({ ...form, date, startTime: slot?.time ?? form.startTime });
+                }} />
             </div>
             <div className="col-span-3 sm:col-span-1">
               <label className={label} htmlFor="rdv-time">Heure</label>
-              <input id="rdv-time" required type="time" step={600} className={input} value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
+              <input id="rdv-time" required type="time" step={600} className={input} value={form.startTime} onChange={(e) => { setTimeTouched(true); setForm({ ...form, startTime: e.target.value }); }} />
             </div>
             <div className="col-span-6 sm:col-span-3">
               <label className={label} htmlFor="rdv-dur-h">Durée prévue <span className="font-normal text-gray-400">· fin à {toHHMM(Math.min(toMin(form.startTime || "00:00") + form.durationMin, 24 * 60 - 1))}</span></label>
@@ -372,6 +526,22 @@ export default function GarageAgenda({
                 <input aria-label="Marque" placeholder="Marque" className={input} value={form.vehicleMake} onChange={(e) => setForm({ ...form, vehicleMake: e.target.value })} />
                 <input aria-label="Modèle" placeholder="Modèle" className={input} value={form.vehicleModel} onChange={(e) => setForm({ ...form, vehicleModel: e.target.value })} />
               </div>
+              {known && known.vehicles.length > 1 && (
+                <div className="flex flex-wrap gap-1 mt-1" role="group" aria-label="Véhicules de ce client">
+                  {known.vehicles.map((v, i) => {
+                    const text = [v.year, v.make, v.model].filter(Boolean).join(" ");
+                    const on = form.vehicleYear === (v.year ? String(v.year) : "") && form.vehicleMake === (v.make ?? "") && form.vehicleModel === (v.model ?? "");
+                    return (
+                      <button key={i} type="button" aria-pressed={on}
+                        onClick={() => setForm({ ...form, vehicleYear: v.year ? String(v.year) : "", vehicleMake: v.make ?? "", vehicleModel: v.model ?? "" })}
+                        className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                        style={{ background: on ? "#0b1f3a" : "#f1f5f9", color: on ? "#fff" : "#0b1f3a" }}>
+                        {text}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="col-span-6 sm:col-span-4">

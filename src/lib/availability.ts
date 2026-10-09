@@ -172,6 +172,42 @@ export function findNextAvailability(
 }
 
 /**
+ * Prochaine heure de départ réellement libre pour un rendez-vous de `durationMin`,
+ * à partir de `fromDate` : garage ouvert, pas dans le passé, pas bloqué, et au
+ * moins un poste libre pendant toute la durée. Sert à proposer d'emblée la bonne
+ * heure quand le garage ouvre le formulaire de rendez-vous (ex. demain 08:00 si
+ * la journée est finie). `today` et `nowMin` sont fournis par l'appelant, dans
+ * son fuseau.
+ */
+export function findNextFreeStart(
+  availability: AvailabilityRow[],
+  blocked: { date: string; startTime?: string | null; endTime?: string | null; allDay?: boolean }[],
+  booked: (BookedRow & { date: string })[],
+  opts: { fromDate: string; today: string; nowMin: number; durationMin?: number; capacity?: number; stepMin?: number; daysAhead?: number },
+): { date: string; time: string } | null {
+  const { fromDate, today, nowMin, durationMin = DEFAULT_DURATION_MIN, capacity = 1, stepMin = 30, daysAhead = 60 } = opts;
+  const first = fromDate < today ? today : fromDate;
+
+  for (let offset = 0; offset <= daysAhead; offset++) {
+    const date = addDaysStr(first, offset);
+    const avail = availability.find((a) => a.dayOfWeek === dayOfWeekOf(date));
+    if (!avail || avail.isClosed) continue;
+    const blocks = blocked.filter((b) => b.date === date);
+    if (blocks.some((b) => b.allDay || !b.startTime || !b.endTime)) continue;
+    const dayBooked = booked.filter((a) => a.date === date);
+
+    const close = toMinutes(avail.closeTime);
+    for (let start = toMinutes(avail.openTime); start + durationMin <= close; start += stepMin) {
+      if (date === today && start < nowMin) continue;
+      if (blocks.some((b) => overlaps(start, start + durationMin, toMinutes(b.startTime!), toMinutes(b.endTime!)))) continue;
+      if (wouldExceedCapacity(toHHMM(start), durationMin, dayBooked, capacity)) continue;
+      return { date, time: toHHMM(start) };
+    }
+  }
+  return null;
+}
+
+/**
  * true si réserver [startTime, startTime+durationMin) dépasserait la capacité
  * du garage — c.-à-d. si au moins `capacity` RDV existants chevauchent déjà ce
  * nouveau créneau (chacun occupant un poste de travail différent).
