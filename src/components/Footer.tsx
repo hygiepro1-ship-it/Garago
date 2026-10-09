@@ -35,10 +35,10 @@ export default function Footer() {
   return (
     <footer style={{ background: "#071428", color: "#475569" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-10 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-8 md:gap-10 mb-10 md:mb-12">
 
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div className="col-span-2">
             <Link href="/" className="inline-flex mb-5">
               <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-10 w-auto object-contain" />
             </Link>
@@ -97,10 +97,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Services */}
-          <div>
+          {/* Services : sur deux colonnes sous les deux autres listes, sur téléphone */}
+          <div className="col-span-2 md:col-span-1">
             <h4 className="font-black text-white text-sm mb-4">{f.popularServices}</h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-6 gap-y-2.5 text-sm">
               {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="flex items-center gap-2 transition-colors hover:text-white">
@@ -117,12 +117,13 @@ export default function Footer() {
         {/* Bottom */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
+          <p className="text-xs text-center" style={{ color: "rgba(255,255,255,0.5)" }}>
             © {new Date().getFullYear()} Garago Technologies Inc. {f.rights}
           </p>
-          <div className="flex items-center gap-6 text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
-            <span className="cursor-pointer hover:text-white transition-colors">{f.privacy}</span>
-            <span className="cursor-pointer hover:text-white transition-colors">{f.terms}</span>
+          {/* Les liens passent à la ligne au lieu de déborder de l'écran. */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <Link href="/confidentialite" className="hover:text-white transition-colors">{f.privacy}</Link>
+            <Link href="/conditions" className="hover:text-white transition-colors">{f.terms}</Link>
             <Link href="/a-propos" className="hover:text-white transition-colors">À propos</Link>
             <Link href="/faq" className="hover:text-white transition-colors">{f.faq}</Link>
             <Link href="/garagistes" className="hover:text-white transition-colors">{f.pricing}</Link>

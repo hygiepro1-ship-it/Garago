@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useLang } from "@/contexts/LanguageContext";
+
+// Le calendrier d'exemple dépend de l'heure du visiteur : rendu dans le navigateur seulement.
+const AgendaDemo = dynamic(() => import("@/components/HomeAgendaDemo"), {
+  ssr: false,
+  loading: () => <div style={{ minHeight: 320 }} aria-hidden="true" />,
+});
 
 const SIGNUP = "/inscription/garage";
 
-// Les écrans montrés (calendrier, onglet Services, carte de rendez-vous) sont
-// des reproductions du tableau de bord garage : mêmes couleurs, formes et textes.
+// Le calendrier du haut est le vrai composant du tableau de bord, rempli d'une
+// semaine d'exemple. L'onglet Services et la fiche de rendez-vous sont des
+// reproductions : mêmes couleurs, formes et textes que le tableau de bord.
 const COPY = {
   fr: {
     h1a: "Fini les rendez-vous",
@@ -37,8 +45,10 @@ const COPY = {
       capHelp: "Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même créneau n'est complet que lorsque tous vos postes sont occupés.",
     },
     card: {
-      vehicle: "Véhicule", note: "Bruit de frottement en freinant, surtout à basse vitesse.",
-      done: "Terminer", move: "Déplacer", cancel: "Annuler",
+      name: "Paul Gagnon", when: "Jeudi 15 octobre · 08:00 – 09:30",
+      planned: "Prévu", confirmedByClient: "Confirmé par le client", bookedOnline: "Réservé en ligne",
+      line: "Freins · 2019 Chevrolet Silverado", note: "Bruit de frottement en freinant, surtout à basse vitesse.",
+      done: "Terminer", move: "Déplacer", cancel: "Annuler", close: "Fermer",
     },
     steps: {
       title: "De l'inscription à votre premier rendez-vous",
@@ -113,8 +123,10 @@ const COPY = {
       capHelp: "Number of bays or employees who can each work on a vehicle at the same time. A time slot is only full when all your bays are busy.",
     },
     card: {
-      vehicle: "Vehicle", note: "Grinding noise when braking, mostly at low speed.",
-      done: "Complete", move: "Reschedule", cancel: "Cancel",
+      name: "Paul Gagnon", when: "Thursday, October 15 · 08:00 – 09:30",
+      planned: "Scheduled", confirmedByClient: "Confirmed by the customer", bookedOnline: "Booked online",
+      line: "Brakes · 2019 Chevrolet Silverado", note: "Grinding noise when braking, mostly at low speed.",
+      done: "Complete", move: "Reschedule", cancel: "Cancel", close: "Close",
     },
     steps: {
       title: "From sign-up to your first appointment",
@@ -166,26 +178,6 @@ const CHECK = (
   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
 );
 
-function ApptRow({ a, confirmed, online, chevronUp }: {
-  a: { s: string; e: string; n: string; v: string; on: boolean };
-  confirmed: string; online: string; chevronUp?: boolean;
-}) {
-  return (
-    <div className="appt">
-      <div className="t tnum"><b>{a.s}</b><small>{a.e}</small></div>
-      <div className="info">
-        <div className="name-row">
-          <span className="name">{a.n}</span>
-          <span className="pill ok">{confirmed}</span>
-          {a.on && <span className="pill on">{online}</span>}
-        </div>
-        <p className="sub">{a.v}</p>
-      </div>
-      <span className="chev" style={chevronUp ? { transform: "rotate(180deg)" } : undefined}>▾</span>
-    </div>
-  );
-}
-
 export default function GaragistesContent() {
   const { lang } = useLang();
   const c = COPY[lang === "en" ? "en" : "fr"];
@@ -196,28 +188,16 @@ export default function GaragistesContent() {
       {/* ═════ HERO ═════ */}
       <div className="hero">
         <div className="wrap">
-          <div className="hero-grid">
-            <div>
-              <h1>{c.h1a}<br /><em>{c.h1b}</em></h1>
-              <p className="lead">{c.lead}</p>
-              <Link className="btn btn-primary" href={SIGNUP}>{c.cta}</Link>
-              <a className="link" href="#etapes">{c.seeSteps}</a>
-              <p className="fine">{c.fine}</p>
-            </div>
+          <div style={{ maxWidth: 640 }}>
+            <h1>{c.h1a}<br /><em>{c.h1b}</em></h1>
+            <p className="lead">{c.lead}</p>
+            <Link className="btn btn-primary" href={SIGNUP}>{c.cta}</Link>
+            <a className="link" href="#etapes">{c.seeSteps}</a>
+            <p className="fine">{c.fine}</p>
+          </div>
 
-            <div className="phone" aria-label={ph.aria}>
-              <div className="ag-head">
-                <div className="ag-top"><span className="sq">‹</span><span className="ag-title">{ph.title}</span><span className="today-btn">{ph.today}</span></div>
-                <div className="ag-date"><span className="sq">‹</span><div className="mid"><p>{ph.date}</p><span>{ph.todayTag}</span></div><span className="sq">›</span></div>
-                <div className="ag-count"><b>{ph.appts.length}</b>{ph.count}</div>
-              </div>
-              <div className="ag-list">
-                {ph.appts.map((a) => (
-                  <div className="card" key={a.n}><ApptRow a={a} confirmed={ph.confirmed} online={ph.online} /></div>
-                ))}
-              </div>
-              <div className="fab">{ph.newAppt}</div>
-            </div>
+          <div style={{ marginTop: 40, color: "#0b1f3a" }} aria-label={ph.aria}>
+            <AgendaDemo lang={lang === "en" ? "en" : "fr"} mobile />
           </div>
         </div>
       </div>
@@ -268,11 +248,22 @@ export default function GaragistesContent() {
             <div><h3>{c.f3.t}</h3><p>{c.f3.p}</p></div>
             <div className="vis">
               <div className="stack">
-                <div className="card open">
-                  <ApptRow a={ph.appts[1]} confirmed={ph.confirmed} online={ph.online} chevronUp />
-                  <div className="expanded">
-                    <div className="vbox"><p>{c.card.vehicle}</p><strong>2019 Chevrolet Silverado</strong></div>
+                <div className="card" style={{ boxShadow: "0 12px 40px rgba(11,31,58,.18)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", borderBottom: "1px solid #f1f5f9" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontWeight: 700, fontSize: 14, color: "#111827", margin: 0 }}>{c.card.name}</p>
+                      <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{c.card.when}</p>
+                    </div>
+                    <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", color: "#6b7280", fontWeight: 700, display: "grid", placeItems: "center", flexShrink: 0 }}>×</span>
+                  </div>
+                  <div className="expanded" style={{ borderTop: 0 }}>
+                    <div className="chips">
+                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#f3f4f6", color: "#374151" }}>{c.card.planned}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#f0fdf4", color: "#15803d" }}>{c.card.confirmedByClient}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#ede9fe", color: "#6d28d9" }}>{c.card.bookedOnline}</span>
+                    </div>
                     <div className="chips"><span className="chip tel">(514) 555-0142</span><span className="chip mail">paul.g@exemple.com</span></div>
+                    <p style={{ fontSize: 14, color: "#374151", margin: 0 }}>{c.card.line}</p>
                     <p className="note">{c.card.note}</p>
                     <div className="acts">
                       <span className="act" style={{ background: "#16a34a" }}>{c.card.done}</span>
