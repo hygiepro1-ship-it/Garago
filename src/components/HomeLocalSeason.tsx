@@ -12,7 +12,7 @@ const NEIGHBOURHOODS: { name: string; lat: number; lng: number }[] = [
   { name: "Ahuntsic",            lat: 45.5560, lng: -73.6620 },
 ];
 
-interface Season { title: string; body: string; service: string; image?: { src: string; alt: string; credit: string; creditUrl: string } }
+interface Season { title: string; body: string; service: string; image?: { src: string; alt: string } }
 
 /**
  * Sujet de saison propre au Québec. Les pneus d'hiver y sont obligatoires du
@@ -30,10 +30,9 @@ function currentSeason(lang: string, now = new Date()): Season | null {
       service: "tires-winter",
       image: {
         src: "/saison-pneus.webp",
+        // Photo Freepik (senivpetro), n° 13781719. Affichée sans mention d'auteur à la demande
+        // du propriétaire du site : la licence gratuite l'exige, un abonnement Premium en dispense.
         alt: fr ? "Un mécanicien serre les écrous d'une roue chaussée d'un pneu d'hiver" : "A mechanic tightens the nuts of a wheel fitted with a winter tire",
-        // Photo de banque d'images (licence gratuite Freepik) : la mention de l'auteur est exigée.
-        credit: fr ? "Photo : senivpetro, Freepik" : "Photo: senivpetro, Freepik",
-        creditUrl: "https://www.magnific.com/free-photo/car-mechanic-changing-wheels-car_13781719.htm",
       },
     };
   }
@@ -58,9 +57,6 @@ export default function HomeLocalSeason({ lang }: { lang: string }) {
           <figure className="md:col-span-2 m-0">
             <img src={season.image.src} alt={season.image.alt} width={1200} height={800} loading="lazy" decoding="async"
               className="w-full h-auto rounded-xl" style={{ aspectRatio: "3 / 2", objectFit: "cover" }} />
-            <figcaption className="text-xs mt-1.5" style={{ color: "#94a3b8" }}>
-              <a href={season.image.creditUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">{season.image.credit}</a>
-            </figcaption>
           </figure>
         )}
         <div className={season?.image ? "md:col-span-3" : ""}>

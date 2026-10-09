@@ -12,8 +12,9 @@ const HOURS: WeekAvailability[] = [
 
 /**
  * Accueil, bloc garagistes : le vrai calendrier du tableau de bord, rempli avec
- * une semaine d'exemple. C'est le composant réel, pas une image : il reste à
- * jour quand l'agenda évolue. Non interactif et ignoré des lecteurs d'écran.
+ * une semaine d'exemple (« Client A », « Client B »…). C'est le composant réel,
+ * pas une image : il reste à jour quand l'agenda évolue. Non interactif et
+ * ignoré des lecteurs d'écran.
  */
 export default function HomeAgendaDemo({ lang }: { lang: string }) {
   const now = new Date();
@@ -42,11 +43,6 @@ export default function HomeAgendaDemo({ lang }: { lang: string }) {
         <AgendaWeekView days={days} appointments={sample} availability={HOURS} capacity={1} lang={lang} rowHeight={18}
           onPickSlot={() => {}} onPickAppointment={() => {}} />
       </div>
-      <figcaption className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-        {lang === "fr"
-          ? "Exemple d'une semaine dans l'agenda Garago. En vert : confirmé par le client. En rouge : à appeler."
-          : "Sample week in the Garago schedule. Green: confirmed by the customer. Red: to call."}
-      </figcaption>
     </figure>
   );
 }

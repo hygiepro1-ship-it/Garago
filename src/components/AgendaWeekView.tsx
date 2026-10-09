@@ -24,6 +24,9 @@ export interface WeekAvailability { dayOfWeek: number; openTime: string; closeTi
 export interface WeekBlock { date: string; startTime?: string | null; endTime?: string | null; allDay?: boolean }
 
 const STEP = 30;     // minutes par ligne
+// Heures déjà passées : fines hachures, pour les distinguer d'un simple « complet »
+// sans masquer les anciens rendez-vous posés dessus.
+const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
@@ -102,9 +105,8 @@ export default function AgendaWeekView({
     a.status === "NO_SHOW" ? "Client absent"
     : a.status === "COMPLETED" ? "Terminé"
     : a.confirmationStatus === "NO_RESPONSE" ? "À appeler"
-    : a.confirmationStatus === "CONFIRMED" ? "Confirmé par le client"
-    : a.confirmationStatus === "AWAITING" ? "En attente de réponse"
-    : a.confirmationStatus === "SCHEDULED" ? "Message à venir"
+    : a.confirmationStatus === "CONFIRMED" ? "Confirmé"
+    : a.confirmationStatus === "AWAITING" || a.confirmationStatus === "SCHEDULED" ? "À confirmer"
     : a.status === "PENDING" ? "En attente" : "Prévu";
 
   // Première plage libre du jour (pour le bouton « + Rendez-vous » de la liste du téléphone)
@@ -219,7 +221,7 @@ export default function AgendaWeekView({
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (
                     <div key={m} aria-hidden="true"
-                      style={{ height: ROW_H, background: open && !isBlocked ? "#fff" : "#f1f5f9", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
+                      style={{ height: ROW_H, background: !open || isBlocked ? "#f1f5f9" : past ? PAST_HATCH : "#fff", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
                   );
                 })}
 
@@ -254,13 +256,14 @@ export default function AgendaWeekView({
       </div>
       </div>
 
-      {/* Légende */}
+      {/* Légende : un mot par couleur */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Disponible</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />Rendez-vous</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé par le client</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />À confirmer</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé ou bloqué</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />Passé</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
       </div>
     </div>
   );
