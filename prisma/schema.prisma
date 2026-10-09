@@ -147,6 +147,7 @@ model Garage {
   availability GarageAvailability[]
   photos       GaragePhoto[]
   appointments Appointment[]
+  customers    Customer[]
   blockedSlots BlockedSlot[]
   alerts       GarageAlert[]
   profileViews GarageProfileView[]
@@ -544,14 +545,47 @@ model Appointment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  user   User?  @relation(fields: [userId], references: [id])
+  // Fiche du client dans le carnet du garage (voir Customer) — null tant que le
+  // rendez-vous n'a pas été rattaché (anciens rendez-vous, réservations en ligne).
+  customerId String?
+
+  garage   Garage    @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([garageId])
   @@index([userId])
   @@index([garageId, date])
   @@index([confirmationStatus, date])
   @@index([confirmToken])
+  @@index([customerId])
+}
+
+// Carnet de clients d'un garage : chaque client pour qui le garage a pris un
+// rendez-vous y reste, pour que ses coordonnées reviennent dès qu'on retape son
+// nom (voir src/lib/customers.ts). Propre à chaque garage — jamais partagé entre
+// garages. Ses véhicules et ses visites se lisent dans ses rendez-vous.
+model Customer {
+  id       String @id @default(cuid())
+  garageId String
+
+  name     String
+  nameKey  String // nom en minuscules, sans accents — sert à la recherche
+  phone    String
+  phoneKey String // chiffres seulement (10 derniers) — sert à reconnaître le client
+  email    String?
+
+  language       String  @default("fr") // fr | en
+  contactChannel String? // SMS | EMAIL | NONE (ne veut aucun message) | null = inconnu
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  garage       Garage        @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@unique([garageId, phoneKey, nameKey])
+  @@index([garageId, nameKey])
 }
 
 /// Réglages globaux du site — une seule ligne (id fixe "singleton").

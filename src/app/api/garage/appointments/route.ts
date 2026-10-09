@@ -8,6 +8,7 @@ import { cleanText, isValidEmail, isRateLimited } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { toE164 } from "@/lib/sms";
+import { rememberCustomer } from "@/lib/customers";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -114,10 +115,19 @@ export async function POST(req: NextRequest) {
   const start = quebecInstant(date, startTime);
   const plan = planManualConfirmation(start, now, { enabled: garage.requireConfirmation ?? true, reachable: contactChannel !== null });
 
+  // Le client reste dans le carnet du garage : ses coordonnées reviendront à sa
+  // prochaine visite. Un souci de carnet ne doit jamais empêcher de prendre le rendez-vous.
+  const customerId = await rememberCustomer(
+    garage.id,
+    { name: customerName, phone: customerPhone, email: customerEmail, language, contactChannel },
+    typeof body.customerId === "string" && body.customerId ? body.customerId : null,
+  ).catch((e) => { console.error("[CUSTOMER]", e); return null; });
+
   const appt = await prisma.appointment.create({
     data: {
       garageId: garage.id,
       userId: null,
+      customerId,
       customerName: cleanText(customerName, 80),
       customerPhone: cleanText(customerPhone, 30),
       customerEmail: customerEmail ? String(customerEmail).toLowerCase() : null,
