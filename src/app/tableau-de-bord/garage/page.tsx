@@ -1219,9 +1219,45 @@ export default function DashboardGaragePage() {
         setAppointments(Array.isArray(appts) ? appts : []);
         setBlockedSlots(Array.isArray(blocks) ? blocks : []);
         setRdvLoaded(true);
+        setRdvUpdatedAt(new Date());
       });
     }
   }, [activeTab, rdvLoaded, garage]);
+
+  // Plusieurs personnes peuvent prendre des rendez-vous sur le même tableau de bord :
+  // le calendrier se recharge toutes les 30 secondes et dès qu'on revient sur l'onglet,
+  // pour voir ce qu'un collègue vient de saisir. Un rechargement raté garde ce qui est
+  // affiché (jamais d'agenda vidé par une coupure de réseau).
+  const [rdvUpdatedAt, setRdvUpdatedAt] = useState<Date | null>(null);
+  const garageLoadedId = garage?.id;
+  useEffect(() => {
+    if (activeTab !== "apercu" || !rdvLoaded || !garageLoadedId) return;
+    let busy = false;
+    let last = Date.now();
+    const refresh = async () => {
+      if (busy || document.visibilityState !== "visible") return;
+      busy = true;
+      try {
+        const [appts, blocks] = await Promise.all([
+          gfetch("/api/garage/appointments").then(r => (r.ok ? r.json() : null)),
+          gfetch("/api/blocked-slots").then(r => (r.ok ? r.json() : null)),
+        ]);
+        if (Array.isArray(appts)) { setAppointments(appts); setRdvUpdatedAt(new Date()); }
+        if (Array.isArray(blocks)) setBlockedSlots(blocks);
+      } catch { /* réseau coupé : on réessaie au prochain passage */ }
+      last = Date.now();
+      busy = false;
+    };
+    const onReturn = () => { if (Date.now() - last > 5000) refresh(); };
+    const timer = setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onReturn);
+      window.removeEventListener("focus", onReturn);
+    };
+  }, [activeTab, rdvLoaded, garageLoadedId]);
 
   async function loadCalendarData() {
     if (!garage) return;
@@ -1231,6 +1267,7 @@ export default function DashboardGaragePage() {
     ]);
     setAppointments(Array.isArray(appts) ? appts : []);
     setBlockedSlots(Array.isArray(blocks) ? blocks : []);
+    setRdvUpdatedAt(new Date());
   }
 
   function changeMonth(delta: number) {
@@ -1989,6 +2026,7 @@ export default function DashboardGaragePage() {
             blocked={blockedSlots}
             lang={lang}
             onReload={loadCalendarData}
+            updatedAt={rdvUpdatedAt}
           />
 
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
