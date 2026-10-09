@@ -10,6 +10,7 @@
 import type { WeekAppointment, WeekAvailability, WeekBlock } from "@/components/AgendaWeekView";
 
 const STEP = 30;
+const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -81,7 +82,7 @@ export default function AgendaMonthView({
           const freeLabel = hasRoom ? `${Math.floor(free / 60)} h${free % 60 ? " 30" : ""} libre${free > 60 ? "s" : ""}` : closed ? "Fermé" : date < todayStr ? "" : "Complet";
           return (
             <div key={date} className="relative border-t border-l border-gray-100 p-1 flex flex-col gap-0.5"
-              style={{ minHeight: 84, background: closed ? "#f1f5f9" : hasRoom ? "#f0fdf4" : "#fff", opacity: inMonth ? 1 : 0.45 }}>
+              style={{ minHeight: 84, background: closed ? "#f1f5f9" : date < todayStr ? PAST_HATCH : hasRoom ? "#f0fdf4" : "#fff", opacity: inMonth ? 1 : 0.45 }}>
               <button type="button" onClick={() => onPickDay(date)}
                 aria-label={`${d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })} : ${dayAppts.length} rendez-vous${freeLabel ? `, ${freeLabel}` : ""}. Ouvrir la semaine`}
                 className="flex items-baseline justify-between gap-1 text-left rounded hover:bg-black/5 px-0.5">
@@ -111,9 +112,10 @@ export default function AgendaMonthView({
         })}
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Il reste de la place</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff", border: "1px solid #e2e8f0" }} />Complet ou passé</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé ou bloqué</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff", border: "1px solid #e2e8f0" }} />Complet</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />Passé</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
         <span>Cliquez sur un jour pour ouvrir sa semaine.</span>
       </div>
     </div>

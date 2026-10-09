@@ -10,8 +10,17 @@ import BrandLogo from "@/components/BrandLogo";
 import { getBestPosition } from "@/lib/geolocate";
 import { useLang } from "@/contexts/LanguageContext";
 import HomeNearbyGarages from "@/components/HomeNearbyGarages";
-import HomeLocalSeason from "@/components/HomeLocalSeason";
-import HomeAgendaDemo from "@/components/HomeAgendaDemo";
+import dynamic from "next/dynamic";
+
+// Le calendrier d'exemple dépend de l'heure du visiteur (jours passés, plages
+// libres) : rendu uniquement dans le navigateur, sinon la page préparée à
+// l'avance ne correspondrait pas à ce que le navigateur calcule.
+// Même raison pour le bloc de saison : son sujet change selon le mois en cours.
+const HomeLocalSeason = dynamic(() => import("@/components/HomeLocalSeason"), { ssr: false });
+const HomeAgendaDemo = dynamic(() => import("@/components/HomeAgendaDemo"), {
+  ssr: false,
+  loading: () => <div className="hidden sm:block" style={{ minHeight: 420 }} aria-hidden="true" />,
+});
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -193,39 +202,24 @@ export default function HomePage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden hero-lines flex flex-col justify-center"
-        style={{ background: "#0b1f3a", minHeight: "calc(100svh - 64px)" }}>
+      <section className="relative overflow-hidden hero-lines" style={{ background: "#0b1f3a" }}>
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-6 items-end">
+        <div className="py-10 sm:py-14 lg:py-20 text-center lg:text-left">
 
-          <div className="mb-2 sm:mb-4" style={{ display: "flex", justifyContent: "center" }}>
-            <img src="/logo-garago-700.webp" width={700} height={217} alt="Garago" fetchPriority="high" decoding="async"
-              style={{ maxHeight: "clamp(115px, 20vw, 160px)", maxWidth: "70%", width: "auto", height: "auto", display: "block" }} />
-          </div>
-
-          <h1 className="font-black tracking-tight mb-1 sm:mb-2"
-            style={{ fontSize: "clamp(1.2rem, 4.5vw, 2.4rem)", lineHeight: 1.15 }}>
+          <h1 className="font-black tracking-tight mb-3"
+            style={{ fontSize: "clamp(1.6rem, 4.2vw, 2.9rem)", lineHeight: 1.1 }}>
             <span style={{ color: "#f97316" }}>{h.heroLine2}</span>
           </h1>
 
-          <p className="hidden sm:block text-base max-w-2xl mx-auto leading-relaxed mb-3"
-            style={{ color: "rgba(255,255,255,0.55)" }}>
+          <p className="text-sm sm:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed mb-5"
+            style={{ color: "rgba(255,255,255,0.7)" }}>
             {h.heroSub}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2 sm:mb-4">
-            {h.trust.map((txt) => (
-              <span key={txt} className="text-xs font-semibold flex items-center gap-1"
-                style={{ color: "rgba(255,255,255,0.45)" }}>
-                <span style={{ color: "#10b981" }}>✓</span>{txt}
-              </span>
-            ))}
-          </div>
-
           {/* Search form */}
           <form onSubmit={handleSearch}
-            className="bg-white rounded-2xl mx-auto max-w-3xl overflow-hidden"
-            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)" }}>
+            className="bg-white rounded-2xl mx-auto lg:mx-0 max-w-3xl overflow-hidden text-left">
 
             {/* Vehicle row — toujours visible */}
             <div className="grid grid-cols-3" style={{ borderBottom: "1.5px solid #f1f5f9" }}>
@@ -279,32 +273,20 @@ export default function HomePage() {
             {(postalError || locError) && <p className="text-xs text-red-600 px-4 pb-2" role="alert">{postalError || locError}</p>}
           </form>
         </div>
+
+        {/* Photo détourée, posée sur le bas du bloc. Décorative : masquée sous 1024 px. */}
+        <div className="hidden lg:block self-end" aria-hidden="true">
+          <img src="/accueil-garagiste-cliente.webp" width={1100} height={960} alt="" fetchPriority="high" decoding="async"
+            style={{ display: "block", width: "100%", maxWidth: 500, height: "auto", margin: "0 auto" }} />
+        </div>
+        </div>
       </section>
 
       {/* ── STATS BAR ── */}
       {liveStats && <StatsBar stats={liveStats} labels={h.stats} />}
 
-      {/* ── SERVICES ── */}
-      <section className="hidden sm:block bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-black" style={{ color: "#0b1f3a" }}>{h.servicesTitle}</h2>
-            <Link href="/rechercher" className="text-sm font-bold" style={{ color: "#f97316" }}>{h.seeAll}</Link>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {h.services.map((s) => (
-              <button key={s.id}
-                onClick={() => router.push(`/rechercher?service=${s.id}${make ? `&make=${make}` : ""}`)}
-                className="flex-shrink-0 flex flex-col items-start gap-1 px-4 py-3 rounded-xl border transition-all"
-                style={{ borderColor: "#e2e8f0", background: "white", minWidth: 128 }}
-                onMouseEnter={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#f97316"; el.style.background = "#fff4ed"; }}
-                onMouseLeave={(e) => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = "#e2e8f0"; el.style.background = "white"; }}>
-                <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#0b1f3a" }}>{s.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── GARAGES PROCHES ── */}
+      <HomeNearbyGarages pos={nearPos} onLocate={locateNear} locating={nearLocating} locError={nearError} lang={lang} />
 
       {/* ── MARQUES ── */}
       <section className="hidden sm:block bg-white py-10" style={{ borderBottom: "1px solid #e2e8f0" }}>
@@ -343,9 +325,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-
-      {/* ── GARAGES PROCHES ── */}
-      <HomeNearbyGarages pos={nearPos} onLocate={locateNear} locating={nearLocating} locError={nearError} lang={lang} />
 
       {/* ── SAISON ET QUARTIERS ── */}
       <HomeLocalSeason lang={lang} />
