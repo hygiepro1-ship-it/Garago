@@ -14,6 +14,7 @@ import AgendaDayView from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
 import { findNextFreeStart } from "@/lib/availability";
 import type { CustomerMatch } from "@/lib/customers";
+import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
 
 export interface AgendaAppointment {
   id: string;
@@ -266,7 +267,7 @@ export default function GarageAgenda({
     setMatches([]);
     setForm({
       ...form,
-      customerId: c.id, customerName: c.name, customerPhone: c.phone, customerEmail: c.email ?? "",
+      customerId: c.id, customerName: c.name, customerPhone: formatPhone(c.phone), customerEmail: c.email ?? "",
       language: c.language === "en" ? "en" : "fr",
       contactChannel: c.contactChannel === "NONE" ? "" : c.contactChannel === "SMS" || c.contactChannel === "EMAIL" ? c.contactChannel : form.contactChannel,
       vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "",
@@ -478,11 +479,29 @@ export default function GarageAgenda({
             </div>
             <div className="col-span-3 sm:col-span-2">
               <label className={label} htmlFor="rdv-phone">Téléphone</label>
-              <input id="rdv-phone" required type="tel" inputMode="tel" autoComplete="off" className={input} value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+              {/* Un seul format, mis en forme au fil de la frappe : seuls les chiffres comptent. */}
+              <input id="rdv-phone" required type="tel" inputMode="tel" autoComplete="off" className={`${input} tabular-nums`}
+                placeholder="(514) 555-0123" pattern={PHONE_PATTERN} title="10 chiffres, sous la forme (514) 555-0123"
+                value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: formatPhone(e.target.value) })} />
             </div>
             <div className="col-span-3 sm:col-span-2">
               <label className={label} htmlFor="rdv-email">Courriel{form.contactChannel === "EMAIL" ? "" : " (facultatif)"}</label>
-              <input id="rdv-email" type="email" autoComplete="off" required={form.contactChannel === "EMAIL"} className={input} value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
+              <input id="rdv-email" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false} list="rdv-email-domains"
+                required={form.contactChannel === "EMAIL"} className={input} placeholder="nom@gmail.com"
+                value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value.replace(/\s/g, "") })} />
+              {/* Fins d'adresse connues, proposées pendant la frappe (gmail.com, hotmail.com, videotron.ca…) */}
+              <datalist id="rdv-email-domains">
+                {emailSuggestions(form.customerEmail).map((address) => <option key={address} value={address} />)}
+              </datalist>
+              {(() => {
+                const fix = emailTypoFix(form.customerEmail);
+                return fix && (
+                  <button type="button" onClick={() => setForm({ ...form, customerEmail: fix })}
+                    className="block text-left text-[11px] font-semibold mt-0.5 underline" style={{ color: "#b45309" }}>
+                    Vouliez-vous dire {fix} ?
+                  </button>
+                );
+              })()}
             </div>
 
             <div className="col-span-3 sm:col-span-2">
