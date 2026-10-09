@@ -40,7 +40,7 @@ export interface AgendaAppointment {
 
 interface AgendaService { categoryId: string; categoryName?: string; name?: string; category?: { name?: string }; durationMin?: number | null }
 
-function gfetch(path: string, init?: RequestInit) {
+export function gfetch(path: string, init?: RequestInit) {
   const g = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("g");
   if (!g) return fetch(path, init);
   return fetch(`${path}${path.includes("?") ? "&" : "?"}g=${encodeURIComponent(g)}`, init);
@@ -70,7 +70,7 @@ function confirmationLabel(a: AgendaAppointment): { label: string; color: string
 const input = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-orange-400";
 const label = "block text-[11px] font-semibold text-gray-500 mb-0.5";
 
-function Dialog({ title, subtitle, onClose, children, wide }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
+export function Dialog({ title, subtitle, onClose, children, wide }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -94,7 +94,7 @@ function Dialog({ title, subtitle, onClose, children, wide }: { title: string; s
   );
 }
 
-function Segmented({ value, onChange, options, name }: { value: string; onChange: (v: string) => void; options: [string, string][]; name: string }) {
+export function Segmented({ value, onChange, options, name }: { value: string; onChange: (v: string) => void; options: [string, string][]; name: string }) {
   return (
     <div className="flex gap-1" role="radiogroup" aria-label={name}>
       {options.map(([v, text]) => (

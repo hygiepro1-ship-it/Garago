@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import GarageAgenda, { type AgendaAppointment } from "@/components/GarageAgenda";
+import GarageCustomers from "@/components/GarageCustomers";
+import type { CustomerMatch, CustomerPage } from "@/lib/customers";
 
 const NAMES = ["Tremblay", "Gagnon", "Roy", "Côté", "Bouchard", "Gauthier", "Morin", "Lavoie", "Fortin", "Gagné", "Ouellet", "Pelletier", "Bélanger", "Lévesque", "Bergeron", "Leblanc", "Paquette", "Girard", "Simard", "Boucher", "Caron", "Beaulieu", "Cloutier", "Dubé", "Poirier", "Fournier", "Lapointe", "Nguyen", "Diallo", "Haddad"];
 const FIRST = ["Marc", "Julie", "Sylvie", "Alain", "Luc", "Patrick", "Chantal", "Nadia", "Denis", "Émilie"];
@@ -60,6 +62,33 @@ function fakeAppointments(posts: number): AgendaAppointment[] {
   return out;
 }
 
+// Carnet de clients fictif, gardé en mémoire le temps de l'aperçu.
+const CARS: [number, string, string][] = [[2019, "Honda", "Civic"], [2021, "Toyota", "RAV4"], [2017, "Ford", "F-150"], [2020, "Hyundai", "Elantra"], [2015, "Mazda", "3"], [2022, "Subaru", "Outback"]];
+const DEMO_CUSTOMERS: CustomerMatch[] = Array.from({ length: 64 }, (_, i) => {
+  const first = FIRST[(i * 7) % FIRST.length], last = NAMES[(i * 11) % NAMES.length];
+  const car = CARS[i % CARS.length];
+  const plain = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return {
+    id: `demo-client-${i}`, name: `${first} ${last}`, phone: `(514) 555-01${pad(i)}`,
+    email: i % 4 === 3 ? null : `${plain(first)}.${plain(last)}@${["gmail.com", "hotmail.com", "videotron.ca"][i % 3]}`,
+    language: i % 9 === 0 ? "en" : "fr", contactChannel: i % 5 === 0 ? "EMAIL" : i % 13 === 0 ? "NONE" : "SMS",
+    visits: 1 + (i % 6), lastDate: `2026-0${1 + (i % 9)}-${pad(1 + (i % 27))}`, lastService: "Changement de pneus",
+    vehicles: i % 8 === 0 ? [] : i % 6 === 0 ? [{ year: car[0], make: car[1], model: car[2] }, { year: 2012, make: "Kia", model: "Rio" }] : [{ year: car[0], make: car[1], model: car[2] }],
+  };
+}).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+
+async function demoFetchPage(q: string, page: number): Promise<CustomerPage> {
+  const needle = q.toLowerCase();
+  const found = DEMO_CUSTOMERS.filter((c) => !needle || c.name.toLowerCase().includes(needle) || c.phone.includes(needle) || (c.email ?? "").includes(needle));
+  return { customers: found.slice((page - 1) * 25, page * 25), total: found.length, page, pageSize: 25 };
+}
+
+async function demoSave(edit: { id: string; name: string; phone: string; email: string; language: string; contactChannel: string }): Promise<string | null> {
+  const c = DEMO_CUSTOMERS.find((x) => x.id === edit.id);
+  if (c) Object.assign(c, { name: edit.name, phone: edit.phone, email: edit.email || null, language: edit.language, contactChannel: edit.contactChannel || "NONE" });
+  return null;
+}
+
 export default function AgendaDemo() {
   const [posts, setPosts] = useState(8);
   const appointments = useMemo(() => fakeAppointments(posts), [posts]);
@@ -84,6 +113,8 @@ export default function AgendaDemo() {
         lang="fr"
         onReload={() => {}}
       />
+      <hr className="border-gray-200" />
+      <GarageCustomers fetchPage={demoFetchPage} save={demoSave} />
     </div>
   );
 }
