@@ -12,7 +12,7 @@ const COPY = {
     h1a: "Fini les rendez-vous",
     h1b: "pris au téléphone.",
     lead: "Vos clients réservent eux-mêmes en ligne, selon vos heures d'ouverture et la durée de chaque service. Chaque rendez-vous arrive dans votre tableau de bord.",
-    cta: "Commencer — 30 jours gratuits",
+    cta: "Essayer 30 jours gratuitement",
     seeSteps: "Voir les étapes ↓",
     fine: "Carte requise · aucun prélèvement avant 30 jours",
     phone: {
@@ -88,7 +88,7 @@ const COPY = {
     h1a: "No more booking",
     h1b: "appointments by phone.",
     lead: "Your customers book online themselves, within your opening hours and the real length of each service. Every appointment lands in your dashboard.",
-    cta: "Get started — 30 days free",
+    cta: "Try it free for 30 days",
     seeSteps: "See the steps ↓",
     fine: "Card required · no charge for 30 days",
     phone: {
@@ -139,7 +139,7 @@ const COPY = {
       incl: [
         "Online booking, 24 hours a day",
         "Add, move or cancel an appointment in a few clicks, from your phone",
-        "Your customers get their confirmation by email — no need to call them back",
+        "Your customers get their confirmation by email, so you don't have to call them back",
       ],
       extra: "Additional garage: +$49.99/month, on the same subscription.",
     },

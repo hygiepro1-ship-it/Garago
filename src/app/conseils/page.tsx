@@ -73,8 +73,8 @@ function FeaturedArticle({ article }: { article: Article }) {
           </span>
           <Link href={`/conseils/${article.slug}`}
             className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
-            style={{ background: "#f97316", boxShadow: "0 2px 12px rgba(249,115,22,0.4)" }}>
-            Lire l'article →
+            style={{ background: "#f97316" }}>
+            Lire l'article
           </Link>
         </div>
       </div>
@@ -104,7 +104,7 @@ function ArticleCard({ article }: { article: Article }) {
           </span>
           <Link href={`/conseils/${article.slug}`}
             className="text-sm font-bold transition-all hover:gap-2" style={{ color: "#f97316" }}>
-            Lire l'article →
+            Lire l'article
           </Link>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function ConseilsPage() {
             <span style={{ color: "#f97316" }}>toute l'année</span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Conseils pratiques adaptés aux conducteurs québécois — entretien, sécurité et saisons.
+            Conseils pratiques pour les conducteurs du Québec : entretien, sécurité et saisons.
           </p>
         </div>
       </section>
@@ -165,7 +165,7 @@ export default function ConseilsPage() {
           {published.length === 0 && (
             <div className="text-center py-20">
               <p className="font-bold text-lg" style={{ color: "#0b1f3a" }}>Aucun conseil publié pour le moment.</p>
-              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}>Revenez bientôt — de nouveaux articles arrivent chaque semaine.</p>
+              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}>Revenez bientôt, de nouveaux articles arrivent chaque semaine.</p>
             </div>
           )}
 
@@ -189,8 +189,8 @@ export default function ConseilsPage() {
           </p>
           <Link href="/inscription/conducteur"
             className="inline-block px-8 py-3.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90"
-            style={{ background: "#f97316", boxShadow: "0 4px 20px rgba(249,115,22,0.4)" }}>
-            Créer un compte gratuitement →
+            style={{ background: "#f97316" }}>
+            Créer un compte gratuitement
           </Link>
         </div>
       </section>

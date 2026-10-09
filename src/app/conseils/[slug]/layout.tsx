@@ -6,8 +6,8 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = getArticle(slug);
-  if (!article) return { title: "Article introuvable — Garago", robots: { index: false } };
-  const title = `${article.title} — Garago`;
+  if (!article) return { title: "Article introuvable | Garago", robots: { index: false } };
+  const title = `${article.title} | Garago`;
   return {
     title,
     description: article.excerpt,

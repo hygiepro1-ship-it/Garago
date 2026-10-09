@@ -93,7 +93,7 @@ function UserMenu({ session, role }: UserMenuProps) {
         className="flex items-center gap-2 px-3 py-2 rounded-xl transition-colors"
         style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}>
         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)" }}>
+          style={{ background: "#f97316" }}>
           {initial}
         </div>
         <span className="hidden md:block text-sm font-semibold text-white">
@@ -260,7 +260,7 @@ export default function Header() {
               </Link>
               <Link href="/inscription/conducteur"
                 className="text-sm font-bold px-4 py-2 rounded-lg text-white"
-                style={{ background: "#f97316", boxShadow: "0 2px 10px rgba(249,115,22,0.4)" }}>
+                style={{ background: "#f97316" }}>
                 {t.nav.signUp}
               </Link>
               <Link href="/inscription/garage"

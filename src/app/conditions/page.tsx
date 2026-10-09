@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Conditions d'utilisation — Garago",
+  title: "Conditions d'utilisation | Garago",
 };
 
 export default function ConditionsPage() {

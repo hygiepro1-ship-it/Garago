@@ -61,7 +61,7 @@ function ServiceCard({ cat, stat }: { cat: typeof SERVICE_CATEGORIES[number]; st
         <Link href={`/rechercher?service=${cat.id}`}
           className="block text-center py-2 rounded-xl text-xs font-black transition-all hover:opacity-90"
           style={{ background: "#0b1f3a", color: "white" }}>
-          Trouver un garage →
+          Trouver un garage
         </Link>
       </div>
     </div>
@@ -164,8 +164,8 @@ export default function PrestationsPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/rechercher"
               className="px-8 py-3.5 rounded-xl text-base font-black text-white transition-all hover:opacity-90"
-              style={{ background: "#f97316", boxShadow: "0 4px 20px rgba(249,115,22,0.4)" }}>
-              Trouver un garage près de moi →
+              style={{ background: "#f97316" }}>
+              Trouver un garage près de moi
             </Link>
             <Link href="/inscription/garage"
               className="px-8 py-3.5 rounded-xl text-base font-black transition-all hover:opacity-80"

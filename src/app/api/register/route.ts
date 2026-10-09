@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (role === "GARAGE_OWNER" && garageName) {
       neq = String(garageNeq ?? "").replace(/\D/g, "");
       if (!/^\d{10}$/.test(neq)) {
-        return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis." }, { status: 400 });
+        return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide : il doit compter 10 chiffres." }, { status: 400 });
       }
     }
 

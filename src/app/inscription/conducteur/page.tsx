@@ -90,19 +90,6 @@ function LeftPanel() {
         </div>
       </div>
 
-      <div className="relative p-4 rounded-xl mt-8"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="flex items-center gap-1 mb-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <span key={i} style={{ color: "#f59e0b", fontSize: 12 }}>★</span>
-          ))}
-          <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
-        </div>
-        <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
-          &ldquo;Pratique et rapide — j'ai trouvé un garage adapté à ma Civic en 2 minutes.&rdquo;
-        </p>
-        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.22)" }}>— Julie M., Sherbrooke</p>
-      </div>
     </div>
   );
 }
@@ -206,7 +193,7 @@ export default function InscriptionConducteurPage() {
       if (!res.ok) { setTsReset((n) => n + 1); setCodeError(data.error ?? "Erreur lors de l'envoi."); return; }
       setCodeSent(true); setEmailVerified(false); setCodeInput("");
       if (data.devCode) {
-        setCodeSentMsg(`Mode développement — code : ${data.devCode}`);
+        setCodeSentMsg(`Mode développement, code : ${data.devCode}`);
         setCodeInput(data.devCode);
         verifyCode(data.devCode);
       } else {
@@ -471,7 +458,7 @@ export default function InscriptionConducteurPage() {
             <p className="text-sm" style={{ color: "#94a3b8" }}>
               {t.auth.garageOwner}{" "}
               <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
-                {r.registerGarage} →
+                {r.registerGarage}
               </Link>
             </p>
           </div>

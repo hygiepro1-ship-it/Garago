@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const vin = req.nextUrl.searchParams.get("vin")?.trim().toUpperCase();
   if (!vin || !/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
-    return NextResponse.json({ error: "NIV invalide — doit contenir exactement 17 caractères." }, { status: 400 });
+    return NextResponse.json({ error: "NIV invalide : il doit contenir exactement 17 caractères." }, { status: 400 });
   }
 
   // Appels parallèles : specs véhicule + rappels actifs

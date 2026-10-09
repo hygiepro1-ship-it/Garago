@@ -17,10 +17,10 @@ export async function generateMetadata(
   // le titre et la description ne doivent pas révéler son nom non plus (ni être indexés).
   const hidden = !garage || garage.hiddenByReport || (garage.claimStatus === "activee" && garage.verificationStatus !== "APPROVED");
   if (!garage || hidden) {
-    return { title: "Garage introuvable — Garago", robots: { index: false, follow: false } };
+    return { title: "Garage introuvable | Garago", robots: { index: false, follow: false } };
   }
 
-  const title = `${garage.name} — ${garage.city}, ${garage.province} | Garago`;
+  const title = `${garage.name}, ${garage.city}, ${garage.province} | Garago`;
   const description =
     garage.description?.trim()
       || `Consultez les avis, services et disponibilités de ${garage.name} à ${garage.city}. Réservez en ligne sur Garago.`;

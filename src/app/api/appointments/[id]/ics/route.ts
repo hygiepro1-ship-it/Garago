@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const dtEnd   = toIcsDate(appt.date, appt.endTime);
   const now     = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const location = escape([appt.garage.address, appt.garage.city, appt.garage.province].filter(Boolean).join(", "));
-  const summary  = escape(`RDV ${appt.garage.name}${appt.serviceName ? ` — ${appt.serviceName}` : ""}`);
+  const summary  = escape(`RDV ${appt.garage.name}${appt.serviceName ? ` · ${appt.serviceName}` : ""}`);
   const description = escape([
     appt.serviceName ? `Service : ${appt.serviceName}` : "",
     appt.vehicleMake ? `Véhicule : ${appt.vehicleYear ?? ""} ${appt.vehicleMake} ${appt.vehicleModel ?? ""}`.trim() : "",

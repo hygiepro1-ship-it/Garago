@@ -196,7 +196,7 @@ export default function SuggestionsPage() {
                   onChange={e => { setCaptchaVal(e.target.value); setCaptchaErr(false); }}
                 />
                 {captchaErr && (
-                  <p className="text-xs text-red-600 font-medium">Réponse incorrecte — réessayez</p>
+                  <p className="text-xs text-red-600 font-medium">Réponse incorrecte, réessayez</p>
                 )}
               </div>
             </div>

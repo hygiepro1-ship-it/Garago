@@ -312,7 +312,7 @@ function ClaimRequestCard({
               </a>
             </>
           ) : (
-            <p className="text-sm text-gray-500">Non fourni — vérifier la pièce justificative reçue par courriel.</p>
+            <p className="text-sm text-gray-500">Non fourni : vérifier la pièce justificative reçue par courriel.</p>
           )}
         </div>
       </div>
@@ -597,7 +597,7 @@ export default function AdminDashboard() {
         </div>
         <Link href="/tableau-de-bord/garage"
           className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium flex-shrink-0">
-          ← Tableau de bord
+          Tableau de bord
         </Link>
       </div>
 
@@ -638,7 +638,7 @@ export default function AdminDashboard() {
             <StatCard label="Garages inscrits" value={stats.garages.total} sub={`+${stats.garages.new30d} (30j)`}
               onClick={() => { setGarageFilter("REGISTERED"); setTab("garages"); }} />
             <StatCard label="Fiches non actives" value={stats.garages.unclaimedFiches + stats.garages.pendingClaims}
-              sub={stats.garages.pendingClaims > 0 ? `dont ${stats.garages.pendingClaims} en cours de réclamation` : "Pas de compte — fiches publiques seulement"}
+              sub={stats.garages.pendingClaims > 0 ? `dont ${stats.garages.pendingClaims} en cours de réclamation` : "Pas de compte, fiches publiques seulement"}
               onClick={() => { setGarageFilter("NON_ACTIVE"); setTab("garages"); }} />
             <StatCard label="Visiteurs (30j)" value={stats.traffic.visitors30d} sub={`${stats.traffic.visitors7d} cette semaine`} />
             <StatCard label="Revenu récurrent estimé" value={`${stats.revenue.mrr.toLocaleString("fr-CA", { minimumFractionDigits: 0 })} $/mois`} sub="MRR" />
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
                 <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.traffic.visitors30d}</p>
                 <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Visiteurs</p>
               </div>
-              <div className="hidden sm:block text-gray-300 text-2xl">→</div>
+              <div className="hidden sm:block text-gray-300 text-2xl" aria-hidden="true">›</div>
               <div>
                 <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.traffic.newSignups30d}</p>
                 <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Inscriptions</p>
@@ -667,7 +667,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {stats.traffic.visitors30d === 0 && (
-              <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d'être activé — ces chiffres se rempliront au fil des prochains jours.</p>
+              <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d'être activé. Ces chiffres se rempliront au fil des prochains jours.</p>
             )}
           </div>
 
@@ -689,7 +689,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-                <span className="text-gray-500">Taux de conversion essai → payant</span>
+                <span className="text-gray-500">Taux de conversion de l'essai au payant</span>
                 <span className="font-bold text-gray-900">
                   {stats.revenue.trialConversionRate !== null ? `${stats.revenue.trialConversionRate.toFixed(0)}%` : "—"}
                 </span>
@@ -708,7 +708,7 @@ export default function AdminDashboard() {
                 <span className="text-sm font-semibold text-gray-700">Total estimé</span>
                 <span className="text-xl font-black" style={{ color: "#f97316" }}>{stats.revenue.mrr.toLocaleString("fr-CA")} $/mois</span>
               </div>
-              <p className="text-xs text-gray-400 mt-2">Basé sur les tarifs publics — le montant réel facturé vit dans Stripe.</p>
+              <p className="text-xs text-gray-400 mt-2">Basé sur les tarifs publics. Le montant réel facturé vit dans Stripe.</p>
             </div>
           </div>
 
@@ -718,8 +718,8 @@ export default function AdminDashboard() {
               <h2 className="font-bold text-gray-900 mb-4">Santé de la place de marché</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between"><span className="text-gray-500">Rendez-vous (30 derniers jours)</span><span className="font-bold text-gray-900">{stats.marketplace.appointments30d}</span></div>
-                <div className="flex items-center justify-between"><span className="text-gray-500">Rendez-vous — total</span><span className="font-bold text-gray-900">{stats.marketplace.totalAppointments}</span></div>
-                <div className="flex items-center justify-between"><span className="text-gray-500">Avis clients — total</span><span className="font-bold text-gray-900">{stats.marketplace.totalReviews}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Rendez-vous, total</span><span className="font-bold text-gray-900">{stats.marketplace.totalAppointments}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Avis clients, total</span><span className="font-bold text-gray-900">{stats.marketplace.totalReviews}</span></div>
                 <div className="flex items-center justify-between"><span className="text-gray-500">Note moyenne globale</span><span className="font-bold text-gray-900">{stats.marketplace.avgRating ? stats.marketplace.avgRating.toFixed(1) : "—"}/5</span></div>
                 <div className="flex items-center justify-between"><span className="text-gray-500">Garages sans aucun service configuré</span><span className="font-bold text-red-600">{stats.garages.noServices}</span></div>
                 <div className="flex items-center justify-between"><span className="text-gray-500">Garages sans aucun avis</span><span className="font-bold text-gray-900">{stats.garages.noReviews}</span></div>
@@ -771,7 +771,7 @@ export default function AdminDashboard() {
             {/* Garages les moins actifs — à recontacter */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-1">Garages les moins actifs</h2>
-              <p className="text-xs text-gray-400 mb-4">Inscrits depuis 14 jours ou plus, encore en essai ou actifs, avec le moins de rendez-vous — à recontacter au besoin.</p>
+              <p className="text-xs text-gray-400 mb-4">Inscrits depuis 14 jours ou plus, encore en essai ou actifs, avec le moins de rendez-vous, à recontacter au besoin.</p>
               <div className="space-y-2">
                 {stats.marketplace.leastActiveGarages.map(g => (
                   <div key={g.id} className="flex items-center justify-between text-sm rounded-xl px-3 py-2 hover:bg-gray-50 gap-2">
@@ -808,7 +808,7 @@ export default function AdminDashboard() {
                   {stats.queues.unreadAlerts > 0 && <button onClick={() => setTab("alertes")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef2f2", color: "#b91c1c" }}>{stats.queues.unreadAlerts} alerte(s)</button>}
                   {stats.queues.pendingSuggestions > 0 && <button onClick={() => setTab("suggestions")} className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: "#eff6ff", color: "#1d4ed8" }}>{stats.queues.pendingSuggestions} suggestion(s)</button>}
                   {stats.queues.pendingVerifications + stats.queues.pendingDescriptions + stats.queues.unreadAlerts + stats.queues.pendingSuggestions === 0 && (
-                    <span className="text-xs text-gray-400">Rien en attente — tout est à jour ✓</span>
+                    <span className="text-xs text-gray-400">Rien en attente, tout est à jour ✓</span>
                   )}
                 </div>
               </div>
@@ -1071,9 +1071,9 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 leading-relaxed">
             <p className="font-semibold mb-1">Quand une alerte se déclenche</p>
-            <p><strong>Avis 1 étoile</strong> — dès qu'un garage reçoit un avis noté 1/5.</p>
-            <p><strong>Note moyenne sous 3/5</strong> — une fois qu'un garage a au moins 5 avis, si sa moyenne passe sous 3,0/5.</p>
-            <p><strong>Série de mauvais avis</strong> — 3 avis notés 2/5 ou moins reçus en moins de 30 jours.</p>
+            <p><strong>Avis 1 étoile</strong> : dès qu'un garage reçoit un avis noté 1/5.</p>
+            <p><strong>Note moyenne sous 3/5</strong> : une fois qu'un garage a au moins 5 avis, si sa moyenne passe sous 3,0/5.</p>
+            <p><strong>Série de mauvais avis</strong> : 3 avis notés 2/5 ou moins reçus en moins de 30 jours.</p>
           </div>
 
           {unreadAlerts.length > 0 && (
