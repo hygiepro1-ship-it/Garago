@@ -39,7 +39,7 @@ export default function GarageProfileError({
           href="/rechercher"
           className="border border-gray-300 text-gray-700 px-5 py-2 rounded-xl font-semibold text-sm hover:bg-gray-50"
         >
-          ← Retour à la recherche
+          Retour à la recherche
         </Link>
       </div>
     </div>

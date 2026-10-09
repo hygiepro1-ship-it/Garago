@@ -282,7 +282,7 @@ function DescriptionSection({
         <div>
           <h2 className="font-bold text-gray-900 text-lg">Description du garage</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Texte descriptif uniquement — pas de liens, courriels, numéros ou hashtags.
+            Texte descriptif uniquement : pas de liens, courriels, numéros ou hashtags.
           </p>
         </div>
         {/* Status badge */}
@@ -354,12 +354,12 @@ function DescriptionSection({
             {draft.length} / 400 caractères
           </p>
           <p className="text-xs rounded-lg px-3 py-2" style={{ background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa" }}>
-            Les modifications de la description doivent être soumises séparément via le bouton <strong>«&nbsp;Faire vérifier&nbsp;»</strong> — le bouton «&nbsp;Sauvegarder le profil&nbsp;» ne les enregistre pas.
+            Les modifications de la description doivent être soumises séparément via le bouton <strong>«&nbsp;Faire vérifier&nbsp;»</strong>. Le bouton «&nbsp;Sauvegarder le profil&nbsp;» ne les enregistre pas.
           </p>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs" style={{ color: remaining <= 1 ? "#dc2626" : "#6b7280" }}>
               {remaining <= 0
-                ? "Limite atteinte — plus aucune modification autorisée cette année."
+                ? "Limite atteinte : plus aucune modification autorisée cette année."
                 : `${remaining} modification${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} cette année (sur ${DESCRIPTION_MAX_PER_YEAR})`}
             </p>
             <button
@@ -413,13 +413,13 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
         style={{ background: tier >= 1 ? "linear-gradient(135deg,#1f2e67,#f97316)" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
         <span className={`flex items-center gap-1.5 text-sm font-black ${tier >= 1 ? "text-white" : "text-gray-600"}`}>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>
-          Programme Ambassadeur{tier >= 1 ? ` — Palier ${tier}/5` : ""}
+          Programme Ambassadeur{tier >= 1 ? `, palier ${tier}/5` : ""}
         </span>
         {tier >= 1 && (
           <button onClick={onViewDetails}
             className="text-xs font-semibold px-3 py-1 rounded-lg"
             style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
-            Voir détails →
+            Voir détails
           </button>
         )}
       </div>
@@ -499,7 +499,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
                   <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
                     <svg className="w-4 h-4 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                     <div className="flex-1">
-                      <p className="text-xs font-semibold text-red-800">{dFr} — {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
+                      <p className="text-xs font-semibold text-red-800">{dFr}, {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
                       {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
                     </div>
                     <button onClick={() => onDeleteBlock(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">Retirer</button>
@@ -522,7 +522,7 @@ const AMBASSADEUR_PALIERS = [
   { seuil: 3,  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17h7M17 14v7"/></svg>, label: "Statistiques avancées",                    desc: "Vues, rendez-vous, note et taux de conversion" },
   { seuil: 6,  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>, label: "−10% sur votre prochaine facture",          desc: "Appliqué automatiquement, une seule fois" },
   { seuil: 10, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>, label: "−20% sur votre prochaine facture",          desc: "−30% si abonnement annuel, une seule fois" },
-  { seuil: 15, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, label: "Priorité dans les résultats de recherche",  desc: "Votre garage apparaît en tête — 30 jours" },
+  { seuil: 15, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, label: "Priorité dans les résultats de recherche",  desc: "Votre garage apparaît en tête pendant 30 jours" },
   { seuil: 20, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M12 12L8 21l4-2 4 2-4-9z"/></svg>,  label: "Badge Certifié Ambassadeur",                desc: "Affiché en permanence sur votre profil public" },
 ];
 
@@ -564,11 +564,11 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
             {tier >= 5 ? (
               <>
                 <p className="text-white font-black text-xl leading-tight">★ Certifié Ambassadeur Garago</p>
-                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint — merci pour votre engagement !</p>
+                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint, merci pour votre engagement !</p>
               </>
             ) : (
               <>
-                <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur — Palier {tier}/5</p>
+                <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur, palier {tier}/5</p>
                 <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
                   {count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""}
                   {nextPalier ? ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}` : ""}
@@ -698,7 +698,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
             </div>
             {(stats.chart?.length ?? 0) > 0 && (
               <div>
-                <p className="text-xs text-gray-400 mb-2">Vues du profil — 30 derniers jours</p>
+                <p className="text-xs text-gray-400 mb-2">Vues du profil, 30 derniers jours</p>
                 <div className="flex items-end gap-px h-20">
                   {stats.chart!.map((c, i: number) => (
                     <div key={i} className="flex-1 rounded-sm transition-all"
@@ -1259,7 +1259,7 @@ export default function DashboardGaragePage() {
         <h1 className="text-xl font-black text-gray-900 mb-2">Ajoutez votre carte pour continuer</h1>
         <p className="text-gray-500 text-sm mb-6">
           Votre essai gratuit de 30 jours est prêt, mais aucun moyen de paiement n'a été enregistré.
-          Ajoutez une carte pour accéder à votre tableau de bord — aucun montant n'est prélevé avant la fin de l'essai.
+          Ajoutez une carte pour accéder à votre tableau de bord. Aucun montant n'est prélevé avant la fin de l'essai.
         </p>
         <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
           className="text-white px-6 py-3 rounded-xl font-bold text-sm disabled:opacity-60"
@@ -1600,7 +1600,7 @@ export default function DashboardGaragePage() {
             )}
             <Link href={`/garage/${garage.slug}?from=dashboard`}
               className="bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
-              Voir mon profil →
+              Voir mon profil
             </Link>
           </div>
         </div>
@@ -1657,7 +1657,7 @@ export default function DashboardGaragePage() {
               <p className={`font-bold ${isTrialExpiring ? "text-red-900" : "text-gray-900"}`}>Aucun moyen de paiement enregistré</p>
               <p className={`text-sm ${isTrialExpiring ? "text-red-700" : "text-gray-500"}`}>
                 {isTrialExpiring
-                  ? "Ajoutez une carte avant la fin de votre essai pour ne pas perdre votre visibilité — aucun montant n'est prélevé avant l'expiration de l'essai."
+                  ? "Ajoutez une carte avant la fin de votre essai pour ne pas perdre votre visibilité. Aucun montant n'est prélevé avant l'expiration de l'essai."
                   : "Ajoutez une carte pour que votre abonnement démarre automatiquement à la fin de l'essai, sans interruption. Aucun montant prélevé avant cette date."}
               </p>
             </div>
@@ -2003,17 +2003,17 @@ export default function DashboardGaragePage() {
                 <p className="sm:hidden text-gray-500 text-xs">Touchez un jour pour le sélectionner</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => changeMonth(-1)}
+                <button onClick={() => changeMonth(-1)} aria-label="Mois précédent"
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
-                  ←
+                  ‹
                 </button>
                 <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
                   className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                   Aujourd'hui
                 </button>
-                <button onClick={() => changeMonth(1)}
+                <button onClick={() => changeMonth(1)} aria-label="Mois suivant"
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
-                  →
+                  ›
                 </button>
               </div>
             </div>
@@ -2069,7 +2069,7 @@ export default function DashboardGaragePage() {
 
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 text-xs">
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV — rendez-vous</span>
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV : rendez-vous</span>
             <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>créneau bloqué</span>
             {selectedDays.length > 0 && (
               <button onClick={() => setSelectedDays([])}
@@ -2311,7 +2311,7 @@ export default function DashboardGaragePage() {
                   </button>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-3">Partagez ce code — le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
+              <p className="text-xs text-gray-400 mt-3">Partagez ce code : le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
@@ -2658,7 +2658,7 @@ export default function DashboardGaragePage() {
               <div>
                 <h3 className="font-bold text-gray-900">Modèles {expandedBrand}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {brandModels[expandedBrand]?.length ? "Modèles sélectionnés uniquement" : "Aucune restriction — tous les modèles sont traités"}
+                  {brandModels[expandedBrand]?.length ? "Modèles sélectionnés uniquement" : "Aucune restriction : tous les modèles sont traités"}
                 </p>
               </div>
               <button onClick={() => setExpandedBrand(null)}
@@ -2904,7 +2904,7 @@ export default function DashboardGaragePage() {
                 disabled={!rescheduleSlot || !rescheduleDate || rescheduleLoading}
                 onClick={submitReschedule}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-colors"
-                style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)" }}>
+                style={{ background: "#f97316" }}>
                 {rescheduleLoading ? "Déplacement…" : "Confirmer le déplacement"}
               </button>
             </div>
@@ -3015,7 +3015,7 @@ export default function DashboardGaragePage() {
                       <button type="button" onClick={() => { setCoverBgColor(null); setShowCoverColorPicker(false); }}
                         className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
                     )}
-                    <button type="button" title="Pipette — choisir une couleur à l'écran"
+                    <button type="button" title="Pipette : choisir une couleur à l'écran"
                       onClick={async () => {
                         if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur (Chrome/Edge requis)."); return; }
                         try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
@@ -3215,7 +3215,7 @@ export default function DashboardGaragePage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
                 <AddressAutocomplete onSelect={handleAddressSelect} initialValue={profileData.address ?? ""} inputClass={inputClass} />
                 {profileData.latitude && profileData.longitude && (
-                  <p className="text-xs text-green-600 mt-1 font-medium">✓ Coordonnées enregistrées — les clients proches vous trouveront en priorité</p>
+                  <p className="text-xs text-green-600 mt-1 font-medium">✓ Coordonnées enregistrées : les clients proches vous trouveront en priorité</p>
                 )}
               </div>
               <div>
@@ -3307,7 +3307,7 @@ export default function DashboardGaragePage() {
                       {!isCurrent && (
                         <button onClick={() => switchGarage(g.id)}
                           className="text-xs font-bold text-orange-600 hover:underline flex-shrink-0">
-                          Gérer →
+                          Gérer
                         </button>
                       )}
                       {g.parentId !== null && (
@@ -3342,7 +3342,7 @@ export default function DashboardGaragePage() {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">Nom du garage</label>
-                    <input type="text" required className={inputClass} placeholder="Garage Tremblay — Brossard"
+                    <input type="text" required className={inputClass} placeholder="Garage Tremblay Brossard"
                       value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} />
                   </div>
                   <div>
@@ -3394,7 +3394,7 @@ export default function DashboardGaragePage() {
               <button
                 onClick={() => { const p = myGarages.find(g => g.parentId === null); if (p) switchGarage(p.id); }}
                 className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
-                Aller au garage principal →
+                Aller au garage principal
               </button>
             </div>
           )}
@@ -3420,7 +3420,7 @@ export default function DashboardGaragePage() {
                   Votre garage est visible dans les résultats.{" "}
                   {garage.stripePriceId
                     ? "Votre abonnement démarrera automatiquement à la fin de l'essai avec la carte enregistrée."
-                    : "Aucune carte n'est enregistrée — ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure."}
+                    : "Aucune carte n'est enregistrée. Ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure."}
                 </p>
                 {!garage.stripePriceId && (
                   <div className="mb-4">
@@ -3433,7 +3433,7 @@ export default function DashboardGaragePage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement — 88,00 $/mois (annuel, −20 %)"}
+                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement : 88,00 $/mois (annuel, −20 %)"}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
@@ -3496,7 +3496,7 @@ export default function DashboardGaragePage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Activer — 88,00 $/mois (annuel, −20 %)"}
+                    {checkoutLoading ? "Chargement…" : "Activer : 88,00 $/mois (annuel, −20 %)"}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
@@ -3576,7 +3576,7 @@ export default function DashboardGaragePage() {
                 <>
                   <p className="text-sm text-gray-500 mb-4">
                     Le renouvellement automatique est désactivé
-                    {garage.subscriptionEndAt ? ` — votre accès reste complet jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
+                    {garage.subscriptionEndAt ? `, votre accès reste complet jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
                   </p>
                   {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
                   <button onClick={() => cancelSubscription(true)} disabled={cancelLoading}
@@ -3588,7 +3588,7 @@ export default function DashboardGaragePage() {
               ) : (
                 <>
                   <p className="text-sm text-gray-500 mb-4">
-                    Vous pouvez annuler à tout moment — vous garderez l'accès complet jusqu'à la fin de votre période déjà payée, sans renouvellement après.
+                    Vous pouvez annuler à tout moment. Vous garderez l'accès complet jusqu'à la fin de votre période déjà payée, sans renouvellement après.
                   </p>
                   {!showCancelConfirm ? (
                     <button onClick={() => setShowCancelConfirm(true)}
@@ -3624,7 +3624,7 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
             <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées — impossible à annuler.
+              Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées. C'est impossible à annuler.
             </p>
             {!showDeleteConfirm ? (
               <button onClick={() => setShowDeleteConfirm(true)}

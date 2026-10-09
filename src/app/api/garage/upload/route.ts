@@ -32,11 +32,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: "Format invalide — utilisez une image JPEG, PNG ou WebP" }, { status: 400 });
+      return NextResponse.json({ error: "Format invalide : utilisez une image JPEG, PNG ou WebP" }, { status: 400 });
     }
 
     if (file.size > MAX_SIZE_BYTES) {
-      return NextResponse.json({ error: "Fichier trop volumineux — 5 Mo maximum" }, { status: 400 });
+      return NextResponse.json({ error: "Fichier trop volumineux : 5 Mo maximum" }, { status: 400 });
     }
 
     // Le type MIME est déclaré par le client : on vérifie aussi les premiers octets du fichier.

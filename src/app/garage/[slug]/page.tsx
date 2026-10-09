@@ -535,7 +535,7 @@ export default function GarageProfilePage() {
             ) : (
             <div style={isOwner ? { opacity: 0.5, pointerEvents: "none", userSelect: "none" } : undefined}>
               {isOwner && (
-                <p className="text-center text-xs text-gray-400 mb-2 italic">Aperçu uniquement — vous ne pouvez pas prendre rendez-vous avec vous-même.</p>
+                <p className="text-center text-xs text-gray-400 mb-2 italic">Aperçu seulement : vous ne pouvez pas prendre rendez-vous avec vous-même.</p>
               )}
               <BookingWidget
                 garageId={garage.id}

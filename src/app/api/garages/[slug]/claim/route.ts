@@ -35,7 +35,7 @@ export async function POST(
   // NEQ obligatoire pour activer une fiche — même exigence que pour l'inscription
   // d'un nouveau garage, vérifié manuellement par un admin dans les deux cas.
   if (!/^\d{10}$/.test(neq)) {
-    return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis." }, { status: 400 });
+    return NextResponse.json({ error: "Numéro d'entreprise du Québec (NEQ) invalide : il doit compter 10 chiffres." }, { status: 400 });
   }
 
   const garage = await prisma.garage.findUnique({

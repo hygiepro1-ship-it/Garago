@@ -9,25 +9,17 @@ import { getModelsForMake, getYears } from "@/lib/vehicleData";
 import BrandLogo from "@/components/BrandLogo";
 import { getBestPosition } from "@/lib/geolocate";
 import { useLang } from "@/contexts/LanguageContext";
+import HomeNearbyGarages from "@/components/HomeNearbyGarages";
+import HomeLocalSeason from "@/components/HomeLocalSeason";
+import HomeAgendaDemo from "@/components/HomeAgendaDemo";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const TESTIMONIALS = [
-  {
-    name: "Marie-Ève T.", city: "Montréal", rating: 5, vehicle: "Toyota RAV4 2021",
-    text: "J'avais un problème de freins. J'ai trouvé un garage qualifié rapidement grâce aux filtres. Service impeccable, zéro surprise.",
-    service: "Freins",
-  },
-  {
-    name: "François L.", city: "Laval", rating: 5, vehicle: "Ford F-150 2019",
-    text: "Avec le filtre par marque, j'ai trouvé exactement ce qu'il fallait pour mon F-150. Service rapide et réservation ultra facile.",
-    service: "Pneus",
-  },
-  {
-    name: "Julie M.", city: "Sherbrooke", rating: 4, vehicle: "Honda Civic 2020",
-    text: "Pouvoir trouver un garage spécialisé pour ma Civic près de chez moi en quelques secondes, c'est vraiment pratique.",
-    service: "Vidange",
-  },
+// Marques de grande série les plus répandues au Québec : affichées d'emblée sur
+// l'accueil. Les autres restent accessibles derrière « Voir les autres marques ».
+const COMMON_BRANDS = [
+  "Toyota", "Honda", "Hyundai", "Kia", "Mazda", "Nissan", "Ford", "Chevrolet", "GMC", "RAM", "Dodge", "Jeep",
+  "Subaru", "Volkswagen", "Mitsubishi", "Chrysler", "Buick", "Tesla", "BMW", "Mercedes-Benz", "Audi", "Lexus", "Acura", "Volvo",
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -64,33 +56,15 @@ function StatsBar({ stats, labels }: {
   );
 }
 
-function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[number] }) {
-  return (
-    <div className="garago-card p-5">
-      <div className="flex items-center gap-0.5 mb-1">
-        {Array.from({ length: 5 }).map((_, j) => (
-          <span key={j} style={{ color: j < testimonial.rating ? "#f59e0b" : "#e2e8f0", fontSize: 14 }}>★</span>
-        ))}
-      </div>
-      <p className="text-xs font-semibold mb-3" style={{ color: "#94a3b8" }}>{testimonial.vehicle}</p>
-      <p className="text-sm leading-relaxed mb-4" style={{ color: "#374151" }}>&ldquo;{testimonial.text}&rdquo;</p>
-      <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid #f1f5f9" }}>
-        <div>
-          <p className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{testimonial.name}</p>
-          <p className="text-xs" style={{ color: "#94a3b8" }}>{testimonial.city}</p>
-        </div>
-        <span className="badge badge-orange">{testimonial.service}</span>
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const h = t.home;
+  const [showAllBrands, setShowAllBrands] = useState(false);
+  const commonBrands = COMMON_BRANDS.map((name) => BRANDS.find((b) => b.name === name)).filter((b): b is (typeof BRANDS)[number] => !!b);
+  const otherBrands = BRANDS.filter((b) => !COMMON_BRANDS.includes(b.name));
 
   const [make,     setMake]     = useState("");
   const [model,    setModel]    = useState("");
@@ -103,6 +77,18 @@ export default function HomePage() {
   // coordonnées (tri par distance) plutôt qu'avec la ville comme filtre texte,
   // qui exclurait les garages des arrondissements (Verdun, Anjou, Lachine…).
   const [autoPos, setAutoPos] = useState<{ lat: number; lng: number; city: string } | null>(null);
+
+  const [nearPos, setNearPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearLocating, setNearLocating] = useState(false);
+  const [nearError, setNearError] = useState("");
+  const locateNear = useCallback(() => {
+    setNearError("");
+    setNearLocating(true);
+    getBestPosition()
+      .then((fix) => { setNearPos({ lat: fix.lat, lng: fix.lng }); })
+      .catch(() => { setNearError("refused"); })
+      .finally(() => { setNearLocating(false); });
+  }, []);
 
   const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
   useEffect(() => {
@@ -117,6 +103,7 @@ export default function HomePage() {
     if (typeof window === "undefined" || !navigator.geolocation) return;
     getBestPosition()
       .then(async (fix) => {
+        setNearPos({ lat: fix.lat, lng: fix.lng });
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${fix.lat}&lon=${fix.lng}&format=json`,
@@ -207,11 +194,7 @@ export default function HomePage() {
     <div>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden hero-lines flex flex-col justify-center"
-        style={{ background: "linear-gradient(140deg, #071428 0%, #0b1f3a 55%, #112847 100%)", minHeight: "calc(100svh - 64px)" }}>
-        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.13) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 right-0 w-96 h-64 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
+        style={{ background: "#0b1f3a", minHeight: "calc(100svh - 64px)" }}>
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 text-center w-full">
 
@@ -222,10 +205,7 @@ export default function HomePage() {
 
           <h1 className="font-black tracking-tight mb-1 sm:mb-2"
             style={{ fontSize: "clamp(1.2rem, 4.5vw, 2.4rem)", lineHeight: 1.15 }}>
-            <span style={{
-              background: "linear-gradient(90deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>{h.heroLine2}</span>
+            <span style={{ color: "#f97316" }}>{h.heroLine2}</span>
           </h1>
 
           <p className="hidden sm:block text-base max-w-2xl mx-auto leading-relaxed mb-3"
@@ -288,7 +268,7 @@ export default function HomePage() {
               <div className="pr-2 py-2">
                 <button type="submit"
                   className="flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-black text-white text-sm"
-                  style={{ background: "linear-gradient(135deg, #f97316 0%, #ea6c0a 100%)", boxShadow: "0 4px 16px rgba(249,115,22,0.4)" }}>
+                  style={{ background: "#f97316" }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                   </svg>
@@ -334,7 +314,7 @@ export default function HomePage() {
             <Link href="/rechercher" className="text-sm font-bold" style={{ color: "#f97316" }}>{h.allGarages}</Link>
           </div>
           <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
-            {BRANDS.map((brand) => (
+            {(showAllBrands ? [...commonBrands, ...otherBrands] : commonBrands).map((brand) => (
               <button key={brand.name} onClick={() => router.push(`/rechercher?make=${encodeURIComponent(brand.name)}`)}
                 title={brand.name}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border transition-all"
@@ -351,77 +331,30 @@ export default function HomePage() {
               </button>
             ))}
           </div>
+          {otherBrands.length > 0 && (
+            <div className="text-center mt-4">
+              <button type="button" onClick={() => setShowAllBrands((v) => !v)} aria-expanded={showAllBrands}
+                className="text-sm font-bold px-4 py-2 rounded-xl border" style={{ color: "#0b1f3a", borderColor: "#e2e8f0" }}>
+                {showAllBrands
+                  ? (lang === "fr" ? "Afficher moins de marques" : "Show fewer makes")
+                  : (lang === "fr" ? `Voir les ${otherBrands.length} autres marques` : `Show ${otherBrands.length} more makes`)}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── COMMENT ÇA MARCHE ── */}
-      <section className="py-10 sm:py-16" style={{ background: "#f8fafc" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: "#f97316" }}>Simple &amp; rapide</p>
-            <h2 className="text-xl sm:text-3xl font-black mb-3" style={{ color: "#0b1f3a" }}>{h.howTitle}</h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>{h.howSub}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Connector line on desktop */}
-            <div className="hidden md:block absolute top-8 left-1/3 right-1/3 h-0.5 pointer-events-none"
-              style={{ background: "linear-gradient(90deg, #fed7aa, #f97316, #fed7aa)", zIndex: 0 }} />
-            {h.howSteps.map((s, i) => (
-              <div key={i} className="flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
-                <div className="relative mb-5">
-                  {/* Numbered circle */}
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 4px 16px rgba(249,115,22,0.35)" }}>
-                    <span className="text-2xl font-black text-white">{i + 1}</span>
-                  </div>
-                  {/* Icon badge */}
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: "#fff", border: "2px solid #fed7aa", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-                    <img src={s.iconPath} alt={s.title} width={18} height={18}
-                      style={{ filter: "brightness(0) saturate(100%) invert(45%) sepia(97%) saturate(1000%) hue-rotate(0deg) brightness(100%)" }} />
-                  </div>
-                </div>
-                <h3 className="text-base font-black mb-2" style={{ color: "#0b1f3a" }}>{s.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#64748b" }}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link href="/rechercher"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-black text-white text-sm"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 4px 16px rgba(249,115,22,0.35)" }}>
-              {h.findGarageBtn}
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── GARAGES PROCHES ── */}
+      <HomeNearbyGarages pos={nearPos} onLocate={locateNear} locating={nearLocating} locError={nearError} lang={lang} />
 
-      {/* ── TÉMOIGNAGES ── */}
-      <section className="py-10 sm:py-16 bg-white" style={{ borderTop: "1px solid #e2e8f0" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-5 sm:mb-8 flex-wrap gap-4">
-            <div>
-              <h2 className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{h.reviewsTitle}</h2>
-              <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>{h.reviewsSub}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => <span key={i} style={{ color: "#f59e0b", fontSize: 16 }}>★</span>)}
-              <span className="font-black text-sm ml-1.5" style={{ color: "#0b1f3a" }}>4.7 / 5</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((r, i) => <TestimonialCard key={i} testimonial={r} />)}
-          </div>
-        </div>
-      </section>
+      {/* ── SAISON ET QUARTIERS ── */}
+      <HomeLocalSeason lang={lang} />
 
       {/* ── CTA GARAGE ── */}
       <section className="py-10 sm:py-16 relative overflow-hidden hero-lines"
-        style={{ background: "linear-gradient(135deg, #071428 0%, #0b1f3a 100%)" }}>
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%)" }} />
+        style={{ background: "#0b1f3a" }}>
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+          <div className="space-y-8">
             <div>
               <h2 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3 sm:mb-4">
                 {h.ctaLine1}<br/>
@@ -433,7 +366,7 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-3">
                 <Link href="/inscription/garage"
                   className="px-6 py-3.5 rounded-xl font-black text-white text-sm"
-                  style={{ background: "linear-gradient(135deg, #f97316, #ea6c0a)", boxShadow: "0 4px 16px rgba(249,115,22,0.4)" }}>
+                  style={{ background: "#f97316" }}>
                   {h.ctaBtn}
                 </Link>
                 <Link href="/garagistes"
@@ -443,15 +376,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {h.ctaFeatures.map((f) => (
-                <div key={f.title} className="rounded-xl p-4"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <p className="font-bold text-white text-sm mb-1">{f.title}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.38)" }}>{f.desc}</p>
-                </div>
-              ))}
-            </div>
+            <HomeAgendaDemo lang={lang} />
           </div>
         </div>
       </section>

@@ -169,13 +169,13 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
             {/* En-tête fiche */}
             <div className="px-3 py-2" style={{ background: "#0b1f3a" }}>
               <p className="text-white text-xs font-bold tracking-widest uppercase">Fiche technique</p>
-              <p className="text-blue-200 text-xs opacity-70">{v.year} {v.make} {v.model}{v.trim ? ` — ${v.trim}` : ""}</p>
+              <p className="text-blue-200 text-xs opacity-70">{v.year} {v.make} {v.model}{v.trim ? ` ${v.trim}` : ""}</p>
             </div>
 
             {/* Grille 2 colonnes */}
             <div className="grid grid-cols-2 divide-x divide-y divide-gray-100" style={{ background: "#fff" }}>
               {[
-                specs.engine && { label: "Moteur", value: `${specs.engine}${specs.hp ? ` — ${specs.hp} ch` : ""}` },
+                specs.engine && { label: "Moteur", value: `${specs.engine}${specs.hp ? `, ${specs.hp} ch` : ""}` },
                 specs.fuel        && { label: "Carburant",    value: specs.fuel },
                 specs.transmission && { label: "Boîte",       value: specs.transmission },
                 specs.driveType   && { label: "Traction",     value: specs.driveType },
@@ -284,7 +284,7 @@ function ApptRow({
     <div className="border border-gray-200 rounded-xl p-4 space-y-2 bg-white">
       <div className="flex items-start justify-between gap-2">
         <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
-          <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs">→</span></p>
+          <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs"></span></p>
           <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
           {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">{appt.serviceName}</p>}
           {(appt.vehicleMake || appt.vehicleYear) && (
@@ -656,7 +656,7 @@ export default function DashboardConducteurPage() {
                 <Link href={`/garage/${prochainRdv.garage.slug}`}
                   className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors hover:opacity-80"
                   style={{ background: "#f97316", color: "#fff" }}>
-                  Voir →
+                  Voir
                 </Link>
               </div>
             )}
@@ -716,7 +716,7 @@ export default function DashboardConducteurPage() {
                     </div>
                     <p className="font-bold text-gray-700 mb-1">Aucun rendez-vous</p>
                     <p className="text-sm text-gray-400 mb-4">Vos réservations en ligne apparaîtront ici.</p>
-                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>Trouver un garage →</Link>
+                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>Trouver un garage</Link>
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-5">
@@ -888,7 +888,7 @@ export default function DashboardConducteurPage() {
             <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-4">
               <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Cette action est définitive. Votre profil, vos véhicules, rendez-vous, avis et favoris seront effacés — impossible à annuler.
+                Cette action est définitive. Votre profil, vos véhicules, rendez-vous, avis et favoris seront effacés. C'est impossible à annuler.
               </p>
               {!showDeleteConfirm ? (
                 <button onClick={() => setShowDeleteConfirm(true)}
@@ -1060,7 +1060,7 @@ export default function DashboardConducteurPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>Voir →</Link>
+                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>Voir</Link>
                         <button onClick={() => removeFav(f.garageId)} className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors" title="Retirer des favoris">Retirer</button>
                       </div>
                     </div>

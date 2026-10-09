@@ -50,19 +50,6 @@ function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"]
         </div>
       </div>
 
-      <div className="relative p-4 rounded-xl"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="flex items-center gap-1 mb-1.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <span key={i} style={{ color: "#f59e0b", fontSize: 13 }}>★</span>
-          ))}
-          <span className="text-white font-black text-sm ml-1">4.7 / 5</span>
-        </div>
-        <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
-          &ldquo;J'ai trouvé un super garage pour mon BMW en 2 minutes. Réservation simple, service impeccable. Incroyable.&rdquo;
-        </p>
-        <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>— Pierre G., Montréal</p>
-      </div>
     </div>
   );
 }
@@ -199,7 +186,7 @@ export default function ConnexionPage() {
             <p className="text-sm" style={{ color: "#94a3b8" }}>
               {a.garageOwner}{" "}
               <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
-                {a.registerGarage} →
+                {a.registerGarage}
               </Link>
             </p>
           </div>

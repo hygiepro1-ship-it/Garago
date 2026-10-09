@@ -6,7 +6,7 @@ import VisitorTracker from "@/components/VisitorTracker";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
-  title: "Garago — Trouvez le bon garage pour votre véhicule",
+  title: "Garago | Trouvez le bon garage pour votre véhicule",
   description:
     "Trouvez le meilleur garage pour votre véhicule exact au Canada. Filtrez par marque, modèle, finition, service et disponibilité. Avis vérifiés, réservation en ligne.",
   keywords: ["garage", "mécanique", "Québec", "pneus", "entretien", "réparation auto", "vidange", "freins"],

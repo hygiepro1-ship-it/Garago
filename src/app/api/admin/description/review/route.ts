@@ -17,7 +17,7 @@ function esc(value: string | null | undefined): string {
 
 function htmlPage(body: string, status = 200) {
   return new NextResponse(
-    `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Modération — Garago</title>
+    `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Modération | Garago</title>
       <style>body{font-family:system-ui,sans-serif;max-width:520px;margin:60px auto;padding:0 20px;color:#0b1f3a}
       button{background:#f97316;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer}
       button.reject{background:#dc2626}

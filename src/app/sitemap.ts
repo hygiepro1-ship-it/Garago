@@ -11,6 +11,7 @@ const STATIC_ROUTES = [
   "/conseils",
   "/garagistes",
   "/faq",
+  "/a-propos",
   "/inscription/conducteur",
   "/inscription/garage",
   "/connexion",

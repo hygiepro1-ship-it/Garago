@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité — Garago",
+  title: "Politique de confidentialité | Garago",
 };
 
 export default function ConfidentialitePage() {

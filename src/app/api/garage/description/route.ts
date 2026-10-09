@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   if (usedThisYear >= DESCRIPTION_MAX_PER_YEAR) {
     return NextResponse.json(
-      { error: `Limite atteinte — vous ne pouvez soumettre que ${DESCRIPTION_MAX_PER_YEAR} descriptions par année.` },
+      { error: `Limite atteinte : vous ne pouvez soumettre que ${DESCRIPTION_MAX_PER_YEAR} descriptions par année.` },
       { status: 429 }
     );
   }

@@ -189,7 +189,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             {article.readTime} min de lecture
           </span>
           <span>·</span>
-          <Link href="/conseils" className="hover:text-orange-400 transition-colors">← Tous les conseils</Link>
+          <Link href="/conseils" className="hover:text-orange-400 transition-colors">Tous les conseils</Link>
         </div>
       </div>
 
@@ -215,8 +215,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <h3 className="text-xl font-black text-white mb-4">Obtenez un devis ou prenez rendez-vous en ligne</h3>
             <Link href={`/rechercher?service=${article.category.toLowerCase()}`}
               className="inline-block px-6 py-3 rounded-xl text-sm font-black text-white"
-              style={{ background: "#f97316", boxShadow: "0 4px 15px rgba(249,115,22,0.4)" }}>
-              Trouver un garage →
+              style={{ background: "#f97316" }}>
+              Trouver un garage
             </Link>
           </div>
         </div>

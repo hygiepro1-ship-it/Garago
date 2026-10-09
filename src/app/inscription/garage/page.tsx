@@ -280,7 +280,7 @@ export default function InscriptionGaragePage() {
       setEmailVerified(false);
       setCodeInput("");
       if (data.devCode) {
-        setCodeSentMsg(`Mode développement — code : ${data.devCode}`);
+        setCodeSentMsg(`Mode développement, code : ${data.devCode}`);
         setCodeInput(data.devCode);
         verifyCode(data.devCode);
       } else {
@@ -322,7 +322,7 @@ export default function InscriptionGaragePage() {
     if (!emailVerified) { setError("Veuillez d'abord vérifier votre adresse courriel."); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
-    if (!/^\d{10}$/.test(garageNeq)) { setError("Numéro d'entreprise du Québec (NEQ) invalide — 10 chiffres requis."); return; }
+    if (!/^\d{10}$/.test(garageNeq)) { setError("Numéro d'entreprise du Québec (NEQ) invalide : il doit compter 10 chiffres."); return; }
 
     setLoading(true);
 

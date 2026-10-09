@@ -55,7 +55,7 @@ function fmtDateFr(dateStr: string): string {
 function calendarLinks(appt: AppointmentDetails & { appointmentId: string }): { google: string; outlook: string; ics: string } {
   const start = `${appt.date.replace(/-/g, "")}T${appt.startTime.replace(":", "")}00`;
   const end   = `${appt.date.replace(/-/g, "")}T${appt.endTime.replace(":", "")}00`;
-  const title = `RDV ${appt.garageName}${appt.serviceName ? ` — ${appt.serviceName}` : ""}`;
+  const title = `RDV ${appt.garageName}${appt.serviceName ? ` · ${appt.serviceName}` : ""}`;
   const details = `Rendez-vous chez ${appt.garageName}${appt.serviceName ? `\nService : ${appt.serviceName}` : ""}`;
 
   const google = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
@@ -198,7 +198,7 @@ function baseLayout(body: string): string {
         <tr><td style="background:#f3f4f6;border-radius:0 0 6px 6px;border:1px solid #e5e7eb;
                        border-top:0;padding:16px 32px;text-align:center">
           <p style="margin:0;color:#9ca3af;font-size:12px">
-            Garago Canada — <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
+            Garago Canada · <a href="${BASE_URL}" style="color:#f97316;text-decoration:none">garagopro.ca</a>
             · <a href="mailto:info@garagopro.ca" style="color:#f97316;text-decoration:none">info@garagopro.ca</a>
           </p>
         </td></tr>
@@ -251,7 +251,7 @@ export async function sendVerificationCode(to: string, code: string) {
     <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
   `;
 
-  await send(to, `${code} — Code de vérification Garago`, body);
+  await send(to, `${code} : Code de vérification Garago`, body);
 }
 
 // ─── Email: Réinitialisation de mot de passe ──────────────────────────────────
@@ -273,12 +273,12 @@ export async function sendPasswordResetCode(to: string, code: string) {
     </div>
 
     <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">Ce code est valide pendant <strong>15 minutes</strong>.</p>
-    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement ce message — votre mot de passe ne changera pas.</p>
+    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement ce message. Votre mot de passe ne changera pas.</p>
     ${HR}
     <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
   `;
 
-  await send(to, `${code} — Réinitialisation de mot de passe Garago`, body);
+  await send(to, `${code} : Réinitialisation de mot de passe Garago`, body);
 }
 
 // ─── Email: Confirmation de rendez-vous (client) ──────────────────────────────
@@ -329,8 +329,8 @@ export async function sendBookingConfirmation(params: BookingConfirmationParams)
   `;
 
   const subject = params.confirmUrl
-    ? `Confirmez dans l'heure — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`
-    : `RDV ${params.garageName} — ${fmtDateFr(params.date)} à ${params.startTime}`;
+    ? `Confirmez dans l'heure : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`
+    : `RDV ${params.garageName} : ${fmtDateFr(params.date)} à ${params.startTime}`;
   await send(params.to, subject, body);
 }
 
@@ -379,7 +379,7 @@ export async function sendGarageNewAppointment(params: GarageNewAppointmentParam
 
   await send(
     params.to,
-    `Nouveau RDV — ${params.customerName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
+    `Nouveau RDV : ${params.customerName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
   );
 }
@@ -411,10 +411,10 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
       ${row("Téléphone", `<a href="${telHref(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
     `)}
 
-    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance — à bientôt sur Garago !</p>
+    <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance, à bientôt sur Garago !</p>
   `;
 
-  await send(params.to, `Votre véhicule est prêt — ${params.garageName}`, body);
+  await send(params.to, `Votre véhicule est prêt : ${params.garageName}`, body);
 }
 
 // ─── Email: Rappel rendez-vous (24h avant) ────────────────────────────────────
@@ -431,7 +431,7 @@ export async function sendBookingReminder(params: BookingReminderParams) {
 
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel — votre rendez-vous est demain</h2>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel : votre rendez-vous est demain</h2>
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, voici un rappel de votre rendez-vous prévu demain.</p>
 
     ${appointmentCard(params)}
@@ -440,7 +440,7 @@ export async function sendBookingReminder(params: BookingReminderParams) {
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Rappel RDV demain — ${params.garageName} à ${params.startTime}`, body);
+  await send(params.to, `Rappel RDV demain : ${params.garageName} à ${params.startTime}`, body);
 }
 
 // ─── Email: Rappel d'entretien véhicule ───────────────────────────────────────
@@ -473,7 +473,7 @@ export async function sendMaintenanceReminder(params: MaintenanceReminderParams)
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Retrouvez tous vos rappels dans votre tableau de bord Garago.</p>
   `;
 
-  await send(params.to, `Rappel d'entretien — ${esc(params.title)}`, body);
+  await send(params.to, `Rappel d'entretien : ${esc(params.title)}`, body);
 }
 
 // ─── Email: Relance carte manquante (inscription garage inachevée) ───────────
@@ -481,7 +481,7 @@ export async function sendMaintenanceReminder(params: MaintenanceReminderParams)
 export interface CardReminderParams {
   to:         string;
   garageName: string;
-  isFinal:    boolean; // dernière relance — l'accès restera bloqué sans action
+  isFinal:    boolean; // dernière relance : l'accès restera bloqué sans action
 }
 
 export async function sendCardReminder(params: CardReminderParams) {
@@ -545,7 +545,7 @@ export async function sendRescheduleNotification(params: RescheduleParams) {
 
   await send(
     params.to,
-    `RDV déplacé — ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
+    `RDV déplacé : ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
   );
 }
@@ -579,7 +579,7 @@ export async function sendAdminNewSuggestion(params: NewSuggestionParams) {
     ${primaryBtn(`${BASE_URL}/tableau-de-bord/admin`, "Voir dans le tableau de bord admin")}
   `;
 
-  await send(ADMIN_EMAIL, `Nouvelle suggestion — ${author}`, body);
+  await send(ADMIN_EMAIL, `Nouvelle suggestion : ${author}`, body);
 }
 
 // ─── Emails: annulation d'un rendez-vous ─────────────────────────────────────
@@ -614,7 +614,7 @@ export async function sendCancelledByGarage(params: AppointmentCancelledParams) 
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Rendez-vous annulé — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  await send(params.to, `Rendez-vous annulé : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }
 
 export interface CancelledByCustomerParams {
@@ -647,7 +647,7 @@ export async function sendCancelledByCustomer(params: CancelledByCustomerParams)
     ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
-  await send(params.to, `Rendez-vous annulé par le client — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  await send(params.to, `Rendez-vous annulé par le client : ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }
 
 // ─── Email: changement de nom d'un garage (admin) ────────────────────────────
@@ -669,7 +669,7 @@ export async function sendAdminGarageRenamed(params: { garageId: string; slug: s
     ${primaryBtn(`${BASE_URL}/garage/${encodeURIComponent(params.slug)}`, "Voir la fiche")}
   `;
 
-  await send(ADMIN_EMAIL, `Changement de nom — ${params.oldName} → ${params.newName}`, body);
+  await send(ADMIN_EMAIL, `Changement de nom : ${params.oldName} devient ${params.newName}`, body);
 }
 
 // ─── Email: nouvelle succursale (admin) ──────────────────────────────────────
@@ -692,7 +692,7 @@ export async function sendAdminBranchCreated(params: { slug: string; branchName:
     ${primaryBtn(`${BASE_URL}/garage/${encodeURIComponent(params.slug)}`, "Voir la succursale")}
   `;
 
-  await send(ADMIN_EMAIL, `Nouvelle succursale — ${params.branchName}`, body);
+  await send(ADMIN_EMAIL, `Nouvelle succursale : ${params.branchName}`, body);
 }
 
 // ─── Email: Signalement d'avis (admin) ───────────────────────────────────────
@@ -748,10 +748,10 @@ export async function sendReviewReport(params: ReviewReportParams) {
 
     ${primaryBtn(adminUrl, "Tableau de bord admin", "#b91c1c")}
     &nbsp;&nbsp;
-    ${secondaryBtn(garageUrl, "Voir le profil du garage →")}
+    ${secondaryBtn(garageUrl, "Voir le profil du garage")}
   `;
 
-  await send(ADMIN_EMAIL, `Signalement d'avis — ${params.garageName}`, body);
+  await send(ADMIN_EMAIL, `Signalement d'avis : ${params.garageName}`, body);
 }
 
 // ─── Email: Conseils auto hebdomadaires ───────────────────────────────────────
@@ -785,7 +785,7 @@ export async function sendWeeklyTips(params: WeeklyTipsParams) {
     ${tipsHtml}
 
     <div style="text-align:center;margin-top:28px">
-      ${primaryBtn(params.conseilsUrl, "Voir tous les conseils →", "#0b1f3a")}
+      ${primaryBtn(params.conseilsUrl, "Voir tous les conseils", "#0b1f3a")}
     </div>
 
     ${HR}
@@ -802,7 +802,7 @@ export async function sendWeeklyTips(params: WeeklyTipsParams) {
   for (let i = 0; i < params.recipients.length; i += BATCH_SIZE) {
     const batch = params.recipients.slice(i, i + BATCH_SIZE);
     const payload = batch.map(({ email }) => ({
-      from: FROM, to: email, subject: "Vos 2 conseils auto de la semaine — Garago", html: baseLayout(bodyFor(email)),
+      from: FROM, to: email, subject: "Vos 2 conseils auto de la semaine | Garago", html: baseLayout(bodyFor(email)),
       headers: { "List-Unsubscribe": `<${unsubscribeUrl(email)}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
     }));
     try {
@@ -834,7 +834,7 @@ export interface BadReviewAlertParams {
 
 export async function sendAdminBadReviewAlert(params: BadReviewAlertParams) {
   if (!canSend() || !process.env.ADMIN_EMAIL) {
-    console.error("[Email] ADMIN_EMAIL manquant — alerte avis non envoyée");
+    console.error("[Email] ADMIN_EMAIL manquant : alerte avis non envoyée");
     return;
   }
 
@@ -849,7 +849,7 @@ export async function sendAdminBadReviewAlert(params: BadReviewAlertParams) {
   const garageUrl = `${BASE_URL}/garage/${params.garageSlug}`;
 
   const body = `
-    <h2 style="margin:0 0 6px;color:#b91c1c;font-size:22px;font-weight:800">Alerte qualité — ${lbl.title}</h2>
+    <h2 style="margin:0 0 6px;color:#b91c1c;font-size:22px;font-weight:800">Alerte qualité : ${lbl.title}</h2>
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Une action de votre part pourrait être nécessaire.</p>
 
     <table width="100%" cellpadding="0" cellspacing="0"
@@ -866,10 +866,10 @@ export async function sendAdminBadReviewAlert(params: BadReviewAlertParams) {
 
     ${primaryBtn(adminUrl, "Tableau de bord admin", "#b91c1c")}
     &nbsp;&nbsp;
-    ${secondaryBtn(garageUrl, "Voir le profil du garage →")}
+    ${secondaryBtn(garageUrl, "Voir le profil du garage")}
   `;
 
-  await send(ADMIN_EMAIL, `[Garago] Alerte — ${params.garageName} · ${lbl.title}`, body);
+  await send(ADMIN_EMAIL, `[Garago] Alerte : ${params.garageName} · ${lbl.title}`, body);
 }
 
 // ─── Email: Vérification de description (admin) ───────────────────────────────
@@ -896,13 +896,13 @@ export async function sendDescriptionReviewEmail(params: DescriptionReviewParams
     </div>
 
     <p style="margin:0 0 16px;font-size:12px;color:#6b7280">
-      Vérifiez que ce texte est une description d'entreprise neutre — sans promotion, sans liens ni coordonnées.
+      Vérifiez que ce texte est une description d'entreprise neutre : sans promotion, sans liens ni coordonnées.
     </p>
 
     ${primaryBtn(adminUrl, "Approuver ou refuser dans le tableau de bord")}
   `;
 
-  await send(ADMIN_EMAIL, `[Modération] Description à vérifier — ${params.garageName}`, body);
+  await send(ADMIN_EMAIL, `[Modération] Description à vérifier : ${params.garageName}`, body);
 }
 
 // ─── Email: Décision sur la description (garage) ──────────────────────────────
@@ -935,8 +935,8 @@ export async function sendDescriptionDecisionEmail(params: DescriptionDecisionPa
       </p>`;
 
   const subject = params.approved
-    ? `Votre description a été approuvée — Garago`
-    : `Votre description a été refusée — Garago`;
+    ? `Votre description a été approuvée | Garago`
+    : `Votre description a été refusée | Garago`;
 
   await send(params.ownerEmail, subject, body);
 }
@@ -969,10 +969,10 @@ export async function sendGarageVerificationRequest(params: GarageVerificationRe
     <p style="margin:0 0 16px;color:#374151;font-size:14px">Vérifiez le NEQ au Registre des entreprises du Québec, puis approuvez ou refusez depuis le tableau de bord admin :</p>
     ${primaryBtn(adminUrl, "Ouvrir le tableau de bord admin")}
     &nbsp;&nbsp;
-    ${secondaryBtn(reqUrl, "Rechercher au Registre →")}
+    ${secondaryBtn(reqUrl, "Rechercher au Registre")}
   `;
 
-  await send(ADMIN_EMAIL, `Garage à vérifier — ${params.garageName}`, body);
+  await send(ADMIN_EMAIL, `Garage à vérifier : ${params.garageName}`, body);
 }
 
 // ─── Email: Décision de vérification (garage) ─────────────────────────────────
@@ -1008,8 +1008,8 @@ export async function sendGarageVerificationDecision(params: GarageVerificationD
       </p>`;
 
   const subject = params.approved
-    ? `Votre garage est vérifié — Garago`
-    : `Vérification de votre garage refusée — Garago`;
+    ? `Votre garage est vérifié | Garago`
+    : `Vérification de votre garage refusée | Garago`;
 
   await send(params.ownerEmail, subject, body);
 }
@@ -1037,7 +1037,7 @@ export async function sendClaimRequestNotification(params: ClaimRequestNotificat
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Quelqu'un affirme être propriétaire d'une fiche garage pré-créée et demande à l'activer.</p>
 
     ${infoCard(`
-      ${row("Garage", `${esc(params.garageName)} — ${esc(params.garageCity)}`)}
+      ${row("Garage", `${esc(params.garageName)}, ${esc(params.garageCity)}`)}
       ${row("Nom du demandeur", esc(params.requesterName))}
       ${row("Rôle", esc(params.requesterRole))}
       ${row("Téléphone", esc(params.requesterPhone))}
@@ -1049,7 +1049,7 @@ export async function sendClaimRequestNotification(params: ClaimRequestNotificat
     ${primaryBtn(adminUrl, "Ouvrir le tableau de bord admin")}
   `;
 
-  await send(ADMIN_EMAIL, `Réclamation de fiche — ${params.garageName}`, body);
+  await send(ADMIN_EMAIL, `Réclamation de fiche : ${params.garageName}`, body);
 }
 
 export interface ClaimDecisionParams {
@@ -1088,8 +1088,8 @@ export async function sendClaimDecision(params: ClaimDecisionParams) {
       </p>`;
 
   const subject = params.approved
-    ? `Votre fiche ${params.garageName} est activée — Garago`
-    : `Demande de réclamation refusée — Garago`;
+    ? `Votre fiche ${params.garageName} est activée | Garago`
+    : `Demande de réclamation refusée | Garago`;
 
   await send(params.requesterEmail, subject, body);
 }
@@ -1131,7 +1131,7 @@ export async function sendConfirmationRequest(params: ConfirmationRequestParams)
 
   await send(
     params.to,
-    `${nudge ? "Dernier rappel — confirmez" : "Confirmez"} votre rendez-vous — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
+    `${nudge ? "Dernier rappel : confirmez" : "Confirmez"} votre rendez-vous : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
   );
 }
@@ -1159,7 +1159,7 @@ export async function sendSlotReleased(params: SlotReleasedParams) {
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Votre créneau a été libéré — ${params.garageName}`, body);
+  await send(params.to, `Votre créneau a été libéré : ${params.garageName}`, body);
 }
 
 export interface ArrivalReminderParams extends AppointmentDetails {
@@ -1184,7 +1184,7 @@ export async function sendArrivalReminder(params: ArrivalReminderParams) {
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Vous arrivez ? — ${params.garageName} à ${params.startTime}`, body);
+  await send(params.to, `Vous arrivez ? ${params.garageName} à ${params.startTime}`, body);
 }
 
 export interface GarageSlotReleasedParams {
@@ -1214,7 +1214,7 @@ export async function sendGarageSlotReleased(params: GarageSlotReleasedParams) {
     ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
-  await send(params.to, `Créneau libéré — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  await send(params.to, `Créneau libéré : ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }
 
 // ─── Rendez-vous saisis par le garage : confirmation demandée au client ───────
@@ -1273,8 +1273,8 @@ export async function sendManualConfirmationRequest(params: ManualConfirmationRe
   await send(
     params.to,
     en
-      ? `Please confirm your appointment — ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
-      : `Confirmez votre rendez-vous — ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
+      ? `Please confirm your appointment: ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+      : `Confirmez votre rendez-vous : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
     params.garageName,
   );
@@ -1315,5 +1315,5 @@ export async function sendGarageNoResponse(params: GarageNoResponseParams) {
     ${primaryBtn(`${BASE_URL}/tableau-de-bord/garage#agenda`, "Ouvrir mon agenda")}
   `;
 
-  await send(params.to, `À appeler — ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  await send(params.to, `À appeler : ${params.customerName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
 }

@@ -115,7 +115,7 @@ export default function VehicleSelector({
         className="w-full py-3 font-bold text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition text-sm"
         style={{ backgroundColor: isReady ? "#f97316" : "#94a3b8" }}
       >
-        {isReady ? `Trouver un garage — ${make} ${model}` : "Sélectionnez votre véhicule"}
+        {isReady ? `Trouver un garage pour ${make} ${model}` : "Sélectionnez votre véhicule"}
       </button>
 
       {isReady && (

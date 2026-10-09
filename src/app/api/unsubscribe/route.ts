@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 function page(body: string, status = 200) {
   return new NextResponse(
     `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-      <title>Désabonnement — Garago</title>
+      <title>Désabonnement | Garago</title>
       <style>body{font-family:system-ui,sans-serif;max-width:480px;margin:60px auto;padding:0 20px;color:#0b1f3a}
       button{background:#0b1f3a;color:#fff;border:0;border-radius:6px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer}
       p{line-height:1.6}</style></head><body>${body}</body></html>`,

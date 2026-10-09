@@ -215,7 +215,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     const gcalEnd = gcalDate.replace(/-/g, "") + "T" + String(Math.floor(endMin / 60)).padStart(2, "0") + String(endMin % 60).padStart(2, "0") + "00";
     const location = [garageAddress, garageCity].filter(Boolean).join(", ");
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-      `&text=${encodeURIComponent(`RDV ${garageName}${service ? ` — ${service}` : ""}`)}` +
+      `&text=${encodeURIComponent(`RDV ${garageName}${service ? ` · ${service}` : ""}`)}` +
       `&dates=${gcalStart}/${gcalEnd}` +
       `&details=${encodeURIComponent(`Rendez-vous chez ${garageName}${service ? `\nService : ${service}` : ""}`)}` +
       `&location=${encodeURIComponent(location)}`;
