@@ -21,7 +21,7 @@ const COPY = {
     h1b: "pris au téléphone.",
     lead: "Vos clients réservent eux-mêmes en ligne, selon vos heures d'ouverture et la durée de chaque service. Chaque rendez-vous arrive dans votre tableau de bord.",
     cta: "Essayer 30 jours gratuitement",
-    seeSteps: "Voir les étapes ↓",
+    seeSteps: "Voir les étapes",
     fine: "Carte requise · aucun prélèvement avant 30 jours",
     phone: {
       aria: "Calendrier du garage, exemple",
@@ -37,7 +37,7 @@ const COPY = {
     featuresTitle: "Un calendrier qui s'adapte à votre atelier",
     f1: { t: "Chaque service a sa durée.", p: "Vous réglez le temps de chaque prestation. Garago bloque exactement cette durée dans votre calendrier." },
     f2: { t: "Plusieurs véhicules en même temps.", p: "Indiquez combien de postes compte votre garage. Un créneau n'est complet que lorsque tous sont occupés." },
-    f3: { t: "Vous savez qui arrive.", p: "Chaque réservation arrive confirmée, avec le véhicule, le service et le mot du client." },
+    f3: { t: "Moins de rendez-vous manqués.", p: "Deux jours avant, le client reçoit un texto ou un courriel pour confirmer ou annuler. S'il annule, vous le savez tout de suite et le créneau se libère. S'il ne répond pas, il apparaît dans votre liste « à appeler »." },
     dash: {
       title: "Services", sub: "Cochez les services que vous offrez", save: "Enregistrer",
       oil: "Vidange d'huile", brakes: "Freins", duration: "Durée", h: "h", min: "min",
@@ -99,7 +99,7 @@ const COPY = {
     h1b: "appointments by phone.",
     lead: "Your customers book online themselves, within your opening hours and the real length of each service. Every appointment lands in your dashboard.",
     cta: "Try it free for 30 days",
-    seeSteps: "See the steps ↓",
+    seeSteps: "See the steps",
     fine: "Card required · no charge for 30 days",
     phone: {
       aria: "Garage calendar, example",
@@ -115,7 +115,7 @@ const COPY = {
     featuresTitle: "A calendar that fits your shop",
     f1: { t: "Every service has its own length.", p: "You set the time each service takes. Garago blocks exactly that long in your calendar." },
     f2: { t: "Several vehicles at once.", p: "Tell us how many bays your garage has. A slot is only full when every bay is busy." },
-    f3: { t: "You know who's coming.", p: "Every booking arrives confirmed, with the vehicle, the service and the customer's note." },
+    f3: { t: "Fewer missed appointments.", p: "Two days before, the customer gets a text or an email to confirm or cancel. If they cancel, you know right away and the slot opens up. If they don't answer, they show up in your “to call” list." },
     dash: {
       title: "Services", sub: "Tick the services you offer", save: "Save",
       oil: "Oil change", brakes: "Brakes", duration: "Duration", h: "h", min: "min",

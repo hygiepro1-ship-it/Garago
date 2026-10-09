@@ -127,7 +127,7 @@ const EMPTY_FORM = {
 };
 
 export default function GarageAgenda({
-  appointments, services, availability, capacity, blocked, lang, onReload,
+  appointments, services, availability, capacity, blocked, lang, onReload, updatedAt,
 }: {
   appointments: AgendaAppointment[];
   services: AgendaService[];
@@ -137,6 +137,8 @@ export default function GarageAgenda({
   lang: string;
   /** Recharge les rendez-vous du tableau de bord après chaque changement. */
   onReload: () => Promise<void> | void;
+  /** Heure du dernier chargement réussi (le tableau de bord se recharge tout seul). */
+  updatedAt?: Date | null;
 }) {
   const today = toDateStr(new Date());
   const [weekStart, setWeekStart] = useState(mondayOf(today));
@@ -265,6 +267,11 @@ export default function GarageAgenda({
             className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">Aujourd&apos;hui</button>
         </div>
         <div className="flex items-center gap-3">
+          {updatedAt && (
+            <span className="text-xs text-gray-500" title="Le calendrier se met à jour tout seul toutes les 30 secondes">
+              Mis à jour à {updatedAt.toLocaleTimeString("fr-CA", { hour: "numeric", minute: "2-digit" })}
+            </span>
+          )}
           <a href={exportHref} className="text-xs font-semibold underline text-gray-600 inline-flex items-center min-h-[44px] sm:min-h-0" title="Télécharger tous vos rendez-vous dans un fichier Excel">Exporter (Excel)</a>
           <button type="button" onClick={() => openForm(view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0], "09:00")}
             className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#f97316" }}>
