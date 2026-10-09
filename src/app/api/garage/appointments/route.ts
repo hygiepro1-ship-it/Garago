@@ -74,7 +74,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Les textos ne partent que vers un numéro canadien à 10 chiffres. Choisissez le courriel, ou corrigez le numéro." }, { status: 400 });
     }
     // Chaque texto est facturé à Garago : plafond par garage et par numéro destinataire (compte piraté, saisie en rafale).
-    if (await isRateLimited(`smsg:${garage.id}`, 60, 24 * 60 * 60 * 1000)) {
+    // 200 par jour : un garage qui reporte d'un coup tout son carnet de rendez-vous (début de saison
+    // des pneus) ne doit pas être bloqué en cours de saisie.
+    if (await isRateLimited(`smsg:${garage.id}`, 200, 24 * 60 * 60 * 1000)) {
       return NextResponse.json({ error: "Limite de textos atteinte pour aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
     }
     if (await isRateLimited(`smsn:${e164}`, 3, 24 * 60 * 60 * 1000)) {
