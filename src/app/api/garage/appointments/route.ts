@@ -9,6 +9,7 @@ import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } fr
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { toE164 } from "@/lib/sms";
 import { rememberCustomer } from "@/lib/customers";
+import { formatPhone, isFormattedPhone } from "@/lib/contact-format";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
   if (typeof date !== "string" || typeof startTime !== "string"
       || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
     return NextResponse.json({ error: "Date ou heure invalide" }, { status: 400 });
+  }
+  // Un seul format de téléphone dans l'agenda et le carnet de clients : (514) 555-0123.
+  const phone = formatPhone(String(customerPhone));
+  if (!isFormattedPhone(phone)) {
+    return NextResponse.json({ error: "Entrez un numéro de téléphone à 10 chiffres, par exemple (514) 555-0123." }, { status: 400 });
   }
   if (customerEmail && !isValidEmail(customerEmail)) {
     return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
@@ -119,7 +125,7 @@ export async function POST(req: NextRequest) {
   // prochaine visite. Un souci de carnet ne doit jamais empêcher de prendre le rendez-vous.
   const customerId = await rememberCustomer(
     garage.id,
-    { name: customerName, phone: customerPhone, email: customerEmail, language, contactChannel },
+    { name: customerName, phone, email: customerEmail, language, contactChannel },
     typeof body.customerId === "string" && body.customerId ? body.customerId : null,
   ).catch((e) => { console.error("[CUSTOMER]", e); return null; });
 
@@ -129,7 +135,7 @@ export async function POST(req: NextRequest) {
       userId: null,
       customerId,
       customerName: cleanText(customerName, 80),
-      customerPhone: cleanText(customerPhone, 30),
+      customerPhone: phone,
       customerEmail: customerEmail ? String(customerEmail).toLowerCase() : null,
       vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
       vehicleMake:  cleanText(vehicleMake, 60)  || null,
