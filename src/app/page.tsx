@@ -229,9 +229,9 @@ export default function HomePage() {
                 { label: h.modelLabel, value: model, setter: setModel, opts: models.map(m => ({ v: m, l: m })), disabled: !make },
               ].map((f, i) => (
                 <div key={f.label} className={`flex flex-col px-2 py-1.5 sm:px-4 sm:py-3 ${i < 2 ? "border-r border-gray-100" : ""}`}>
-                  <label className="font-black truncate" style={{ color: "#94a3b8", fontSize: "9px" }}>{f.label}</label>
+                  <label className="font-black truncate" style={{ color: "#64748b", fontSize: "11px" }}>{f.label}</label>
                   <select
-                    className="w-full border-0 bg-transparent py-0.5 sm:py-1 text-xs sm:text-sm focus:outline-none text-gray-800"
+                    className="w-full border-0 bg-transparent py-1.5 sm:py-1 text-base sm:text-sm focus:outline-none text-gray-800"
                     value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
                     disabled={(f as any).disabled}>
@@ -256,7 +256,7 @@ export default function HomePage() {
                 <input type="text" value={location} onChange={(e) => handlePostalInput(e.target.value)}
                   placeholder={h.cityPlaceholder} aria-label={h.cityLabel} autoComplete="postal-code"
                   inputMode="text" maxLength={7} aria-invalid={!!postalError}
-                  className="block w-full text-sm focus:outline-none bg-transparent text-gray-800"
+                  className="block w-full text-base sm:text-sm focus:outline-none bg-transparent text-gray-800"
                   style={{ color: "#374151" }} />
               </div>
               <div className="pr-2 py-2">

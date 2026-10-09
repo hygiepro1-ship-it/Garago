@@ -24,8 +24,9 @@ export interface WeekAvailability { dayOfWeek: number; openTime: string; closeTi
 export interface WeekBlock { date: string; startTime?: string | null; endTime?: string | null; allDay?: boolean }
 
 const STEP = 30;     // minutes par ligne
-// Heures déjà passées : fines hachures, pour les distinguer d'un simple « complet »
-// sans masquer les anciens rendez-vous posés dessus.
+// Journées déjà passées : fines hachures, pour les distinguer d'un simple « complet »
+// sans masquer les anciens rendez-vous posés dessus. La journée en cours n'est
+// jamais hachurée, même pour ses heures déjà écoulées.
 const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
@@ -221,7 +222,7 @@ export default function AgendaWeekView({
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (
                     <div key={m} aria-hidden="true"
-                      style={{ height: ROW_H, background: !open || isBlocked ? "#f1f5f9" : past ? PAST_HATCH : "#fff", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
+                      style={{ height: ROW_H, background: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
                   );
                 })}
 
