@@ -136,6 +136,41 @@ export interface CustomerMatch {
   vehicles: { year: number | null; make: string | null; model: string | null }[];
 }
 
+// Ce qu'on lit d'un client pour l'afficher : ses derniers rendez-vous donnent ses véhicules et sa dernière visite.
+const MATCH_INCLUDE = {
+  _count: { select: { appointments: true } },
+  appointments: {
+    where: { status: { not: "CANCELLED" } },
+    orderBy: [{ date: "desc" as const }, { startTime: "desc" as const }],
+    take: 12,
+    select: { date: true, serviceName: true, vehicleYear: true, vehicleMake: true, vehicleModel: true },
+  },
+};
+
+function toMatch(c: {
+  id: string; name: string; phone: string; email: string | null; language: string; contactChannel: string | null;
+  _count: { appointments: number };
+  appointments: { date: string; serviceName: string | null; vehicleYear: number | null; vehicleMake: string | null; vehicleModel: string | null }[];
+}): CustomerMatch {
+  const seen = new Set<string>();
+  const vehicles: CustomerMatch["vehicles"] = [];
+  for (const a of c.appointments) {
+    if (!a.vehicleMake && !a.vehicleModel) continue;
+    const key = `${a.vehicleYear ?? ""}|${a.vehicleMake ?? ""}|${a.vehicleModel ?? ""}`.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    vehicles.push({ year: a.vehicleYear, make: a.vehicleMake, model: a.vehicleModel });
+  }
+  return {
+    id: c.id, name: c.name, phone: c.phone, email: c.email,
+    language: c.language, contactChannel: c.contactChannel,
+    visits: c._count.appointments,
+    lastDate: c.appointments[0]?.date ?? null,
+    lastService: c.appointments[0]?.serviceName ?? null,
+    vehicles,
+  };
+}
+
 /** Clients du garage dont le nom (ou le téléphone) contient ce que le garage est en train de taper. */
 export async function searchCustomers(garageId: string, query: string, limit = 6): Promise<CustomerMatch[]> {
   const nk = nameKey(query);
@@ -149,15 +184,7 @@ export async function searchCustomers(garageId: string, query: string, limit = 6
     },
     orderBy: { updatedAt: "desc" },
     take: 30,
-    include: {
-      _count: { select: { appointments: true } },
-      appointments: {
-        where: { status: { not: "CANCELLED" } },
-        orderBy: [{ date: "desc" }, { startTime: "desc" }],
-        take: 12,
-        select: { date: true, serviceName: true, vehicleYear: true, vehicleMake: true, vehicleModel: true },
-      },
-    },
+    include: MATCH_INCLUDE,
   });
 
   // Les noms qui commencent par ce qui est tapé (le prénom) passent devant.
@@ -165,23 +192,58 @@ export async function searchCustomers(garageId: string, query: string, limit = 6
   return customers
     .sort((a, b) => rank(a.nameKey) - rank(b.nameKey))
     .slice(0, limit)
-    .map((c) => {
-      const seen = new Set<string>();
-      const vehicles: CustomerMatch["vehicles"] = [];
-      for (const a of c.appointments) {
-        if (!a.vehicleMake && !a.vehicleModel) continue;
-        const key = `${a.vehicleYear ?? ""}|${a.vehicleMake ?? ""}|${a.vehicleModel ?? ""}`.toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        vehicles.push({ year: a.vehicleYear, make: a.vehicleMake, model: a.vehicleModel });
-      }
-      return {
-        id: c.id, name: c.name, phone: c.phone, email: c.email,
-        language: c.language, contactChannel: c.contactChannel,
-        visits: c._count.appointments,
-        lastDate: c.appointments[0]?.date ?? null,
-        lastService: c.appointments[0]?.serviceName ?? null,
-        vehicles,
-      };
-    });
+    .map(toMatch);
+}
+
+export interface CustomerPage { customers: CustomerMatch[]; total: number; page: number; pageSize: number }
+
+/** Page du carnet de clients d'un garage, par ordre alphabétique, filtrée par nom, téléphone ou courriel. */
+export async function listCustomers(garageId: string, query: string, page: number, pageSize = 25): Promise<CustomerPage> {
+  const nk = nameKey(query);
+  const digits = query.replace(/\D/g, "");
+  const where = {
+    garageId,
+    ...(nk.length > 0 ? {
+      OR: [
+        { nameKey: { contains: nk } },
+        { email: { contains: query.trim().toLowerCase() } },
+        ...(digits.length >= 3 ? [{ phoneKey: { contains: digits } }] : []),
+      ],
+    } : {}),
+  };
+  const total = await prisma.customer.count({ where });
+  const current = Math.min(Math.max(1, Math.floor(page) || 1), Math.max(1, Math.ceil(total / pageSize)));
+  const customers = await prisma.customer.findMany({
+    where,
+    orderBy: [{ nameKey: "asc" }, { id: "asc" }],
+    skip: (current - 1) * pageSize,
+    take: pageSize,
+    include: MATCH_INCLUDE,
+  });
+  return { customers: customers.map(toMatch), total, page: current, pageSize };
+}
+
+export interface CustomerEdit { name: string; phone: string; email: string | null; language: string; contactChannel: "SMS" | "EMAIL" | "NONE" }
+
+/**
+ * Corrige la fiche d'un client depuis le carnet. Ses rendez-vous à venir suivent (nom, téléphone,
+ * courriel, langue), pour que la demande de confirmation parte aux bonnes coordonnées ; les
+ * rendez-vous passés gardent ce qui avait été saisi. Retourne false si la fiche n'est pas à ce
+ * garage ; lève l'erreur Prisma P2002 si une autre fiche porte déjà ce nom et ce numéro.
+ */
+export async function updateCustomer(garageId: string, customerId: string, edit: CustomerEdit, today: string): Promise<boolean> {
+  const fields = {
+    name: edit.name, nameKey: nameKey(edit.name),
+    phone: edit.phone, phoneKey: phoneKey(edit.phone),
+    email: edit.email,
+    language: edit.language === "en" ? "en" : "fr",
+    contactChannel: edit.contactChannel,
+  };
+  const updated = await prisma.customer.updateMany({ where: { id: customerId, garageId }, data: fields });
+  if (updated.count === 0) return false;
+  await prisma.appointment.updateMany({
+    where: { customerId, garageId, date: { gte: today }, status: { in: ["PENDING", "CONFIRMED"] } },
+    data: { customerName: fields.name, customerPhone: fields.phone, customerEmail: fields.email, language: fields.language },
+  });
+  return true;
 }
