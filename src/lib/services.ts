@@ -2,6 +2,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "oil",
     name: "Vidange d'huile",
+    nameEn: "Oil change",
+    descriptionEn: "Engine oil and filter change",
     icon: "🛢️",
     iconPath: "/icons/oil.png",
     description: "Changement d'huile moteur et filtre",
@@ -9,6 +11,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "tires-winter",
     name: "Pneus d'hiver",
+    nameEn: "Winter tires",
+    descriptionEn: "Winter tire installation, storage and sales",
     icon: "❄️",
     iconPath: "/icons/tires-winter.png",
     description: "Installation, entreposage et vente de pneus d'hiver",
@@ -16,6 +20,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "tires-summer",
     name: "Pneus d'été / toutes saisons",
+    nameEn: "Summer / all-season tires",
+    descriptionEn: "Summer and all-season tire installation and sales",
     icon: "☀️",
     iconPath: "/icons/tires-summer.png",
     description: "Installation et vente de pneus d'été et toutes saisons",
@@ -23,6 +29,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "brakes",
     name: "Freins",
+    nameEn: "Brakes",
+    descriptionEn: "Brake inspection, repair and replacement",
     icon: "🔴",
     iconPath: "/icons/brakes.png",
     description: "Inspection, réparation et remplacement des freins",
@@ -30,6 +38,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "ac",
     name: "Climatisation",
+    nameEn: "Air conditioning",
+    descriptionEn: "A/C recharge, repair and maintenance",
     icon: "💨",
     iconPath: "/icons/ac.png",
     description: "Recharge, réparation et entretien de l'air climatisé",
@@ -37,6 +47,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "engine",
     name: "Mécanique générale",
+    nameEn: "General mechanics",
+    descriptionEn: "Engine repairs, timing belt and more",
     icon: "🔧",
     iconPath: "/icons/engine.png",
     description: "Réparations moteur, courroie de distribution, etc.",
@@ -44,6 +56,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "inspection",
     name: "Inspection mécanique",
+    nameEn: "Mechanical inspection",
+    descriptionEn: "Pre-purchase and general inspection",
     icon: "🔍",
     iconPath: "/icons/inspection.png",
     description: "Inspection pré-achat et inspection générale",
@@ -51,6 +65,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "battery",
     name: "Batterie",
+    nameEn: "Battery",
+    descriptionEn: "Battery testing, replacement and charging",
     icon: "🔋",
     iconPath: "/icons/battery.png",
     description: "Test, remplacement et chargement de batterie",
@@ -58,6 +74,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "transmission",
     name: "Transmission",
+    nameEn: "Transmission",
+    descriptionEn: "Gearbox repair and maintenance",
     icon: "⚙️",
     iconPath: "/icons/transmission.png",
     description: "Réparation et entretien de la boîte de vitesses",
@@ -65,6 +83,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "bodywork",
     name: "Carrosserie",
+    nameEn: "Body work",
+    descriptionEn: "Dent removal, paint and body repair",
     icon: "🚗",
     iconPath: "/icons/bodywork.png",
     description: "Débosselage, peinture et réparation carrosserie",
@@ -72,6 +92,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "alignment",
     name: "Alignement",
+    nameEn: "Alignment",
+    descriptionEn: "Wheel alignment and geometry",
     icon: "📐",
     iconPath: "/icons/alignment.png",
     description: "Alignement des roues et géométrie",
@@ -79,6 +101,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "suspension",
     name: "Suspension & direction",
+    nameEn: "Suspension & steering",
+    descriptionEn: "Shocks, springs and steering",
     icon: "🌀",
     iconPath: "/icons/suspension.png",
     description: "Amortisseurs, ressorts et direction",
@@ -86,6 +110,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "electrical",
     name: "Électrique / Électronique",
+    nameEn: "Electrical / Electronics",
+    descriptionEn: "Electronic diagnostics, alternator, starter",
     icon: "⚡",
     iconPath: "/icons/electrical.png",
     description: "Diagnostic électronique, alternateur, démarreur",
@@ -93,6 +119,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "exhaust",
     name: "Système d'échappement",
+    nameEn: "Exhaust system",
+    descriptionEn: "Exhaust repair and replacement",
     icon: "💨",
     iconPath: "/icons/exhaust.png",
     description: "Réparation et remplacement de l'échappement",
@@ -100,6 +128,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "cooling",
     name: "Système de refroidissement",
+    nameEn: "Cooling system",
+    descriptionEn: "Radiator, thermostat and coolant",
     icon: "🌡️",
     iconPath: "/icons/cooling.png",
     description: "Radiateur, thermostat et liquide de refroidissement",
@@ -107,6 +137,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "detailing",
     name: "Détailing & lavage",
+    nameEn: "Detailing & wash",
+    descriptionEn: "Interior and exterior cleaning, polish, ceramic coating",
     icon: "✨",
     iconPath: "/icons/detailing.png",
     description: "Nettoyage intérieur/extérieur, polish, céramique",
@@ -114,6 +146,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "ev",
     name: "Véhicule électrique (VE)",
+    nameEn: "Electric vehicle (EV)",
+    descriptionEn: "Specialized electric vehicle maintenance and repair",
     icon: "🔌",
     iconPath: "/icons/ev.png",
     description: "Entretien et réparation spécialisés véhicules électriques",
@@ -121,6 +155,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "glass",
     name: "Vitres & pare-brise",
+    nameEn: "Windows & windshield",
+    descriptionEn: "Glass replacement and repair",
     icon: "🪟",
     iconPath: "/icons/glass.png",
     description: "Remplacement et réparation de vitres",
@@ -128,6 +164,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "timing",
     name: "Courroie de distribution",
+    nameEn: "Timing belt",
+    descriptionEn: "Timing belt or chain replacement",
     icon: "🔩",
     iconPath: "/icons/timing.png",
     description: "Remplacement courroie ou chaîne de distribution",
@@ -135,6 +173,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "clutch",
     name: "Embrayage",
+    nameEn: "Clutch",
+    descriptionEn: "Clutch and manual gearbox replacement",
     icon: "🔄",
     iconPath: "/icons/clutch.png",
     description: "Remplacement d'embrayage et boîte manuelle",
@@ -142,6 +182,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "preventive",
     name: "Entretien préventif",
+    nameEn: "Preventive maintenance",
+    descriptionEn: "30,000 km, 60,000 km and 100,000 km service",
     icon: "📋",
     iconPath: "/icons/preventive.png",
     description: "Révision 30 000 km, 60 000 km, 100 000 km",
@@ -149,6 +191,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "bearing",
     name: "Roulements de roue",
+    nameEn: "Wheel bearings",
+    descriptionEn: "Bearing and hub replacement",
     icon: "⭕",
     iconPath: "/icons/bearing.png",
     description: "Remplacement de roulements et moyeux",
@@ -156,6 +200,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "fuel",
     name: "Système de carburant",
+    nameEn: "Fuel system",
+    descriptionEn: "Injector cleaning, fuel pump, filter",
     icon: "⛽",
     iconPath: "/icons/fuel.png",
     description: "Nettoyage injecteurs, pompe à carburant, filtre",
@@ -163,6 +209,8 @@ export const SERVICE_CATEGORIES = [
   {
     id: "rust",
     name: "Protection contre la rouille",
+    nameEn: "Rust protection",
+    descriptionEn: "Rustproofing and body protection",
     icon: "🛡️",
     iconPath: "/icons/rust.png",
     description: "Traitement antirouille et protection de carrosserie",
@@ -170,11 +218,33 @@ export const SERVICE_CATEGORIES = [
   {
     id: "diagnostic",
     name: "Diagnostic",
+    nameEn: "Diagnostic",
+    descriptionEn: "Error code reading, electronic and mechanical diagnostics",
     icon: "🖥️",
     iconPath: "/icons/diagnostic.png",
     description: "Lecture de codes d'erreur, diagnostic électronique et mécanique",
   },
 ];
+
+type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+/** Nom d'un service dans la langue du visiteur. */
+export const serviceLabel = (cat: ServiceCategory, lang: string) => (lang === "en" ? cat.nameEn : cat.name);
+/** Description d'un service dans la langue du visiteur. */
+export const serviceDescription = (cat: ServiceCategory, lang: string) => (lang === "en" ? cat.descriptionEn : cat.description);
+
+const EN_BY_NAME = new Map<string, string>(SERVICE_CATEGORIES.map((c) => [c.name.toLowerCase(), c.nameEn]));
+
+/**
+ * Traduit un nom de service enregistré en français (catégorie d'un garage, service d'un
+ * rendez-vous, y compris « Freins + Alignement ») vers la langue du visiteur. Un service
+ * tapé librement par un garage, inconnu de la liste, reste tel quel.
+ */
+export function translateServiceName(name: string | null | undefined, lang: string): string {
+  if (!name) return "";
+  if (lang !== "en") return name;
+  return name.split(/( \+ |, )/).map((part) => EN_BY_NAME.get(part.trim().toLowerCase()) ?? part).join("");
+}
 
 export const QUEBEC_CITIES = [
   "Montréal",

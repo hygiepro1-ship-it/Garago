@@ -13,7 +13,7 @@ function newCaptcha() {
 }
 
 export default function SuggestionsPage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const s = t.suggestions;
   const { data: session } = useSession();
 
@@ -118,7 +118,7 @@ export default function SuggestionsPage() {
 
             {/* Honeypot — hidden from real users, visible to bots */}
             <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
-              <label>Ne remplissez pas ce champ</label>
+              <label>{lang === "en" ? "Leave this field empty" : "Ne remplissez pas ce champ"}</label>
               <input
                 type="text"
                 name="website"
@@ -179,7 +179,7 @@ export default function SuggestionsPage() {
             {/* Math captcha */}
             <div className="border-t border-gray-100 pt-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Vérification anti-robot <span style={{ color: "#f97316" }}>*</span>
+                {lang === "en" ? "Anti-robot check" : "Vérification anti-robot"} <span style={{ color: "#f97316" }}>*</span>
               </label>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 font-mono font-bold text-gray-900 text-lg select-none flex-shrink-0">

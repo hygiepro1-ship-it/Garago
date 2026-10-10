@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
+import L from "@/components/L";
 
 export default function Footer() {
   const { t } = useLang();
@@ -124,7 +125,7 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>
             <Link href="/confidentialite" className="hover:text-white transition-colors">{f.privacy}</Link>
             <Link href="/conditions" className="hover:text-white transition-colors">{f.terms}</Link>
-            <Link href="/a-propos" className="hover:text-white transition-colors">À propos</Link>
+            <Link href="/a-propos" className="hover:text-white transition-colors"><L fr="À propos" en="About" /></Link>
             <Link href="/faq" className="hover:text-white transition-colors">{f.faq}</Link>
             <Link href="/garagistes" className="hover:text-white transition-colors">{f.pricing}</Link>
             <Link href="/suggestions" className="hover:text-white transition-colors flex items-center gap-1">

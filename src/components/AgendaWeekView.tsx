@@ -110,15 +110,17 @@ export default function AgendaWeekView({
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const locale = lang === "fr" ? "fr-CA" : "en-CA";
+  // Texte dans la langue du tableau de bord (et de la démonstration sur la page des garages).
+  const tr = (fr: string, en: string) => (lang === "en" ? en : fr);
 
   // Étiquette en mots (jamais la couleur seule) pour la liste du téléphone
   const stateLabel = (a: WeekAppointment) =>
-    a.status === "NO_SHOW" ? "Client absent"
-    : a.status === "COMPLETED" ? "Terminé"
-    : a.confirmationStatus === "NO_RESPONSE" ? "À appeler"
-    : a.confirmationStatus === "CONFIRMED" ? "Confirmé"
-    : a.confirmationStatus === "AWAITING" || a.confirmationStatus === "SCHEDULED" ? "À confirmer"
-    : a.status === "PENDING" ? "En attente" : "Prévu";
+    a.status === "NO_SHOW" ? tr("Client absent", "No-show")
+    : a.status === "COMPLETED" ? tr("Terminé", "Done")
+    : a.confirmationStatus === "NO_RESPONSE" ? tr("À appeler", "To call")
+    : a.confirmationStatus === "CONFIRMED" ? tr("Confirmé", "Confirmed")
+    : a.confirmationStatus === "AWAITING" || a.confirmationStatus === "SCHEDULED" ? tr("À confirmer", "To confirm")
+    : a.status === "PENDING" ? tr("En attente", "Pending") : tr("Prévu", "Scheduled");
 
   // Téléphone : journées affichées ou masquées. Sans choix du garage, seule la journée en cours
   // est ouverte (ou le premier jour ouvert, pour une autre semaine).
@@ -148,10 +150,10 @@ export default function AgendaWeekView({
           des pages de rendez-vous ; seule la journée en cours est ouverte au départ. */}
       <div className="sm:hidden divide-y divide-gray-100">
         <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-          <p className="text-xs text-gray-500">Touchez une journée pour l&apos;afficher ou la masquer.</p>
+          <p className="text-xs text-gray-500">{tr("Touchez une journée pour l'afficher ou la masquer.", "Tap a day to show or hide it.")}</p>
           <button type="button" onClick={() => setShownDays(Object.fromEntries(days.map((d) => [d, !allShown])))}
             className="shrink-0 min-h-[44px] px-2 text-xs font-bold underline text-gray-700" style={{ touchAction: "manipulation" }}>
-            {allShown ? "Tout masquer" : "Tout afficher"}
+            {allShown ? tr("Tout masquer", "Hide all") : tr("Tout afficher", "Show all")}
           </button>
         </div>
         {days.map((d) => {
@@ -171,11 +173,11 @@ export default function AgendaWeekView({
                   <span className="min-w-0">
                     <span className="block text-sm font-black capitalize" style={{ color: closed ? "#94a3b8" : "#0b1f3a" }}>
                       {dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
-                      {d === todayStr && <span className="ml-2 text-[11px] font-bold" style={{ color: "#c2410c" }}>Aujourd&apos;hui</span>}
+                      {d === todayStr && <span className="ml-2 text-[11px] font-bold" style={{ color: "#c2410c" }}>{tr("Aujourd'hui", "Today")}</span>}
                     </span>
                     <span className="block text-xs text-gray-500">
-                      {closed && list.length === 0 ? "Fermé" : list.length === 0 ? "Aucun rendez-vous" : `${list.length} rendez-vous`}
-                      {toCall > 0 && <span className="font-bold" style={{ color: "#b91c1c" }}> · {toCall} à appeler</span>}
+                      {closed && list.length === 0 ? tr("Fermé", "Closed") : list.length === 0 ? tr("Aucun rendez-vous", "No appointments") : tr(`${list.length} rendez-vous`, `${list.length} appointment${list.length > 1 ? "s" : ""}`)}
+                      {toCall > 0 && <span className="font-bold" style={{ color: "#b91c1c" }}> · {toCall} {tr("à appeler", "to call")}</span>}
                     </span>
                   </span>
                 </button>
@@ -183,7 +185,7 @@ export default function AgendaWeekView({
                   <button type="button" onClick={() => onPickSlot(d, firstFree(d))}
                     className="shrink-0 min-h-[44px] px-3 rounded-lg text-sm font-bold border border-gray-300 bg-white text-gray-800"
                     style={{ touchAction: "manipulation" }}>
-                    + Rendez-vous
+                    + {tr("Rendez-vous", "Appointment")}
                   </button>
                 )}
               </div>
@@ -221,13 +223,13 @@ export default function AgendaWeekView({
               <>
                 <span className="block text-[11px] font-bold uppercase opacity-70">{dt.toLocaleDateString(locale, { weekday: "short" }).replace(".", "")}</span>
                 <span className="block text-sm font-black leading-tight">{dt.getDate()}</span>
-                {closed && <span className="block text-[10px] font-semibold">Fermé</span>}
+                {closed && <span className="block text-[10px] font-semibold">{tr("Fermé", "Closed")}</span>}
               </>
             );
             return onPickDay ? (
               <button key={d} type="button" onClick={() => onPickDay(d)} style={style}
-                title="Voir cette journée poste par poste"
-                aria-label={`Voir la journée du ${dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}`}
+                title={tr("Voir cette journée poste par poste", "See this day bay by bay")}
+                aria-label={`${tr("Voir la journée du", "See the day of")} ${dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}`}
                 className="py-2 text-center border-l border-gray-100 hover:underline">
                 {content}
               </button>
@@ -271,11 +273,11 @@ export default function AgendaWeekView({
                       past:  { bg: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", text: "#64748b", pip: "#94a3b8" },
                     }[tone];
                     const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
-                    const taken = `${busy} ${busy > 1 ? "postes pris" : "poste pris"} sur ${capacity}`;
+                    const taken = tr(`${busy} ${busy > 1 ? "postes pris" : "poste pris"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
                     return (
                       <button key={m} type="button" onClick={() => (free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
-                        title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · voir la journée`}
-                        aria-label={`${label} : ${taken}${toCall ? ", un client à appeler" : ""}. ${free ? "Ajouter un rendez-vous" : "Voir la journée"}`}
+                        title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · ${tr("voir la journée", "see the day")}`}
+                        aria-label={`${label} : ${taken}${toCall ? tr(", un client à appeler", ", one customer to call") : ""}. ${free ? tr("Ajouter un rendez-vous", "Add an appointment") : tr("Voir la journée", "See the day")}`}
                         className="flex w-full items-center justify-between gap-1 px-1.5 text-[11px] font-bold tabular-nums hover:brightness-95 focus-visible:brightness-95"
                         style={{ height: ROW_H, background: c.bg, color: c.text, borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #ffffff`, touchAction: "manipulation" }}>
                         {capacity <= 10 ? (
@@ -291,14 +293,14 @@ export default function AgendaWeekView({
                         )}
                         <span className="flex items-center gap-1 whitespace-nowrap">
                           {toCall && <i aria-hidden="true" className="block w-1.5 h-1.5 rounded-full" style={{ background: "#dc2626" }} />}
-                          {left <= 0 ? "Complet" : `${busy}/${capacity}`}
+                          {left <= 0 ? tr("Complet", "Full") : `${busy}/${capacity}`}
                         </span>
                       </button>
                     );
                   }
                   return free ? (
                     <button key={m} type="button" onClick={() => onPickSlot(d, toHHMM(m))}
-                      aria-label={`Disponible : ${label}. Ajouter un rendez-vous`}
+                      aria-label={tr(`Disponible : ${label}. Ajouter un rendez-vous`, `Available: ${label}. Add an appointment`)}
                       className="block w-full hover:bg-green-100 focus-visible:bg-green-100"
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (
@@ -342,22 +344,22 @@ export default function AgendaWeekView({
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
         {byLoad ? (
           <>
-            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />De la place</span>
-            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }} />Presque complet</span>
-            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#e8edf3", border: "1px solid #cbd5e1" }} />Complet</span>
-            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-2 h-2 rounded-full" style={{ background: "#dc2626" }} />Client à appeler</span>
-            <span className="hidden sm:inline">Cliquez un jour pour le voir poste par poste.</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />{tr("De la place", "Room left")}</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }} />{tr("Presque complet", "Almost full")}</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#e8edf3", border: "1px solid #cbd5e1" }} />{tr("Complet", "Full")}</span>
+            <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-2 h-2 rounded-full" style={{ background: "#dc2626" }} />{tr("Client à appeler", "Customer to call")}</span>
+            <span className="hidden sm:inline">{tr("Cliquez un jour pour le voir poste par poste.", "Click a day to see it bay by bay.")}</span>
           </>
         ) : (
           <>
-            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
-            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />À confirmer</span>
-            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé</span>
-            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />{tr("Libre", "Free")}</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />{tr("À confirmer", "To confirm")}</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />{tr("Confirmé", "Confirmed")}</span>
+            <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />{tr("À appeler", "To call")}</span>
           </>
         )}
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />Passé</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />{tr("Passé", "Past")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé", "Closed")}</span>
       </div>
     </div>
   );

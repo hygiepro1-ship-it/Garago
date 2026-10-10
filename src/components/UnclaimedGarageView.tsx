@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLang } from "@/contexts/LanguageContext";
 import Turnstile, { turnstileActive } from "@/components/Turnstile";
 
 interface Props {
@@ -24,6 +25,7 @@ const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm f
 // disponibilité, aucun nom personnel. Deux actions : réclamer la fiche, ou
 // signaler un problème.
 export default function UnclaimedGarageView({ garage }: Props) {
+  const en = useLang().lang === "en";
   const [showClaim, setShowClaim] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
@@ -55,8 +57,8 @@ export default function UnclaimedGarageView({ garage }: Props) {
           </svg>
           <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>
             {garage.claimStatus === "en_attente"
-              ? "Une demande de réclamation de cette fiche est en cours de vérification."
-              : "Ce garage ne prend pas encore de rendez-vous en ligne sur Garago"}
+              ? (en ? "A claim request for this listing is being verified." : "Une demande de réclamation de cette fiche est en cours de vérification.")
+              : (en ? "This garage does not take online appointments on Garago yet" : "Ce garage ne prend pas encore de rendez-vous en ligne sur Garago")}
           </p>
         </div>
 
@@ -70,18 +72,18 @@ export default function UnclaimedGarageView({ garage }: Props) {
             <button onClick={() => setShowClaim(true)}
               className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border"
               style={{ borderColor: "#f97316", color: "#f97316" }}>
-              Vous êtes le propriétaire ? Activez votre page
+              {en ? "Are you the owner? Activate your page" : "Vous êtes le propriétaire ? Activez votre page"}
             </button>
           )}
         </div>
 
         <button onClick={() => setShowReport(true)}
           className="mt-6 text-xs text-gray-400 hover:text-gray-600 underline">
-          Signaler un problème / demander le retrait de cette fiche
+          {en ? "Report a problem / ask for this listing to be removed" : "Signaler un problème / demander le retrait de cette fiche"}
         </button>
 
         <p className="mt-8 text-xs text-gray-400">
-          Fiche créée à partir d'informations d'entreprise publiques. <Link href="/garagistes" className="underline hover:text-gray-600">En savoir plus sur Garago pour les garages</Link>.
+          {en ? "Listing created from public business information." : "Fiche créée à partir d'informations d'entreprise publiques."} <Link href="/garagistes" className="underline hover:text-gray-600">{en ? "Learn more about Garago for garages" : "En savoir plus sur Garago pour les garages"}</Link>.
         </p>
       </div>
 
@@ -108,6 +110,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 }
 
 function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+  const en = useLang().lang === "en";
   const [name, setName] = useState("");
   const [role, setRole] = useState("proprietaire");
   const [phone, setPhone] = useState("");
@@ -134,62 +137,62 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
       setDone(true);
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.error ?? "Impossible d'envoyer la demande.");
+      setError(d.error ?? (en ? "The request could not be sent." : "Impossible d'envoyer la demande."));
     }
   }
 
   if (done) {
     return (
-      <Modal title="Demande envoyée" onClose={onClose}>
+      <Modal title={en ? "Request sent" : "Demande envoyée"} onClose={onClose}>
         <div className="p-6 text-center">
           <div className="w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-full" style={{ background: "#ecfdf5" }}>
             <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
           <p className="text-sm text-gray-600">
-            Notre équipe va vérifier votre identité (NEQ et pièce justificative) avant d'activer votre page. Vous serez contacté par courriel.
+            {en ? "Our team will verify your identity (NEQ and supporting document) before activating your page. You will be contacted by email." : "Notre équipe va vérifier votre identité (NEQ et pièce justificative) avant d'activer votre page. Vous serez contacté par courriel."}
           </p>
-          <button onClick={onClose} className="mt-5 text-sm font-semibold text-orange-500 hover:underline">Fermer</button>
+          <button onClick={onClose} className="mt-5 text-sm font-semibold text-orange-500 hover:underline">{en ? "Close" : "Fermer"}</button>
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal title="Activez votre page" onClose={onClose}>
+    <Modal title={en ? "Activate your page" : "Activez votre page"} onClose={onClose}>
       <form onSubmit={submit} className="p-6 space-y-4">
         <p className="text-xs text-gray-500">
-          Une pièce justificative (facture du garage, compte de taxes) vous sera demandée par courriel pour confirmer votre identité.
+          {en ? "A supporting document (a garage invoice or tax bill) will be requested by email to confirm your identity." : "Une pièce justificative (facture du garage, compte de taxes) vous sera demandée par courriel pour confirmer votre identité."}
         </p>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Nom complet *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Full name" : "Nom complet"} *</label>
           <input className={inputCls} required value={name} onChange={e => setName(e.target.value)} placeholder="Jean Tremblay" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Rôle *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Role" : "Rôle"} *</label>
           <select className={inputCls} value={role} onChange={e => setRole(e.target.value)}>
-            <option value="proprietaire">Propriétaire</option>
-            <option value="gerant">Gérant</option>
+            <option value="proprietaire">{en ? "Owner" : "Propriétaire"}</option>
+            <option value="gerant">{en ? "Manager" : "Gérant"}</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Cellulaire *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Cell phone" : "Cellulaire"} *</label>
           <input className={inputCls} required type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="514 555-0100" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Email" : "Courriel"} *</label>
           <input className={inputCls} required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vous@exemple.com" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">NEQ (Numéro d'entreprise du Québec) *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "NEQ (Quebec enterprise number)" : "NEQ (Numéro d'entreprise du Québec)"} *</label>
           <input className={inputCls} required value={neq} onChange={e => setNeq(e.target.value)} placeholder="10 chiffres" maxLength={10}
             pattern="\d{10}" title="10 chiffres" />
-          <p className="text-xs text-gray-400 mt-1">Exigé pour confirmer que vous êtes bien l'entreprise titulaire de ce garage.</p>
+          <p className="text-xs text-gray-400 mt-1">{en ? "Required to confirm that you are the business that owns this garage." : "Exigé pour confirmer que vous êtes bien l'entreprise titulaire de ce garage."}</p>
         </div>
         <Turnstile onToken={setTsToken} resetKey={tsReset} />
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
         <button type="submit" disabled={submitting || (turnstileActive && !tsToken)}
           className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-          {submitting ? "Envoi…" : "Envoyer la demande"}
+          {submitting ? (en ? "Sending…" : "Envoi…") : (en ? "Send the request" : "Envoyer la demande")}
         </button>
       </form>
     </Modal>
@@ -197,6 +200,7 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
 }
 
 function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+  const en = useLang().lang === "en";
   const [reason, setReason] = useState("retrait");
   const [message, setMessage] = useState("");
   const [reporterEmail, setReporterEmail] = useState("");
@@ -217,49 +221,49 @@ function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     if (res.ok) setDone(true);
     else {
       const d = await res.json().catch(() => ({}));
-      setError(d.error ?? "Impossible d'envoyer le signalement.");
+      setError(d.error ?? (en ? "The report could not be sent." : "Impossible d'envoyer le signalement."));
     }
   }
 
   if (done) {
     return (
-      <Modal title="Signalement envoyé" onClose={onClose}>
+      <Modal title={en ? "Report sent" : "Signalement envoyé"} onClose={onClose}>
         <div className="p-6 text-center">
           <p className="text-sm text-gray-600">
             {reason === "retrait"
-              ? "Cette fiche a été masquée en attendant la vérification de votre demande."
-              : "Merci, notre équipe va examiner votre signalement."}
+              ? (en ? "This listing has been hidden while your request is being verified." : "Cette fiche a été masquée en attendant la vérification de votre demande.")
+              : (en ? "Thank you, our team will review your report." : "Merci, notre équipe va examiner votre signalement.")}
           </p>
-          <button onClick={onClose} className="mt-5 text-sm font-semibold text-orange-500 hover:underline">Fermer</button>
+          <button onClick={onClose} className="mt-5 text-sm font-semibold text-orange-500 hover:underline">{en ? "Close" : "Fermer"}</button>
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal title="Signaler un problème" onClose={onClose}>
+    <Modal title={en ? "Report a problem" : "Signaler un problème"} onClose={onClose}>
       <form onSubmit={submit} className="p-6 space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Motif *</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Reason" : "Motif"} *</label>
           <select className={inputCls} value={reason} onChange={e => setReason(e.target.value)}>
-            <option value="retrait">Demander le retrait de cette fiche</option>
-            <option value="usurpation">Usurpation de ce garage</option>
-            <option value="erreur">Information erronée</option>
-            <option value="autre">Autre</option>
+            <option value="retrait">{en ? "Ask for this listing to be removed" : "Demander le retrait de cette fiche"}</option>
+            <option value="usurpation">{en ? "Someone is impersonating this garage" : "Usurpation de ce garage"}</option>
+            <option value="erreur">{en ? "Incorrect information" : "Information erronée"}</option>
+            <option value="autre">{en ? "Other" : "Autre"}</option>
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Message <span className="font-normal text-gray-400">(optionnel)</span></label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Message <span className="font-normal text-gray-400">({en ? "optional" : "optionnel"})</span></label>
           <textarea className={inputCls} rows={3} value={message} onChange={e => setMessage(e.target.value)} maxLength={1000} style={{ resize: "none" }} />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">Votre courriel <span className="font-normal text-gray-400">(optionnel, pour vous répondre)</span></label>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Your email" : "Votre courriel"} <span className="font-normal text-gray-400">({en ? "optional, so we can reply" : "optionnel, pour vous répondre"})</span></label>
           <input className={inputCls} type="email" value={reporterEmail} onChange={e => setReporterEmail(e.target.value)} placeholder="vous@exemple.com" />
         </div>
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
         <button type="submit" disabled={submitting}
           className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#0b1f3a" }}>
-          {submitting ? "Envoi…" : "Envoyer"}
+          {submitting ? (en ? "Sending…" : "Envoi…") : (en ? "Send" : "Envoyer")}
         </button>
       </form>
     </Modal>

@@ -3,6 +3,36 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useLang } from "@/contexts/LanguageContext";
+
+const TX = {
+  fr: {
+    generic: "Une erreur est survenue.", network: "Erreur réseau.",
+    tooShort: "Le mot de passe doit contenir au moins 8 caractères.", mismatch: "Les mots de passe ne correspondent pas.",
+    title: "Mot de passe oublié", titleDone: "Mot de passe réinitialisé",
+    leadEmail: "Entrez votre courriel pour recevoir un code de réinitialisation.",
+    leadReset: (email: string) => `Entrez le code envoyé à ${email} et votre nouveau mot de passe.`,
+    leadDone: "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+    email: "Courriel", sending: "Envoi…", send: "Envoyer le code", back: "Retour à la connexion",
+    code: "Code reçu par courriel", newPassword: "Nouveau mot de passe", min8: "Minimum 8 caractères",
+    confirm: "Confirmer le mot de passe", repeat: "Répétez votre mot de passe",
+    resetting: "Réinitialisation…", reset: "Réinitialiser mon mot de passe",
+    otherEmail: "Utiliser une autre adresse courriel", signIn: "Se connecter",
+  },
+  en: {
+    generic: "Something went wrong.", network: "Network error.",
+    tooShort: "The password must be at least 8 characters long.", mismatch: "The passwords do not match.",
+    title: "Forgot your password", titleDone: "Password reset",
+    leadEmail: "Enter your email to receive a reset code.",
+    leadReset: (email: string) => `Enter the code sent to ${email} and your new password.`,
+    leadDone: "You can now sign in with your new password.",
+    email: "Email", sending: "Sending…", send: "Send the code", back: "Back to sign in",
+    code: "Code received by email", newPassword: "New password", min8: "At least 8 characters",
+    confirm: "Confirm the password", repeat: "Repeat your password",
+    resetting: "Resetting…", reset: "Reset my password",
+    otherEmail: "Use a different email address", signIn: "Sign in",
+  },
+};
 
 function CodeInput({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
@@ -48,6 +78,7 @@ function CodeInput({ value, onChange, disabled }: { value: string; onChange: (v:
 }
 
 export default function MotDePasseOubliePage() {
+  const tx = TX[useLang().lang];
   const [step, setStep] = useState<"email" | "reset" | "done">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -66,18 +97,18 @@ export default function MotDePasseOubliePage() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Une erreur est survenue."); setLoading(false); return; }
+      if (!res.ok) { setError(data.error ?? tx.generic); setLoading(false); return; }
       if (data.devCode) { setCode(data.devCode); }
       setStep("reset");
-    } catch { setError("Erreur réseau."); }
+    } catch { setError(tx.network); }
     finally { setLoading(false); }
   }
 
   async function confirmReset(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (newPassword.length < 8) { setError("Le mot de passe doit contenir au moins 8 caractères."); return; }
-    if (newPassword !== confirmPassword) { setError("Les mots de passe ne correspondent pas."); return; }
+    if (newPassword.length < 8) { setError(tx.tooShort); return; }
+    if (newPassword !== confirmPassword) { setError(tx.mismatch); return; }
 
     setLoading(true);
     try {
@@ -86,9 +117,9 @@ export default function MotDePasseOubliePage() {
         body: JSON.stringify({ email, code, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Une erreur est survenue."); setLoading(false); return; }
+      if (!res.ok) { setError(data.error ?? tx.generic); setLoading(false); return; }
       setStep("done");
-    } catch { setError("Erreur réseau."); }
+    } catch { setError(tx.network); }
     finally { setLoading(false); }
   }
 
@@ -101,12 +132,12 @@ export default function MotDePasseOubliePage() {
             <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-9 w-auto object-contain" />
           </Link>
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>
-            {step === "done" ? "Mot de passe réinitialisé" : "Mot de passe oublié"}
+            {step === "done" ? tx.titleDone : tx.title}
           </h1>
           <p className="text-sm" style={{ color: "#94a3b8" }}>
-            {step === "email" && "Entrez votre courriel pour recevoir un code de réinitialisation."}
-            {step === "reset" && `Entrez le code envoyé à ${email} et votre nouveau mot de passe.`}
-            {step === "done" && "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."}
+            {step === "email" && tx.leadEmail}
+            {step === "reset" && tx.leadReset(email)}
+            {step === "done" && tx.leadDone}
           </p>
         </div>
 
@@ -126,15 +157,15 @@ export default function MotDePasseOubliePage() {
         {step === "email" && (
           <form onSubmit={sendCode} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Courriel</label>
+              <label htmlFor="email" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{tx.email}</label>
               <input id="email" type="email" required className="garago-input" placeholder="vous@exemple.com"
                 value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-base">
-              {loading ? "Envoi…" : "Envoyer le code"}
+              {loading ? tx.sending : tx.send}
             </button>
             <p className="text-center text-sm" style={{ color: "#94a3b8" }}>
-              <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>Retour à la connexion</Link>
+              <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>{tx.back}</Link>
             </p>
           </form>
         )}
@@ -142,34 +173,34 @@ export default function MotDePasseOubliePage() {
         {step === "reset" && (
           <form onSubmit={confirmReset} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold mb-2 text-center" style={{ color: "#0b1f3a" }}>Code reçu par courriel</label>
+              <label className="block text-sm font-bold mb-2 text-center" style={{ color: "#0b1f3a" }}>{tx.code}</label>
               <CodeInput value={code} onChange={setCode} disabled={loading} />
             </div>
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Nouveau mot de passe</label>
+              <label htmlFor="newPassword" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{tx.newPassword}</label>
               <input id="newPassword" type="password" required minLength={8} className="garago-input"
-                placeholder="Minimum 8 caractères"
+                placeholder={tx.min8}
                 value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>Confirmer le mot de passe</label>
+              <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>{tx.confirm}</label>
               <input id="confirmPassword" type="password" required className="garago-input"
-                placeholder="Répétez votre mot de passe"
+                placeholder={tx.repeat}
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
             <button type="submit" disabled={loading || code.length < 6} className="btn-primary w-full py-3 text-base disabled:opacity-50">
-              {loading ? "Réinitialisation…" : "Réinitialiser mon mot de passe"}
+              {loading ? tx.resetting : tx.reset}
             </button>
             <button type="button" onClick={() => { setStep("email"); setCode(""); setError(""); }}
               className="w-full text-center text-sm font-semibold" style={{ color: "#64748b" }}>
-              Utiliser une autre adresse courriel
+              {tx.otherEmail}
             </button>
           </form>
         )}
 
         {step === "done" && (
           <Link href="/connexion" className="btn-primary w-full py-3 text-base flex items-center justify-center">
-            Se connecter
+            {tx.signIn}
           </Link>
         )}
       </div>

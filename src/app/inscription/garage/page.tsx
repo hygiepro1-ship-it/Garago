@@ -153,7 +153,7 @@ const PLANS = [
 
 export default function InscriptionGaragePage() {
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const r = t.register;
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -322,7 +322,7 @@ export default function InscriptionGaragePage() {
     if (!emailVerified) { setError("Veuillez d'abord vérifier votre adresse courriel."); return; }
     if (password !== confirmPwd) { setError(r.pwdMismatch); return; }
     if (!acceptTerms) { setError(r.termsRequired); return; }
-    if (!/^\d{10}$/.test(garageNeq)) { setError("Numéro d'entreprise du Québec (NEQ) invalide : il doit compter 10 chiffres."); return; }
+    if (!/^\d{10}$/.test(garageNeq)) { setError(lang === "en" ? "Invalid Quebec enterprise number (NEQ): it must have 10 digits." : "Numéro d'entreprise du Québec (NEQ) invalide : il doit compter 10 chiffres."); return; }
 
     setLoading(true);
 
@@ -450,7 +450,7 @@ export default function InscriptionGaragePage() {
                 <form onSubmit={handleStep1} className="space-y-4">
                   {/* Honeypot — invisible aux vrais utilisateurs, rempli par les bots */}
                   <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
-                    <label>Ne remplissez pas ce champ</label>
+                    <label>{lang === "en" ? "Leave this field empty" : "Ne remplissez pas ce champ"}</label>
                     <input type="text" name="website" autoComplete="off" tabIndex={-1}
                       value={hp} onChange={(e) => setHp(e.target.value)} />
                   </div>
@@ -489,7 +489,7 @@ export default function InscriptionGaragePage() {
                             <button type="button" onClick={sendCode} disabled={sendingCode || !email}
                               className="px-4 py-2 rounded-xl text-sm font-semibold text-white whitespace-nowrap disabled:opacity-50"
                               style={{ background: "#0b1f3a" }}>
-                              {sendingCode ? "…" : codeSent ? "Renvoyer" : "Vérifier"}
+                              {sendingCode ? "…" : codeSent ? (lang === "en" ? "Resend" : "Renvoyer") : (lang === "en" ? "Verify" : "Vérifier")}
                             </button>
                           )}
                         </div>
@@ -564,13 +564,13 @@ export default function InscriptionGaragePage() {
                             className="mt-0.5 w-4 h-4 flex-shrink-0 rounded"
                             style={{ accentColor: "#f97316" }} />
                           <span className="text-xs text-gray-600">
-                            J'accepte les{" "}
+                            {lang === "en" ? "I accept the" : "J'accepte les"}{" "}
                             <Link href="/conditions" target="_blank" className="underline font-semibold text-orange-500">
-                              conditions d'utilisation
+                              {lang === "en" ? "terms of use" : "conditions d'utilisation"}
                             </Link>{" "}
-                            et la{" "}
+                            {lang === "en" ? "and the" : "et la"}{" "}
                             <Link href="/confidentialite" target="_blank" className="underline font-semibold text-orange-500">
-                              politique de confidentialité
+                              {lang === "en" ? "privacy policy" : "politique de confidentialité"}
                             </Link>{" "}
                             <span className="text-red-500">*</span>
                           </span>
@@ -581,8 +581,8 @@ export default function InscriptionGaragePage() {
                             className="mt-0.5 w-4 h-4 flex-shrink-0 rounded"
                             style={{ accentColor: "#f97316" }} />
                           <span className="text-xs text-gray-500">
-                            J'accepte de recevoir des courriels de Garago (promotions, conseils).{" "}
-                            <span className="text-gray-400">(facultatif)</span>
+                            {lang === "en" ? "I agree to receive emails from Garago (promotions, tips)." : "J'accepte de recevoir des courriels de Garago (promotions, conseils)."}{" "}
+                            <span className="text-gray-400">({lang === "en" ? "optional" : "facultatif"})</span>
                           </span>
                         </label>
                       </div>
@@ -623,13 +623,13 @@ export default function InscriptionGaragePage() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          Numéro d'entreprise du Québec (NEQ) <span className="text-red-500">*</span>
+                          {lang === "en" ? "Quebec enterprise number (NEQ)" : "Numéro d'entreprise du Québec (NEQ)"} <span className="text-red-500">*</span>
                         </label>
                         <input type="text" required inputMode="numeric" maxLength={10} className={inputClass} placeholder="1234567890"
                           value={garageNeq}
                           onChange={(e) => setGarageNeq(e.target.value.replace(/\D/g, "").slice(0, 10))} />
                         <p className="text-xs text-gray-400 mt-1">
-                          Utilisé pour vérifier votre entreprise avant l'activation de votre profil public.
+                          {lang === "en" ? "Used to verify your business before your public profile is activated." : "Utilisé pour vérifier votre entreprise avant l'activation de votre profil public."}
                         </p>
                       </div>
                     </div>
@@ -679,12 +679,12 @@ export default function InscriptionGaragePage() {
                 </div>
                 <div className="space-y-3">
                   {([
-                    { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
-                    { path: "M3 4h18a2 2 0 012 2v13a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2zm0 6h18M8 2v4m8-4v4", text: "Gérez vos horaires et disponibilités en temps réel" },
-                    { path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", text: "Accumulez des avis vérifiés qui construisent votre réputation" },
-                    { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: "Indiquez précisément les services que vous offrez" },
-                    { path: "M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m3 10a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h10a2 2 0 012 2v8z", text: "Indiquez les marques que vous traitez (et celles que vous ne traitez pas)" },
-                    { path: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v6H3z", text: "Tableau de bord centralisé pour tout gérer" },
+                    { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: lang === "en" ? "Visibility with Quebec drivers looking for a garage" : "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
+                    { path: "M3 4h18a2 2 0 012 2v13a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2zm0 6h18M8 2v4m8-4v4", text: lang === "en" ? "Manage your hours and availability in real time" : "Gérez vos horaires et disponibilités en temps réel" },
+                    { path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", text: lang === "en" ? "Collect verified reviews that build your reputation" : "Accumulez des avis vérifiés qui construisent votre réputation" },
+                    { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: lang === "en" ? "List exactly which services you offer" : "Indiquez précisément les services que vous offrez" },
+                    { path: "M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m3 10a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h10a2 2 0 012 2v8z", text: lang === "en" ? "List the makes you work on (and the ones you don't)" : "Indiquez les marques que vous traitez (et celles que vous ne traitez pas)" },
+                    { path: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v6H3z", text: lang === "en" ? "One dashboard to manage everything" : "Tableau de bord centralisé pour tout gérer" },
                   ] as { path: string; text: string }[]).map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
                       <svg className="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -704,7 +704,7 @@ export default function InscriptionGaragePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">"Un client de plus par semaine couvre largement l'abonnement"</p>
+                    <p className="font-bold text-gray-900 text-sm">{lang === "en" ? "\"One more customer a week more than covers the subscription\"" : "\"Un client de plus par semaine couvre largement l'abonnement\""}</p>
                   </div>
                 </div>
                 <p className="text-gray-500 text-xs leading-relaxed">— Patrick G., Garage Auto-Sport, Laval</p>
@@ -714,8 +714,8 @@ export default function InscriptionGaragePage() {
               </div>
 
               <div className="rounded-2xl p-4 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                <p className="font-bold text-green-700 mb-1">✓ Aucun montant prélevé avant 30 jours</p>
-                <p className="text-green-600">Carte requise pour activer l'essai, mais vous ne payez rien avant la fin des 30 jours. Résiliez en 1 clic si ce n'est pas pour vous.</p>
+                <p className="font-bold text-green-700 mb-1">✓ {lang === "en" ? "Nothing charged for 30 days" : "Aucun montant prélevé avant 30 jours"}</p>
+                <p className="text-green-600">{lang === "en" ? "A card is required to start the trial, but you pay nothing until the 30 days are over. Cancel in one click if it is not for you." : "Carte requise pour activer l'essai, mais vous ne payez rien avant la fin des 30 jours. Résiliez en 1 clic si ce n'est pas pour vous."}</p>
               </div>
             </div>
           </div>

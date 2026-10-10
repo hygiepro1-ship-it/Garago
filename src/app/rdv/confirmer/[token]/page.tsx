@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { translateServiceName } from "@/lib/services";
 
 interface Info {
   state: "ask" | "confirmed" | "expired" | "cancelled" | "closed" | "past" | "invalid";
@@ -100,7 +101,7 @@ export default function ConfirmerRdvPage() {
 
   const summary = info.garageName && (
     <div className="text-left rounded-xl p-4 my-5" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
-      <p className="text-sm font-bold text-gray-900">{info.serviceName ?? tx.appointment}</p>
+      <p className="text-sm font-bold text-gray-900">{info.serviceName ? translateServiceName(info.serviceName, lang) : tx.appointment}</p>
       <p className="text-sm text-gray-700 mt-1">{info.date && fmtDate(info.date, lang)} · {info.startTime} – {info.endTime}</p>
       <p className="text-sm text-gray-700">{info.garageName}</p>
       <p className="text-xs text-gray-500 mt-1">{info.garageAddress}</p>
