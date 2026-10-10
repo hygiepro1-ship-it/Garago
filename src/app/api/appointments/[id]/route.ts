@@ -62,7 +62,8 @@ export async function PATCH(
     if (appt.source !== "ONLINE") {
       return NextResponse.json({ error: "Seuls les rendez-vous en ligne peuvent être modifiés ici." }, { status: 403 });
     }
-    if ((status && status !== "CANCELLED") || completionNote !== undefined) {
+    // Les notes sont celles du garage (« visibles seulement par vous ») : le client n'y écrit pas.
+    if ((status && status !== "CANCELLED") || completionNote !== undefined || notes !== undefined) {
       return NextResponse.json({ error: "Action réservée au garage." }, { status: 403 });
     }
   }

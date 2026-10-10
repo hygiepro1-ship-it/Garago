@@ -7,7 +7,14 @@
  * connaît pas Garago, un message signé d'un inconnu ressemble à de l'hameçonnage.
  */
 
+import { isRateLimited } from "@/lib/abuse";
+
 export type SmsLang = "fr" | "en";
+
+// Plafonds quotidiens appliqués à tout envoi (voir sendSMS). Celui du site entier se règle
+// avec la variable d'environnement SMS_DAILY_LIMIT.
+const SMS_PER_NUMBER_DAILY = 6;
+const SMS_ALL_DAILY = 1000;
 
 export function smsConfigured(): boolean {
   return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
@@ -60,6 +67,17 @@ export async function sendSMS(to: string, body: string): Promise<void> {
   const e164 = toE164(to);
   if (!e164) throw new Error(`Numéro de téléphone invalide : ${to}`);
 
+  // Garde-fous valables pour tous les envois (demande de confirmation, déplacement, annulation,
+  // tâche planifiée) : chaque texto est facturé à Garago, et un compte de garage piraté ne doit
+  // pouvoir ni harceler un numéro en déplaçant un rendez-vous en boucle, ni vider le budget.
+  const DAY = 24 * 60 * 60 * 1000;
+  if (await isRateLimited(`smsto:${e164}`, SMS_PER_NUMBER_DAILY, DAY)) {
+    throw new Error("Plafond quotidien de textos atteint pour ce numéro");
+  }
+  if (await isRateLimited("smsall", Number(process.env.SMS_DAILY_LIMIT) || SMS_ALL_DAILY, DAY)) {
+    throw new Error("Plafond quotidien de textos atteint pour l'ensemble du site (SMS_DAILY_LIMIT)");
+  }
+
   const sid = process.env.TWILIO_ACCOUNT_SID as string;
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
@@ -92,6 +110,14 @@ function smsTime(time: string, lang: SmsLang): string {
   return `${h}h${mm}`;
 }
 
+/**
+ * Nom du garage tel qu'il apparaît en tête d'un texto : sans adresse web ni lien (un nom de
+ * garage ne doit jamais servir à glisser un lien d'hameçonnage dans un message), et borné.
+ */
+function smsName(name: string): string {
+  return name.replace(/https?:\/\/\S*|www\.\S*|\S+\.(?:com|ca|net|org|io|co|info|xyz|app|ly|me)\b\S*/gi, " ").replace(/\s+/g, " ").trim().slice(0, 40) || "Garage";
+}
+
 interface RdvSmsParams {
   to:         string;
   lang:       SmsLang;
@@ -106,8 +132,8 @@ interface RdvSmsParams {
 export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
   const msg = params.lang === "en"
-    ? `${params.garageName}: appointment ${when}. Confirm or cancel: ${params.url}`
-    : `${params.garageName}: RDV ${when}. Confirmez ou annulez: ${params.url}`;
+    ? `${smsName(params.garageName)}: appointment ${when}. Confirm or cancel: ${params.url}`
+    : `${smsName(params.garageName)}: RDV ${when}. Confirmez ou annulez: ${params.url}`;
   await sendSMS(params.to, msg);
 }
 
@@ -115,8 +141,8 @@ export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: s
 export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
   const msg = params.lang === "en"
-    ? `${params.garageName}: your appointment has been moved to ${when}. Questions: ${params.garagePhone}`
-    : `${params.garageName}: votre RDV est déplacé au ${when}. Questions: ${params.garagePhone}`;
+    ? `${smsName(params.garageName)}: your appointment has been moved to ${when}. Questions: ${params.garagePhone}`
+    : `${smsName(params.garageName)}: votre RDV est déplacé au ${when}. Questions: ${params.garagePhone}`;
   await sendSMS(params.to, msg);
 }
 
@@ -124,7 +150,7 @@ export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: st
 export async function sendCancelledByGarageSMS(params: RdvSmsParams & { garagePhone: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
   const msg = params.lang === "en"
-    ? `${params.garageName}: your appointment on ${when} has been cancelled. To rebook: ${params.garagePhone}`
-    : `${params.garageName}: votre RDV du ${when} est annulé. Pour le reprendre: ${params.garagePhone}`;
+    ? `${smsName(params.garageName)}: your appointment on ${when} has been cancelled. To rebook: ${params.garagePhone}`
+    : `${smsName(params.garageName)}: votre RDV du ${when} est annulé. Pour le reprendre: ${params.garagePhone}`;
   await sendSMS(params.to, msg);
 }
