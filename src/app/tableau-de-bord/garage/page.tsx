@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
 import { getModelsForMake } from "@/lib/vehicleData";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, serviceLabel, translateServiceName } from "@/lib/services";
 import { isCardRequired } from "@/lib/trial-card";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import BrandLogo from "@/components/BrandLogo";
@@ -16,6 +16,7 @@ import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 import GarageAgenda from "@/components/GarageAgenda";
 import GarageCustomers from "@/components/GarageCustomers";
+import { useTr } from "@/lib/dashboard-en";
 
 /**
  * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
@@ -136,6 +137,7 @@ function BgColorPicker({ value, onChange, onClose }: {
   onChange: (c: string | null) => void;
   onClose: () => void;
 }) {
+  const tr = useTr();
   const [hex, setHex] = useState(value ?? "");
   const nativeRef = useRef<HTMLInputElement>(null);
   useEffect(() => { setHex(value ?? ""); }, [value]);
@@ -144,7 +146,7 @@ function BgColorPicker({ value, onChange, onClose }: {
     <div className="border border-gray-200 rounded-xl p-3 bg-white shadow-lg space-y-3 z-10 relative">
       {/* Preset swatches */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">Couleurs rapides</p>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">{tr("Couleurs rapides")}</p>
         <div className="grid grid-cols-10 gap-1">
           {BG_PRESETS.map(c => (
             <button key={c} type="button" title={c}
@@ -158,7 +160,7 @@ function BgColorPicker({ value, onChange, onClose }: {
 
       {/* Hue strip — click to pick */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">Teinte personnalisée</p>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">{tr("Teinte personnalisée")}</p>
         <div
           className="h-7 rounded-lg cursor-crosshair border border-gray-200 select-none"
           style={{ background: "linear-gradient(to right,hsl(0,70%,55%),hsl(30,70%,55%),hsl(60,70%,55%),hsl(90,70%,55%),hsl(120,70%,55%),hsl(150,70%,55%),hsl(180,70%,55%),hsl(210,70%,55%),hsl(240,70%,55%),hsl(270,70%,55%),hsl(300,70%,55%),hsl(330,70%,55%),hsl(360,70%,55%))" }}
@@ -183,10 +185,10 @@ function BgColorPicker({ value, onChange, onClose }: {
         <input ref={nativeRef} type="color" className="hidden"
           value={value ?? "#000000"}
           onChange={e => { onChange(e.target.value); setHex(e.target.value); }} />
-        <button type="button" title="Ouvrir la palette complète du système"
+        <button type="button" title={tr("Ouvrir la palette complète du système")}
           onClick={() => nativeRef.current?.click()}
           className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 font-medium whitespace-nowrap">
-          Palette…
+          {tr("Palette…")}
         </button>
         <button type="button" onClick={onClose}
           className="text-gray-400 hover:text-gray-600 font-bold px-1">✕</button>
@@ -195,7 +197,7 @@ function BgColorPicker({ value, onChange, onClose }: {
       {/* Reset */}
       <button type="button" onClick={() => { onChange(null); setHex(""); onClose(); }}
         className="w-full text-xs py-1.5 rounded-lg border border-dashed border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
-        ↺ Fond automatique (image floutée)
+        {tr("↺ Fond automatique (image floutée)")}
       </button>
     </div>
   );
@@ -241,6 +243,7 @@ function DescriptionSection({
   inputClass: string;
   onUpdated: (data: any) => void;
 }) {
+  const tr = useTr();
   const DESCRIPTION_MAX_PER_YEAR = 4;
   const [draft, setDraft] = useState(garage?.descriptionDraft ?? garage?.description ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -258,7 +261,7 @@ function DescriptionSection({
 
   async function handleSubmit() {
     setError(""); setSuccess("");
-    if (!draft.trim()) { setError("La description ne peut pas être vide."); return; }
+    if (!draft.trim()) { setError(tr("La description ne peut pas être vide.")); return; }
     setSubmitting(true);
     try {
       const res = await gfetch("/api/garage/description", {
@@ -270,7 +273,7 @@ function DescriptionSection({
       if (!res.ok) { setError(data.error ?? "Erreur"); return; }
       setStatus("PENDING");
       setUsedThisYear(data.usedThisYear);
-      setSuccess("Description soumise pour vérification. Vous recevrez une confirmation par courriel.");
+      setSuccess(tr("Description soumise pour vérification. Vous recevrez une confirmation par courriel."));
       onUpdated({ descriptionDraft: draft.trim(), descriptionStatus: "PENDING", descriptionChanges: data.usedThisYear });
     } finally {
       setSubmitting(false);
@@ -281,9 +284,9 @@ function DescriptionSection({
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
         <div>
-          <h2 className="font-bold text-gray-900 text-lg">Description du garage</h2>
+          <h2 className="font-bold text-gray-900 text-lg">{tr("Description du garage")}</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Texte descriptif uniquement : pas de liens, courriels, numéros ou hashtags.
+            {tr("Texte descriptif uniquement : pas de liens, courriels, numéros ou hashtags.")}
           </p>
         </div>
         {/* Status badge */}
@@ -291,21 +294,21 @@ function DescriptionSection({
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0"
             style={{ background: "#fef3c7", color: "#92400e" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block" />
-            En attente de validation
+            {tr("En attente de validation")}
           </span>
         )}
         {isRejected && (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0"
             style={{ background: "#fee2e2", color: "#991b1b" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-            Description refusée
+            {tr("Description refusée")}
           </span>
         )}
         {status === "APPROVED" && garage?.description && (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full shrink-0"
             style={{ background: "#dcfce7", color: "#166534" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-            Approuvée
+            {tr("Approuvée")}
           </span>
         )}
       </div>
@@ -313,7 +316,7 @@ function DescriptionSection({
       {/* Current approved description (read-only display) */}
       {garage?.description && (
         <div className="mb-4 rounded-xl p-3 text-sm text-gray-700" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-          <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Description active</p>
+          <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">{tr("Description active")}</p>
           <p className="whitespace-pre-wrap">{garage.description}</p>
         </div>
       )}
@@ -321,10 +324,10 @@ function DescriptionSection({
       {/* Draft pending review */}
       {isPending && garage?.descriptionDraft && (
         <div className="mb-4 rounded-xl p-3 text-sm" style={{ background: "#fffbeb", border: "1px solid #fde68a" }}>
-          <p className="text-xs font-semibold mb-1" style={{ color: "#92400e" }}>Modification en cours de révision</p>
+          <p className="text-xs font-semibold mb-1" style={{ color: "#92400e" }}>{tr("Modification en cours de révision")}</p>
           <p className="text-gray-700 whitespace-pre-wrap">{garage.descriptionDraft}</p>
           <p className="text-xs mt-2" style={{ color: "#78350f" }}>
-            Elle remplacera la description active une fois approuvée par notre équipe.
+            {tr("Elle remplacera la description active une fois approuvée par notre équipe.")}
           </p>
         </div>
       )}
@@ -333,10 +336,10 @@ function DescriptionSection({
       {isRejected && (
         <div className="mb-4 rounded-xl p-3 text-sm" style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
           <p className="text-xs font-semibold mb-1" style={{ color: "#991b1b" }}>
-            Votre dernière description a été refusée.
+            {tr("Votre dernière description a été refusée.")}
           </p>
           <p className="text-gray-700 text-xs">
-            Elle ne respectait pas nos conditions : description de l&apos;entreprise uniquement, sans promotion ni coordonnées. Soumettez une nouvelle version ci-dessous.
+            {tr("Elle ne respectait pas nos conditions : description de l'entreprise uniquement, sans promotion ni coordonnées. Soumettez une nouvelle version ci-dessous.")}
           </p>
         </div>
       )}
@@ -348,20 +351,24 @@ function DescriptionSection({
             className={`${inputClass} min-h-[120px]`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Décrivez votre garage, votre expertise, vos spécialités…"
+            placeholder={tr("Décrivez votre garage, votre expertise, vos spécialités…")}
             maxLength={400}
           />
           <p className="text-xs text-right" style={{ color: draft.length >= 380 ? "#dc2626" : "#9ca3af" }}>
-            {draft.length} / 400 caractères
+            {draft.length} / 400 {tr.en ? "characters" : "caractères"}
           </p>
           <p className="text-xs rounded-lg px-3 py-2" style={{ background: "#fff7ed", color: "#9a3412", border: "1px solid #fed7aa" }}>
-            Les modifications de la description doivent être soumises séparément via le bouton <strong>«&nbsp;Faire vérifier&nbsp;»</strong>. Le bouton «&nbsp;Sauvegarder le profil&nbsp;» ne les enregistre pas.
+            {tr.en
+              ? <>Changes to the description must be submitted separately with the <strong>&quot;Submit for review&quot;</strong> button. The &quot;Save profile&quot; button does not save them.</>
+              : <>Les modifications de la description doivent être soumises séparément via le bouton <strong>«&nbsp;Faire vérifier&nbsp;»</strong>. Le bouton «&nbsp;Sauvegarder le profil&nbsp;» ne les enregistre pas.</>}
           </p>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs" style={{ color: remaining <= 1 ? "#dc2626" : "#6b7280" }}>
               {remaining <= 0
                 ? "Limite atteinte : plus aucune modification autorisée cette année."
-                : `${remaining} modification${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} cette année (sur ${DESCRIPTION_MAX_PER_YEAR})`}
+                : tr.en
+                  ? `${remaining} change${remaining > 1 ? "s" : ""} left this year (out of ${DESCRIPTION_MAX_PER_YEAR})`
+                  : `${remaining} modification${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} cette année (sur ${DESCRIPTION_MAX_PER_YEAR})`}
             </p>
             <button
               type="button"
@@ -369,7 +376,7 @@ function DescriptionSection({
               onClick={handleSubmit}
               className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
               style={{ background: "#f97316" }}>
-              {submitting ? "Envoi en cours…" : "Faire vérifier"}
+              {submitting ? tr("Envoi en cours…") : tr("Faire vérifier")}
             </button>
           </div>
           {error   && <p className="text-xs font-medium" style={{ color: "#dc2626" }}>{error}</p>}
@@ -379,7 +386,7 @@ function DescriptionSection({
 
       {isPending && (
         <p className="text-xs text-gray-400 mt-2">
-          La modification est en cours de révision. L&apos;édition sera réactivée une fois la décision rendue.
+          {tr("La modification est en cours de révision. L'édition sera réactivée une fois la décision rendue.")}
         </p>
       )}
     </div>
@@ -407,6 +414,7 @@ const AMBASSADOR_PALIERS = [
 ];
 
 function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewDetails: () => void }) {
+  const tr = useTr();
   return (
     <div className="rounded-2xl overflow-hidden shadow-sm bg-white"
       style={{ border: `2px solid ${tier >= 1 ? "#1f2e67" : "#e2e8f0"}` }}>
@@ -420,7 +428,7 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
           <button onClick={onViewDetails}
             className="text-xs font-semibold px-3 py-1 rounded-lg"
             style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
-            Voir détails
+            {tr("Voir détails")}
           </button>
         )}
       </div>
@@ -439,8 +447,8 @@ function AmbassadorOverviewCard({ tier, onViewDetails }: { tier: number; onViewD
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                 )}
               </span>
-              <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{p.label}</span>
-              <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} réf.</span>
+              <span className="text-xs font-semibold flex-1" style={{ color: done ? "#c2410c" : "#94a3b8" }}>{tr(p.label)}</span>
+              <span className="text-xs flex-shrink-0" style={{ color: "#cbd5e1" }}>{p.seuil} {tr.en ? "ref." : "réf."}</span>
             </div>
           );
         })}
@@ -457,6 +465,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
   blockedSlots: any[];
   onDeleteBlock: (id: string) => void;
 }) {
+  const tr = useTr();
   const multiAppts  = appointments.filter(a => selectedDays.includes(a.date));
   const multiBlocks = blockedSlots.filter(s => selectedDays.includes(s.date));
   return (
@@ -469,7 +478,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
               .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
               .map(a => {
                 const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
-                const dFr = new Date(a.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                const dFr = new Date(a.date + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
                 return (
                   <div key={a.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                     <div className="text-center min-w-[70px]">
@@ -478,10 +487,10 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                      <p className="text-xs text-gray-500">{a.serviceName || "—"}</p>
+                      <p className="text-xs text-gray-500">{translateServiceName(a.serviceName, tr.en ? "en" : "fr") || "—"}</p>
                     </div>
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
-                      style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
+                      style={{ backgroundColor: sc.bg, color: sc.color }}>{tr(sc.label)}</span>
                   </div>
                 );
               })}
@@ -490,20 +499,20 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
       )}
       {multiBlocks.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Créneaux bloqués sur ces jours ({multiBlocks.length})</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">{tr.en ? "Blocked slots on these days" : "Créneaux bloqués sur ces jours"} ({multiBlocks.length})</p>
           <div className="space-y-2">
             {multiBlocks
               .sort((a, b) => a.date.localeCompare(b.date))
               .map(s => {
-                const dFr = new Date(s.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                const dFr = new Date(s.date + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
                 return (
                   <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
                     <svg className="w-4 h-4 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                     <div className="flex-1">
-                      <p className="text-xs font-semibold text-red-800">{dFr}, {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}</p>
+                      <p className="text-xs font-semibold text-red-800">{dFr}, {s.allDay ? tr("Journée entière") : `${s.startTime} – ${s.endTime}`}</p>
                       {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
                     </div>
-                    <button onClick={() => onDeleteBlock(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">Retirer</button>
+                    <button onClick={() => onDeleteBlock(s.id)} className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">{tr("Retirer")}</button>
                   </div>
                 );
               })}
@@ -511,7 +520,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
         </div>
       )}
       {multiAppts.length === 0 && multiBlocks.length === 0 && (
-        <p className="text-gray-400 text-sm text-center py-4">Aucun événement sur ces {selectedDays.length} jours.</p>
+        <p className="text-gray-400 text-sm text-center py-4">{tr.en ? `Nothing scheduled on these ${selectedDays.length} days.` : `Aucun événement sur ces ${selectedDays.length} jours.`}</p>
       )}
     </div>
   );
@@ -542,6 +551,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
   stats: AmbassadeurStats | null;
   onCopyCode: () => void;
 }) {
+  const tr = useTr();
   const nextPalier = AMBASSADEUR_PALIERS.find((_, i) => i + 1 > tier);
   const maxChartV  = (stats?.chart?.length ?? 0) > 0 ? Math.max(...stats!.chart!.map((c) => c.views), 1) : 1;
   return (
@@ -564,15 +574,15 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
           <div className="flex-1 min-w-0">
             {tier >= 5 ? (
               <>
-                <p className="text-white font-black text-xl leading-tight">★ Certifié Ambassadeur Garago</p>
-                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>Niveau maximum atteint, merci pour votre engagement !</p>
+                <p className="text-white font-black text-xl leading-tight">{tr("★ Certifié Ambassadeur Garago")}</p>
+                <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>{tr("Niveau maximum atteint, merci pour votre engagement !")}</p>
               </>
             ) : (
               <>
                 <p className="text-white font-black text-xl leading-tight">Programme Ambassadeur, palier {tier}/5</p>
                 <p className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>
-                  {count} garage{count > 1 ? "s" : ""} parrainé{count > 1 ? "s" : ""}
-                  {nextPalier ? ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}` : ""}
+                  {tr.en ? `${count} referred garage${count > 1 ? "s" : ""}` : `${count} garage${count > 1 ? "s" : ""} parrainé${count > 1 ? "s" : ""}`}
+                  {nextPalier ? (tr.en ? ` · ${nextPalier.seuil - count} more for tier ${tier + 1}` : ` · encore ${nextPalier.seuil - count} pour le palier ${tier + 1}`) : ""}
                 </p>
               </>
             )}
@@ -594,9 +604,9 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
 
       {/* Code de parrainage */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <h3 className="font-bold text-gray-900 mb-1">Votre code de parrainage</h3>
+        <h3 className="font-bold text-gray-900 mb-1">{tr("Votre code de parrainage")}</h3>
         <p className="text-gray-500 text-sm mb-4">
-          Partagez ce code. Le garage parrainé profite de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.
+          {tr.en ? "Share this code. The referred garage gets" : "Partagez ce code. Le garage parrainé profite de"} <strong>{tr("60 jours d'essai gratuit")}</strong> {tr("au lieu de 30.")}
         </p>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-2xl px-5 py-2.5 rounded-xl tracking-widest select-all">
@@ -605,27 +615,27 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
           {garage.referralCode && (
             <button type="button" onClick={onCopyCode}
               className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
-              Copier le code
+              {tr("Copier le code")}
             </button>
           )}
         </div>
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
             <p className="text-2xl font-black" style={{ color: "#f97316" }}>{count}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Garages parrainés</p>
+            <p className="text-xs text-gray-500 mt-0.5">{tr("Garages parrainés")}</p>
           </div>
           <div className="text-center p-3 rounded-xl" style={{ background: "rgba(249,115,22,0.06)" }}>
             <p className="text-2xl font-black" style={{ color: tier >= 5 ? "#f97316" : "#1f2e67" }}>
               {tier >= 5 ? "★" : Math.max(0, ([3,6,10,15,20].find(s => s > count) ?? 20) - count)}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? "Certifié" : `Restants (palier ${tier + 1})`}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{tier >= 5 ? tr("Certifié") : `Restants (palier ${tier + 1})`}</p>
           </div>
         </div>
       </div>
 
       {/* Progression des paliers */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Progression des paliers</h3>
+        <h3 className="font-bold text-gray-900 mb-4">{tr("Progression des paliers")}</h3>
         <div className="space-y-2">
           {AMBASSADEUR_PALIERS.map((p, i) => {
             const palierNum = i + 1;
@@ -645,16 +655,16 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-4 flex-shrink-0" style={{ color: done ? "#f97316" : "#94a3b8" }}>{p.icon}</span>
-                    <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{p.label}</span>
-                    <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} réf.</span>
+                    <span className="text-sm font-bold" style={{ color: done ? "#f97316" : "#475569" }}>{tr(p.label)}</span>
+                    <span className="text-xs ml-auto font-medium" style={{ color: "#94a3b8" }}>{p.seuil} {tr.en ? "ref." : "réf."}</span>
                   </div>
-                  <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{p.desc}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{tr(p.desc)}</p>
                   {active && (
                     <div className="mt-2">
                       <div className="h-1.5 rounded-full" style={{ background: "#e2e8f0" }}>
                         <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / p.seuil) * 100)}%`, background: "#1f2e67" }} />
                       </div>
-                      <p className="text-xs mt-0.5 font-medium" style={{ color: "#1f2e67" }}>{count}/{p.seuil} garages parrainés</p>
+                      <p className="text-xs mt-0.5 font-medium" style={{ color: "#1f2e67" }}>{count}/{p.seuil} {tr.en ? "referred garages" : "garages parrainés"}</p>
                     </div>
                   )}
                 </div>
@@ -664,7 +674,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
         </div>
         {garage.ambassadorSince && (
           <p className="text-xs mt-4 pt-4" style={{ color: "#94a3b8", borderTop: "1px solid #f1f5f9" }}>
-            Ambassadeur depuis {new Date(garage.ambassadorSince).toLocaleDateString("fr-CA", { month: "long", year: "numeric" })}
+            {tr.en ? "Ambassador since" : "Ambassadeur depuis"} {new Date(garage.ambassadorSince).toLocaleDateString(tr.locale, { month: "long", year: "numeric" })}
           </p>
         )}
       </div>
@@ -673,15 +683,15 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
       {stats && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid #f1f5f9", background: "linear-gradient(135deg,#1f2e67,#1a3a6b)" }}>
-            <span className="text-white text-sm font-black">Statistiques avancées</span>
-            <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>30 derniers jours</span>
+            <span className="text-white text-sm font-black">{tr("Statistiques avancées")}</span>
+            <span className="text-xs ml-auto" style={{ color: "rgba(255,255,255,0.5)" }}>{tr("30 derniers jours")}</span>
           </div>
           <div className="p-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Vues du profil",      value: stats.views.last30,      trend: stats.views.trend30,      suffix: "" },
-                { label: "Rendez-vous reçus",   value: stats.appts.last30,      trend: stats.appts.trend30,      suffix: "" },
-                { label: "Note moyenne",         value: stats.rating.overall ?? "—", trend: null,                suffix: stats.rating.overall ? "/5" : "" },
+                { label: tr("Vues du profil"),      value: stats.views.last30,      trend: stats.views.trend30,      suffix: "" },
+                { label: tr("Rendez-vous reçus"),   value: stats.appts.last30,      trend: stats.appts.trend30,      suffix: "" },
+                { label: tr("Note moyenne"),         value: stats.rating.overall ?? "—", trend: null,                suffix: stats.rating.overall ? "/5" : "" },
                 { label: "Taux de conversion",  value: stats.conversion.last30, trend: stats.conversion.trend30, suffix: "%" },
               ].map(({ label, value, trend, suffix }) => (
                 <div key={label} className="p-4 rounded-xl" style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}>
@@ -699,7 +709,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
             </div>
             {(stats.chart?.length ?? 0) > 0 && (
               <div>
-                <p className="text-xs text-gray-400 mb-2">Vues du profil, 30 derniers jours</p>
+                <p className="text-xs text-gray-400 mb-2">{tr("Vues du profil, 30 derniers jours")}</p>
                 <div className="flex items-end gap-px h-20">
                   {stats.chart!.map((c, i: number) => (
                     <div key={i} className="flex-1 rounded-sm transition-all"
@@ -710,7 +720,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
               </div>
             )}
             <p className="text-xs" style={{ color: "#94a3b8" }}>
-              Total avis : {stats.rating.total} · Note 30j : {stats.rating.last30 ?? "—"}/5
+              {tr.en ? "Total reviews:" : "Total avis :"} {stats.rating.total} · {tr.en ? "30-day rating:" : "Note 30j :"} {stats.rating.last30 ?? "—"}/5
             </p>
           </div>
         </div>
@@ -720,6 +730,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
 }
 
 export default function DashboardGaragePage() {
+  const tr = useTr();
   const { t, lang } = useLang();
   const d = t.dash;
   const { data: session, status } = useSession();
@@ -762,7 +773,7 @@ export default function DashboardGaragePage() {
       setShowAddBranch(false);
       setBranchForm({ name: "", address: "", city: "", postalCode: "", phone: "", latitude: null, longitude: null });
       loadMyGarages();
-    } catch { setBranchError("Erreur réseau."); }
+    } catch { setBranchError(tr("Erreur réseau.")); }
     finally { setBranchSaving(false); }
   }
 
@@ -771,7 +782,7 @@ export default function DashboardGaragePage() {
     try {
       const res = await fetch(`/api/garage/branch/${id}`, { method: "DELETE" });
       if (res.ok) loadMyGarages();
-      else { const d = await res.json().catch(() => ({})); alert(d.error ?? "Impossible de retirer ce garage."); }
+      else { const d = await res.json().catch(() => ({})); alert(d.error ?? tr("Impossible de retirer ce garage.")); }
     } finally { setRemovingBranch(null); }
   }
   const [saving, setSaving] = useState(false);
@@ -791,7 +802,7 @@ export default function DashboardGaragePage() {
     const res = await fetch("/api/user/profile", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: deletePwd }) });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setDeleteError(data.error ?? tr("Une erreur est survenue. Réessayez plus tard."));
       setDeleting(false);
       return;
     }
@@ -830,7 +841,7 @@ export default function DashboardGaragePage() {
       if (data.url) { window.location.href = data.url; return; }
       setPortalError(data.error ?? "Impossible d'ouvrir le portail de facturation.");
     } catch {
-      setPortalError("Erreur réseau.");
+      setPortalError(tr("Erreur réseau."));
     } finally { setPortalLoading(false); }
   }
 
@@ -844,7 +855,7 @@ export default function DashboardGaragePage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setCancelError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setCancelError(data.error ?? tr("Une erreur est survenue. Réessayez plus tard."));
       setCancelLoading(false);
       return;
     }
@@ -979,7 +990,7 @@ export default function DashboardGaragePage() {
     const missing = services.filter((s) => !(parseFloat(String(s.priceMin ?? "").replace(",", ".")) > 0));
     if (missing.length > 0) {
       setPriceTried(true);
-      setSuccess(`Indiquez le prix « à partir de » pour : ${missing.map((s) => s.categoryName).join(", ")}`);
+      setSuccess(`${tr.en ? "Enter the \"from\" price for:" : "Indiquez le prix « à partir de » pour :"} ${missing.map((s) => translateServiceName(s.categoryName, tr.en ? "en" : "fr")).join(", ")}`);
       setTimeout(() => setSuccess(""), 6000);
       return;
     }
@@ -995,7 +1006,7 @@ export default function DashboardGaragePage() {
       setGarage((g: any) => g ? { ...g, capacity: cap, requireConfirmation } : g);
     }
     setSaving(false);
-    setSuccess(res.ok ? "Services sauvegardés ✓" : "Erreur lors de la sauvegarde");
+    setSuccess(res.ok ? tr("Services sauvegardés ✓") : tr("Erreur lors de la sauvegarde"));
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1048,7 +1059,7 @@ export default function DashboardGaragePage() {
       body: JSON.stringify({ brands, brandModels }),
     });
     setSaving(false);
-    setSuccess("Marques sauvegardées ✓");
+    setSuccess(tr("Marques sauvegardées ✓"));
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1090,7 +1101,7 @@ export default function DashboardGaragePage() {
       setGarage((g: any) => g ? { ...g, availability: horaires.map((h) => ({ ...h })) } : g);
     }
     setSaving(false);
-    setSuccess("Horaires sauvegardés ✓");
+    setSuccess(tr("Horaires sauvegardés ✓"));
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1139,7 +1150,7 @@ export default function DashboardGaragePage() {
       }),
     });
     setSaving(false);
-    setSuccess("Profil sauvegardé ✓");
+    setSuccess(tr("Profil sauvegardé ✓"));
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1161,7 +1172,7 @@ export default function DashboardGaragePage() {
     if (data.url) {
       setGarage((g: any) => ({ ...g, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
       setProfileData((p: any) => ({ ...p, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
-      setSuccess(`${type === "logo" ? "Logo" : "Image de couverture"} mis à jour ✓`);
+      setSuccess(tr.en ? `${type === "logo" ? "Logo" : "Cover image"} updated ✓` : `${type === "logo" ? "Logo" : "Image de couverture"} mis à jour ✓`);
       setTimeout(() => setSuccess(""), 3000);
     }
     if (type === "logo") setUploadingLogo(false);
@@ -1294,18 +1305,18 @@ export default function DashboardGaragePage() {
             <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
           </svg>
         </div>
-        <h1 className="text-xl font-black text-gray-900 mb-2">Ajoutez votre carte pour continuer</h1>
+        <h1 className="text-xl font-black text-gray-900 mb-2">{tr("Ajoutez votre carte pour continuer")}</h1>
         <p className="text-gray-500 text-sm mb-6">
-          Votre essai gratuit de 30 jours est prêt, mais aucun moyen de paiement n'a été enregistré.
-          Ajoutez une carte pour accéder à votre tableau de bord. Aucun montant n'est prélevé avant la fin de l'essai.
+          {tr("Votre essai gratuit de 30 jours est prêt, mais aucun moyen de paiement n'a été enregistré.")}{" "}
+          {tr("Ajoutez une carte pour accéder à votre tableau de bord. Aucun montant n'est prélevé avant la fin de l'essai.")}
         </p>
         <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
           className="text-white px-6 py-3 rounded-xl font-bold text-sm disabled:opacity-60"
           style={{ background: "#f97316" }}>
-          {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+          {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
         </button>
         <p className="mt-6 text-xs text-gray-400">
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="underline hover:no-underline">Se déconnecter</button>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="underline hover:no-underline">{tr("Se déconnecter")}</button>
         </p>
       </div>
     );
@@ -1321,7 +1332,7 @@ export default function DashboardGaragePage() {
     // modification « disparaîtrait » au rechargement de la page.
     if (!res || !res.ok) {
       const d = res ? await res.json().catch(() => ({})) : {};
-      window.alert(d.error ?? "Le changement n'a pas pu être enregistré. Réessayez.");
+      window.alert(d.error ?? tr("Le changement n'a pas pu être enregistré. Réessayez."));
       return;
     }
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
@@ -1348,11 +1359,11 @@ export default function DashboardGaragePage() {
       const appt = await res.json();
       setAppointments(prev => [appt, ...prev]);
       setShowAddRdv(false);
-      setSuccess("Rendez-vous ajouté ✓");
+      setSuccess(tr("Rendez-vous ajouté ✓"));
       setTimeout(() => setSuccess(""), 3000);
     } else {
       const d = await res.json().catch(() => ({}));
-      setManualError(d.error ?? "Impossible d'ajouter ce rendez-vous.");
+      setManualError(d.error ?? tr("Impossible d'ajouter ce rendez-vous."));
     }
     setSavingRdv(false);
   }
@@ -1369,7 +1380,7 @@ export default function DashboardGaragePage() {
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      setManualError(d.error ?? "Impossible d'ajouter ce rendez-vous.");
+      setManualError(d.error ?? tr("Impossible d'ajouter ce rendez-vous."));
       setSavingRdv(false);
       return;
     }
@@ -1379,7 +1390,7 @@ export default function DashboardGaragePage() {
       setAppointments(prev => [appt, ...prev]);
       setShowManualForm(false);
       setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", categoryId:"", date:"", startTime:"", notes:"" });
-      setSuccess("Rendez-vous ajouté ✓");
+      setSuccess(tr("Rendez-vous ajouté ✓"));
       setTimeout(() => setSuccess(""), 3000);
     }
     setSavingRdv(false);
@@ -1398,11 +1409,11 @@ export default function DashboardGaragePage() {
       setBlockedSlots(prev => [...prev, slot]);
       setShowBlockForm(false);
       setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
-      setSuccess("Créneau bloqué ✓");
+      setSuccess(tr("Créneau bloqué ✓"));
       setTimeout(() => setSuccess(""), 3000);
     } else {
       const d = await res.json().catch(() => ({}));
-      window.alert(d.error ?? "Impossible de bloquer ce créneau.");
+      window.alert(d.error ?? tr("Impossible de bloquer ce créneau."));
     }
     setSavingBlock(false);
   }
@@ -1410,7 +1421,7 @@ export default function DashboardGaragePage() {
   async function deleteBlockSlot(id: string) {
     const res = await fetch(`/api/blocked-slots/${id}`, { method: "DELETE" });
     if (res.ok) setBlockedSlots(prev => prev.filter(s => s.id !== id));
-    else window.alert("Ce blocage n'a pas pu être retiré. Réessayez.");
+    else window.alert(tr("Ce blocage n'a pas pu être retiré. Réessayez."));
   }
 
   // ── Multi-day selection helpers ───────────────────────────────────────────
@@ -1464,14 +1475,14 @@ export default function DashboardGaragePage() {
         saved++;
       } else {
         const d = await res.json().catch(() => ({}));
-        failure = d.error ?? "Impossible de bloquer ces journées.";
+        failure = d.error ?? tr("Impossible de bloquer ces journées.");
       }
     }
     setSavingBlock(false);
     if (saved === 0) { window.alert(failure); return; }
     setShowBlockForm(false);
     setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
-    setSuccess(`Créneaux bloqués pour ${saved} jour${saved > 1 ? "s" : ""} ✓`);
+    setSuccess(tr.en ? `Slots blocked for ${saved} day${saved > 1 ? "s" : ""} ✓` : `Créneaux bloqués pour ${saved} jour${saved > 1 ? "s" : ""} ✓`);
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1492,7 +1503,7 @@ export default function DashboardGaragePage() {
     setShowManualForm(false);
     setManualForm({ customerName:"", customerPhone:"", customerEmail:"", vehicleYear:"", vehicleMake:"", vehicleModel:"", serviceName:"", categoryId:"", date:"", startTime:"", notes:"" });
     setSavingRdv(false);
-    setSuccess(`Rendez-vous ajoutés pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
+    setSuccess(tr.en ? `Appointments added for ${selectedDays.length} day${selectedDays.length > 1 ? "s" : ""} ✓` : `Rendez-vous ajoutés pour ${selectedDays.length} jour${selectedDays.length > 1 ? "s" : ""} ✓`);
     setTimeout(() => setSuccess(""), 3000);
   }
 
@@ -1530,7 +1541,7 @@ export default function DashboardGaragePage() {
         ? { ...a, date: rescheduleDate, startTime: rescheduleSlot, endTime }
         : a
       ));
-      setSuccess("Rendez-vous déplacé ✓");
+      setSuccess(tr("Rendez-vous déplacé ✓"));
       setTimeout(() => setSuccess(""), 3000);
     }
     setRescheduleAppt(null);
@@ -1571,7 +1582,7 @@ export default function DashboardGaragePage() {
   // Date limite de la période de grâce après un paiement échoué (7 jours)
   const pastDueDeadline = garage.pastDueSince
     ? new Date(new Date(garage.pastDueSince).getTime() + 7 * 24 * 60 * 60 * 1000)
-        .toLocaleDateString("fr-CA", { day: "numeric", month: "long" })
+        .toLocaleDateString(tr.locale, { day: "numeric", month: "long" })
     : null;
 
   const tabIcons: Record<Tab, ReactNode> = {
@@ -1592,7 +1603,7 @@ export default function DashboardGaragePage() {
     { id: "marques",  label: d.brands    },
     { id: "horaires", label: d.hours     },
     { id: "profil",   label: d.profile   },
-    { id: "abonnement", label: "Abonnement" },
+    { id: "abonnement", label: tr("Abonnement") },
     ...(garage.subscriptionStatus === "ACTIVE" && garage.ambassadorTier >= 1
       ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur" }] : []),
   ];
@@ -1626,21 +1637,21 @@ export default function DashboardGaragePage() {
           <div className="flex flex-wrap items-center gap-2">
             {garage.subscriptionStatus === "TRIAL" && (
               <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
-                Essai {garage.subscriptionEndAt ? `— expire ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}` : "gratuit"}
+                {tr.en ? "Trial" : "Essai"} {garage.subscriptionEndAt ? `— ${tr.en ? "expires" : "expire"} ${new Date(garage.subscriptionEndAt).toLocaleDateString(tr.locale, { day: "numeric", month: "short" })}` : tr("gratuit")}
               </span>
             )}
             {garage.subscriptionStatus === "ACTIVE" && (
-              <span className="bg-green-400 text-green-900 text-xs font-bold px-2 py-1 rounded-full">Actif ✓</span>
+              <span className="bg-green-400 text-green-900 text-xs font-bold px-2 py-1 rounded-full">{tr("Actif ✓")}</span>
             )}
             {garage.subscriptionStatus === "PAST_DUE" && (
-              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">Paiement échoué</span>
+              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">{tr("Paiement échoué")}</span>
             )}
             {garage.subscriptionStatus === "EXPIRED" && (
-              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">Expiré</span>
+              <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">{tr("Expiré")}</span>
             )}
             <Link href={`/garage/${garage.slug}?from=dashboard`}
               className="bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
-              Voir mon profil
+              {tr("Voir mon profil")}
             </Link>
           </div>
         </div>
@@ -1649,14 +1660,14 @@ export default function DashboardGaragePage() {
       {/* Sélecteur de garage (propriétaires multi-garages) */}
       {myGarages.length > 1 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 mb-6 flex items-center gap-3 flex-wrap shadow-sm">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Vous gérez</span>
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{tr("Vous gérez")}</span>
           <select
             value={selectedGarageId() ?? (myGarages.find(g => g.parentId === null)?.id ?? "")}
             onChange={(e) => switchGarage(e.target.value)}
             className="flex-1 min-w-[220px] border border-gray-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400">
             {myGarages.map((g) => (
               <option key={g.id} value={g.id}>
-                {g.name} · {g.city}{g.parentId === null ? " (principal)" : ""}
+                {g.name} · {g.city}{g.parentId === null ? (tr.en ? " (main)" : " (principal)") : ""}
               </option>
             ))}
           </select>
@@ -1669,8 +1680,8 @@ export default function DashboardGaragePage() {
             <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
           </svg>
           <div>
-            <p className="font-bold text-blue-900">Vérification en cours</p>
-            <p className="text-blue-700 text-sm">Votre profil est en cours de vérification et n'apparaît pas encore dans les résultats de recherche. Vous recevrez un courriel dès que ce sera fait.</p>
+            <p className="font-bold text-blue-900">{tr("Vérification en cours")}</p>
+            <p className="text-blue-700 text-sm">{tr("Votre profil est en cours de vérification et n'apparaît pas encore dans les résultats de recherche. Vous recevrez un courriel dès que ce sera fait.")}</p>
           </div>
         </div>
       )}
@@ -1681,8 +1692,8 @@ export default function DashboardGaragePage() {
             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
           <div>
-            <p className="font-bold text-red-900">Vérification refusée</p>
-            <p className="text-red-700 text-sm">Nous n'avons pas pu vérifier votre profil. Contactez-nous à info.garago@gmail.com pour résoudre la situation.</p>
+            <p className="font-bold text-red-900">{tr("Vérification refusée")}</p>
+            <p className="text-red-700 text-sm">{tr("Nous n'avons pas pu vérifier votre profil. Contactez-nous à info.garago@gmail.com pour résoudre la situation.")}</p>
           </div>
         </div>
       )}
@@ -1694,11 +1705,11 @@ export default function DashboardGaragePage() {
               <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
             <div>
-              <p className={`font-bold ${isTrialExpiring ? "text-red-900" : "text-gray-900"}`}>Aucun moyen de paiement enregistré</p>
+              <p className={`font-bold ${isTrialExpiring ? "text-red-900" : "text-gray-900"}`}>{tr("Aucun moyen de paiement enregistré")}</p>
               <p className={`text-sm ${isTrialExpiring ? "text-red-700" : "text-gray-500"}`}>
                 {isTrialExpiring
                   ? "Ajoutez une carte avant la fin de votre essai pour ne pas perdre votre visibilité. Aucun montant n'est prélevé avant l'expiration de l'essai."
-                  : "Ajoutez une carte pour que votre abonnement démarre automatiquement à la fin de l'essai, sans interruption. Aucun montant prélevé avant cette date."}
+                  : tr("Ajoutez une carte pour que votre abonnement démarre automatiquement à la fin de l'essai, sans interruption. Aucun montant prélevé avant cette date.")}
               </p>
             </div>
           </div>
@@ -1706,7 +1717,7 @@ export default function DashboardGaragePage() {
             <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
               className={`text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60 ${isTrialExpiring ? "bg-red-600 hover:bg-red-700" : ""}`}
               style={isTrialExpiring ? undefined : { background: "#f97316" }}>
-              {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+              {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
             </button>
           </div>
         </div>
@@ -1720,18 +1731,18 @@ export default function DashboardGaragePage() {
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div>
-              <p className="font-bold text-yellow-900">Votre essai expire bientôt!</p>
-              <p className="text-yellow-700 text-sm">Activez votre abonnement pour continuer à apparaître dans les résultats.</p>
+              <p className="font-bold text-yellow-900">{tr("Votre essai expire bientôt!")}</p>
+              <p className="text-yellow-700 text-sm">{tr("Activez votre abonnement pour continuer à apparaître dans les résultats.")}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
               className="bg-yellow-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-yellow-600 text-sm whitespace-nowrap disabled:opacity-60">
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel (−20 %)"}
+              {checkoutLoading ? tr("Chargement…") : tr("Activer mon abonnement annuel (−20 %)")}
             </button>
             <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold text-yellow-800 underline hover:no-underline disabled:opacity-60">
-              ou payer mensuellement
+              {tr("ou payer mensuellement")}
             </button>
           </div>
         </div>
@@ -1745,16 +1756,18 @@ export default function DashboardGaragePage() {
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div>
-              <p className="font-bold text-red-900">Votre dernier paiement a échoué</p>
+              <p className="font-bold text-red-900">{tr("Votre dernier paiement a échoué")}</p>
               <p className="text-red-700 text-sm">
-                Mettez à jour votre carte {pastDueDeadline ? `avant le ${pastDueDeadline}` : "rapidement"} pour éviter que votre garage soit retiré des résultats de recherche.
+                {tr.en
+                  ? `Update your card ${pastDueDeadline ? `before ${pastDueDeadline}` : "soon"} so your garage is not removed from search results.`
+                  : `Mettez à jour votre carte ${pastDueDeadline ? `avant le ${pastDueDeadline}` : "rapidement"} pour éviter que votre garage soit retiré des résultats de recherche.`}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <button onClick={openBillingPortal} disabled={portalLoading}
               className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
-              {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
+              {portalLoading ? tr("Ouverture…") : tr("Mettre à jour ma carte")}
             </button>
             {portalError && <p className="text-xs text-red-700 max-w-[220px] text-right">{portalError}</p>}
           </div>
@@ -1769,18 +1782,18 @@ export default function DashboardGaragePage() {
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div>
-              <p className="font-bold text-red-900">Votre abonnement est expiré</p>
-              <p className="text-red-700 text-sm">Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.</p>
+              <p className="font-bold text-red-900">{tr("Votre abonnement est expiré")}</p>
+              <p className="text-red-700 text-sm">{tr("Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.")}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
               className="bg-red-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-red-700 text-sm whitespace-nowrap disabled:opacity-60">
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel (−20 %)"}
+              {checkoutLoading ? tr("Chargement…") : tr("Activer mon abonnement annuel (−20 %)")}
             </button>
             <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold text-red-700 underline hover:no-underline disabled:opacity-60">
-              ou payer mensuellement
+              {tr("ou payer mensuellement")}
             </button>
           </div>
         </div>
@@ -1793,20 +1806,20 @@ export default function DashboardGaragePage() {
               <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
             </svg>
             <div>
-              <p className="font-bold text-gray-900">Vous êtes actuellement en période d'essai gratuit</p>
-              <p className="text-gray-500 text-sm">Vous pouvez activer votre abonnement dès maintenant, sans attendre la fin de l'essai.</p>
+              <p className="font-bold text-gray-900">{tr("Vous êtes actuellement en période d'essai gratuit")}</p>
+              <p className="text-gray-500 text-sm">{tr("Vous pouvez activer votre abonnement dès maintenant, sans attendre la fin de l'essai.")}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
               className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
               style={{ background: "#f97316" }}>
-              {checkoutLoading ? "Chargement…" : "Activer mon abonnement annuel maintenant (−20 %)"}
+              {checkoutLoading ? tr("Chargement…") : tr("Activer mon abonnement annuel maintenant (−20 %)")}
             </button>
             <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
               className="text-xs font-semibold underline hover:no-underline disabled:opacity-60"
               style={{ color: "#f97316" }}>
-              ou payer mensuellement
+              {tr("ou payer mensuellement")}
             </button>
           </div>
         </div>
@@ -1822,11 +1835,11 @@ export default function DashboardGaragePage() {
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
           <div>
-            <p className="font-bold text-sm" style={{ color: "#9a3412" }}>Configurez vos heures d'ouverture pour activer votre tableau de bord</p>
+            <p className="font-bold text-sm" style={{ color: "#9a3412" }}>{tr("Configurez vos heures d'ouverture pour activer votre tableau de bord")}</p>
             <p className="text-sm mt-0.5" style={{ color: "#c2410c" }}>
-              Tant qu'aucun horaire n'est enregistré, votre garage n'apparaît pas comme disponible pour les
-              conducteurs et ne peut recevoir aucun rendez-vous. Enregistrez vos horaires ci-dessous pour
-              débloquer le reste du tableau de bord.
+              {tr("Tant qu'aucun horaire n'est enregistré, votre garage n'apparaît pas comme disponible pour les")}{" "}
+              {tr("conducteurs et ne peut recevoir aucun rendez-vous. Enregistrez vos horaires ci-dessous pour")}{" "}
+              {tr("débloquer le reste du tableau de bord.")}
             </p>
           </div>
         </div>
@@ -1841,7 +1854,7 @@ export default function DashboardGaragePage() {
               title={locked ? "Enregistrez d'abord vos horaires" : undefined}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"} ${locked ? "opacity-40 cursor-not-allowed" : ""}`}
               style={activeTab === tab.id ? { background: "#f97316" } : {}}>
-              {tabIcons[tab.id]}{tab.label}
+              {tabIcons[tab.id]}{tr(tab.label)}
             </button>
           );
         })}
@@ -1899,7 +1912,7 @@ export default function DashboardGaragePage() {
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Note moyenne</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{tr("Note moyenne")}</span>
                     </div>
                     <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{avgRating ? `${avgRating}` : "—"}<span className="text-base font-semibold text-gray-400">{avgRating ? "/5" : ""}</span></p>
                     <p className="text-xs text-gray-400 mt-1">{garage._count?.reviews ?? 0} avis</p>
@@ -1909,11 +1922,11 @@ export default function DashboardGaragePage() {
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#0b1f3a" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Taux de confirmation</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{tr("Taux de confirmation")}</span>
                     </div>
                     <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{tauxConfirmation !== null ? `${tauxConfirmation}` : "—"}<span className="text-base font-semibold text-gray-400">{tauxConfirmation !== null ? "%" : ""}</span></p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {asked.length > 0 ? `${confirmedByClient} client${confirmedByClient > 1 ? "s" : ""} sur ${asked.length} ont confirmé ce mois` : "aucune demande de confirmation ce mois"}
+                      {asked.length > 0 ? (tr.en ? `${confirmedByClient} of ${asked.length} customer${asked.length > 1 ? "s" : ""} confirmed this month` : `${confirmedByClient} client${confirmedByClient > 1 ? "s" : ""} sur ${asked.length} ont confirmé ce mois`) : tr("aucune demande de confirmation ce mois")}
                     </p>
                   </div>
 
@@ -1921,7 +1934,7 @@ export default function DashboardGaragePage() {
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Taux de remplissage</span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{tr("Taux de remplissage")}</span>
                     </div>
                     <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{tauxRemplissage !== null ? `${tauxRemplissage}` : "—"}<span className="text-base font-semibold text-gray-400">{tauxRemplissage !== null ? "%" : ""}</span></p>
                     {tauxRemplissage !== null && (
@@ -1930,7 +1943,7 @@ export default function DashboardGaragePage() {
                       </div>
                     )}
                     <p className="text-xs text-gray-400 mt-1">
-                      {openMin > 0 ? `${hoursLabel(bookedMin)} réservées sur ${hoursLabel(openMin)} ouvertes cette semaine` : "aucune heure d'ouverture cette semaine"}
+                      {openMin > 0 ? (tr.en ? `${hoursLabel(bookedMin)} booked out of ${hoursLabel(openMin)} open this week` : `${hoursLabel(bookedMin)} réservées sur ${hoursLabel(openMin)} ouvertes cette semaine`) : tr("aucune heure d'ouverture cette semaine")}
                     </p>
                   </div>
                 </div>
@@ -1941,13 +1954,13 @@ export default function DashboardGaragePage() {
           {/* Upcoming appointments list */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h3 className="font-bold text-gray-900">Prochains rendez-vous</h3>
-              <a href="#agenda" className="text-sm font-semibold underline text-gray-600 whitespace-nowrap">Voir le calendrier ↓</a>
+              <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
+              <a href="#agenda" className="text-sm font-semibold underline text-gray-600 whitespace-nowrap">{tr("Voir le calendrier ↓")}</a>
             </div>
             {!rdvLoaded ? (
-              <div className="text-gray-400 text-sm text-center py-8">Chargement…</div>
+              <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
             ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr()).length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">Aucun rendez-vous à venir.</p>
+              <p className="text-gray-400 text-sm text-center py-6">{tr("Aucun rendez-vous à venir.")}</p>
             ) : (
               <div className="space-y-2">
                 {appointments
@@ -1957,7 +1970,7 @@ export default function DashboardGaragePage() {
                   .map(a => {
                     const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
                     const dateObj = new Date(a.date + "T12:00:00");
-                    const dateFr = dateObj.toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" });
+                    const dateFr = dateObj.toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
                     return (
                       <div key={a.id} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2">
                         <div className="flex items-center gap-3">
@@ -1968,7 +1981,7 @@ export default function DashboardGaragePage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
                             {(a.vehicleMake || a.vehicleModel) && (
                               <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
                             )}
@@ -1979,7 +1992,7 @@ export default function DashboardGaragePage() {
                             )}
                           </div>
                           <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
-                            {sc.label}
+                            {tr(sc.label)}
                           </span>
                         </div>
                         {/* Actions */}
@@ -1987,13 +2000,13 @@ export default function DashboardGaragePage() {
                           {a.status === "PENDING" && (
                             <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold hover:bg-green-100 transition-colors">
-                              ✓ Confirmer
+                              {tr("✓ Confirmer")}
                             </button>
                           )}
                           {a.status === "CONFIRMED" && (
                             <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold hover:bg-purple-100 transition-colors">
-                              ✓ Terminé
+                              {tr("✓ Terminé")}
                             </button>
                           )}
                           {(a.status === "PENDING" || a.status === "CONFIRMED") && (
@@ -2003,16 +2016,16 @@ export default function DashboardGaragePage() {
                               fetchGarageSlots(a.date, a.id);
                             }}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                              Déplacer
+                              {tr("Déplacer")}
                             </button>
                           )}
                           {(a.status === "PENDING" || a.status === "CONFIRMED") && (
                             <button onClick={async () => {
-                              if (!window.confirm("Annuler ce rendez-vous ?")) return;
+                              if (!window.confirm(tr("Annuler ce rendez-vous ?"))) return;
                               await updateApptStatus(a.id, "CANCELLED");
                             }}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
-                              Annuler
+                              {tr("Annuler")}
                             </button>
                           )}
                         </div>
@@ -2041,21 +2054,21 @@ export default function DashboardGaragePage() {
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #f1f5f9" }}>
               <div>
                 <h2 className="font-bold text-gray-900 text-lg">
-                  Disponibilités et absences · {MONTH_NAMES_FR[calMonth]} {calYear}
+                  {tr.en ? "Availability and time off" : "Disponibilités et absences"} · {tr(MONTH_NAMES_FR[calMonth])} {calYear}
                 </h2>
-                <p className="hidden sm:block text-gray-500 text-sm">Cliquez pour sélectionner · recliquez pour désélectionner · <kbd className="bg-gray-100 px-1 rounded text-xs">Maj</kbd>+clic pour une plage</p>
-                <p className="sm:hidden text-gray-500 text-xs">Touchez un jour pour le sélectionner</p>
+                <p className="hidden sm:block text-gray-500 text-sm">{tr("Cliquez pour sélectionner · recliquez pour désélectionner ·")} <kbd className="bg-gray-100 px-1 rounded text-xs">{tr("Maj")}</kbd>{tr("+clic pour une plage")}</p>
+                <p className="sm:hidden text-gray-500 text-xs">{tr("Touchez un jour pour le sélectionner")}</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => changeMonth(-1)} aria-label="Mois précédent"
+                <button onClick={() => changeMonth(-1)} aria-label={tr("Mois précédent")}
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
                   ‹
                 </button>
                 <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
                   className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
-                  Aujourd'hui
+                  {tr("Aujourd'hui")}
                 </button>
-                <button onClick={() => changeMonth(1)} aria-label="Mois suivant"
+                <button onClick={() => changeMonth(1)} aria-label={tr("Mois suivant")}
                   className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
                   ›
                 </button>
@@ -2083,7 +2096,7 @@ export default function DashboardGaragePage() {
                 return (
                   <button key={day}
                     onClick={(e) => toggleDay(dayStr, e)}
-                    title="Clic = sélectionner · Ctrl+clic = ajouter · Maj+clic = plage"
+                    title={tr("Clic = sélectionner · Ctrl+clic = ajouter · Maj+clic = plage")}
                     className={`h-16 flex flex-col items-start p-1.5 text-left transition-colors border-b border-gray-100 ${colIndex < 6 ? "border-r" : ""} ${isSelected ? "bg-orange-50" : "hover:bg-gray-50"}`}
                   >
                     <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-white" : "text-gray-700"}`}
@@ -2113,12 +2126,12 @@ export default function DashboardGaragePage() {
 
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 text-xs">
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>RDV : rendez-vous</span>
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>créneau bloqué</span>
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>{tr("RDV : rendez-vous")}</span>
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>{tr("créneau bloqué")}</span>
             {selectedDays.length > 0 && (
               <button onClick={() => setSelectedDays([])}
                 className="ml-auto text-gray-400 hover:text-gray-600 font-semibold underline">
-                Tout désélectionner ({selectedDays.length})
+                {tr("Tout désélectionner")} ({selectedDays.length})
               </button>
             )}
           </div>
@@ -2130,15 +2143,15 @@ export default function DashboardGaragePage() {
                 {isMultiSelect ? (
                   <div>
                     <h3 className="font-bold text-gray-900">
-                      {selectedDays.length} jours sélectionnés
+                      {selectedDays.length} {tr.en ? "days selected" : "jours sélectionnés"}
                     </h3>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {selectedDays.map(d => new Date(d + "T12:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" })).join(" · ")}
+                      {selectedDays.map(d => new Date(d + "T12:00:00").toLocaleDateString(tr.locale, { day: "numeric", month: "short" })).join(" · ")}
                     </p>
                   </div>
                 ) : (
                   <h3 className="font-bold text-gray-900">
-                    {new Date(selectedDay! + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
+                    {new Date(selectedDay! + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "long", day: "numeric", month: "long" })}
                   </h3>
                 )}
                 <div className="flex gap-2 flex-wrap">
@@ -2146,7 +2159,7 @@ export default function DashboardGaragePage() {
                     onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
                     className="text-sm px-4 py-2 rounded-xl font-semibold border"
                     style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                    {isMultiSelect ? `Bloquer ${selectedDays.length} jours` : "Bloquer ce créneau"}
+                    {isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer ce créneau")}
                   </button>
                 </div>
               </div>
@@ -2155,21 +2168,21 @@ export default function DashboardGaragePage() {
               {showManualForm && (
                 <div className="rounded-xl p-4 mb-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-sm">Nouveau rendez-vous</h4>
+                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Nouveau rendez-vous")}</h4>
                     <button onClick={() => setShowManualForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                   </div>
                   <form onSubmit={isMultiSelect ? saveBulkManualRdv : saveManualRdv} className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Nom du client *</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Nom du client *")}</label>
                         <input className={inputClass} required value={manualForm.customerName} onChange={e=>setManualForm(f=>({...f,customerName:e.target.value}))} placeholder="Jean Tremblay" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Téléphone *")}</label>
                         <input className={inputClass} required type="tel" value={manualForm.customerPhone} onChange={e=>setManualForm(f=>({...f,customerPhone:e.target.value}))} placeholder="514 555-0100" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Courriel")}</label>
                         <input className={inputClass} type="email" value={manualForm.customerEmail} onChange={e=>setManualForm(f=>({...f,customerEmail:e.target.value}))} placeholder="jean@exemple.com" />
                       </div>
                     </div>
@@ -2181,40 +2194,40 @@ export default function DashboardGaragePage() {
                             const cat = services.find(s => s.categoryId === e.target.value);
                             setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
                           }}>
-                          <option value="">Autre / non précisé</option>
+                          <option value="">{tr("Autre / non précisé")}</option>
                           {services.map(s => (
                             <option key={s.categoryId} value={s.categoryId}>
-                              {s.categoryName}{s.durationMin ? ` (${s.durationMin} min)` : ""}
+                              {translateServiceName(s.categoryName, tr.en ? "en" : "fr")}{s.durationMin ? ` (${s.durationMin} min)` : ""}
                             </option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Heure *</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure *")}</label>
                         <input className={inputClass} required type="time" value={manualForm.startTime} onChange={e=>setManualForm(f=>({...f,startTime:e.target.value}))} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Marque")}</label>
                         <input className={inputClass} value={manualForm.vehicleMake} onChange={e=>setManualForm(f=>({...f,vehicleMake:e.target.value}))} placeholder="Toyota" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Modèle")}</label>
                         <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">(visibles seulement par vous)</span></label>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">{tr("(visibles seulement par vous)")}</span></label>
                       <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
                         value={manualForm.notes ?? ""}
                         onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
-                        placeholder="Ex. : client déjà venu, apporte ses pneus, bruit au freinage…" />
+                        placeholder={tr("Ex. : client déjà venu, apporte ses pneus, bruit au freinage…")} />
                     </div>
                     {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
                     <div className="flex gap-2 pt-1">
                       <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-                        {savingRdv ? "Ajout…" : "Ajouter"}
+                        {savingRdv ? tr("Ajout…") : tr("Ajouter")}
                       </button>
-                      <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">Annuler</button>
+                      <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
                     </div>
                   </form>
                 </div>
@@ -2224,7 +2237,7 @@ export default function DashboardGaragePage() {
               {showBlockForm && (
                 <div className="rounded-xl p-4 mb-4" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-sm">Bloquer un créneau</h4>
+                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Bloquer un créneau")}</h4>
                     <button onClick={() => setShowBlockForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
                   </div>
                   <form onSubmit={isMultiSelect ? saveBulkBlock : saveBlockSlot} className="space-y-3">
@@ -2232,31 +2245,31 @@ export default function DashboardGaragePage() {
                       <input type="checkbox" checked={blockForm.allDay}
                         onChange={e => setBlockForm(f => ({ ...f, allDay: e.target.checked }))}
                         className="accent-red-500 w-4 h-4" />
-                      Journée entière
+                      {tr("Journée entière")}
                     </label>
                     {!blockForm.allDay && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Heure début</label>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure début")}</label>
                           <input className={inputClass} type="time" value={blockForm.startTime} onChange={e=>setBlockForm(f=>({...f,startTime:e.target.value}))} />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Heure fin</label>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure fin")}</label>
                           <input className={inputClass} type="time" value={blockForm.endTime} onChange={e=>setBlockForm(f=>({...f,endTime:e.target.value}))} />
                         </div>
                       </div>
                     )}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Raison (optionnel)</label>
-                      <input className={inputClass} value={blockForm.reason} onChange={e=>setBlockForm(f=>({...f,reason:e.target.value}))} placeholder="Congé, formation, fermeture exceptionnelle…" />
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Raison (optionnel)")}</label>
+                      <input className={inputClass} value={blockForm.reason} onChange={e=>setBlockForm(f=>({...f,reason:e.target.value}))} placeholder={tr("Congé, formation, fermeture exceptionnelle…")} />
                     </div>
                     <div className="flex gap-2">
                       <button type="submit" disabled={savingBlock}
                         className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
                         style={{ background: "#dc2626" }}>
-                        {savingBlock ? "Blocage…" : isMultiSelect ? `Bloquer ${selectedDays.length} jours` : "Bloquer le créneau"}
+                        {savingBlock ? tr("Blocage…") : isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer le créneau")}
                       </button>
-                      <button type="button" onClick={() => setShowBlockForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">Annuler</button>
+                      <button type="button" onClick={() => setShowBlockForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
                     </div>
                   </form>
                 </div>
@@ -2286,9 +2299,9 @@ export default function DashboardGaragePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{sc.label}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{tr(sc.label)}</span>
                           </div>
-                          <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${a.serviceName}` : ""}</p>
+                          <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
                           {(a as any).notes && (
                             <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
                               {(a as any).notes}
@@ -2296,12 +2309,12 @@ export default function DashboardGaragePage() {
                           )}
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {a.status === "PENDING" && <>
-                              <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">✓ Confirmer</button>
-                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">Refuser</button>
+                              <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">{tr("✓ Confirmer")}</button>
+                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">{tr("Refuser")}</button>
                             </>}
                             {a.status === "CONFIRMED" && <>
-                              <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">✓ Terminé</button>
-                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">Annuler</button>
+                              <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>
+                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">{tr("Annuler")}</button>
                             </>}
                           </div>
                         </div>
@@ -2314,19 +2327,19 @@ export default function DashboardGaragePage() {
               {/* Single-day: blocked slots */}
               {!isMultiSelect && selectedDayBlocks.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-700">Créneaux bloqués</p>
+                  <p className="text-sm font-semibold text-gray-700">{tr("Créneaux bloqués")}</p>
                   {selectedDayBlocks.map(s => (
                     <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
                       <svg className="w-5 h-5 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-red-800">
-                          {s.allDay ? "Journée entière" : `${s.startTime} – ${s.endTime}`}
+                          {s.allDay ? tr("Journée entière") : `${s.startTime} – ${s.endTime}`}
                         </p>
                         {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
                       </div>
                       <button onClick={() => deleteBlockSlot(s.id)}
                         className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">
-                        Retirer
+                        {tr("Retirer")}
                       </button>
                     </div>
                   ))}
@@ -2334,7 +2347,7 @@ export default function DashboardGaragePage() {
               )}
 
               {!isMultiSelect && selectedDayAppts.length === 0 && selectedDayBlocks.length === 0 && !showManualForm && !showBlockForm && (
-                <p className="text-gray-400 text-sm text-center py-4">Aucun événement ce jour.</p>
+                <p className="text-gray-400 text-sm text-center py-4">{tr("Aucun événement ce jour.")}</p>
               )}
             </div>
           )}
@@ -2342,26 +2355,28 @@ export default function DashboardGaragePage() {
           {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
           {referralUnlocked ? (
             <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Code de parrainage</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{tr("Code de parrainage")}</p>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
                   {garage.referralCode ?? "—"}
                 </span>
                 {garage.referralCode && (
                   <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess(tr("Code copié ✓")); setTimeout(() => setSuccess(""), 3000); }}
                     className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                    Copier
+                    {tr("Copier")}
                   </button>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-3">Partagez ce code : le garage parrainé bénéficie de <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30.</p>
+              <p className="text-xs text-gray-400 mt-3">{tr("Partagez ce code : le garage parrainé bénéficie de")} <strong>{tr("60 jours d'essai gratuit")}</strong> {tr("au lieu de 30.")}</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Programme de parrainage</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{tr("Programme de parrainage")}</p>
               <p className="text-sm text-gray-600 mb-3">
-                Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).
+                {tr.en
+                  ? <>Activate your subscription to unlock your referral code: the garage you refer gets <strong>60 days of free trial</strong> instead of 30, and you join the Ambassador program (discounts on your invoice, priority in search, Certified badge).</>
+                  : <>Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).</>}
               </p>
               <button type="button" onClick={() => setActiveTab("abonnement")}
                 className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
@@ -2390,12 +2405,12 @@ export default function DashboardGaragePage() {
           {/* Reviews with reply + moderation */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-lg">Avis clients</h3>
+              <h3 className="font-bold text-gray-900 text-lg">{tr("Avis clients")}</h3>
               <span className="text-sm text-gray-400">{reviews.length} avis</span>
             </div>
 
             {reviews.length === 0 ? (
-              <p className="text-gray-400 text-sm">Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!</p>
+              <p className="text-gray-400 text-sm">{tr("Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!")}</p>
             ) : (
               <div className="space-y-4">
                 {reviews.map((r: any) => (
@@ -2416,13 +2431,13 @@ export default function DashboardGaragePage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {reportSent === r.id ? (
-                          <span className="text-xs px-2.5 py-1 rounded-lg font-medium bg-green-50 text-green-700 border border-green-200">✓ Signalement envoyé</span>
+                          <span className="text-xs px-2.5 py-1 rounded-lg font-medium bg-green-50 text-green-700 border border-green-200">{tr("✓ Signalement envoyé")}</span>
                         ) : (
                           <button
                             onClick={() => { setReportingId(reportingId === r.id ? null : r.id); setReportReason(""); }}
                             className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
                             style={{ background: reportingId === r.id ? "#fef2f2" : undefined, borderColor: "#fca5a5", color: "#dc2626" }}>
-                            Signaler
+                            {tr("Signaler")}
                           </button>
                         )}
                         <button
@@ -2432,7 +2447,7 @@ export default function DashboardGaragePage() {
                           }}
                           className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
                           style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                          {r.ownerReply ? "Modifier" : "Répondre"}
+                          {r.ownerReply ? tr("Modifier") : tr("Répondre")}
                         </button>
                       </div>
                     </div>
@@ -2443,13 +2458,13 @@ export default function DashboardGaragePage() {
                     {/* Formulaire de signalement */}
                     {reportingId === r.id && (
                       <div className="mt-3 rounded-xl p-4 space-y-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                        <p className="text-xs font-bold text-red-700">Signaler cet avis à l&apos;équipe Garago</p>
-                        <p className="text-xs text-red-600">Décrivez pourquoi vous souhaitez signaler cet avis. Notre équipe examinera votre demande et décidera s&apos;il doit être retiré.</p>
+                        <p className="text-xs font-bold text-red-700">{tr("Signaler cet avis à l'équipe Garago")}</p>
+                        <p className="text-xs text-red-600">{tr("Décrivez pourquoi vous souhaitez signaler cet avis. Notre équipe examinera votre demande et décidera s'il doit être retiré.")}</p>
                         <textarea
                           className={`${inputClass} min-h-[80px]`}
                           value={reportReason}
                           onChange={e => setReportReason(e.target.value)}
-                          placeholder="Ex : avis diffamatoire, faux client, contenu inapproprié…"
+                          placeholder={tr("Ex : avis diffamatoire, faux client, contenu inapproprié…")}
                         />
                         <div className="flex gap-2">
                           <button
@@ -2457,12 +2472,12 @@ export default function DashboardGaragePage() {
                             disabled={sendingReport || !reportReason.trim()}
                             className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                             style={{ background: "#dc2626" }}>
-                            {sendingReport ? "Envoi…" : "Confirmer le signalement"}
+                            {sendingReport ? tr("Envoi…") : tr("Confirmer le signalement")}
                           </button>
                           <button
                             onClick={() => { setReportingId(null); setReportReason(""); }}
                             className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                            Annuler
+                            {tr("Annuler")}
                           </button>
                         </div>
                       </div>
@@ -2471,7 +2486,7 @@ export default function DashboardGaragePage() {
                     {/* Existing reply */}
                     {r.ownerReply && replyingTo !== r.id && (
                       <div className="mt-3 rounded-lg p-3 text-sm" style={{ background: "#fff4ed", borderLeft: "3px solid #f97316" }}>
-                        <p className="text-xs font-bold text-orange-600 mb-1">Votre réponse :</p>
+                        <p className="text-xs font-bold text-orange-600 mb-1">{tr("Votre réponse :")}</p>
                         <p className="text-gray-700">{r.ownerReply}</p>
                       </div>
                     )}
@@ -2483,23 +2498,23 @@ export default function DashboardGaragePage() {
                           className={`${inputClass} min-h-[80px]`}
                           value={replyText}
                           onChange={e => setReplyText(e.target.value)}
-                          placeholder="Rédigez votre réponse publique…"
+                          placeholder={tr("Rédigez votre réponse publique…")}
                         />
                         <div className="flex gap-2">
                           <button onClick={() => saveReply(r.id)} disabled={savingReply}
                             className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                             style={{ background: "#f97316" }}>
-                            {savingReply ? "Envoi…" : "Publier la réponse"}
+                            {savingReply ? tr("Envoi…") : tr("Publier la réponse")}
                           </button>
                           {r.ownerReply && (
                             <button onClick={() => { setReplyText(""); saveReply(r.id); }}
                               className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
-                              Supprimer la réponse
+                              {tr("Supprimer la réponse")}
                             </button>
                           )}
                           <button onClick={() => { setReplyingTo(null); setReplyText(""); }}
                             className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                            Annuler
+                            {tr("Annuler")}
                           </button>
                         </div>
                       </div>
@@ -2519,7 +2534,7 @@ export default function DashboardGaragePage() {
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.services}</h2>
               <p className="text-gray-500 text-sm">
-                Cochez les services que vous offrez et indiquez, pour chacun, le prix « à partir de » : c'est le prix minimum que le client verra
+                {tr("Cochez les services que vous offrez et indiquez, pour chacun, le prix « à partir de » : c'est le prix minimum que le client verra")}
               </p>
             </div>
             <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
@@ -2529,18 +2544,18 @@ export default function DashboardGaragePage() {
           {/* Capacité de l'atelier */}
           <div className="rounded-xl p-4 mb-5" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
             <label htmlFor="garage-capacity" className="block text-sm font-bold text-gray-900 mb-1">
-              Véhicules pris en charge en même temps
+              {tr("Véhicules pris en charge en même temps")}
             </label>
             <div className="flex items-center gap-3">
               <input id="garage-capacity" type="number" inputMode="numeric" min={1} max={50}
                 className={`${inputClass} max-w-[7rem]`}
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)} />
-              <span className="text-sm text-gray-500">{parseInt(capacity, 10) > 1 ? "postes de travail" : "poste de travail"}</span>
+              <span className="text-sm text-gray-500">{tr.en ? (parseInt(capacity, 10) > 1 ? "bays" : "bay") : parseInt(capacity, 10) > 1 ? "postes de travail" : "poste de travail"}</span>
             </div>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même
-              créneau n'est complet que lorsque tous vos postes sont occupés. Enregistrez pour appliquer.
+              {tr("Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même")}{" "}
+              {tr("créneau n'est complet que lorsque tous vos postes sont occupés. Enregistrez pour appliquer.")}
             </p>
           </div>
 
@@ -2550,11 +2565,11 @@ export default function DashboardGaragePage() {
               <input id="garage-require-confirmation" type="checkbox" checked={requireConfirmation}
                 onChange={(e) => setRequireConfirmation(e.target.checked)} className="w-4 h-4 mt-0.5 accent-orange-500" />
               <span>
-                <span className="block text-sm font-bold text-gray-900">Demander aux clients de confirmer leur rendez-vous</span>
+                <span className="block text-sm font-bold text-gray-900">{tr("Demander aux clients de confirmer leur rendez-vous")}</span>
                 <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
-                  Chaque client reçoit un courriel 24 h avant pour confirmer. Sans réponse, le créneau est remis à
-                  disposition pour d'autres conducteurs (12 h avant le rendez-vous). Les rendez-vous pris moins de 24 h
-                  à l'avance doivent être confirmés dans l'heure. Enregistrez pour appliquer.
+                  {tr("Chaque client reçoit un courriel 24 h avant pour confirmer. Sans réponse, le créneau est remis à")}{" "}
+                  {tr("disposition pour d'autres conducteurs (12 h avant le rendez-vous). Les rendez-vous pris moins de 24 h")}{" "}
+                  {tr("à l'avance doivent être confirmés dans l'heure. Enregistrez pour appliquer.")}
                 </span>
               </span>
             </label>
@@ -2569,13 +2584,13 @@ export default function DashboardGaragePage() {
                   <div className="flex items-center gap-3 mb-3">
                     <input type="checkbox" id={cat.id} checked={!!active} onChange={() => toggleService(cat.id, cat)} className="w-4 h-4 accent-orange-500" />
                     <label htmlFor={cat.id} className="flex items-center gap-2 cursor-pointer font-semibold text-gray-900 text-sm">
-                      <ServiceIcon id={cat.id} size={18} className="text-gray-500" />{cat.name}
+                      <ServiceIcon id={cat.id} size={18} className="text-gray-500" />{serviceLabel(cat, tr.en ? "en" : "fr")}
                     </label>
                   </div>
                   {active && (
                     <div className="grid grid-cols-1 gap-2 pl-7">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-0.5">Durée</label>
+                        <label className="block text-xs text-gray-500 mb-0.5">{tr("Durée")}</label>
                         {(() => {
                           const total = parseInt(String(active.durationMin), 10) || 0;
                           const setTotal = (t: number) =>
@@ -2584,11 +2599,11 @@ export default function DashboardGaragePage() {
                           const mins  = total % 60;
                           return (
                             <div className="flex items-center gap-2">
-                              <input type="number" inputMode="numeric" min={0} aria-label="Heures" className={inputClass} style={{ width: 84 }} placeholder="0"
+                              <input type="number" inputMode="numeric" min={0} aria-label={tr("Heures")} className={inputClass} style={{ width: 84 }} placeholder="0"
                                 value={total > 0 ? hours : ""}
                                 onChange={(e) => setTotal(Math.max(0, parseInt(e.target.value, 10) || 0) * 60 + mins)} />
                               <span className="text-sm text-gray-500">h</span>
-                              <input type="number" inputMode="numeric" min={0} max={59} aria-label="Minutes" className={inputClass} style={{ width: 84 }} placeholder="45"
+                              <input type="number" inputMode="numeric" min={0} max={59} aria-label={tr("Minutes")} className={inputClass} style={{ width: 84 }} placeholder="45"
                                 value={total > 0 ? mins : ""}
                                 onChange={(e) => setTotal(hours * 60 + Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))} />
                               <span className="text-sm text-gray-500">min</span>
@@ -2602,18 +2617,18 @@ export default function DashboardGaragePage() {
                           return (
                             <>
                               <label htmlFor={`prix-${cat.id}`} className="block text-xs text-gray-500 mb-0.5">
-                                Prix minimum <span className="text-red-600" aria-hidden="true">*</span>
+                                {tr.en ? "Minimum price" : "Prix minimum"} <span className="text-red-600" aria-hidden="true">*</span>
                               </label>
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">À partir de</span>
+                                <span className="text-sm text-gray-600">{tr("À partir de")}</span>
                                 <input id={`prix-${cat.id}`} type="text" inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" maxLength={9} required
-                                  aria-label={`Prix à partir de, en dollars, pour ${cat.name}`} aria-invalid={invalid}
+                                  aria-label={tr.en ? `Starting price, in dollars, for ${cat.nameEn}` : `Prix à partir de, en dollars, pour ${cat.name}`} aria-invalid={invalid}
                                   className={inputClass} style={{ width: 110, ...(invalid ? { borderColor: "#dc2626" } : {}) }} placeholder="89"
                                   value={active.priceMin ?? ""}
                                   onChange={(e) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, priceMin: e.target.value } : s))} />
                                 <span className="text-sm text-gray-600">$</span>
                               </div>
-                              {invalid && <p className="text-xs mt-1" style={{ color: "#dc2626" }} role="alert">Indiquez le prix minimum de ce service.</p>}
+                              {invalid && <p className="text-xs mt-1" style={{ color: "#dc2626" }} role="alert">{tr("Indiquez le prix minimum de ce service.")}</p>}
                             </>
                           );
                         })()}
@@ -2633,7 +2648,7 @@ export default function DashboardGaragePage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.brands}</h2>
-              <p className="text-gray-500 text-sm mt-0.5">Cliquez ✓ pour accepter, pour refuser.</p>
+              <p className="text-gray-500 text-sm mt-0.5">{tr("Cliquez ✓ pour accepter, pour refuser.")}</p>
             </div>
             <button onClick={saveBrands} disabled={saving}
               className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex-shrink-0" style={{ background: "#f97316" }}>
@@ -2642,13 +2657,13 @@ export default function DashboardGaragePage() {
           </div>
           <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-5 pb-4 border-b border-gray-100">
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-green-500 inline-flex items-center justify-center text-white font-bold text-xs">✓</span>Acceptée
+              <span className="w-5 h-5 rounded-full bg-green-500 inline-flex items-center justify-center text-white font-bold text-xs">✓</span>{tr("Acceptée")}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-red-500 inline-flex items-center justify-center text-white font-bold text-xs">✗</span>Refusée
+              <span className="w-5 h-5 rounded-full bg-red-500 inline-flex items-center justify-center text-white font-bold text-xs">✗</span>{tr("Refusée")}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-gray-200 inline-block" />Non configurée
+              <span className="w-5 h-5 rounded-full bg-gray-200 inline-block" />{tr("Non configurée")}
             </span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
@@ -2670,11 +2685,11 @@ export default function DashboardGaragePage() {
                   </div>
                   <p className="text-center font-semibold text-gray-800 px-2 pb-2 leading-tight" style={{ fontSize: 11 }}>{brand}</p>
                   <div className="flex w-full border-t border-gray-100">
-                    <button onClick={() => toggleBrand(brand, true)} title="Accepter"
+                    <button onClick={() => toggleBrand(brand, true)} title={tr("Accepter")}
                       className="flex-1 py-2 text-xs font-bold transition-colors"
                       style={isAccepted ? { backgroundColor: "#22c55e", color: "white" } : { backgroundColor: "transparent", color: "#6b7280" }}>✓</button>
                     <div className="w-px bg-gray-100" />
-                    <button onClick={() => toggleBrand(brand, false)} title="Refuser"
+                    <button onClick={() => toggleBrand(brand, false)} title={tr("Refuser")}
                       className="flex-1 py-2 text-xs font-bold transition-colors"
                       style={isRefused ? { backgroundColor: "#ef4444", color: "white" } : { backgroundColor: "transparent", color: "#6b7280" }}>✗</button>
                   </div>
@@ -2682,7 +2697,7 @@ export default function DashboardGaragePage() {
                     <button onClick={() => setExpandedBrand(brand)}
                       className="w-full py-1.5 text-xs font-semibold border-t border-gray-100 hover:bg-green-100 transition-colors"
                       style={{ color: "#166534" }}>
-                      {brandModels[brand]?.length ? `${brandModels[brand].length} modèle${brandModels[brand].length > 1 ? "s" : ""}` : "Tous les modèles"}
+                      {brandModels[brand]?.length ? `${brandModels[brand].length} ${tr.en ? "model" : "modèle"}${brandModels[brand].length > 1 ? "s" : ""}` : tr("Tous les modèles")}
                     </button>
                   )}
                 </div>
@@ -2700,9 +2715,9 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
             <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #f1f5f9" }}>
               <div>
-                <h3 className="font-bold text-gray-900">Modèles {expandedBrand}</h3>
+                <h3 className="font-bold text-gray-900">{tr.en ? `${expandedBrand} models` : `Modèles ${expandedBrand}`}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {brandModels[expandedBrand]?.length ? "Modèles sélectionnés uniquement" : "Aucune restriction : tous les modèles sont traités"}
+                  {brandModels[expandedBrand]?.length ? tr("Modèles sélectionnés uniquement") : tr("Aucune restriction : tous les modèles sont traités")}
                 </p>
               </div>
               <button onClick={() => setExpandedBrand(null)}
@@ -2712,7 +2727,7 @@ export default function DashboardGaragePage() {
               {brandModels[expandedBrand]?.length > 0 && (
                 <button onClick={() => setBrandModels((prev) => ({ ...prev, [expandedBrand]: [] }))}
                   className="text-xs font-semibold mb-3" style={{ color: "#f97316" }}>
-                  Retirer toutes les restrictions (tous les modèles)
+                  {tr("Retirer toutes les restrictions (tous les modèles)")}
                 </button>
               )}
               <div className="grid grid-cols-2 gap-2">
@@ -2730,7 +2745,7 @@ export default function DashboardGaragePage() {
             </div>
             <div className="px-6 py-4" style={{ borderTop: "1px solid #f1f5f9" }}>
               <button onClick={() => setExpandedBrand(null)} className="w-full text-white py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>
-                Terminé
+                {tr("Terminé")}
               </button>
             </div>
           </div>
@@ -2743,7 +2758,7 @@ export default function DashboardGaragePage() {
           <div className="flex items-center justify-between mb-2">
             <div>
               <h2 className="font-bold text-gray-900 text-lg">{d.hours}</h2>
-              <p className="text-gray-500 text-sm">Configurez vos heures d'ouverture pour chaque jour</p>
+              <p className="text-gray-500 text-sm">{tr("Configurez vos heures d'ouverture pour chaque jour")}</p>
             </div>
             <button onClick={saveHoraires} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
               {saving ? d.saving : t.common.save}
@@ -2762,7 +2777,7 @@ export default function DashboardGaragePage() {
                     disabled={h.isClosed} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm disabled:opacity-40" />
                   <label className="flex items-center gap-2 text-sm text-gray-600 ml-auto cursor-pointer">
                     <input type="checkbox" checked={h.isClosed} onChange={(e) => setHoraireField(i, "isClosed", e.target.checked)} className="accent-red-500" />
-                    Fermé
+                    {tr("Fermé")}
                   </label>
                 </div>
               );
@@ -2779,8 +2794,8 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[92vh] flex flex-col">
             <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #f1f5f9" }}>
               <div>
-                <h3 className="font-bold text-gray-900">Ajouter un rendez-vous</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Un client qui a appelé ou qui s'est présenté</p>
+                <h3 className="font-bold text-gray-900">{tr("Ajouter un rendez-vous")}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{tr("Un client qui a appelé ou qui s'est présenté")}</p>
               </div>
               <button onClick={() => setShowAddRdv(false)}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors font-bold text-lg">×</button>
@@ -2788,12 +2803,12 @@ export default function DashboardGaragePage() {
             <form onSubmit={saveManualRdvModal} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Date *</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Date *")}</label>
                   <input className={inputClass} required type="date" value={manualForm.date}
                     onChange={e => setManualForm(f => ({ ...f, date: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Heure *</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure *")}</label>
                   <input className={inputClass} required type="time" value={manualForm.startTime}
                     onChange={e => setManualForm(f => ({ ...f, startTime: e.target.value }))} />
                 </div>
@@ -2805,54 +2820,54 @@ export default function DashboardGaragePage() {
                     const cat = services.find(s => s.categoryId === e.target.value);
                     setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
                   }}>
-                  <option value="">Autre / non précisé (1 h)</option>
+                  <option value="">{tr("Autre / non précisé (1 h)")}</option>
                   {services.map(s => {
                     const t = parseInt(String(s.durationMin), 10) || 0;
                     const dur = t > 0 ? ` (${t >= 60 ? `${Math.floor(t / 60)} h${t % 60 ? ` ${t % 60}` : ""}` : `${t} min`})` : "";
-                    return <option key={s.categoryId} value={s.categoryId}>{s.categoryName}{dur}</option>;
+                    return <option key={s.categoryId} value={s.categoryId}>{translateServiceName(s.categoryName, tr.en ? "en" : "fr")}{dur}</option>;
                   })}
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Nom du client *</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Nom du client *")}</label>
                   <input className={inputClass} required value={manualForm.customerName}
                     onChange={e => setManualForm(f => ({ ...f, customerName: e.target.value }))} placeholder="Jean Tremblay" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone *</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Téléphone *")}</label>
                   <input className={inputClass} required type="tel" value={manualForm.customerPhone}
                     onChange={e => setManualForm(f => ({ ...f, customerPhone: e.target.value }))} placeholder="514 555-0100" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Courriel <span className="font-normal text-gray-400">(optionnel)</span></label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Courriel")} <span className="font-normal text-gray-400">{tr("(optionnel)")}</span></label>
                 <input className={inputClass} type="email" value={manualForm.customerEmail}
                   onChange={e => setManualForm(f => ({ ...f, customerEmail: e.target.value }))} placeholder="jean@exemple.com" />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Année</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Année")}</label>
                   <input className={inputClass} inputMode="numeric" value={manualForm.vehicleYear}
                     onChange={e => setManualForm(f => ({ ...f, vehicleYear: e.target.value }))} placeholder="2020" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Marque</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Marque")}</label>
                   <input className={inputClass} value={manualForm.vehicleMake}
                     onChange={e => setManualForm(f => ({ ...f, vehicleMake: e.target.value }))} placeholder="Toyota" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Modèle</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Modèle")}</label>
                   <input className={inputClass} value={manualForm.vehicleModel}
                     onChange={e => setManualForm(f => ({ ...f, vehicleModel: e.target.value }))} placeholder="Camry" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">(visibles seulement par vous)</span></label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">{tr("(visibles seulement par vous)")}</span></label>
                 <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
                   value={manualForm.notes ?? ""}
                   onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Ex. : client déjà venu, apporte ses pneus, bruit au freinage…" />
+                  placeholder={tr("Ex. : client déjà venu, apporte ses pneus, bruit au freinage…")} />
               </div>
               {manualError && (
                 <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">{manualError}</p>
@@ -2860,10 +2875,10 @@ export default function DashboardGaragePage() {
               <div className="flex gap-2 pt-1">
                 <button type="submit" disabled={savingRdv}
                   className="flex-1 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
-                  {savingRdv ? "Ajout…" : "Ajouter le rendez-vous"}
+                  {savingRdv ? tr("Ajout…") : tr("Ajouter le rendez-vous")}
                 </button>
                 <button type="button" onClick={() => setShowAddRdv(false)}
-                  className="border border-gray-200 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50">Annuler</button>
+                  className="border border-gray-200 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
               </div>
             </form>
           </div>
@@ -2880,8 +2895,8 @@ export default function DashboardGaragePage() {
             <div className="px-6 py-4 flex items-center justify-between"
               style={{ borderBottom: "1px solid #f1f5f9" }}>
               <div>
-                <h3 className="font-bold text-gray-900">Déplacer le rendez-vous</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{rescheduleAppt.customerName} · {rescheduleAppt.serviceName || "—"}</p>
+                <h3 className="font-bold text-gray-900">{tr("Déplacer le rendez-vous")}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{rescheduleAppt.customerName} · {translateServiceName(rescheduleAppt.serviceName, tr.en ? "en" : "fr") || "—"}</p>
               </div>
               <button onClick={() => setRescheduleAppt(null)}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors font-bold text-lg">
@@ -2892,7 +2907,7 @@ export default function DashboardGaragePage() {
             <div className="p-6 space-y-5">
               {/* Date picker */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nouvelle date</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">{tr("Nouvelle date")}</label>
                 <input
                   type="date"
                   className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -2908,17 +2923,17 @@ export default function DashboardGaragePage() {
               {/* Slots */}
               {rescheduleDate && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Créneau disponible</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">{tr("Créneau disponible")}</label>
                   {slotsLoading ? (
-                    <p className="text-sm text-gray-400 text-center py-3">Chargement des disponibilités…</p>
+                    <p className="text-sm text-gray-400 text-center py-3">{tr("Chargement des disponibilités…")}</p>
                   ) : slotsClosed ? (
                     <div className="text-center py-4 rounded-xl" style={{ background: "#fef2f2" }}>
-                      <p className="text-sm font-semibold text-red-700">Fermé ce jour</p>
-                      <p className="text-xs text-red-500 mt-1">Choisissez une autre date</p>
+                      <p className="text-sm font-semibold text-red-700">{tr("Fermé ce jour")}</p>
+                      <p className="text-xs text-red-500 mt-1">{tr("Choisissez une autre date")}</p>
                     </div>
                   ) : rescheduleSlots.length === 0 ? (
                     <div className="text-center py-4 rounded-xl bg-gray-50">
-                      <p className="text-sm text-gray-500">Aucun créneau disponible ce jour</p>
+                      <p className="text-sm text-gray-500">{tr("Aucun créneau disponible ce jour")}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-2">
@@ -2942,14 +2957,14 @@ export default function DashboardGaragePage() {
             <div className="px-6 pb-6 flex gap-3">
               <button type="button" onClick={() => setRescheduleAppt(null)}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Annuler
+                {tr("Annuler")}
               </button>
               <button type="button"
                 disabled={!rescheduleSlot || !rescheduleDate || rescheduleLoading}
                 onClick={submitReschedule}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-colors"
                 style={{ background: "#f97316" }}>
-                {rescheduleLoading ? "Déplacement…" : "Confirmer le déplacement"}
+                {rescheduleLoading ? tr("Déplacement…") : tr("Confirmer le déplacement")}
               </button>
             </div>
           </div>
@@ -2961,11 +2976,11 @@ export default function DashboardGaragePage() {
         <div className="space-y-6">
           {/* Media uploads */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-5">Images du profil public</h2>
+            <h2 className="font-bold text-gray-900 text-lg mb-5">{tr("Images du profil public")}</h2>
 
             {/* Cover image */}
             <div className="mb-8">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Image de couverture</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{tr("Image de couverture")}</label>
 
               {/* Draggable preview */}
               <div
@@ -3019,14 +3034,14 @@ export default function DashboardGaragePage() {
                       }}
                     />
                     <div className="absolute inset-0 flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">Glisser pour repositionner</span>
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-medium">{tr("Glisser pour repositionner")}</span>
                       <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-mono">{Math.round(coverPos.tx)}% / {Math.round(coverPos.ty)}%</span>
                     </div>
                   </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center"
                     style={{ background: "linear-gradient(90deg, #071428 0%, #0b1f3a 60%, #f97316 100%)" }}>
-                    <span className="text-white/60 text-sm">Cliquez pour télécharger une image de couverture</span>
+                    <span className="text-white/60 text-sm">{tr("Cliquez pour télécharger une image de couverture")}</span>
                   </div>
                 )}
               </div>
@@ -3047,7 +3062,7 @@ export default function DashboardGaragePage() {
                   </div>
                   {/* Background color toggle */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Fond</span>
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">{tr("Fond")}</span>
                     <button type="button"
                       onClick={() => setShowCoverColorPicker(v => !v)}
                       className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium">
@@ -3059,13 +3074,13 @@ export default function DashboardGaragePage() {
                       <button type="button" onClick={() => { setCoverBgColor(null); setShowCoverColorPicker(false); }}
                         className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
                     )}
-                    <button type="button" title="Pipette : choisir une couleur à l'écran"
+                    <button type="button" title={tr("Pipette : choisir une couleur à l'écran")}
                       onClick={async () => {
                         if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur (Chrome/Edge requis)."); return; }
                         try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
                       }}
                       className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
-                      Pipette
+                      {tr("Pipette")}
                     </button>
                   </div>
                   {showCoverColorPicker && (
@@ -3080,14 +3095,14 @@ export default function DashboardGaragePage() {
                       onClick={() => coverInputRef.current?.click()}
                       className="text-xs px-3 py-1.5 rounded-lg font-semibold border"
                       style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                      {uploadingCover ? "Téléchargement…" : "Changer l'image"}
+                      {uploadingCover ? tr("Téléchargement…") : "Changer l'image"}
                     </button>
                     <button type="button"
                       onClick={() => setCoverPos({ tx: 0, ty: 0, zoom: 1 })}
                       className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
-                      Réinitialiser
+                      {tr("Réinitialiser")}
                     </button>
-                    <span className="text-xs text-gray-400 ml-1">Sauvegardez pour appliquer</span>
+                    <span className="text-xs text-gray-400 ml-1">{tr("Sauvegardez pour appliquer")}</span>
                   </div>
                 </div>
               )}
@@ -3095,17 +3110,17 @@ export default function DashboardGaragePage() {
                 <button type="button" onClick={() => coverInputRef.current?.click()}
                   className="text-sm px-4 py-2 rounded-xl font-semibold border"
                   style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                  {uploadingCover ? "Téléchargement…" : "Télécharger une couverture"}
+                  {uploadingCover ? tr("Téléchargement…") : tr("Télécharger une couverture")}
                 </button>
               )}
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, "cover"); e.target.value = ""; }} />
-              <p className="text-xs text-gray-400 mt-2">Recommandé : 1200×400 px, JPG ou PNG.</p>
+              <p className="text-xs text-gray-400 mt-2">{tr("Recommandé : 1200×400 px, JPG ou PNG.")}</p>
             </div>
 
             {/* Logo */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Logo du garage</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{tr("Logo du garage")}</label>
               <div className="flex items-start gap-4">
                 {/* Draggable Preview */}
                 <div className="flex-shrink-0">
@@ -3182,19 +3197,19 @@ export default function DashboardGaragePage() {
                           className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 flex-1 justify-center">
                           <div className="w-3.5 h-3.5 rounded border border-gray-300 flex-shrink-0"
                             style={{ background: logoBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
-                          Fond
+                          {tr("Fond")}
                         </button>
                         {logoBgColor && (
                           <button type="button" onClick={() => { setLogoBgColor(null); setShowLogoColorPicker(false); }}
                             className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
                         )}
-                        <button type="button" title="Pipette"
+                        <button type="button" title={tr("Pipette")}
                           onClick={async () => {
                             if (!("EyeDropper" in window)) { alert("Pipette non disponible."); return; }
                             try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
                           }}
                           className="text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500">
-                          Pipette
+                          {tr("Pipette")}
                         </button>
                       </div>
                       {showLogoColorPicker && (
@@ -3211,28 +3226,28 @@ export default function DashboardGaragePage() {
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-600 mb-3">Votre logo apparaît sur votre profil public à côté de votre nom.</p>
+                  <p className="text-sm text-gray-600 mb-3">{tr("Votre logo apparaît sur votre profil public à côté de votre nom.")}</p>
                   {garage.logoUrl && (
                     <p className="text-xs text-gray-500 mb-2">
-                      <strong>Glisser</strong> le logo pour le repositionner<br />
-                      <strong>Curseur</strong> pour zoomer / dézoomer
+                      <strong>{tr("Glisser")}</strong> {tr("le logo pour le repositionner")}<br />
+                      <strong>{tr("Curseur")}</strong> {tr.en ? "to zoom in or out" : "pour zoomer / dézoomer"}
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => logoInputRef.current?.click()}
                       className="text-sm px-4 py-2 rounded-xl font-semibold border"
                       style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
-                      {uploadingLogo ? "Téléchargement…" : "Changer le logo"}
+                      {uploadingLogo ? tr("Téléchargement…") : tr("Changer le logo")}
                     </button>
                     {garage.logoUrl && (
                       <button type="button" onClick={() => setLogoPos({ tx: 0, ty: 0, zoom: 1 })}
                         className="text-xs px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50">
-                        Réinitialiser
+                        {tr("Réinitialiser")}
                       </button>
                     )}
                   </div>
                   {garage.logoUrl && (
-                    <p className="text-xs text-gray-400 mt-2">Cliquez sur <strong>Sauvegarder le profil</strong> pour appliquer.</p>
+                    <p className="text-xs text-gray-400 mt-2">{tr("Cliquez sur")} <strong>{tr("Sauvegarder le profil")}</strong> {tr("pour appliquer.")}</p>
                   )}
                 </div>
               </div>
@@ -3243,33 +3258,33 @@ export default function DashboardGaragePage() {
 
           {/* Profile info form */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-5">Informations du garage</h2>
+            <h2 className="font-bold text-gray-900 text-lg mb-5">{tr("Informations du garage")}</h2>
             <form onSubmit={saveProfile} className="space-y-4 max-w-2xl">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Nom du garage</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{tr("Nom du garage")}</label>
                   <input type="text" className={inputClass} value={profileData.name ?? ""} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Téléphone</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{tr("Téléphone")}</label>
                   <input type="tel" className={inputClass} value={profileData.phone ?? ""} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Adresse</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{tr("Adresse")}</label>
                 <AddressAutocomplete onSelect={handleAddressSelect} initialValue={profileData.address ?? ""} inputClass={inputClass} />
                 {profileData.latitude && profileData.longitude && (
-                  <p className="text-xs text-green-600 mt-1 font-medium">✓ Coordonnées enregistrées : les clients proches vous trouveront en priorité</p>
+                  <p className="text-xs text-green-600 mt-1 font-medium">{tr("✓ Coordonnées enregistrées : les clients proches vous trouveront en priorité")}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Courriel public</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{tr("Courriel public")}</label>
                 <input type="email" className={inputClass} value={profileData.email ?? ""} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} />
               </div>
               {/* Langues parlées sur place */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Langues parlées sur place</label>
-                <p className="text-xs text-gray-400 mb-2">Affichées sur votre profil public pour rassurer les clients.</p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{tr("Langues parlées sur place")}</label>
+                <p className="text-xs text-gray-400 mb-2">{tr("Affichées sur votre profil public pour rassurer les clients.")}</p>
                 <div className="flex flex-wrap gap-2">
                   {GARAGE_LANGUAGES.map((l) => {
                     const current = parseLanguages(profileData.languages);
@@ -3294,11 +3309,11 @@ export default function DashboardGaragePage() {
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={profileData.acceptsWalkIn ?? true} onChange={(e) => setProfileData({ ...profileData, acceptsWalkIn: e.target.checked })} className="accent-orange-500 w-4 h-4" />
-                  <span className="text-sm font-medium text-gray-700">Accepte sans rendez-vous</span>
+                  <span className="text-sm font-medium text-gray-700">{tr("Accepte sans rendez-vous")}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={profileData.appointmentOnly ?? false} onChange={(e) => setProfileData({ ...profileData, appointmentOnly: e.target.checked })} className="accent-orange-500 w-4 h-4" />
-                  <span className="text-sm font-medium text-gray-700">Sur rendez-vous seulement</span>
+                  <span className="text-sm font-medium text-gray-700">{tr("Sur rendez-vous seulement")}</span>
                 </label>
               </div>
 
@@ -3306,9 +3321,9 @@ export default function DashboardGaragePage() {
               <div className="rounded-xl p-4" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={profileData.emailPublic ?? false} onChange={(e) => setProfileData({ ...profileData, emailPublic: e.target.checked })} className="accent-orange-500 w-4 h-4" />
-                  <span className="text-sm font-medium text-gray-700">Afficher mon adresse courriel sur mon profil public</span>
+                  <span className="text-sm font-medium text-gray-700">{tr("Afficher mon adresse courriel sur mon profil public")}</span>
                 </label>
-                <p className="text-xs text-gray-400 mt-1 ml-6">Si désactivé, votre courriel reste visible uniquement pour vous.</p>
+                <p className="text-xs text-gray-400 mt-1 ml-6">{tr("Si désactivé, votre courriel reste visible uniquement pour vous.")}</p>
               </div>
 
               <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
@@ -3330,9 +3345,11 @@ export default function DashboardGaragePage() {
           {/* ── Mes garages (visible depuis le garage principal) ── */}
           {garage.parentId === null && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Mes garages</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Mes garages")}</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Un seul abonnement couvre tous vos garages. 1<sup>er</sup> garage 109,99 $/mois, chaque garage supplémentaire +49,99 $/mois (−20 % en annuel). Chaque garage garde son profil, ses horaires et son agenda.
+                {tr.en
+                  ? "One subscription covers all your garages. First garage $109.99/month, each additional garage +$49.99/month (−20% on an annual plan). Each garage keeps its own profile, hours and calendar."
+                  : <>Un seul abonnement couvre tous vos garages. 1<sup>er</sup> garage 109,99 $/mois, chaque garage supplémentaire +49,99 $/mois (−20 % en annuel). Chaque garage garde son profil, ses horaires et son agenda.</>}
               </p>
               <div className="divide-y divide-gray-100">
                 {myGarages.map((g) => {
@@ -3345,23 +3362,23 @@ export default function DashboardGaragePage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{g.name}</p>
                         <p className="text-xs text-gray-400">
-                          {g.city}{g.parentId === null ? " · garage principal" : " · +49,99 $/mois"}
+                          {g.city}{g.parentId === null ? (tr.en ? " · main garage" : " · garage principal") : tr.en ? " · +$49.99/month" : " · +49,99 $/mois"}
                         </p>
                       </div>
                       {!isCurrent && (
                         <button onClick={() => switchGarage(g.id)}
                           className="text-xs font-bold text-orange-600 hover:underline flex-shrink-0">
-                          Gérer
+                          {tr("Gérer")}
                         </button>
                       )}
                       {g.parentId !== null && (
-                        <button onClick={() => { if (window.confirm(`Retirer « ${g.name} » ? Le profil est masqué immédiatement et votre facture baisse de 49,99 $/mois.`)) removeBranch(g.id); }}
+                        <button onClick={() => { if (window.confirm(tr.en ? `Remove "${g.name}"? The profile is hidden right away and your invoice goes down by $49.99/month.` : `Retirer « ${g.name} » ? Le profil est masqué immédiatement et votre facture baisse de 49,99 $/mois.`)) removeBranch(g.id); }}
                           disabled={removingBranch === g.id}
                           className="text-xs font-semibold text-gray-400 hover:text-red-600 flex-shrink-0 disabled:opacity-50">
-                          {removingBranch === g.id ? "…" : "Retirer"}
+                          {removingBranch === g.id ? "…" : tr("Retirer")}
                         </button>
                       )}
-                      {isCurrent && <span className="text-xs font-semibold text-gray-300 flex-shrink-0">affiché</span>}
+                      {isCurrent && <span className="text-xs font-semibold text-gray-300 flex-shrink-0">{tr("affiché")}</span>}
                     </div>
                   );
                 })}
@@ -3369,7 +3386,7 @@ export default function DashboardGaragePage() {
               <button onClick={() => { setBranchError(""); setShowAddBranch(true); }}
                 className="mt-4 w-full flex items-center justify-center gap-2 border-[1.5px] border-dashed border-gray-300 rounded-xl py-3 text-sm font-bold text-gray-600 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Ajouter une succursale
+                {tr("Ajouter une succursale")}
               </button>
             </div>
           )}
@@ -3380,17 +3397,17 @@ export default function DashboardGaragePage() {
               onClick={() => !branchSaving && setShowAddBranch(false)}>
               <form onSubmit={submitBranch} onClick={(e) => e.stopPropagation()}
                 className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-                <h3 className="text-lg font-black text-gray-900 mb-1">Ajouter une succursale</h3>
-                <p className="text-sm text-gray-500 mb-4">Ce garage aura son propre profil, ses horaires et son agenda.</p>
+                <h3 className="text-lg font-black text-gray-900 mb-1">{tr("Ajouter une succursale")}</h3>
+                <p className="text-sm text-gray-500 mb-4">{tr("Ce garage aura son propre profil, ses horaires et son agenda.")}</p>
                 {branchError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{branchError}</p>}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Nom du garage</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">{tr("Nom du garage")}</label>
                     <input type="text" required className={inputClass} placeholder="Garage Tremblay Brossard"
                       value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Adresse</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">{tr("Adresse")}</label>
                     <AddressAutocomplete
                       initialValue={branchForm.address}
                       inputClass={inputClass}
@@ -3400,27 +3417,27 @@ export default function DashboardGaragePage() {
                       }))} />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Téléphone</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">{tr("Téléphone")}</label>
                     <input type="tel" className={inputClass} placeholder="(450) 555-1234"
                       value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} />
                   </div>
                 </div>
                 <div className="rounded-xl p-3 mt-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
-                  <p className="text-sm font-bold" style={{ color: "#ea6c0a" }}>+ 49,99 $/mois</p>
+                  <p className="text-sm font-bold" style={{ color: "#ea6c0a" }}>{tr("+ 49,99 $/mois")}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#9a3412" }}>
                     {garage.subscriptionStatus === "ACTIVE"
                       ? "Facturé au prorata dès aujourd'hui, puis à chaque cycle. Le garage principal porte la facture."
-                      : "Gratuit pendant votre essai. Facturé quand vous activerez votre abonnement."}
+                      : tr("Gratuit pendant votre essai. Facturé quand vous activerez votre abonnement.")}
                   </p>
                 </div>
                 <div className="flex gap-2 mt-5">
                   <button type="button" onClick={() => setShowAddBranch(false)} disabled={branchSaving}
                     className="flex-1 border border-gray-300 rounded-xl py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-                    Annuler
+                    {tr("Annuler")}
                   </button>
                   <button type="submit" disabled={branchSaving}
                     className="flex-1 text-white rounded-xl py-2.5 text-sm font-black disabled:opacity-50" style={{ background: "#f97316" }}>
-                    {branchSaving ? "Ajout…" : "Ajouter la succursale"}
+                    {branchSaving ? tr("Ajout…") : tr("Ajouter la succursale")}
                   </button>
                 </div>
               </form>
@@ -3430,15 +3447,15 @@ export default function DashboardGaragePage() {
           {/* Succursale : l'abonnement est géré depuis le garage principal */}
           {garage.parentId !== null && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Statut</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Statut")}</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Cette succursale est couverte par l'abonnement de votre garage principal.
-                La facturation, l'activation et la résiliation se gèrent depuis celui-ci.
+                {tr("Cette succursale est couverte par l'abonnement de votre garage principal.")}{" "}
+                {tr("La facturation, l'activation et la résiliation se gèrent depuis celui-ci.")}
               </p>
               <button
                 onClick={() => { const p = myGarages.find(g => g.parentId === null); if (p) switchGarage(p.id); }}
                 className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
-                Aller au garage principal
+                {tr("Aller au garage principal")}
               </button>
             </div>
           )}
@@ -3446,42 +3463,42 @@ export default function DashboardGaragePage() {
           {/* ── Statut de l'abonnement (garage principal) ── */}
           {garage.parentId === null && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-4">Statut</h2>
+            <h2 className="font-bold text-gray-900 text-lg mb-4">{tr("Statut")}</h2>
 
             {garage.subscriptionStatus === "TRIAL" && (
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}>
-                    Essai gratuit
+                    {tr("Essai gratuit")}
                   </span>
                   {garage.subscriptionEndAt && (
                     <span className="text-sm text-gray-500">
-                      jusqu'au {new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
+                      {tr.en ? "until" : "jusqu'au"} {new Date(garage.subscriptionEndAt).toLocaleDateString(tr.locale, { day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Votre garage est visible dans les résultats.{" "}
+                  {tr("Votre garage est visible dans les résultats.")}{" "}
                   {garage.stripePriceId
                     ? "Votre abonnement démarrera automatiquement à la fin de l'essai avec la carte enregistrée."
-                    : "Aucune carte n'est enregistrée. Ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure."}
+                    : tr("Aucune carte n'est enregistrée. Ajoutez-en une pour que votre abonnement démarre automatiquement à la fin de l'essai, sans coupure.")}
                 </p>
                 {!garage.stripePriceId && (
                   <div className="mb-4">
                     <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
                       className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                      {addCardLoading ? "Redirection…" : "Ajouter ma carte"}
+                      {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
                     </button>
                   </div>
                 )}
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Ou activer immédiatement : 88,00 $/mois (annuel, −20 %)"}
+                    {checkoutLoading ? tr("Chargement…") : tr("Ou activer immédiatement : 88,00 $/mois (annuel, −20 %)")}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    ou payer mensuellement (109,99 $/mois)
+                    {tr("ou payer mensuellement (109,99 $/mois)")}
                   </button>
                 </div>
               </>
@@ -3491,19 +3508,19 @@ export default function DashboardGaragePage() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#ecfdf5", color: "#047857", border: "1px solid #6ee7b7" }}>
-                    Actif
+                    {tr("Actif")}
                   </span>
                   {garage.subscriptionEndAt && (
                     <span className="text-sm text-gray-500">
-                      {garage.cancelAtPeriodEnd ? "se termine le" : "prochain renouvellement le"}{" "}
-                      {new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}
+                      {garage.cancelAtPeriodEnd ? tr("se termine le") : tr("prochain renouvellement le")}{" "}
+                      {new Date(garage.subscriptionEndAt).toLocaleDateString(tr.locale, { day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   )}
                 </div>
                 <p className="text-sm text-gray-500">
                   {garage.cancelAtPeriodEnd
                     ? "Votre abonnement ne se renouvellera pas. Vous gardez l'accès complet jusqu'à la date ci-dessus."
-                    : "Votre garage apparaît dans les résultats de recherche et reçoit les réservations en ligne."}
+                    : tr("Votre garage apparaît dans les résultats de recherche et reçoit les réservations en ligne.")}
                 </p>
               </>
             )}
@@ -3512,17 +3529,17 @@ export default function DashboardGaragePage() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
-                    Paiement échoué
+                    {tr("Paiement échoué")}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Votre dernier prélèvement n'a pas abouti. {pastDueDeadline
-                    ? `Mettez votre moyen de paiement à jour avant le ${pastDueDeadline} pour rester visible dans la recherche.`
-                    : "Mettez votre moyen de paiement à jour pour rester visible dans la recherche."}
+                  {tr.en ? "Your last charge did not go through." : "Votre dernier prélèvement n'a pas abouti."} {pastDueDeadline
+                    ? (tr.en ? `Update your payment method before ${pastDueDeadline} to stay visible in search.` : `Mettez votre moyen de paiement à jour avant le ${pastDueDeadline} pour rester visible dans la recherche.`)
+                    : tr("Mettez votre moyen de paiement à jour pour rester visible dans la recherche.")}
                 </p>
                 <button onClick={openBillingPortal} disabled={portalLoading}
                   className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                  {portalLoading ? "Ouverture…" : "Mettre à jour ma carte"}
+                  {portalLoading ? tr("Ouverture…") : tr("Mettre à jour ma carte")}
                 </button>
               </>
             )}
@@ -3531,20 +3548,20 @@ export default function DashboardGaragePage() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}>
-                    Expiré
+                    {tr("Expiré")}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.
+                  {tr("Votre garage n'apparaît plus dans les résultats de recherche. Activez votre abonnement pour redevenir visible.")}
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
                     className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
-                    {checkoutLoading ? "Chargement…" : "Activer : 88,00 $/mois (annuel, −20 %)"}
+                    {checkoutLoading ? tr("Chargement…") : "Activer : 88,00 $/mois (annuel, −20 %)"}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
                     className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
-                    ou payer mensuellement (109,99 $/mois)
+                    {tr("ou payer mensuellement (109,99 $/mois)")}
                   </button>
                 </div>
               </>
@@ -3555,7 +3572,7 @@ export default function DashboardGaragePage() {
           {/* ── Facturation + moyen de paiement (garage principal, abonné) ── */}
           {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-4">Facturation</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-4">{tr("Facturation")}</h2>
 
               {billing?.hasSubscription ? (
                 <>
@@ -3563,32 +3580,32 @@ export default function DashboardGaragePage() {
                     <span className="text-sm text-gray-500">
                       {billing.cancelAtPeriodEnd
                         ? "Dernière facture avant résiliation"
-                        : billing.interval === "year" ? "Prochaine facture annuelle" : "Prochaine facture mensuelle"}
+                        : billing.interval === "year" ? (tr.en ? "Next annual invoice" : "Prochaine facture annuelle") : tr.en ? "Next monthly invoice" : "Prochaine facture mensuelle"}
                     </span>
                     <span className="text-xl font-black text-gray-900" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {billing.nextAmount != null
-                        ? `${(billing.nextAmount / 100).toLocaleString("fr-CA", { minimumFractionDigits: 2 })} ${billing.currency ?? "CAD"}`
+                        ? `${(billing.nextAmount / 100).toLocaleString(tr.locale, { minimumFractionDigits: 2 })} ${billing.currency ?? "CAD"}`
                         : "—"}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-3 py-3 border-b border-gray-100">
                     <span className="text-sm text-gray-500">
-                      {billing.cancelAtPeriodEnd ? "Échéance" : "Date de prélèvement"}
+                      {billing.cancelAtPeriodEnd ? tr("Échéance") : tr("Date de prélèvement")}
                     </span>
                     <span className="text-sm font-bold text-gray-900">
                       {billing.nextDate
-                        ? new Date(billing.nextDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })
+                        ? new Date(billing.nextDate).toLocaleDateString(tr.locale, { day: "numeric", month: "long", year: "numeric" })
                         : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-3 pt-3">
-                    <span className="text-sm text-gray-500">Moyen de paiement</span>
+                    <span className="text-sm text-gray-500">{tr("Moyen de paiement")}</span>
                     <span className="text-sm font-bold text-gray-900">
                       {billing.paymentMethod?.type === "card"
-                        ? `${(billing.paymentMethod.brand ?? "carte").replace(/^\w/, c => c.toUpperCase())} •••• ${billing.paymentMethod.last4}`
+                        ? `${(billing.paymentMethod.brand ?? (tr.en ? "card" : "carte")).replace(/^\w/, c => c.toUpperCase())} •••• ${billing.paymentMethod.last4}`
                         : billing.paymentMethod?.type === "acss_debit"
-                        ? `Compte bancaire •••• ${billing.paymentMethod.last4 ?? ""}`
-                        : billing.paymentMethod?.type ?? "Non renseigné"}
+                        ? `${tr.en ? "Bank account" : "Compte bancaire"} •••• ${billing.paymentMethod.last4 ?? ""}`
+                        : billing.paymentMethod?.type ?? tr("Non renseigné")}
                     </span>
                   </div>
                 </>
@@ -3596,18 +3613,18 @@ export default function DashboardGaragePage() {
                 <p className="text-sm text-gray-500">
                   {billing === null
                     ? "Chargement…"
-                    : "Gérez votre moyen de paiement et consultez vos factures sur la page sécurisée de Stripe."}
+                    : tr("Gérez votre moyen de paiement et consultez vos factures sur la page sécurisée de Stripe.")}
                 </p>
               )}
 
               <button onClick={openBillingPortal} disabled={portalLoading || billing === null}
                 className="mt-4 text-sm font-semibold text-gray-700 border border-gray-300 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                {portalLoading ? "Ouverture…" : "Modifier le moyen de paiement"}
+                {portalLoading ? tr("Ouverture…") : tr("Modifier le moyen de paiement")}
               </button>
               {portalError
                 ? <p className="text-xs text-red-600 mt-2">{portalError}</p>
                 : <p className="text-xs text-gray-400 mt-2">
-                    Vous serez redirigé vers la page sécurisée de Stripe pour mettre à jour votre carte ou vos coordonnées bancaires et consulter vos factures.
+                    {tr("Vous serez redirigé vers la page sécurisée de Stripe pour mettre à jour votre carte ou vos coordonnées bancaires et consulter vos factures.")}
                   </p>}
             </div>
           )}
@@ -3615,44 +3632,44 @@ export default function DashboardGaragePage() {
           {/* ── Annulation / réactivation (abonnement actif, garage principal) ── */}
           {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Renouvellement</h2>
+              <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Renouvellement")}</h2>
               {garage.cancelAtPeriodEnd ? (
                 <>
                   <p className="text-sm text-gray-500 mb-4">
-                    Le renouvellement automatique est désactivé
-                    {garage.subscriptionEndAt ? `, votre accès reste complet jusqu'au ${new Date(garage.subscriptionEndAt).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
+                    {tr("Le renouvellement automatique est désactivé")}
+                    {garage.subscriptionEndAt ? `${tr.en ? ", you keep full access until" : ", votre accès reste complet jusqu'au"} ${new Date(garage.subscriptionEndAt).toLocaleDateString(tr.locale, { day: "numeric", month: "long", year: "numeric" })}` : ""}.
                   </p>
                   {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
                   <button onClick={() => cancelSubscription(true)} disabled={cancelLoading}
                     className="text-sm font-bold text-white rounded-xl px-4 py-2 disabled:opacity-50"
                     style={{ background: "#f97316" }}>
-                    {cancelLoading ? "Chargement…" : "Réactiver le renouvellement"}
+                    {cancelLoading ? tr("Chargement…") : tr("Réactiver le renouvellement")}
                   </button>
                 </>
               ) : (
                 <>
                   <p className="text-sm text-gray-500 mb-4">
-                    Vous pouvez annuler à tout moment. Vous garderez l'accès complet jusqu'à la fin de votre période déjà payée, sans renouvellement après.
+                    {tr("Vous pouvez annuler à tout moment. Vous garderez l'accès complet jusqu'à la fin de votre période déjà payée, sans renouvellement après.")}
                   </p>
                   {!showCancelConfirm ? (
                     <button onClick={() => setShowCancelConfirm(true)}
                       className="text-sm font-semibold text-gray-600 border border-gray-300 rounded-xl px-4 py-2 hover:bg-gray-50 transition-colors">
-                      Annuler mon abonnement
+                      {tr("Annuler mon abonnement")}
                     </button>
                   ) : (
                     <div className="rounded-xl p-4" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                       <p className="text-sm font-semibold text-gray-800 mb-3">
-                        Confirmer l'annulation ? Vous garderez l'accès jusqu'à la fin de la période déjà payée, sans renouvellement ensuite.
+                        {tr("Confirmer l'annulation ? Vous garderez l'accès jusqu'à la fin de la période déjà payée, sans renouvellement ensuite.")}
                       </p>
                       {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
                       <div className="flex gap-3">
                         <button onClick={() => cancelSubscription(false)} disabled={cancelLoading}
                           className="text-sm font-bold text-white bg-gray-800 rounded-xl px-4 py-2 hover:bg-gray-900 disabled:opacity-50">
-                          {cancelLoading ? "Chargement…" : "Oui, annuler"}
+                          {cancelLoading ? tr("Chargement…") : tr("Oui, annuler")}
                         </button>
                         <button onClick={() => setShowCancelConfirm(false)} disabled={cancelLoading}
                           className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
-                          Retour
+                          {tr("Retour")}
                         </button>
                       </div>
                     </div>
@@ -3666,31 +3683,31 @@ export default function DashboardGaragePage() {
 
           {/* ── Zone de suppression du compte ── */}
           <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
-            <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
+            <h2 className="font-bold text-red-700 text-lg mb-1">{tr("Supprimer mon compte")}</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées. C'est impossible à annuler.
+              {tr("Cette action est définitive. Votre abonnement sera annulé automatiquement, votre fiche garage sera retirée des résultats de recherche, et toutes vos données (services, avis, rendez-vous, statistiques) seront effacées. C'est impossible à annuler.")}
             </p>
             {!showDeleteConfirm ? (
               <button onClick={() => setShowDeleteConfirm(true)}
                 className="text-sm font-bold text-red-600 border border-red-300 rounded-xl px-4 py-2 hover:bg-red-50 transition-colors">
-                Supprimer définitivement mon compte
+                {tr("Supprimer définitivement mon compte")}
               </button>
             ) : (
               <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
-                <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible et annule votre abonnement.</p>
+                <p className="text-sm font-semibold text-red-800 mb-3">{tr("Êtes-vous certain(e) ? Cette action est irréversible et annule votre abonnement.")}</p>
                 <div className="mb-3">
-                  <label htmlFor="del-pwd-g" className="block text-xs font-semibold text-red-800 mb-1">Entrez votre mot de passe pour confirmer (laissez vide si vous vous connectez avec Google)</label>
+                  <label htmlFor="del-pwd-g" className="block text-xs font-semibold text-red-800 mb-1">{tr("Entrez votre mot de passe pour confirmer (laissez vide si vous vous connectez avec Google)")}</label>
                   <input id="del-pwd-g" type="password" autoComplete="current-password" className="w-full border border-red-300 rounded-xl px-3 py-2 text-sm bg-white" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} />
                 </div>
                 {deleteError && <p className="text-xs text-red-600 mb-3" role="alert">{deleteError}</p>}
                 <div className="flex gap-3">
                   <button onClick={deleteAccount} disabled={deleting}
                     className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">
-                    {deleting ? "Suppression…" : "Oui, tout supprimer"}
+                    {deleting ? tr("Suppression…") : tr("Oui, tout supprimer")}
                   </button>
                   <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting}
                     className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
-                    Annuler
+                    {tr("Annuler")}
                   </button>
                 </div>
               </div>
@@ -3706,7 +3723,7 @@ export default function DashboardGaragePage() {
           count={garage.referralCount ?? 0}
           garage={garage}
           stats={stats}
-          onCopyCode={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess("Code copié ✓"); setTimeout(() => setSuccess(""), 3000); }}
+          onCopyCode={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess(tr("Code copié ✓")); setTimeout(() => setSuccess(""), 3000); }}
         />
       )}
     </div>

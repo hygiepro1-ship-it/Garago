@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { translateServiceName } from "@/lib/services";
 
 /**
  * Vue « semaine » de l'agenda du garage : une colonne par jour, une ligne par
@@ -198,7 +199,7 @@ export default function AgendaWeekView({
                     <span className="text-sm font-black tabular-nums shrink-0">{a.startTime}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold truncate">{a.customerName}</span>
-                      <span className="block text-xs truncate">{a.serviceName ? `${a.serviceName} · ` : ""}{stateLabel(a)}</span>
+                      <span className="block text-xs truncate">{a.serviceName ? `${translateServiceName(a.serviceName, lang)} · ` : ""}{stateLabel(a)}</span>
                     </span>
                     <span aria-hidden="true" className="text-lg">›</span>
                   </button>
