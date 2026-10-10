@@ -1915,7 +1915,7 @@ export default function DashboardGaragePage() {
                       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{tr("Note moyenne")}</span>
                     </div>
                     <p className="text-3xl font-black mt-1" style={{ color: "#0b1f3a" }}>{avgRating ? `${avgRating}` : "—"}<span className="text-base font-semibold text-gray-400">{avgRating ? "/5" : ""}</span></p>
-                    <p className="text-xs text-gray-400 mt-1">{garage._count?.reviews ?? 0} avis</p>
+                    <p className="text-xs text-gray-400 mt-1">{garage._count?.reviews ?? 0} {tr.en ? "reviews" : "avis"}</p>
                   </div>
 
                   {/* Taux de confirmation RDV */}
@@ -2406,7 +2406,7 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-900 text-lg">{tr("Avis clients")}</h3>
-              <span className="text-sm text-gray-400">{reviews.length} avis</span>
+              <span className="text-sm text-gray-400">{reviews.length} {tr.en ? "reviews" : "avis"}</span>
             </div>
 
             {reviews.length === 0 ? (
