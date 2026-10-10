@@ -40,6 +40,7 @@ function useClickOutside<T extends HTMLElement>(onClose: () => void) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SearchBar() {
+  const en = useLang().lang === "en";
   const router = useRouter();
   const [search, setSearch] = useState("");
 
@@ -63,13 +64,13 @@ function SearchBar() {
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Service, marque, garage…"
+        placeholder={en ? "Service, make, garage…" : "Service, marque, garage…"}
         className="flex-1 bg-transparent px-3 py-2.5 text-sm focus:outline-none"
         style={{ color: "white" }}
       />
       <button type="submit" className="px-4 py-2.5 text-sm font-bold text-white flex-shrink-0"
         style={{ background: "#f97316" }}>
-        Chercher
+        {en ? "Search" : "Chercher"}
       </button>
     </form>
   );

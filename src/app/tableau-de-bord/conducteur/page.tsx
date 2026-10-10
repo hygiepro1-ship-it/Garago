@@ -6,6 +6,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
+import { useTr } from "@/lib/dashboard-en";
+import { translateServiceName } from "@/lib/services";
 
 // ── Couleurs de marque ────────────────────────────────────────────────────────
 const BRAND_COLOR: Record<string, string> = {
@@ -78,6 +80,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
   findGarageLabel: string;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const tr = useTr();
   const [deleting, setDeleting]     = useState(false);
   const [showSpecs, setShowSpecs]   = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -120,7 +123,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
                   <rect x="1" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
                   <rect x="7" y="7" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/>
                 </svg>
-                {showSpecs ? "Fermer" : "Fiche tech."}
+                {showSpecs ? tr("Fermer") : tr("Fiche tech.")}
               </button>
             )}
             {confirmingDelete ? (
@@ -130,19 +133,19 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
                   disabled={deleting}
                   className="text-xs font-bold text-white px-2.5 py-1.5 rounded-full disabled:opacity-50"
                   style={{ background: "#dc2626" }}>
-                  {deleting ? "…" : "Retirer"}
+                  {deleting ? "…" : tr("Retirer")}
                 </button>
                 <button
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
                   className="text-xs font-semibold text-gray-500 px-2.5 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50">
-                  Annuler
+                  {tr("Annuler")}
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setConfirmingDelete(true)}
-                title="Retirer ce véhicule"
+                title={tr("Retirer ce véhicule")}
                 className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                 ×
               </button>
@@ -168,22 +171,22 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
           <div className="mx-4 mb-3 rounded-xl overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
             {/* En-tête fiche */}
             <div className="px-3 py-2" style={{ background: "#0b1f3a" }}>
-              <p className="text-white text-xs font-bold tracking-widest uppercase">Fiche technique</p>
+              <p className="text-white text-xs font-bold tracking-widest uppercase">{tr("Fiche technique")}</p>
               <p className="text-blue-200 text-xs opacity-70">{v.year} {v.make} {v.model}{v.trim ? ` ${v.trim}` : ""}</p>
             </div>
 
             {/* Grille 2 colonnes */}
             <div className="grid grid-cols-2 divide-x divide-y divide-gray-100" style={{ background: "#fff" }}>
               {[
-                specs.engine && { label: "Moteur", value: `${specs.engine}${specs.hp ? `, ${specs.hp} ch` : ""}` },
+                specs.engine && { label: tr.en ? "Engine" : "Moteur", value: `${specs.engine}${specs.hp ? `, ${specs.hp} ${tr.en ? "hp" : "ch"}` : ""}` },
                 specs.fuel        && { label: "Carburant",    value: specs.fuel },
-                specs.transmission && { label: "Boîte",       value: specs.transmission },
+                specs.transmission && { label: tr("Boîte"),       value: specs.transmission },
                 specs.driveType   && { label: "Traction",     value: specs.driveType },
-                (specs.bodyType || specs.doors) && { label: "Carrosserie", value: `${specs.bodyType ?? ""}${specs.doors ? ` · ${specs.doors} portes` : ""}`.trim() },
-                v.tireSize        && { label: "Pneus d'orig.", value: v.tireSize },
+                (specs.bodyType || specs.doors) && { label: tr("Carrosserie"), value: `${specs.bodyType ?? ""}${specs.doors ? ` · ${specs.doors} ${tr.en ? "doors" : "portes"}` : ""}`.trim() },
+                v.tireSize        && { label: tr("Pneus d'orig."), value: v.tireSize },
               ].filter(Boolean).map((item: any, i: number) => (
                 <div key={i} className="px-3 py-2.5">
-                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ fontSize: "9px", letterSpacing: "0.08em" }}>{item.label}</p>
+                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ fontSize: "9px", letterSpacing: "0.08em" }}>{tr(item.label)}</p>
                   <p className="text-gray-900 text-xs font-semibold leading-snug">{item.value}</p>
                 </div>
               ))}
@@ -207,7 +210,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
         {!specs && v.tireSize && (
           <div className="mx-4 mb-2 flex items-center justify-between px-3 py-2 rounded-lg"
             style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide" style={{ fontSize: "9px" }}>Pneus d&apos;origine</span>
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide" style={{ fontSize: "9px" }}>{tr("Pneus d'origine")}</span>
             <span className="text-xs font-bold text-green-800">{v.tireSize}</span>
           </div>
         )}
@@ -278,6 +281,7 @@ function ApptRow({
   onReschedule: (a: ClientAppt) => void;
   onCancel: (id: string) => void;
 }) {
+  const tr = useTr();
   const s = STATUS_BADGE[appt.status] ?? STATUS_BADGE.PENDING;
   const modifiable = canModify(appt);
   return (
@@ -285,17 +289,17 @@ function ApptRow({
       <div className="flex items-start justify-between gap-2">
         <Link href={`/garage/${appt.garage.slug}`} className="group flex-1 min-w-0">
           <p className="font-bold text-gray-900 text-sm group-hover:underline" style={{ color: "#1e3a5f" }}>{appt.garage.name} <span className="text-gray-400 font-normal text-xs"></span></p>
-          <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
-          {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">{appt.serviceName}</p>}
+          <p className="text-xs text-gray-500">{new Date(appt.date + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "long", day: "numeric", month: "long" })} · {appt.startTime} – {appt.endTime}</p>
+          {appt.serviceName && <p className="text-xs text-gray-500 mt-0.5">{translateServiceName(appt.serviceName, tr.en ? "en" : "fr")}</p>}
           {(appt.vehicleMake || appt.vehicleYear) && (
             <p className="text-xs text-gray-400">{[appt.vehicleYear, appt.vehicleMake, appt.vehicleModel].filter(Boolean).join(" ")}</p>
           )}
         </Link>
-        <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
+        <span className="text-xs px-2 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: s.color, background: s.bg }}>{tr(s.label)}</span>
       </div>
       {appt.completionNote && (
         <div className="rounded-lg px-3 py-2.5 text-xs" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534" }}>
-          <p className="font-semibold mb-1">Note du garage</p>
+          <p className="font-semibold mb-1">{tr("Note du garage")}</p>
           <p className="leading-relaxed">{appt.completionNote}</p>
         </div>
       )}
@@ -309,11 +313,11 @@ function ApptRow({
           <button
             onClick={() => onReschedule(appt)}
             className="text-xs px-3 py-2 rounded-lg font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-          >Modifier</button>
+          >{tr("Modifier")}</button>
           <button
             onClick={() => onCancel(appt.id)}
             className="text-xs px-3 py-2 rounded-lg font-semibold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-          >✕ Annuler</button>
+          >{tr("✕ Annuler")}</button>
         </div>
       )}
     </div>
@@ -321,6 +325,7 @@ function ApptRow({
 }
 
 export default function DashboardConducteurPage() {
+  const tr = useTr();
   const { data: session, status } = useSession();
   const router = useRouter();
   const { t } = useLang();
@@ -355,7 +360,7 @@ export default function DashboardConducteurPage() {
       body: JSON.stringify({ name: merged.name, phone: merged.phone, marketingConsent: merged.marketing }),
     });
     const data = await res.json().catch(() => ({}));
-    setProfMsg(res.ok ? { ok: true, text: "Enregistré." } : { ok: false, text: data.error ?? "Impossible d'enregistrer." });
+    setProfMsg(res.ok ? { ok: true, text: tr("Enregistré.") } : { ok: false, text: data.error ?? tr("Impossible d'enregistrer.") });
   }
 
   async function changePassword(e: React.FormEvent) {
@@ -366,8 +371,8 @@ export default function DashboardConducteurPage() {
       body: JSON.stringify({ currentPassword: pwd.current, newPassword: pwd.next }),
     });
     const data = await res.json().catch(() => ({}));
-    if (res.ok) { setPwd({ current: "", next: "" }); setPwdMsg({ ok: true, text: "Mot de passe modifié." }); }
-    else setPwdMsg({ ok: false, text: data.error ?? "Impossible de changer le mot de passe." });
+    if (res.ok) { setPwd({ current: "", next: "" }); setPwdMsg({ ok: true, text: tr("Mot de passe modifié.") }); }
+    else setPwdMsg({ ok: false, text: data.error ?? tr("Impossible de changer le mot de passe.") });
   }
 
   async function deleteAccount() {
@@ -376,7 +381,7 @@ export default function DashboardConducteurPage() {
     const res = await fetch("/api/user/profile", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: deletePwd }) });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setDeleteError(data.error ?? "Une erreur est survenue. Réessayez plus tard.");
+      setDeleteError(data.error ?? tr("Une erreur est survenue. Réessayez plus tard."));
       setDeleting(false);
       return;
     }
@@ -511,7 +516,7 @@ export default function DashboardConducteurPage() {
 
   async function lookupVin() {
     const v = vin.trim().toUpperCase();
-    if (v.length !== 17) { setVinError("Le NIV doit contenir exactement 17 caractères."); return; }
+    if (v.length !== 17) { setVinError(tr("Le NIV doit contenir exactement 17 caractères.")); return; }
     setVinLoading(true); setVinError(""); setVinSpecs(null);
     try {
       const res = await fetch(`/api/vin-decode?vin=${v}`);
@@ -535,7 +540,7 @@ export default function DashboardConducteurPage() {
         recalls:      data.recalls      ?? [],
       };
       setVinSpecs(specs);
-    } catch { setVinError("Erreur réseau."); }
+    } catch { setVinError(tr("Erreur réseau.")); }
     finally { setVinLoading(false); }
   }
 
@@ -555,7 +560,7 @@ export default function DashboardConducteurPage() {
       setYear(""); setMake(""); setModel(""); setTrim(""); setVin(""); setTireSize(""); setVinSpecs(null);
     } else {
       const err = await res.json().catch(() => ({}));
-      setVehicleError(err?.error || "Impossible d'ajouter le véhicule.");
+      setVehicleError(err?.error || tr("Impossible d'ajouter le véhicule."));
     }
     setSavingVehicle(false);
   }
@@ -631,7 +636,7 @@ export default function DashboardConducteurPage() {
               </div>
               <div>
                 <p className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{totalRdv}</p>
-                <p className="text-xs text-gray-400 font-semibold">Rendez-vous</p>
+                <p className="text-xs text-gray-400 font-semibold">{tr("Rendez-vous")}</p>
               </div>
             </div>
 
@@ -642,21 +647,21 @@ export default function DashboardConducteurPage() {
                 <div className="w-12 h-12 rounded-xl flex-shrink-0 flex flex-col items-center justify-center"
                   style={{ background: "#f97316" }}>
                   <span className="text-white text-xs font-black leading-none uppercase">
-                    {new Date(prochainRdv.date + "T12:00:00").toLocaleDateString("fr-CA", { month: "short" })}
+                    {new Date(prochainRdv.date + "T12:00:00").toLocaleDateString(tr.locale, { month: "short" })}
                   </span>
                   <span className="text-white text-lg font-black leading-tight">
                     {new Date(prochainRdv.date + "T12:00:00").getDate()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black uppercase tracking-widest mb-0.5" style={{ color: "#f97316" }}>Prochain rendez-vous</p>
+                  <p className="text-xs font-black uppercase tracking-widest mb-0.5" style={{ color: "#f97316" }}>{tr("Prochain rendez-vous")}</p>
                   <p className="font-bold text-gray-900 text-sm truncate">{prochainRdv.garage.name}</p>
-                  <p className="text-xs text-gray-500">{prochainRdv.startTime} – {prochainRdv.endTime}{prochainRdv.serviceName ? ` · ${prochainRdv.serviceName}` : ""}</p>
+                  <p className="text-xs text-gray-500">{prochainRdv.startTime} – {prochainRdv.endTime}{prochainRdv.serviceName ? ` · ${translateServiceName(prochainRdv.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
                 </div>
                 <Link href={`/garage/${prochainRdv.garage.slug}`}
                   className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors hover:opacity-80"
                   style={{ background: "#f97316", color: "#fff" }}>
-                  Voir
+                  {tr("Voir")}
                 </Link>
               </div>
             )}
@@ -672,7 +677,7 @@ export default function DashboardConducteurPage() {
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-1 flex-nowrap">
             {([
-              { id: "rdv",       label: "Rendez-vous" + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : ""),
+              { id: "rdv",       label: tr("Rendez-vous") + (appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length ? ` (${appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED").length})` : ""),
                 icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
               { id: "vehicules", label: d.vehicles,
                 icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h5l3 3v4h-8V8zM5 7V3m6 4V3M5 17v4m6-4v4"/><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/></svg> },
@@ -680,7 +685,7 @@ export default function DashboardConducteurPage() {
                 icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> },
               { id: "rappels",   label: d.reminders + (pending.length ? ` (${pending.length})` : ""),
                 icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg> },
-              { id: "preferences", label: "Préférences",
+              { id: "preferences", label: tr("Préférences"),
                 icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
             ] as { id: Tab; label: string; icon: ReactNode }[]).map(tb => (
               <button
@@ -689,7 +694,7 @@ export default function DashboardConducteurPage() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
                 style={tab === tb.id ? { background: "#f97316" } : {}}
               >
-                {tb.icon}{tb.label}
+                {tb.icon}{tr(tb.label)}
               </button>
             ))}
           </div>
@@ -714,33 +719,33 @@ export default function DashboardConducteurPage() {
                         <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                       </svg>
                     </div>
-                    <p className="font-bold text-gray-700 mb-1">Aucun rendez-vous</p>
-                    <p className="text-sm text-gray-400 mb-4">Vos réservations en ligne apparaîtront ici.</p>
-                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>Trouver un garage</Link>
+                    <p className="font-bold text-gray-700 mb-1">{tr("Aucun rendez-vous")}</p>
+                    <p className="text-sm text-gray-400 mb-4">{tr("Vos réservations en ligne apparaîtront ici.")}</p>
+                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>{tr("Trouver un garage")}</Link>
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-5">
                     {upcoming.length > 0 && (
                       <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">À venir ({upcoming.length})</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{tr.en ? "Upcoming" : "À venir"} ({upcoming.length})</p>
                         <div className="space-y-3">{upcoming.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {active.length > 0 && (
                       <div>
-                        <p className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3">Aujourd'hui</p>
+                        <p className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3">{tr("Aujourd'hui")}</p>
                         <div className="space-y-3">{active.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {past.length > 0 && (
                       <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Passés</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{tr("Passés")}</p>
                         <div className="space-y-3">{past.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
                     {cancelled.length > 0 && (
                       <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Annulés</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">{tr("Annulés")}</p>
                         <div className="space-y-3 opacity-60">{cancelled.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
@@ -751,12 +756,12 @@ export default function DashboardConducteurPage() {
                 {rescheduleAppt && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-                      <h3 className="font-black text-gray-900 text-lg mb-1">Modifier le rendez-vous</h3>
+                      <h3 className="font-black text-gray-900 text-lg mb-1">{tr("Modifier le rendez-vous")}</h3>
                       <p className="text-xs text-gray-400 mb-4">{rescheduleAppt.garage.name}</p>
                       <form onSubmit={submitReschedule} className="space-y-4">
                         {/* Sélection de la date */}
                         <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">Nouvelle date</label>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Nouvelle date")}</label>
                           <input
                             type="date"
                             required
@@ -773,16 +778,16 @@ export default function DashboardConducteurPage() {
                         {/* Créneaux disponibles */}
                         {rescheduleDate && (
                           <div>
-                            <label className="block text-xs font-semibold text-gray-500 mb-2">Choisir un créneau</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-2">{tr("Choisir un créneau")}</label>
                             {slotsLoading ? (
-                              <p className="text-xs text-gray-400 text-center py-3">Chargement des créneaux…</p>
+                              <p className="text-xs text-gray-400 text-center py-3">{tr("Chargement des créneaux…")}</p>
                             ) : slotsClosed ? (
                               <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fef2f2", color: "#dc2626" }}>
-                                Le garage est fermé ce jour-là. Choisissez une autre date.
+                                {tr("Le garage est fermé ce jour-là. Choisissez une autre date.")}
                               </div>
                             ) : rescheduleSlots.length === 0 ? (
                               <div className="rounded-xl p-3 text-xs text-center" style={{ background: "#fffbeb", color: "#92400e" }}>
-                                Aucun créneau disponible ce jour-là. Essayez une autre date.
+                                {tr("Aucun créneau disponible ce jour-là. Essayez une autre date.")}
                               </div>
                             ) : (
                               <div className="grid grid-cols-3 gap-2">
@@ -806,14 +811,14 @@ export default function DashboardConducteurPage() {
 
                         {rescheduleErr && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{rescheduleErr}</p>}
                         <div className="flex gap-2 pt-1">
-                          <button type="button" onClick={() => setRescheduleAppt(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">Annuler</button>
+                          <button type="button" onClick={() => setRescheduleAppt(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm">{tr("Annuler")}</button>
                           <button
                             type="submit"
                             disabled={rescheduling || !rescheduleSlot}
                             className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-40"
                             style={{ background: "#f97316" }}
                           >
-                            {rescheduling ? "…" : "Confirmer"}
+                            {rescheduling ? "…" : tr("Confirmer")}
                           </button>
                         </div>
                       </form>
@@ -828,34 +833,34 @@ export default function DashboardConducteurPage() {
           {tab === "preferences" && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h2 className="font-bold text-gray-900 text-lg mb-1">Mon profil</h2>
+                <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Mon profil")}</h2>
                 {prof ? (
                   <form onSubmit={(e) => { e.preventDefault(); saveProfile({}); }} className="grid gap-3 sm:grid-cols-2 mt-3">
                     <div>
-                      <label htmlFor="pf-name" className="block text-xs font-semibold text-gray-600 mb-1">Nom complet</label>
+                      <label htmlFor="pf-name" className="block text-xs font-semibold text-gray-600 mb-1">{tr("Nom complet")}</label>
                       <input id="pf-name" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={prof.name} onChange={(e) => setProf({ ...prof, name: e.target.value })} />
                     </div>
                     <div>
-                      <label htmlFor="pf-phone" className="block text-xs font-semibold text-gray-600 mb-1">Téléphone</label>
+                      <label htmlFor="pf-phone" className="block text-xs font-semibold text-gray-600 mb-1">{tr("Téléphone")}</label>
                       <input id="pf-phone" type="tel" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={prof.phone} onChange={(e) => setProf({ ...prof, phone: e.target.value })} />
                     </div>
                     <div className="sm:col-span-2 flex items-center gap-3">
-                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>Enregistrer</button>
+                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>{tr("Enregistrer")}</button>
                       {profMsg && <span className="text-sm font-semibold" role="status" style={{ color: profMsg.ok ? "#15803d" : "#b91c1c" }}>{profMsg.text}</span>}
                     </div>
                   </form>
-                ) : <p className="text-sm text-gray-400 mt-2">Chargement…</p>}
+                ) : <p className="text-sm text-gray-400 mt-2">{tr("Chargement…")}</p>}
               </div>
 
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h2 className="font-bold text-gray-900 text-lg mb-1">Préférences de notification</h2>
-                <p className="text-sm text-gray-500 mb-4">Vous recevez toujours vos confirmations et rappels de rendez-vous par courriel.</p>
+                <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Préférences de notification")}</h2>
+                <p className="text-sm text-gray-500 mb-4">{tr("Vous recevez toujours vos confirmations et rappels de rendez-vous par courriel.")}</p>
                 {prof && (
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 mt-0.5 accent-orange-500" checked={prof.marketing} onChange={(e) => saveProfile({ marketing: e.target.checked })} />
                     <span className="text-sm text-gray-700">
-                      <span className="font-semibold">Recevoir les conseils auto par courriel</span>
-                      <span className="block text-xs text-gray-500">Un courriel par semaine au plus. Vous pouvez vous désabonner en tout temps, ici ou par le lien dans chaque courriel.</span>
+                      <span className="font-semibold">{tr("Recevoir les conseils auto par courriel")}</span>
+                      <span className="block text-xs text-gray-500">{tr("Un courriel par semaine au plus. Vous pouvez vous désabonner en tout temps, ici ou par le lien dans chaque courriel.")}</span>
                     </span>
                   </label>
                 )}
@@ -863,18 +868,18 @@ export default function DashboardConducteurPage() {
 
               {prof?.hasPassword && (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                  <h2 className="font-bold text-gray-900 text-lg mb-1">Mot de passe</h2>
+                  <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Mot de passe")}</h2>
                   <form onSubmit={changePassword} className="grid gap-3 sm:grid-cols-2 mt-3">
                     <div>
-                      <label htmlFor="pw-cur" className="block text-xs font-semibold text-gray-600 mb-1">Mot de passe actuel</label>
+                      <label htmlFor="pw-cur" className="block text-xs font-semibold text-gray-600 mb-1">{tr("Mot de passe actuel")}</label>
                       <input id="pw-cur" type="password" autoComplete="current-password" required className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />
                     </div>
                     <div>
-                      <label htmlFor="pw-new" className="block text-xs font-semibold text-gray-600 mb-1">Nouveau mot de passe (8 caractères minimum)</label>
+                      <label htmlFor="pw-new" className="block text-xs font-semibold text-gray-600 mb-1">{tr("Nouveau mot de passe (8 caractères minimum)")}</label>
                       <input id="pw-new" type="password" autoComplete="new-password" required minLength={8} maxLength={128} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
                     </div>
                     <div className="sm:col-span-2 flex items-center gap-3">
-                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#0b1f3a" }}>Changer le mot de passe</button>
+                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#0b1f3a" }}>{tr("Changer le mot de passe")}</button>
                       {pwdMsg && <span className="text-sm font-semibold" role="status" style={{ color: pwdMsg.ok ? "#15803d" : "#b91c1c" }}>{pwdMsg.text}</span>}
                     </div>
                   </form>
@@ -886,21 +891,21 @@ export default function DashboardConducteurPage() {
           {/* ── Zone de suppression du compte ── */}
           {tab === "preferences" && (
             <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6 mt-4">
-              <h2 className="font-bold text-red-700 text-lg mb-1">Supprimer mon compte</h2>
+              <h2 className="font-bold text-red-700 text-lg mb-1">{tr("Supprimer mon compte")}</h2>
               <p className="text-sm text-gray-500 mb-4">
-                Cette action est définitive. Votre profil, vos véhicules, rendez-vous, avis et favoris seront effacés. C'est impossible à annuler.
+                {tr("Cette action est définitive. Votre profil, vos véhicules, rendez-vous, avis et favoris seront effacés. C'est impossible à annuler.")}
               </p>
               {!showDeleteConfirm ? (
                 <button onClick={() => setShowDeleteConfirm(true)}
                   className="text-sm font-bold text-red-600 border border-red-300 rounded-xl px-4 py-2 hover:bg-red-50 transition-colors">
-                  Supprimer définitivement mon compte
+                  {tr("Supprimer définitivement mon compte")}
                 </button>
               ) : (
                 <div className="rounded-xl p-4" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
-                  <p className="text-sm font-semibold text-red-800 mb-3">Êtes-vous certain(e) ? Cette action est irréversible.</p>
+                  <p className="text-sm font-semibold text-red-800 mb-3">{tr("Êtes-vous certain(e) ? Cette action est irréversible.")}</p>
                   {prof?.hasPassword && (
                     <div className="mb-3">
-                      <label htmlFor="del-pwd" className="block text-xs font-semibold text-red-800 mb-1">Entrez votre mot de passe pour confirmer</label>
+                      <label htmlFor="del-pwd" className="block text-xs font-semibold text-red-800 mb-1">{tr("Entrez votre mot de passe pour confirmer")}</label>
                       <input id="del-pwd" type="password" autoComplete="current-password" className="w-full border border-red-300 rounded-xl px-3 py-2 text-sm bg-white" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} />
                     </div>
                   )}
@@ -908,11 +913,11 @@ export default function DashboardConducteurPage() {
                   <div className="flex gap-3">
                     <button onClick={deleteAccount} disabled={deleting}
                       className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 hover:bg-red-700 disabled:opacity-50">
-                      {deleting ? "Suppression…" : "Oui, tout supprimer"}
+                      {deleting ? tr("Suppression…") : tr("Oui, tout supprimer")}
                     </button>
                     <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting}
                       className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 hover:bg-gray-100">
-                      Annuler
+                      {tr("Annuler")}
                     </button>
                   </div>
                 </div>
@@ -933,13 +938,13 @@ export default function DashboardConducteurPage() {
                   {/* Champ NIV */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Numéro d&apos;identification du véhicule (NIV) <span className="font-normal text-gray-400">— optionnel, auto-remplit les champs</span>
+                      {tr.en ? "Vehicle identification number (VIN)" : "Numéro d'identification du véhicule (NIV)"} <span className="font-normal text-gray-400">{tr("— optionnel, auto-remplit les champs")}</span>
                     </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         className={inputClass + " uppercase tracking-widest font-mono"}
-                        placeholder="Ex : 1HGBH41JXMN109186"
+                        placeholder={tr("Ex : 1HGBH41JXMN109186")}
                         maxLength={17}
                         value={vin}
                         onChange={e => { setVin(e.target.value.toUpperCase()); setVinError(""); }}
@@ -951,20 +956,20 @@ export default function DashboardConducteurPage() {
                         className="px-4 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-40 whitespace-nowrap"
                         style={{ background: "#0b1f3a" }}
                       >
-                        {vinLoading ? "…" : "Rechercher"}
+                        {vinLoading ? "…" : tr("Rechercher")}
                       </button>
                     </div>
                     {vinError && <p className="text-xs text-red-600 mt-1">{vinError}</p>}
                     {vinSpecs && (
                       <div className="mt-2 rounded-xl p-3 space-y-2" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                        <p className="text-xs font-bold text-green-800">Fiche technique récupérée</p>
+                        <p className="text-xs font-bold text-green-800">{tr("Fiche technique récupérée")}</p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-green-900">
-                          {vinSpecs.engine     && <span><strong>Moteur :</strong> {vinSpecs.engine}{vinSpecs.hp ? ` · ${vinSpecs.hp} ch` : ""}</span>}
-                          {vinSpecs.fuel       && <span><strong>Carburant :</strong> {vinSpecs.fuel}</span>}
-                          {vinSpecs.transmission && <span><strong>Transmission :</strong> {vinSpecs.transmission}</span>}
-                          {vinSpecs.driveType  && <span><strong>Rouage :</strong> {vinSpecs.driveType}</span>}
-                          {vinSpecs.bodyType   && <span><strong>Carrosserie :</strong> {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} portes` : ""}</span>}
-                          {tireSize            && <span><strong>Pneus :</strong> {tireSize}</span>}
+                          {vinSpecs.engine     && <span><strong>{tr("Moteur :")}</strong> {vinSpecs.engine}{vinSpecs.hp ? ` · ${vinSpecs.hp} ${tr.en ? "hp" : "ch"}` : ""}</span>}
+                          {vinSpecs.fuel       && <span><strong>{tr("Carburant :")}</strong> {vinSpecs.fuel}</span>}
+                          {vinSpecs.transmission && <span><strong>{tr("Transmission :")}</strong> {vinSpecs.transmission}</span>}
+                          {vinSpecs.driveType  && <span><strong>{tr("Rouage :")}</strong> {vinSpecs.driveType}</span>}
+                          {vinSpecs.bodyType   && <span><strong>{tr("Carrosserie :")}</strong> {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} ${tr.en ? "doors" : "portes"}` : ""}</span>}
+                          {tireSize            && <span><strong>{tr("Pneus :")}</strong> {tireSize}</span>}
                         </div>
                         {vinSpecs.recallCount > 0 && (
                           <div className="mt-1 rounded-lg px-3 py-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
@@ -1060,8 +1065,8 @@ export default function DashboardConducteurPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>Voir</Link>
-                        <button onClick={() => removeFav(f.garageId)} className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors" title="Retirer des favoris">Retirer</button>
+                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>{tr("Voir")}</Link>
+                        <button onClick={() => removeFav(f.garageId)} className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors" title={tr("Retirer des favoris")}>{tr("Retirer")}</button>
                       </div>
                     </div>
                   ))}
@@ -1085,13 +1090,13 @@ export default function DashboardConducteurPage() {
                     <label className="block text-xs font-semibold text-gray-600 mb-1">{d.maintenanceType}</label>
                     <select className={inputClass} value={rTitle} onChange={e => setRTitle(e.target.value)} required>
                       <option value="">{d.choose}</option>
-                      {PRESET_REMINDERS.map(p => <option key={p} value={p}>{p}</option>)}
+                      {PRESET_REMINDERS.map(p => <option key={p} value={p}>{tr(p)}</option>)}
                     </select>
                   </div>
                   {rTitle === "Autre" && (
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">{d.specify}</label>
-                      <input className={inputClass} value={rCustom} onChange={e => setRCustom(e.target.value)} placeholder="Ex: Révision complète" required />
+                      <input className={inputClass} value={rCustom} onChange={e => setRCustom(e.target.value)} placeholder={tr("Ex: Révision complète")} required />
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-3">
@@ -1119,7 +1124,7 @@ export default function DashboardConducteurPage() {
                   )}
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">{d.notes}</label>
-                    <input className={inputClass} value={rNotes} onChange={e => setRNotes(e.target.value)} placeholder="Ex: Faire vérifier les plaquettes en même temps" />
+                    <input className={inputClass} value={rNotes} onChange={e => setRNotes(e.target.value)} placeholder={tr("Ex: Faire vérifier les plaquettes en même temps")} />
                   </div>
                   <div className="flex gap-2">
                     <button type="submit" disabled={savingReminder} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>{savingReminder ? d.adding : d.add}</button>
@@ -1150,19 +1155,19 @@ export default function DashboardConducteurPage() {
                         <button onClick={() => toggleDone(r.id, r.done)} className="mt-0.5 w-5 h-5 rounded-full border-2 border-gray-300 hover:border-orange-400 flex-shrink-0 transition-colors" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold text-gray-900 text-sm">{r.title}</p>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: p.color, background: p.bg }}>{p.label}</span>
+                            <p className="font-semibold text-gray-900 text-sm">{tr(r.title)}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: p.color, background: p.bg }}>{tr(p.label)}</span>
                             {isOverdue && <span className="text-xs text-red-500 font-medium">{d.overdue}</span>}
                           </div>
                           {r.vehicle && <p className="text-xs text-gray-500 mt-0.5">{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}</p>}
-                          {r.dueDate && <p className="text-xs text-gray-400 mt-0.5">{new Date(r.dueDate).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}</p>}
+                          {r.dueDate && <p className="text-xs text-gray-400 mt-0.5">{new Date(r.dueDate).toLocaleDateString(tr.locale, { day: "numeric", month: "long", year: "numeric" })}</p>}
                           {r.notes && <p className="text-xs text-gray-500 mt-1 italic">{r.notes}</p>}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Link
                             href={`/rechercher${r.title ? `?service=${encodeURIComponent(r.title)}` : ""}`}
                             className="text-xs font-medium hover:underline whitespace-nowrap" style={{ color: "#f97316" }}
-                            title="Trouver un garage pour ce service"
+                            title={tr("Trouver un garage pour ce service")}
                           >
                             {d.book}
                           </Link>
@@ -1181,7 +1186,7 @@ export default function DashboardConducteurPage() {
                             <span className="text-white text-xs leading-none">✓</span>
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-500 text-sm line-through">{r.title}</p>
+                            <p className="font-semibold text-gray-500 text-sm line-through">{tr(r.title)}</p>
                             {r.vehicle && <p className="text-xs text-gray-400">{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}</p>}
                           </div>
                           <button onClick={() => deleteReminder(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none">×</button>
