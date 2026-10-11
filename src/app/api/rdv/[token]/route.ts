@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { wouldExceedCapacity, toMinutes } from "@/lib/availability";
+import { wouldExceedCapacity, pickBay, toMinutes } from "@/lib/availability";
+import { loadBayRules } from "@/lib/bays";
 import { quebecInstant, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 import { sendCancelledByCustomer } from "@/lib/email";
 
@@ -109,12 +110,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         const duration = toMinutes(fresh.endTime) - toMinutes(fresh.startTime);
         const sameDay = await tx.appointment.findMany({
           where: { garageId: fresh.garageId, date: fresh.date, id: { not: fresh.id }, status: { notIn: FREE_SLOT_STATUSES } },
-          select: { startTime: true, endTime: true },
+          select: { startTime: true, endTime: true, bay: true },
         });
-        if (wouldExceedCapacity(fresh.startTime, duration, sameDay, fresh.garage.capacity ?? 1)) throw new Error("SLOT_TAKEN");
+        const capacity = fresh.garage.capacity ?? 1;
+        if (wouldExceedCapacity(fresh.startTime, duration, sameDay, capacity)) throw new Error("SLOT_TAKEN");
+        // Son poste a pu être repris entre-temps : il retrouve le sien s'il est libre, sinon un autre poste qui convient.
+        const rules = await loadBayRules(fresh.garageId, capacity);
+        const bay = pickBay(fresh.startTime, duration, sameDay, capacity, { allowed: rules.forServiceName(fresh.serviceName), versatility: rules.versatility, prefer: fresh.bay });
+        if (bay === null) throw new Error("SLOT_TAKEN");
         await tx.appointment.update({
           where: { id: fresh.id },
-          data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null, cancelledBy: null, cancelledAt: null },
+          data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null, cancelledBy: null, cancelledAt: null, bay },
         });
       }, { isolationLevel: "Serializable" });
     } catch (e: any) {

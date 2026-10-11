@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
-import { wouldExceedCapacity, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { loadBayRules } from "@/lib/bays";
 import { cleanText, isValidEmail, isRateLimited } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
@@ -111,10 +112,28 @@ export async function POST(req: NextRequest) {
 
   const sameDay = await prisma.appointment.findMany({
     where: { garageId: garage.id, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-    select: { startTime: true, endTime: true },
+    select: { startTime: true, endTime: true, bay: true },
   });
-  if (wouldExceedCapacity(startTime, durationMin, sameDay, garage.capacity ?? 1)) {
-    return NextResponse.json({ error: "Tous vos postes sont déjà occupés sur ce créneau." }, { status: 409 });
+  const capacity = garage.capacity ?? 1;
+  if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
+    return NextResponse.json({ error: "Toutes vos portes sont déjà occupées sur ce créneau." }, { status: 409 });
+  }
+
+  // Poste : celui choisi par le garage s'il est libre. Sinon « Automatique » : le poste le
+  // plus spécialisé parmi ceux où ce service se fait, ou à défaut n'importe quel poste libre
+  // (le garage qui saisit lui-même un rendez-vous a toujours le dernier mot).
+  let bay: number | null;
+  const wantedBay = Number(body.bay);
+  if (body.bay !== undefined && body.bay !== null && body.bay !== "" && Number.isInteger(wantedBay) && wantedBay >= 1 && wantedBay <= capacity) {
+    if (!bayIsFree(wantedBay, startTime, durationMin, sameDay)) {
+      return NextResponse.json({ error: `La porte ${wantedBay} est déjà occupée sur ce créneau. Choisissez-en une autre ou laissez « Automatique ».` }, { status: 409 });
+    }
+    bay = wantedBay;
+  } else {
+    const rules = await loadBayRules(garage.id, capacity);
+    const allowed = categoryId ? rules.forCategories([String(categoryId)]) : rules.forServiceName(serviceName);
+    bay = pickBay(startTime, durationMin, sameDay, capacity, { allowed, versatility: rules.versatility })
+      ?? pickBay(startTime, durationMin, sameDay, capacity, { versatility: rules.versatility });
   }
 
   const now = new Date();
@@ -144,6 +163,7 @@ export async function POST(req: NextRequest) {
       date,
       startTime,
       endTime,
+      bay,
       notes: notes ? String(notes).slice(0, 1000) : null,
       status: "CONFIRMED", // manual = direct confirm
       source: "MANUAL",

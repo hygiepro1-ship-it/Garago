@@ -4,8 +4,7 @@
  * Vue « jour » de l'agenda du garage : une colonne par poste de travail, une
  * ligne par demi-heure. Chaque rendez-vous garde toute la largeur de sa colonne,
  * donc son nom reste lisible même quand huit postes travaillent à la même heure.
- * Les rendez-vous ne sont pas rattachés à un poste précis : ils sont répartis
- * ici dans l'ordre des heures, sur le premier poste libre.
+ * Chaque rendez-vous s'affiche dans la colonne du poste qui lui est attribué.
  */
 
 import { apptColors, PAST_HATCH, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
@@ -17,15 +16,25 @@ const STEP = 30; // minutes par ligne
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
-/** Place chaque rendez-vous sur le premier poste libre, dans l'ordre des heures de début. */
-function assignPosts(appts: WeekAppointment[]): WeekAppointment[][] {
-  const posts: WeekAppointment[][] = [];
+/**
+ * Range chaque rendez-vous dans la colonne de son poste. Ceux qui n'ont pas de poste
+ * attribué (anciens rendez-vous), ou dont le poste est déjà pris à cette heure, vont
+ * sur le premier poste libre, dans l'ordre des heures ; au besoin, une colonne « en surplus ».
+ */
+function assignPosts(appts: WeekAppointment[], capacity: number): WeekAppointment[][] {
+  const posts: WeekAppointment[][] = Array.from({ length: Math.max(1, capacity) }, () => []);
+  const fits = (post: WeekAppointment[], a: WeekAppointment) => post.every((x) => toMin(x.endTime) <= toMin(a.startTime) || toMin(x.startTime) >= toMin(a.endTime));
   const sorted = [...appts].sort((x, y) => x.startTime.localeCompare(y.startTime) || x.endTime.localeCompare(y.endTime));
+  const floating: WeekAppointment[] = [];
   for (const appt of sorted) {
-    const post = posts.find((p) => toMin(p[p.length - 1].endTime) <= toMin(appt.startTime));
+    const own = appt.bay && appt.bay >= 1 && appt.bay <= posts.length ? posts[appt.bay - 1] : null;
+    if (own && fits(own, appt)) own.push(appt); else floating.push(appt);
+  }
+  for (const appt of floating) {
+    const post = posts.find((p) => fits(p, appt));
     if (post) post.push(appt); else posts.push([appt]);
   }
-  return posts;
+  return posts.map((p) => p.sort((x, y) => x.startTime.localeCompare(y.startTime)));
 }
 
 export default function AgendaDayView({
@@ -38,16 +47,16 @@ export default function AgendaDayView({
   lang: string;
   blocked?: WeekBlock[];
   rowHeight?: number;                   // pixels par demi-heure
-  onPickSlot: (date: string, time: string) => void;
+  /** `bay` : le poste de la colonne cliquée. */
+  onPickSlot: (date: string, time: string, bay?: number) => void;
   onPickAppointment: (appt: WeekAppointment) => void;
 }) {
   const tr = useTr();
   const ROW_H = rowHeight;
   const active = appointments.filter((a) => a.date === date && a.status !== "CANCELLED");
   // Un client absent a libéré son poste : il reste affiché, mais ne bloque plus la plage.
-  const assigned = assignPosts(active.filter((a) => a.status !== "NO_SHOW"));
+  const posts = assignPosts(active.filter((a) => a.status !== "NO_SHOW"), capacity);
   const noShows = active.filter((a) => a.status === "NO_SHOW");
-  const posts = Array.from({ length: Math.max(capacity, assigned.length) }, (_, i) => assigned[i] ?? []);
 
   const h = availability.find((a) => a.dayOfWeek === new Date(date + "T12:00:00").getDay());
   const hours = h && !h.isClosed ? { open: toMin(h.openTime), close: toMin(h.closeTime) } : null;
@@ -89,7 +98,7 @@ export default function AgendaDayView({
               const extra = i >= capacity;
               return (
                 <div key={i} className="py-1.5 px-2 text-center border-l border-gray-100">
-                  <p className="text-xs font-black" style={{ color: extra ? "#b91c1c" : "#0b1f3a" }}>{extra ? tr("En surplus") : `${lang === "en" ? "Bay" : "Poste"} ${i + 1}`}</p>
+                  <p className="text-xs font-black" style={{ color: extra ? "#b91c1c" : "#0b1f3a" }}>{extra ? tr("En surplus") : `${lang === "en" ? "Bay" : "Porte"} ${i + 1}`}</p>
                   <p className="text-[11px] text-gray-500">
                     {list.length === 0 ? tr("Libre") : freeH === 0 ? tr("Complet") : lang === "en" ? `${Math.round(freeH * 10) / 10} h free` : `${String(Math.round(freeH * 10) / 10).replace(".", ",")} h libres`}
                   </p>
@@ -105,7 +114,7 @@ export default function AgendaDayView({
           <div className="grid" style={{ gridTemplateColumns: columns }}>
             <div>
               {rows.map((m) => (
-                <div key={m} className="text-[11px] text-gray-400 text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px" }}>
+                <div key={m} className="text-[12px] font-black text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px", color: "#0b1f3a" }}>
                   {m % 60 === 0 ? toHHMM(m) : ""}
                 </div>
               ))}
@@ -120,8 +129,8 @@ export default function AgendaDayView({
                   const taken = list.some((a) => toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
                   const free = open && !past && !isBlocked && !taken && i < capacity;
                   return free ? (
-                    <button key={m} type="button" onClick={() => onPickSlot(date, toHHMM(m))}
-                      aria-label={lang === "en" ? `Bay ${i + 1} free: ${dayLabel}, ${toHHMM(m)}. Add an appointment` : `Poste ${i + 1} libre : ${dayLabel}, ${toHHMM(m)}. Ajouter un rendez-vous`}
+                    <button key={m} type="button" onClick={() => onPickSlot(date, toHHMM(m), i + 1)}
+                      aria-label={lang === "en" ? `Bay ${i + 1} free: ${dayLabel}, ${toHHMM(m)}. Add an appointment` : `Porte ${i + 1} libre : ${dayLabel}, ${toHHMM(m)}. Ajouter un rendez-vous`}
                       className="block w-full hover:bg-green-100 focus-visible:bg-green-100"
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (

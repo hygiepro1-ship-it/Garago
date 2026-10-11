@@ -38,9 +38,27 @@ export interface AgendaAppointment {
   contactChannel?: string | null;
   language?: string;
   confirmedVia?: string | null;
+  /** Poste de travail attribué (1..capacité), s'il y en a un. */
+  bay?: number | null;
 }
 
 interface AgendaService { categoryId: string; categoryName?: string; name?: string; category?: { name?: string }; durationMin?: number | null }
+
+/** Choix du poste : « Automatique », ou un poste précis. Un poste déjà pris à cette heure ne peut pas être choisi. */
+function BaySelect({ id, value, capacity, taken, en, autoLabel, onChange }: {
+  id: string; value: string; capacity: number; taken: Set<number>; en: boolean; autoLabel: string; onChange: (v: string) => void;
+}) {
+  return (
+    <select id={id} className={input} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{autoLabel}</option>
+      {Array.from({ length: capacity }, (_, i) => i + 1).map((n) => (
+        <option key={n} value={n} disabled={taken.has(n)}>
+          {en ? `Bay ${n}` : `Porte ${n}`}{taken.has(n) ? (en ? " (taken)" : " (occupée)") : ""}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function gfetch(path: string, init?: RequestInit) {
   const g = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("g");
@@ -63,7 +81,7 @@ function confirmationLabel(a: AgendaAppointment, tr: (fr: string) => string, en:
   switch (a.confirmationStatus) {
     case "NO_RESPONSE": return { label: tr("À appeler : sans réponse"), color: "#b91c1c", bg: "#fef2f2" };
     case "AWAITING":    return { label: en ? `Waiting for a reply (${via})` : `En attente de réponse (${via})`, color: "#b45309", bg: "#fffbeb" };
-    case "SCHEDULED":   return { label: a.confirmTier === "MANUAL" ? (en ? `Confirmation by ${via} 48 h before` : `Confirmation par ${via} 48 h avant`) : tr("Confirmation demandée 24 h avant"), color: "#475569", bg: "#f1f5f9" };
+    case "SCHEDULED":   return { label: a.confirmTier === "MANUAL" ? (en ? `Confirmation by ${via} 48 h before` : `Confirmation par ${via} 48 h avant`) : tr("Confirmation demandée 48 h avant"), color: "#475569", bg: "#f1f5f9" };
     case "CONFIRMED":   return { label: a.confirmedVia === "PHONE" ? tr("Confirmé par téléphone") : tr("Confirmé par le client"), color: "#15803d", bg: "#f0fdf4" };
     default: return null;
   }
@@ -133,6 +151,7 @@ const EMPTY_FORM = {
   customerName: "", customerPhone: "", customerEmail: "",
   vehicleYear: "", vehicleMake: "", vehicleModel: "",
   categoryId: "", serviceName: "", date: "", startTime: "09:00", durationMin: 60,
+  bay: "", // "" = automatique
   contactChannel: "SMS", language: "fr", notes: "",
 };
 
@@ -224,7 +243,7 @@ export default function GarageAgenda({
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "move" | "complete" | "cancel">("view");
-  const [move, setMove] = useState({ date: "", startTime: "", durationMin: 60 });
+  const [move, setMove] = useState({ date: "", startTime: "", durationMin: 60, bay: "" });
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -247,17 +266,26 @@ export default function GarageAgenda({
     );
   }
 
-  function resetForm(date: string, time: string, touched: boolean) {
+  function resetForm(date: string, time: string, touched: boolean, bay?: number) {
     setFormError("");
     setKnown(null);
     setMatches([]);
     setTimeTouched(touched);
-    setForm({ ...EMPTY_FORM, date, startTime: time });
+    setForm({ ...EMPTY_FORM, date, startTime: time, bay: bay ? String(bay) : "" });
   }
 
-  /** Clic sur une plage du calendrier : le garage a choisi lui-même la date et l'heure. */
-  function openForm(date: string, time: string) {
-    resetForm(date, time, true);
+  /** Clic sur une plage du calendrier : le garage a choisi lui-même la date et l'heure (et le poste, en vue « jour »). */
+  function openForm(date: string, time: string, bay?: number) {
+    resetForm(date, time, true, bay);
+  }
+
+  /** Postes déjà pris sur une plage (par un autre rendez-vous que `exceptId`). */
+  function takenBays(date: string, startTime: string, durationMin: number, exceptId?: string) {
+    const start = toMin(startTime || "00:00");
+    const end = start + durationMin;
+    return new Set(appointments
+      .filter((a) => a.date === date && a.id !== exceptId && a.status !== "CANCELLED" && a.status !== "NO_SHOW" && a.bay && toMin(a.startTime) < end && toMin(a.endTime) > start)
+      .map((a) => a.bay as number));
   }
 
   /** Bouton « + Rendez-vous » : le formulaire s'ouvre sur la prochaine disponibilité (ex. demain à l'ouverture). */
@@ -295,7 +323,7 @@ export default function GarageAgenda({
       const res = await gfetch("/api/garage/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, contactChannel: form.contactChannel || null }),
+        body: JSON.stringify({ ...form, bay: form.bay ? Number(form.bay) : null, contactChannel: form.contactChannel || null }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -529,6 +557,17 @@ export default function GarageAgenda({
               <DurationPicker idPrefix="rdv-dur" value={form.durationMin} onChange={(v) => setForm({ ...form, durationMin: v })} />
             </div>
 
+            {capacity > 1 && (() => {
+              const taken = takenBays(form.date, form.startTime, form.durationMin);
+              return (
+                <div className="col-span-6 sm:col-span-3">
+                  <label className={label} htmlFor="rdv-bay">{en ? "Bay" : "Porte"}</label>
+                  <BaySelect id="rdv-bay" value={taken.has(Number(form.bay)) ? "" : form.bay} capacity={capacity} taken={taken} en={en}
+                    autoLabel={tr("Automatique (la porte qui convient le mieux)")} onChange={(v) => setForm({ ...form, bay: v })} />
+                </div>
+              );
+            })()}
+
             <div className="col-span-6 sm:col-span-3">
               <label className={label} htmlFor="rdv-service">Service</label>
               {services.length > 0 ? (
@@ -609,6 +648,7 @@ export default function GarageAgenda({
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-100 text-gray-700">{tr(STATUS_LABEL[open.status] ?? open.status)}</span>
               {(() => { const c = confirmationLabel(open, tr, lang === "en"); return c && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: c.bg, color: c.color }}>{c.label}</span>; })()}
               {open.source === "ONLINE" && <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">{tr("Réservé en ligne")}</span>}
+              {capacity > 1 && open.bay && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#e0e7ff", color: "#1e3a8a" }}>{en ? `Bay ${open.bay}` : `Porte ${open.bay}`}</span>}
             </div>
             <div className="flex flex-wrap gap-2">
               <a href={`tel:${open.customerPhone}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d" }}>{open.customerPhone}</a>
@@ -633,7 +673,7 @@ export default function GarageAgenda({
                   <>
                     <button type="button" className={actionBtn} style={{ background: "#16a34a" }} onClick={() => { setNote(""); setMode("complete"); }}>{tr("Terminer")}</button>
                     <button type="button" className={actionBtn} style={{ background: "#7c3aed" }}
-                      onClick={() => { setMove({ date: open.date, startTime: open.startTime, durationMin: Math.max(10, toMin(open.endTime) - toMin(open.startTime)) }); setMode("move"); }}>{tr("Déplacer")}</button>
+                      onClick={() => { setMove({ date: open.date, startTime: open.startTime, durationMin: Math.max(10, toMin(open.endTime) - toMin(open.startTime)), bay: open.bay ? String(open.bay) : "" }); setMode("move"); }}>{tr("Déplacer")}</button>
                     {new Date(`${open.date}T${open.startTime}:00`).getTime() + 15 * 60 * 1000 <= new Date().getTime() && (
                       <button type="button" disabled={busy} className={actionBtn} style={{ background: "#b91c1c" }} onClick={() => patch(open.id, { status: "NO_SHOW" })}>{tr("Client absent")}</button>
                     )}
@@ -647,7 +687,14 @@ export default function GarageAgenda({
             )}
 
             {mode === "move" && (
-              <form className="grid grid-cols-2 gap-2 pt-1" onSubmit={(e) => { e.preventDefault(); patch(open.id, { date: move.date, startTime: move.startTime, endTime: toHHMM(Math.min(toMin(move.startTime) + move.durationMin, 24 * 60 - 1)) }); }}>
+              <form className="grid grid-cols-2 gap-2 pt-1" onSubmit={(e) => {
+                e.preventDefault();
+                const taken = takenBays(move.date, move.startTime, move.durationMin, open.id);
+                patch(open.id, {
+                  date: move.date, startTime: move.startTime, endTime: toHHMM(Math.min(toMin(move.startTime) + move.durationMin, 24 * 60 - 1)),
+                  ...(capacity > 1 ? { bay: move.bay && !taken.has(Number(move.bay)) ? Number(move.bay) : null } : {}),
+                });
+              }}>
                 <div>
                   <label className={label} htmlFor="mv-date">{tr("Nouvelle date")}</label>
                   <input id="mv-date" required type="date" className={input} value={move.date} onChange={(e) => setMove({ ...move, date: e.target.value })} />
@@ -660,6 +707,16 @@ export default function GarageAgenda({
                   <label className={label} htmlFor="mv-dur-h">{tr("Durée")}</label>
                   <DurationPicker idPrefix="mv-dur" value={move.durationMin} onChange={(v) => setMove({ ...move, durationMin: v })} />
                 </div>
+                {capacity > 1 && (() => {
+                  const taken = takenBays(move.date, move.startTime, move.durationMin, open.id);
+                  return (
+                    <div className="col-span-2">
+                      <label className={label} htmlFor="mv-bay">{en ? "Bay" : "Porte"}</label>
+                      <BaySelect id="mv-bay" value={taken.has(Number(move.bay)) ? "" : move.bay} capacity={capacity} taken={taken} en={en}
+                        autoLabel={tr("Automatique (la porte qui convient le mieux)")} onChange={(v) => setMove({ ...move, bay: v })} />
+                    </div>
+                  );
+                })()}
                 <div className="col-span-2 flex gap-2 justify-end">
                   <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
                   <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#f97316" }}>{busy ? "…" : tr("Déplacer")}</button>

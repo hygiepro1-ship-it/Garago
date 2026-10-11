@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN, quebecToday, dayOfWeekOf } from "@/lib/availability";
+import { loadBayRules } from "@/lib/bays";
 
 // GET /api/garages/[slug]/slots?date=YYYY-MM-DD&categoryId=...
 // Renvoie les créneaux libres pour une date donnée, dimensionnés à la durée
@@ -33,6 +34,9 @@ export async function GET(
   // valeur envoyée par le client) : le service configuré par CE garage, ou —
   // lors d'un déplacement de RDV (excludeId) — la durée du RDV déplacé, pour
   // proposer des créneaux de la même longueur que celui qu'on remplace.
+  // Les postes où le service demandé peut se faire : un créneau n'est offert que si l'un d'eux est libre.
+  const rules = await loadBayRules(garage.id, capacity);
+  let allowedBays = rules.forCategories([]);
   let durationMin = DEFAULT_DURATION_MIN;
   if (categoryIds.length > 0) {
     const svcs = await prisma.garageService.findMany({
@@ -40,14 +44,16 @@ export async function GET(
       select: { durationMin: true },
     });
     if (svcs.length > 0) durationMin = svcs.reduce((sum, s) => sum + (s.durationMin ?? DEFAULT_DURATION_MIN), 0);
+    allowedBays = rules.forCategories(categoryIds);
   } else if (excludeId) {
     const original = await prisma.appointment.findFirst({
       where: { id: excludeId, garageId: garage.id },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, serviceName: true },
     });
     if (original) {
       const d = toMinutes(original.endTime) - toMinutes(original.startTime);
       if (d > 0) durationMin = d;
+      allowedBays = rules.forServiceName(original.serviceName);
     }
   }
 
@@ -67,13 +73,13 @@ export async function GET(
       status: { notIn: ["CANCELLED", "NO_SHOW"] },
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
-    select: { startTime: true, endTime: true },
+    select: { startTime: true, endTime: true, bay: true },
   });
 
   const now = new Date();
   const isToday = date === quebecToday(now);
 
-  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity });
+  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity, allowedBays });
 
   const closed = !avail || avail.isClosed || blockedSlots.some((b) => b.allDay);
 

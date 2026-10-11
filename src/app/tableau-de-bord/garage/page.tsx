@@ -56,6 +56,8 @@ interface GarageService {
   priceMin:     string;
   priceMax:     string;
   durationMin:  string;
+  /** Portes où ce service se fait — vide ou absent = tous les postes. */
+  bays?:        number[];
 }
 
 interface GarageBrand {
@@ -979,7 +981,7 @@ export default function DashboardGaragePage() {
   const [capacity, setCapacity] = useState("1");
   useEffect(() => { if (garage) setCapacity(String(garage.capacity ?? 1)); }, [garage]);
 
-  // Confirmation obligatoire du client (courriel à −24 h, créneau libéré sans réponse)
+  // Confirmation obligatoire du client (courriel à −48 h, créneau libéré sans réponse)
   const [requireConfirmation, setRequireConfirmation] = useState(true);
   useEffect(() => { if (garage) setRequireConfirmation(garage.requireConfirmation ?? true); }, [garage]);
 
@@ -2551,11 +2553,11 @@ export default function DashboardGaragePage() {
                 className={`${inputClass} max-w-[7rem]`}
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)} />
-              <span className="text-sm text-gray-500">{tr.en ? (parseInt(capacity, 10) > 1 ? "bays" : "bay") : parseInt(capacity, 10) > 1 ? "postes de travail" : "poste de travail"}</span>
+              <span className="text-sm text-gray-500">{tr.en ? (parseInt(capacity, 10) > 1 ? "bays" : "bay") : parseInt(capacity, 10) > 1 ? "portes" : "porte"}</span>
             </div>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              {tr("Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même")}{" "}
-              {tr("créneau n'est complet que lorsque tous vos postes sont occupés. Enregistrez pour appliquer.")}
+              {tr("Nombre de portes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même")}{" "}
+              {tr("créneau n'est complet que lorsque toutes vos portes sont occupées. Enregistrez pour appliquer.")}
             </p>
           </div>
 
@@ -2567,7 +2569,7 @@ export default function DashboardGaragePage() {
               <span>
                 <span className="block text-sm font-bold text-gray-900">{tr("Demander aux clients de confirmer leur rendez-vous")}</span>
                 <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
-                  {tr("Chaque client reçoit un courriel 24 h avant pour confirmer. Sans réponse, le créneau est remis à")}{" "}
+                  {tr("Chaque client reçoit un courriel 48 h avant pour confirmer. Sans réponse, le créneau est remis à")}{" "}
                   {tr("disposition pour d'autres conducteurs (12 h avant le rendez-vous). Les rendez-vous pris moins de 24 h")}{" "}
                   {tr("à l'avance doivent être confirmés dans l'heure. Enregistrez pour appliquer.")}
                 </span>
@@ -2633,6 +2635,30 @@ export default function DashboardGaragePage() {
                           );
                         })()}
                       </div>
+                      {/* Portes où ce service se fait : sert à placer les rendez-vous pris en ligne au bon poste */}
+                      {(() => {
+                        const posts = Math.min(50, Math.max(1, parseInt(capacity, 10) || 1));
+                        if (posts < 2) return null;
+                        const chosen = (active.bays ?? []).filter((b) => b >= 1 && b <= posts);
+                        const setBays = (bays: number[]) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, bays } : s));
+                        const chip = (on: boolean) => `px-2.5 py-1 rounded-lg text-xs font-bold border ${on ? "text-white border-transparent" : "bg-white text-gray-600 border-gray-300"}`;
+                        return (
+                          <div role="group" aria-label={tr.en ? `Bays for ${cat.nameEn}` : `Portes pour ${cat.name}`}>
+                            <span className="block text-xs text-gray-500 mb-1">{tr("Portes où ce service se fait")}</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              <button type="button" aria-pressed={chosen.length === 0} className={chip(chosen.length === 0)} style={chosen.length === 0 ? { background: "#0b1f3a" } : {}}
+                                onClick={() => setBays([])}>{tr("Tous")}</button>
+                              {Array.from({ length: posts }, (_, i) => i + 1).map((n) => {
+                                const on = chosen.includes(n);
+                                return (
+                                  <button key={n} type="button" aria-pressed={on} aria-label={tr.en ? `Bay ${n}` : `Porte ${n}`} className={chip(on)} style={on ? { background: "#0b1f3a" } : {}}
+                                    onClick={() => setBays(on ? chosen.filter((b) => b !== n) : [...chosen, n].sort((x, y) => x - y))}>{n}</button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

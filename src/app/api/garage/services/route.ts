@@ -77,7 +77,14 @@ export async function PUT(req: NextRequest) {
   }
   const list: unknown[] = Array.isArray(services) ? services : [];
   if (list.length > 40) return NextResponse.json({ error: "Trop de services (40 maximum)." }, { status: 400 });
-  const prepared: { categoryId: string; name: string; description: string | null; priceMin: number | null; priceMax: number | null; durationMin: number | null }[] = [];
+  // Postes où chaque service se fait : numéros valides seulement ; « tous cochés » s'enregistre comme une liste vide (= tous).
+  const postCount = capacity !== undefined ? sanitizeCapacity(capacity) : garage.capacity ?? 1;
+  const sanitizeBays = (v: unknown): number[] => {
+    if (!Array.isArray(v)) return [];
+    const list = Array.from(new Set(v.map((b) => Number(b)).filter((b) => Number.isInteger(b) && b >= 1 && b <= postCount))).sort((x, y) => x - y);
+    return list.length >= postCount ? [] : list;
+  };
+  const prepared: { categoryId: string; name: string; description: string | null; priceMin: number | null; priceMax: number | null; durationMin: number | null; bays: number[] }[] = [];
   const seen = new Set<string>();
   for (const raw of list) {
     const s = (raw ?? {}) as Record<string, unknown>;
@@ -100,6 +107,7 @@ export async function PUT(req: NextRequest) {
       description: cleanText(s.description, 300) || null,
       priceMin, priceMax,
       durationMin: sanitizeDuration(s.durationMin, maxDurationMin),
+      bays: sanitizeBays(s.bays),
     });
   }
 
@@ -124,7 +132,7 @@ export async function PUT(req: NextRequest) {
       await tx.garageService.create({
         data: {
           garageId: garage.id, categoryId: cat.id, name: s.name, description: s.description,
-          priceMin: s.priceMin, priceMax: s.priceMax, durationMin: s.durationMin, active: true,
+          priceMin: s.priceMin, priceMax: s.priceMax, durationMin: s.durationMin, bays: s.bays, active: true,
         },
       });
     }

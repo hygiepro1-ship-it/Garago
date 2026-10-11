@@ -3,7 +3,8 @@ import { randomBytes } from "crypto";
 /**
  * Cycle de confirmation des rendez-vous en ligne.
  *
- *  - STANDARD (plus de 24 h avant) : courriel de confirmation à −24 h, relance à
+ *  - STANDARD (plus de 24 h avant) : courriel de confirmation à −48 h (ou tout de
+ *    suite si le rendez-vous est pris entre 24 h et 48 h à l'avance), relance à
  *    −16 h, créneau libéré à −12 h sans réponse.
  *  - LAST_MINUTE (2 h à 24 h avant) : confirmation exigée dans l'heure suivant la
  *    réservation, puis un dernier courriel « vous arrivez ? » à −2 h.
@@ -15,7 +16,7 @@ import { randomBytes } from "crypto";
 
 export const QUEBEC_TZ = "America/Toronto";
 
-export const REQUEST_HOURS_BEFORE = 24;
+export const REQUEST_HOURS_BEFORE = 48;
 export const NUDGE_HOURS_BEFORE = 16;
 export const RELEASE_HOURS_BEFORE = 12;
 export const LAST_MINUTE_WINDOW_MIN = 60;

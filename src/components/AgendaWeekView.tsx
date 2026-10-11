@@ -19,6 +19,8 @@ export interface WeekAppointment {
   endTime: string;
   status: string;
   confirmationStatus?: string;
+  /** Poste de travail attribué (1..capacité), s'il y en a un. */
+  bay?: number | null;
 }
 
 export interface WeekAvailability { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }
@@ -76,7 +78,7 @@ export default function AgendaWeekView({
    * deux ou trois. Le détail se lit dans la vue « jour » (voir AgendaDayView).
    */
   byLoad?: boolean;
-  /** Clic sur l'en-tête d'un jour (ou sur une plage complète) : ouvrir la journée poste par poste. */
+  /** Clic sur l'en-tête d'un jour (ou sur une plage complète) : ouvrir la journée porte par porte. */
   onPickDay?: (date: string) => void;
   days: string[];                       // 7 dates "YYYY-MM-DD", du lundi au dimanche
   appointments: WeekAppointment[];
@@ -229,7 +231,7 @@ export default function AgendaWeekView({
             );
             return onPickDay ? (
               <button key={d} type="button" onClick={() => onPickDay(d)} style={style}
-                title={tr("Voir cette journée poste par poste", "See this day bay by bay")}
+                title={tr("Voir cette journée porte par porte", "See this day bay by bay")}
                 aria-label={`${tr("Voir la journée du", "See the day of")} ${dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}`}
                 className="py-2 text-center border-l border-gray-100 hover:underline">
                 {content}
@@ -244,7 +246,7 @@ export default function AgendaWeekView({
         <div className="grid" style={{ gridTemplateColumns: "48px repeat(7, minmax(0, 1fr))" }}>
           <div>
             {rows.map((m) => (
-              <div key={m} className="text-[11px] text-gray-400 text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px" }}>
+              <div key={m} className="text-[12px] font-black text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px", color: "#0b1f3a" }}>
                 {m % 60 === 0 ? toHHMM(m) : ""}
               </div>
             ))}
@@ -274,7 +276,7 @@ export default function AgendaWeekView({
                       past:  { bg: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", text: "#64748b", pip: "#94a3b8" },
                     }[tone];
                     const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
-                    const taken = tr(`${busy} ${busy > 1 ? "postes pris" : "poste pris"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
+                    const taken = tr(`${busy} ${busy > 1 ? "portes prises" : "porte prise"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
                     return (
                       <button key={m} type="button" onClick={() => (free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
                         title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · ${tr("voir la journée", "see the day")}`}
@@ -349,7 +351,7 @@ export default function AgendaWeekView({
             <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }} />{tr("Presque complet", "Almost full")}</span>
             <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#e8edf3", border: "1px solid #cbd5e1" }} />{tr("Complet", "Full")}</span>
             <span className="hidden sm:flex items-center gap-1.5"><i className="inline-block w-2 h-2 rounded-full" style={{ background: "#dc2626" }} />{tr("Client à appeler", "Customer to call")}</span>
-            <span className="hidden sm:inline">{tr("Cliquez un jour pour le voir poste par poste.", "Click a day to see it bay by bay.")}</span>
+            <span className="hidden sm:inline">{tr("Cliquez un jour pour le voir porte par porte.", "Click a day to see it bay by bay.")}</span>
           </>
         ) : (
           <>

@@ -98,7 +98,7 @@ export default function AgendaDemo() {
         <p className="font-bold">Aperçu avec des rendez-vous fictifs</p>
         <p>Rien n&apos;est enregistré ici : le bouton « Enregistrer » du formulaire ne fonctionne pas dans cet aperçu.</p>
         <label className="flex items-center gap-2 mt-2 font-semibold" htmlFor="demo-posts">
-          Nombre de postes du garage
+          Nombre de portes du garage
           <input id="demo-posts" type="number" inputMode="numeric" min={1} max={50} value={posts}
             onChange={(e) => setPosts(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))}
             className="w-20 border border-blue-200 rounded-lg px-2 py-1 bg-white text-gray-900" />
