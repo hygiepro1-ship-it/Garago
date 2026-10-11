@@ -519,6 +519,8 @@ export interface RescheduleParams extends AppointmentDetails {
   to:           string;
   customerName: string;
   garagePhone:  string;
+  /** Ce qui a changé : l'horaire (par défaut) ou seulement le service. */
+  what?:        "time" | "service";
 }
 
 export async function sendRescheduleNotification(params: RescheduleParams) {
@@ -526,16 +528,16 @@ export async function sendRescheduleNotification(params: RescheduleParams) {
 
   const rescheduledCard = infoCard(`
     ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
-    ${row("Nouvelle date", fmtDateFr(params.date))}
-    ${row("Nouvel horaire", `${esc(params.startTime)} – ${esc(params.endTime)}`)}
+    ${row(params.what === "service" ? "Date" : "Nouvelle date", fmtDateFr(params.date))}
+    ${row(params.what === "service" ? "Horaire" : "Nouvel horaire", `${esc(params.startTime)} – ${esc(params.endTime)}`)}
     ${row("Garage", esc(params.garageName))}
     ${row("Adresse", esc(params.garageAddress), true)}
   `);
 
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre rendez-vous a été déplacé</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, le garage a modifié l'horaire de votre rendez-vous.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${params.what === "service" ? "Votre rendez-vous a été modifié" : "Votre rendez-vous a été déplacé"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, le garage a modifié ${params.what === "service" ? "le service" : "l'horaire"} de votre rendez-vous.</p>
 
     ${rescheduledCard}
 
@@ -545,7 +547,7 @@ export async function sendRescheduleNotification(params: RescheduleParams) {
 
   await send(
     params.to,
-    `RDV déplacé : ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
+    `${params.what === "service" ? "RDV modifié" : "RDV déplacé"} : ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
   );
 }

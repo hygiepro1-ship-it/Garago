@@ -21,7 +21,7 @@ const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")
  * attribué (anciens rendez-vous), ou dont le poste est déjà pris à cette heure, vont
  * sur le premier poste libre, dans l'ordre des heures ; au besoin, une colonne « en surplus ».
  */
-function assignPosts(appts: WeekAppointment[], capacity: number): WeekAppointment[][] {
+export function assignPosts(appts: WeekAppointment[], capacity: number): WeekAppointment[][] {
   const posts: WeekAppointment[][] = Array.from({ length: Math.max(1, capacity) }, () => []);
   const fits = (post: WeekAppointment[], a: WeekAppointment) => post.every((x) => toMin(x.endTime) <= toMin(a.startTime) || toMin(x.startTime) >= toMin(a.endTime));
   const sorted = [...appts].sort((x, y) => x.startTime.localeCompare(y.startTime) || x.endTime.localeCompare(y.endTime));
