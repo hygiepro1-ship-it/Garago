@@ -255,6 +255,7 @@ model GarageService {
   priceMin    Float?
   priceMax    Float?
   durationMin Int?
+  bays        Int[]   @default([]) // postes où ce service se fait — vide = tous les postes
   active      Boolean @default(true)
 
   garage   Garage          @relation(fields: [garageId], references: [id], onDelete: Cascade)
@@ -513,6 +514,7 @@ model Appointment {
   date      String // "YYYY-MM-DD"
   startTime String // "HH:MM"
   endTime   String // "HH:MM"
+  bay       Int? // poste de travail attribué (1..capacity) — null = non attribué (anciens rendez-vous)
 
   // Gestion
   status        String  @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED | NO_SHOW

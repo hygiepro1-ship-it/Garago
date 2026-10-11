@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/price";
 import BrandLogo from "@/components/BrandLogo";
 import ServiceIcon from "@/components/ServiceIcon";
+import { translateServiceName } from "@/lib/services";
 import { useLang } from "@/contexts/LanguageContext";
 
 interface GarageCardProps {
@@ -153,7 +154,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
             {services.map((s, i) => (
               <span key={`s${i}`} className="badge badge-navy">
                 <ServiceIcon name={s.category.name} size={12} />
-                {s.category.name}
+                {translateServiceName(s.category.name, lang)}
                 {formatPrice(s.priceMin) && <span style={{ opacity: 0.85, fontWeight: 600 }}> · dès {formatPrice(s.priceMin)}</span>}
               </span>
             ))}

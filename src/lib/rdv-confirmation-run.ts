@@ -119,7 +119,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
         continue;
       }
 
-      // 1. Demande de confirmation à −24 h (rendez-vous STANDARD)
+      // 1. Demande de confirmation à −48 h (rendez-vous STANDARD)
       if (a.confirmationStatus === "SCHEDULED") {
         if (start.getTime() - now.getTime() > REQUEST_HOURS_BEFORE * HOUR) continue;
         const deadline = to ? standardDeadline(start, now) : null;

@@ -13,7 +13,7 @@ import ServiceIcon from "@/components/ServiceIcon";
 import BrandLogo from "@/components/BrandLogo";
 import { formatPrice } from "@/lib/price";
 import { languageLabel, parseLanguages } from "@/lib/languages";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, serviceLabel, translateServiceName } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -389,9 +389,9 @@ export default function GarageProfilePage() {
                       <ServiceIcon id={catId} name={catName} size={18} />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{catName}</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{translateServiceName(catName, lang)}</p>
                       {formatPrice(services[0]?.priceMin) && (
-                        <p className="text-xs font-bold mt-0.5" style={{ color: "#c2410c" }}>À partir de {formatPrice(services[0]?.priceMin)}</p>
+                        <p className="text-xs font-bold mt-0.5" style={{ color: "#c2410c" }}>{lang === "en" ? "From" : "À partir de"} {formatPrice(services[0]?.priceMin)}</p>
                       )}
                       {services[0]?.durationMin && (
                         <p className="text-xs text-gray-400 mt-0.5">{services[0].durationMin} min</p>
@@ -470,7 +470,7 @@ export default function GarageProfilePage() {
                   <select className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                     value={reviewService} onChange={(e) => setReviewService(e.target.value)}>
                     <option value="">{g.chooseService}</option>
-                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.name}>{sc.name}</option>)}
+                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.name}>{serviceLabel(sc, lang)}</option>)}
                   </select>
                 </div>
                 <div>

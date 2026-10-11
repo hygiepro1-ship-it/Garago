@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, sendCancelledByCustomer } from "@/lib/email";
-import { wouldExceedCapacity, computeFreeSlots, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { loadBayRules } from "@/lib/bays";
 import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { sendRescheduleSMS, sendCancelledByGarageSMS } from "@/lib/sms";
@@ -76,8 +77,11 @@ export async function PATCH(
   // Un déplacement de date/heure ne doit pas chevaucher un autre RDV du garage —
   // vérifié par intervalle (durée réelle du RDV déplacé), pas par égalité d'heure.
   const movesAppt = !!(date || startTime || endTime);
+  // Le garage peut aussi changer le poste d'un rendez-vous, avec ou sans déplacement.
+  const bayAsked = isGarageOwner && body.bay !== undefined;
   let newEndTimeForClient: string | null = null;
-  if (movesAppt) {
+  let newBay: number | null | undefined = undefined;
+  if (movesAppt || bayAsked) {
     const newDate      = date ?? appt.date;
     const newStartTime = startTime ?? appt.startTime;
     // Un client ne choisit jamais la durée : elle reste celle du rendez-vous d'origine.
@@ -91,11 +95,15 @@ export async function PATCH(
     }
     const sameDay = await prisma.appointment.findMany({
       where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-      select: { startTime: true, endTime: true },
+      select: { startTime: true, endTime: true, bay: true },
     });
-    if (wouldExceedCapacity(newStartTime, durationMin, sameDay, appt.garage.capacity ?? 1)) {
-      return NextResponse.json({ error: "Tous les postes du garage sont déjà occupés sur ce créneau." }, { status: 409 });
+    const capacity = appt.garage.capacity ?? 1;
+    if (movesAppt && wouldExceedCapacity(newStartTime, durationMin, sameDay, capacity)) {
+      return NextResponse.json({ error: "Toutes les portes du garage sont déjà occupées sur ce créneau." }, { status: 409 });
     }
+    // Postes où le service de ce rendez-vous peut se faire.
+    const bayRules = await loadBayRules(appt.garageId, capacity);
+    const allowedBays = bayRules.forServiceName(appt.serviceName);
     // Le client ne peut déplacer son rendez-vous que vers un créneau réellement offert par le garage
     // (heures d'ouverture, vacances, jour fermé, heure déjà passée) — jamais vers un horaire forcé.
     if (clientOnly) {
@@ -107,10 +115,25 @@ export async function PATCH(
         prisma.blockedSlot.findMany({ where: { garageId: appt.garageId, date: newDate }, select: { startTime: true, endTime: true, allDay: true } }),
         prisma.garageAvailability.findFirst({ where: { garageId: appt.garageId, dayOfWeek: dayOfWeekOf(newDate) } }),
       ]);
-      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: newDate === today, now: new Date(), capacity: appt.garage.capacity ?? 1 });
+      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: newDate === today, now: new Date(), capacity, allowedBays });
       if (!free.includes(newStartTime)) {
         return NextResponse.json({ error: "Ce créneau n'est pas disponible." }, { status: 409 });
       }
+    }
+
+    // Poste : celui demandé par le garage s'il est libre ; sinon le rendez-vous garde son
+    // poste quand c'est possible ; sinon le poste le plus spécialisé qui convient.
+    const wantedBay = Number(body.bay);
+    if (bayAsked && body.bay !== null && body.bay !== "" && Number.isInteger(wantedBay) && wantedBay >= 1 && wantedBay <= capacity) {
+      if (!bayIsFree(wantedBay, newStartTime, durationMin, sameDay)) {
+        return NextResponse.json({ error: `La porte ${wantedBay} est déjà occupée sur ce créneau.` }, { status: 409 });
+      }
+      newBay = wantedBay;
+    } else if (appt.bay && appt.bay <= capacity && bayIsFree(appt.bay, newStartTime, durationMin, sameDay) && (!clientOnly || allowedBays.includes(appt.bay))) {
+      newBay = appt.bay;
+    } else {
+      newBay = pickBay(newStartTime, durationMin, sameDay, capacity, { allowed: allowedBays, versatility: bayRules.versatility })
+        ?? (clientOnly ? null : pickBay(newStartTime, durationMin, sameDay, capacity, { versatility: bayRules.versatility }));
     }
   }
 
@@ -144,6 +167,7 @@ export async function PATCH(
       ...(startTime                     ? { startTime }      : {}),
       ...(newEndTimeForClient           ? { endTime: newEndTimeForClient } : endTime ? { endTime } : {}),
       ...(completionNote !== undefined  ? { completionNote } : {}),
+      ...(newBay !== undefined          ? { bay: newBay }    : {}),
       ...resetConfirmation,
       ...(phoneConfirmed ? { confirmationStatus: "CONFIRMED", confirmedVia: "PHONE", confirmRespondedAt: appt.confirmRespondedAt ?? new Date() } : {}),
       ...(status === "CANCELLED" && appt.status !== "CANCELLED" ? { cancelledBy: isGarageOwner ? "GARAGE" : "CLIENT", cancelledAt: new Date() } : {}),

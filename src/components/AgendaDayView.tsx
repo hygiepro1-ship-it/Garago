@@ -4,26 +4,37 @@
  * Vue « jour » de l'agenda du garage : une colonne par poste de travail, une
  * ligne par demi-heure. Chaque rendez-vous garde toute la largeur de sa colonne,
  * donc son nom reste lisible même quand huit postes travaillent à la même heure.
- * Les rendez-vous ne sont pas rattachés à un poste précis : ils sont répartis
- * ici dans l'ordre des heures, sur le premier poste libre.
+ * Chaque rendez-vous s'affiche dans la colonne du poste qui lui est attribué.
  */
 
 import { apptColors, PAST_HATCH, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import { useTr } from "@/lib/dashboard-en";
+import { translateServiceName } from "@/lib/services";
 
 const STEP = 30; // minutes par ligne
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
-/** Place chaque rendez-vous sur le premier poste libre, dans l'ordre des heures de début. */
-function assignPosts(appts: WeekAppointment[]): WeekAppointment[][] {
-  const posts: WeekAppointment[][] = [];
+/**
+ * Range chaque rendez-vous dans la colonne de son poste. Ceux qui n'ont pas de poste
+ * attribué (anciens rendez-vous), ou dont le poste est déjà pris à cette heure, vont
+ * sur le premier poste libre, dans l'ordre des heures ; au besoin, une colonne « en surplus ».
+ */
+function assignPosts(appts: WeekAppointment[], capacity: number): WeekAppointment[][] {
+  const posts: WeekAppointment[][] = Array.from({ length: Math.max(1, capacity) }, () => []);
+  const fits = (post: WeekAppointment[], a: WeekAppointment) => post.every((x) => toMin(x.endTime) <= toMin(a.startTime) || toMin(x.startTime) >= toMin(a.endTime));
   const sorted = [...appts].sort((x, y) => x.startTime.localeCompare(y.startTime) || x.endTime.localeCompare(y.endTime));
+  const floating: WeekAppointment[] = [];
   for (const appt of sorted) {
-    const post = posts.find((p) => toMin(p[p.length - 1].endTime) <= toMin(appt.startTime));
+    const own = appt.bay && appt.bay >= 1 && appt.bay <= posts.length ? posts[appt.bay - 1] : null;
+    if (own && fits(own, appt)) own.push(appt); else floating.push(appt);
+  }
+  for (const appt of floating) {
+    const post = posts.find((p) => fits(p, appt));
     if (post) post.push(appt); else posts.push([appt]);
   }
-  return posts;
+  return posts.map((p) => p.sort((x, y) => x.startTime.localeCompare(y.startTime)));
 }
 
 export default function AgendaDayView({
@@ -36,15 +47,16 @@ export default function AgendaDayView({
   lang: string;
   blocked?: WeekBlock[];
   rowHeight?: number;                   // pixels par demi-heure
-  onPickSlot: (date: string, time: string) => void;
+  /** `bay` : le poste de la colonne cliquée. */
+  onPickSlot: (date: string, time: string, bay?: number) => void;
   onPickAppointment: (appt: WeekAppointment) => void;
 }) {
+  const tr = useTr();
   const ROW_H = rowHeight;
   const active = appointments.filter((a) => a.date === date && a.status !== "CANCELLED");
   // Un client absent a libéré son poste : il reste affiché, mais ne bloque plus la plage.
-  const assigned = assignPosts(active.filter((a) => a.status !== "NO_SHOW"));
+  const posts = assignPosts(active.filter((a) => a.status !== "NO_SHOW"), capacity);
   const noShows = active.filter((a) => a.status === "NO_SHOW");
-  const posts = Array.from({ length: Math.max(capacity, assigned.length) }, (_, i) => assigned[i] ?? []);
 
   const h = availability.find((a) => a.dayOfWeek === new Date(date + "T12:00:00").getDay());
   const hours = h && !h.isClosed ? { open: toMin(h.openTime), close: toMin(h.closeTime) } : null;
@@ -67,7 +79,7 @@ export default function AgendaDayView({
   if (!hours && active.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 px-4 py-10 text-center text-sm text-gray-500" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-        Le garage est fermé ce jour-là.
+        {tr("Le garage est fermé ce jour-là.")}
       </div>
     );
   }
@@ -86,9 +98,9 @@ export default function AgendaDayView({
               const extra = i >= capacity;
               return (
                 <div key={i} className="py-1.5 px-2 text-center border-l border-gray-100">
-                  <p className="text-xs font-black" style={{ color: extra ? "#b91c1c" : "#0b1f3a" }}>{extra ? "En surplus" : `Poste ${i + 1}`}</p>
+                  <p className="text-xs font-black" style={{ color: extra ? "#b91c1c" : "#0b1f3a" }}>{extra ? tr("En surplus") : `${lang === "en" ? "Bay" : "Porte"} ${i + 1}`}</p>
                   <p className="text-[11px] text-gray-500">
-                    {list.length === 0 ? "Libre" : freeH === 0 ? "Complet" : `${String(Math.round(freeH * 10) / 10).replace(".", ",")} h libres`}
+                    {list.length === 0 ? tr("Libre") : freeH === 0 ? tr("Complet") : lang === "en" ? `${Math.round(freeH * 10) / 10} h free` : `${String(Math.round(freeH * 10) / 10).replace(".", ",")} h libres`}
                   </p>
                   <div className="h-1 rounded-full mt-1 overflow-hidden" style={{ background: "#f1f5f9" }} aria-hidden="true">
                     <i className="block h-full" style={{ width: open ? `${Math.min(100, (taken / open) * 100)}%` : 0, background: "#0b1f3a" }} />
@@ -102,7 +114,7 @@ export default function AgendaDayView({
           <div className="grid" style={{ gridTemplateColumns: columns }}>
             <div>
               {rows.map((m) => (
-                <div key={m} className="text-[11px] text-gray-400 text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px" }}>
+                <div key={m} className="text-[12px] font-black text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px", color: "#0b1f3a" }}>
                   {m % 60 === 0 ? toHHMM(m) : ""}
                 </div>
               ))}
@@ -117,8 +129,8 @@ export default function AgendaDayView({
                   const taken = list.some((a) => toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
                   const free = open && !past && !isBlocked && !taken && i < capacity;
                   return free ? (
-                    <button key={m} type="button" onClick={() => onPickSlot(date, toHHMM(m))}
-                      aria-label={`Poste ${i + 1} libre : ${dayLabel}, ${toHHMM(m)}. Ajouter un rendez-vous`}
+                    <button key={m} type="button" onClick={() => onPickSlot(date, toHHMM(m), i + 1)}
+                      aria-label={lang === "en" ? `Bay ${i + 1} free: ${dayLabel}, ${toHHMM(m)}. Add an appointment` : `Porte ${i + 1} libre : ${dayLabel}, ${toHHMM(m)}. Ajouter un rendez-vous`}
                       className="block w-full hover:bg-green-100 focus-visible:bg-green-100"
                       style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
                   ) : (
@@ -143,7 +155,7 @@ export default function AgendaDayView({
                       <span className="block text-[11px] font-semibold leading-tight truncate">
                         <span className="font-bold tabular-nums">{appt.startTime}</span> {appt.customerName}
                       </span>
-                      {height >= 34 && appt.serviceName && <span className="block text-[10.5px] leading-tight truncate opacity-90">{appt.serviceName}</span>}
+                      {height >= 34 && appt.serviceName && <span className="block text-[10.5px] leading-tight truncate opacity-90">{translateServiceName(appt.serviceName, lang)}</span>}
                     </button>
                   );
                 })}
@@ -155,11 +167,11 @@ export default function AgendaDayView({
 
       {/* Légende : un mot par couleur */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />À confirmer</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />Confirmé</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />À appeler</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />{tr("Libre")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />{tr("À confirmer")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />{tr("Confirmé")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />{tr("À appeler")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé")}</span>
       </div>
     </div>
   );

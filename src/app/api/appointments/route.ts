@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
-import { computeFreeSlots, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { computeFreeSlots, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { loadBayRules } from "@/lib/bays";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
@@ -139,6 +140,9 @@ export async function POST(req: NextRequest) {
   const resolvedServiceName = svcs.length ? svcs.map((s) => s.category.name).join(" + ") : (serviceName || null);
   const capacity = garageForCapacity?.capacity ?? 1;
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
+  // Postes où ces services peuvent se faire : le rendez-vous est attribué à l'un d'eux dès la réservation.
+  const bayRules = await loadBayRules(garageId, capacity);
+  const allowedBays = bayRules.forCategories(wantedCats);
 
   const sessionUserId = (session?.user as any)?.id ?? null;
 
@@ -164,7 +168,7 @@ export async function POST(req: NextRequest) {
       const [sameDay, blocks, availRow] = await Promise.all([
         tx.appointment.findMany({
           where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-          select: { startTime: true, endTime: true },
+          select: { startTime: true, endTime: true, bay: true },
         }),
         tx.blockedSlot.findMany({ where: { garageId, date }, select: { startTime: true, endTime: true, allDay: true } }),
         tx.garageAvailability.findFirst({ where: { garageId, dayOfWeek: dayOfWeekOf(date) } }),
@@ -172,11 +176,14 @@ export async function POST(req: NextRequest) {
       // Le créneau doit figurer parmi ceux réellement offerts : heures d'ouverture, blocages
       // (vacances), jour fermé, capacité et heure déjà passée — un client ne peut pas forcer
       // un horaire en contournant l'interface.
-      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: date === today, now: new Date(), capacity });
+      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: date === today, now: new Date(), capacity, allowedBays });
       if (!free.includes(startTime)) throw new Error("SLOT_TAKEN");
+      // Le poste le plus spécialisé parmi ceux qui conviennent, pour garder les postes polyvalents libres.
+      const bay = pickBay(startTime, durationMin, sameDay, capacity, { allowed: allowedBays, versatility: bayRules.versatility });
       return tx.appointment.create({
         data: {
           garageId,
+          bay,
           userId: sessionUserId,
           customerName: name,
           customerPhone: phoneStd,

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import LocationGuide from "@/components/LocationGuide";
+import { useLang } from "@/contexts/LanguageContext";
 
 type GeoStatus = "idle" | "loading" | "ok" | "denied" | "error";
 
@@ -27,6 +28,7 @@ const PIN = (
 export default function LocationPicker({ geoStatus, accuracy, label, active, onLocate, onAddress, onDisable }: Props) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const en = useLang().lang === "en";
 
   useEffect(() => {
     if (!open) return;
@@ -39,10 +41,10 @@ export default function LocationPicker({ geoStatus, accuracy, label, active, onL
 
   const approx = geoStatus === "ok" && !label && accuracy != null && accuracy > 150;
   const text =
-    geoStatus === "loading" ? "Localisation en cours…"
-    : active ? (label ?? (approx ? "Position approximative" : "Autour de moi"))
-    : geoStatus === "denied" ? "Position refusée"
-    : "Choisir ma position";
+    geoStatus === "loading" ? (en ? "Locating…" : "Localisation en cours…")
+    : active ? (label ?? (approx ? (en ? "Approximate location" : "Position approximative") : (en ? "Near me" : "Autour de moi")))
+    : geoStatus === "denied" ? (en ? "Location denied" : "Position refusée")
+    : (en ? "Choose my location" : "Choisir ma position");
   const color = active && !approx ? "#15803d" : approx ? "#b45309" : "#47586f";
 
   return (
@@ -56,21 +58,21 @@ export default function LocationPicker({ geoStatus, accuracy, label, active, onL
       </button>
 
       {open && (
-        <div role="dialog" aria-label="Choisir ma position"
+        <div role="dialog" aria-label={en ? "Choose my location" : "Choisir ma position"}
           className="absolute left-0 top-full mt-1.5 z-30 bg-white w-full sm:w-[340px]"
           style={{ borderRadius: 6, border: "1px solid #cbd3df", padding: 12 }}>
           <button type="button" onClick={() => { onLocate(); }}
             className="w-full flex items-center gap-2 py-2 text-sm font-semibold text-left" style={{ color: "#0b1f3a" }}>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /><circle cx="12" cy="12" r="7" /></svg>
-            Utiliser ma position
+            {en ? "Use my location" : "Utiliser ma position"}
           </button>
-          {geoStatus === "denied" && <p className="text-xs pb-2" style={{ color: "#b91c1c" }}>Autorisez la localisation dans votre navigateur, ou saisissez une adresse.</p>}
-          {approx && <p className="text-xs pb-2" style={{ color: "#b45309" }}>Votre appareil ne donne qu&apos;une position approximative. Saisissez votre adresse pour plus de précision.</p>}
+          {geoStatus === "denied" && <p className="text-xs pb-2" style={{ color: "#b91c1c" }}>{en ? "Allow location access in your browser, or enter an address." : "Autorisez la localisation dans votre navigateur, ou saisissez une adresse."}</p>}
+          {approx && <p className="text-xs pb-2" style={{ color: "#b45309" }}>{en ? "Your device only gives an approximate location. Enter your address for better accuracy." : "Votre appareil ne donne qu'une position approximative. Saisissez votre adresse pour plus de précision."}</p>}
 
           <div className="pt-2" style={{ borderTop: "1px solid #e5e9f0" }}>
-            <p className="text-xs font-bold pb-1.5" style={{ color: "#47586f" }}>Ou saisir une adresse ou un code postal</p>
+            <p className="text-xs font-bold pb-1.5" style={{ color: "#47586f" }}>{en ? "Or enter an address or postal code" : "Ou saisir une adresse ou un code postal"}</p>
             <AddressAutocomplete
-              placeholder="Votre adresse"
+              placeholder={en ? "Your address" : "Votre adresse"}
               inputClass="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               onSelect={(r) => { onAddress(r); setOpen(false); }}
             />
@@ -80,7 +82,7 @@ export default function LocationPicker({ geoStatus, accuracy, label, active, onL
             <LocationGuide className="text-xs" />
             {active && (
               <button type="button" onClick={() => { onDisable(); setOpen(false); }} className="underline" style={{ color: "#47586f" }}>
-                Ne plus utiliser ma position
+                {en ? "Stop using my location" : "Ne plus utiliser ma position"}
               </button>
             )}
           </div>

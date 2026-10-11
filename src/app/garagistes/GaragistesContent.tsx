@@ -1,20 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useLang } from "@/contexts/LanguageContext";
-
-// Le calendrier d'exemple dépend de l'heure du visiteur : rendu dans le navigateur seulement.
-const AgendaDemo = dynamic(() => import("@/components/HomeAgendaDemo"), {
-  ssr: false,
-  loading: () => <div style={{ minHeight: 320 }} aria-hidden="true" />,
-});
+import PresentationVideo from "./PresentationVideo";
 
 const SIGNUP = "/inscription/garage";
 
-// Le calendrier du haut est le vrai composant du tableau de bord, rempli d'une
-// semaine d'exemple. L'onglet Services et la fiche de rendez-vous sont des
-// reproductions : mêmes couleurs, formes et textes que le tableau de bord.
+// En haut, la vidéo de présentation dans la langue de la page.
 const COPY = {
   fr: {
     h1a: "Fini les rendez-vous",
@@ -23,42 +15,15 @@ const COPY = {
     cta: "Essayer 30 jours gratuitement",
     seeSteps: "Voir les étapes",
     fine: "Carte requise · aucun prélèvement avant 30 jours",
-    phone: {
-      aria: "Calendrier du garage, exemple",
-      title: "Calendrier", today: "Auj.", date: "jeudi 24 septembre", todayTag: "Aujourd'hui",
-      count: "rendez-vous", confirmed: "Confirmé", online: "En ligne", newAppt: "+ Nouveau rendez-vous",
-      appts: [
-        { s: "08:00", e: "08:30", n: "Marie Tremblay", v: "2021 Honda Civic · Vidange d'huile", on: true },
-        { s: "08:00", e: "09:30", n: "Paul Gagnon", v: "2019 Chevrolet Silverado · Freins", on: true },
-        { s: "08:00", e: "08:30", n: "Sophie Roy", v: "2018 Hyundai Elantra · Vidange d'huile", on: false },
-        { s: "08:30", e: "09:30", n: "Karim Benali", v: "2020 Toyota RAV4 · Pneus d'hiver", on: true },
-      ],
-    },
-    featuresTitle: "Un calendrier qui s'adapte à votre atelier",
-    f1: { t: "Chaque service a sa durée.", p: "Vous réglez le temps de chaque prestation. Garago bloque exactement cette durée dans votre calendrier." },
-    f2: { t: "Plusieurs véhicules en même temps.", p: "Indiquez combien de postes compte votre garage. Un créneau n'est complet que lorsque tous sont occupés." },
-    f3: { t: "Moins de rendez-vous manqués.", p: "Deux jours avant, le client reçoit un texto ou un courriel pour confirmer ou annuler. S'il annule, vous le savez tout de suite et le créneau se libère. S'il ne répond pas, il apparaît dans votre liste « à appeler »." },
-    dash: {
-      title: "Services", sub: "Cochez les services que vous offrez", save: "Enregistrer",
-      oil: "Vidange d'huile", brakes: "Freins", duration: "Durée", h: "h", min: "min",
-      capLabel: "Véhicules pris en charge en même temps", capUnit: "postes de travail",
-      capHelp: "Nombre de postes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même créneau n'est complet que lorsque tous vos postes sont occupés.",
-    },
-    card: {
-      name: "Paul Gagnon", when: "Jeudi 15 octobre · 08:00 – 09:30",
-      planned: "Prévu", confirmedByClient: "Confirmé par le client", bookedOnline: "Réservé en ligne",
-      line: "Freins · 2019 Chevrolet Silverado", note: "Bruit de frottement en freinant, surtout à basse vitesse.",
-      done: "Terminer", move: "Déplacer", cancel: "Annuler", close: "Fermer",
-    },
     steps: {
       title: "De l'inscription à votre premier rendez-vous",
-      lead: "Cinq étapes. Vous savez toujours où vous en êtes et ce qui vient ensuite.",
+      needLabel: "À prévoir",
       list: [
-        { t: "Créez votre compte et votre garage", p: "Votre nom, le nom du garage, son adresse et son numéro d'entreprise du Québec (NEQ).", tag: "Ayez votre NEQ à portée de main", green: false },
+        { t: "Créez votre compte et votre garage", p: "Votre nom, le nom du garage, son adresse et son numéro d'entreprise du Québec (NEQ).", need: "Votre NEQ." },
         { t: "Choisissez vos services et vos marques", p: "Cochez ce que vous faites et les véhicules que vous traitez. Vous pourrez tout modifier plus tard." },
-        { t: "Choisissez votre formule et ajoutez une carte", p: "Mensuel ou annuel. La carte active votre essai de 30 jours.", tag: "Rien n'est prélevé pendant 30 jours", green: true },
+        { t: "Choisissez votre formule et ajoutez une carte", p: "Mensuel ou annuel. La carte active votre essai de 30 jours.", need: "Une carte. Rien n'est prélevé pendant 30 jours." },
         { t: "Réglez votre tableau de bord", p: "Vos heures d'ouverture, la durée de chaque service et le nombre de véhicules en même temps." },
-        { t: "Nous vérifions votre NEQ, puis vous êtes en ligne", p: "Notre équipe confirme votre entreprise avant de publier votre garage. Ensuite, les conducteurs peuvent réserver." },
+        { t: "Nous vérifions votre NEQ, puis vous êtes en ligne", p: "Notre équipe confirme votre entreprise avant de publier votre garage. Ensuite, les conducteurs peuvent réserver.", need: "Rien. Notre équipe s'en occupe." },
       ],
       cta: "Commencer", fine: "Annulable à tout moment avant la fin de l'essai",
     },
@@ -84,7 +49,7 @@ const COPY = {
       ["Puis-je annuler à tout moment ?", "Oui, en un clic depuis votre tableau de bord, sans engagement. Votre garage reste actif jusqu'à la fin de la période payée."],
       ["Pourquoi mon NEQ, et quand mon garage devient-il visible ?", "Notre équipe vérifie chaque numéro d'entreprise avant de publier un garage : c'est ce qui garantit aux conducteurs qu'ils réservent auprès de vrais garages. Votre profil apparaît dans les résultats dès cette vérification faite."],
       ["Comment Garago sait-il combien de temps bloquer pour un service ?", "C'est vous qui le décidez : chaque service a sa durée dans votre tableau de bord (onglet Services). Une vidange de 30 minutes et des freins de 90 minutes ne bloquent pas le même temps."],
-      ["J'ai plusieurs employés qui travaillent en même temps.", "Indiquez combien de véhicules votre garage prend en charge simultanément (onglet Services). Un créneau n'est complet que lorsque tous vos postes sont occupés."],
+      ["J'ai plusieurs employés qui travaillent en même temps.", "Indiquez combien de véhicules votre garage prend en charge simultanément (onglet Services). Un créneau n'est complet que lorsque toutes vos portes sont occupées."],
       ["Puis-je ajouter un client qui a appelé, fermer des journées ou déplacer un rendez-vous ?", "Oui, depuis votre tableau de bord. Le client est averti par courriel quand vous déplacez son rendez-vous."],
       ["Puis-je gérer mon tableau de bord depuis mon téléphone ?", "Oui. Il s'ouvre dans le navigateur de votre téléphone, sans application à installer."],
       ["J'ai plusieurs garages.", "Un seul abonnement couvre tous vos garages : 109,99 $/mois pour le premier, +49,99 $/mois par garage supplémentaire. Chacun garde son profil, ses horaires et son calendrier."],
@@ -92,7 +57,6 @@ const COPY = {
       ["Que faire si je reçois un avis négatif ?", "Les avis viennent de vrais comptes conducteurs. Vous pouvez répondre publiquement à chacun depuis votre tableau de bord."],
       ["Les conducteurs paient-ils quelque chose ?", "Non. Garago est gratuit pour les conducteurs."],
     ],
-    finalTitle: "Prêt à remplir votre calendrier ?",
   },
   en: {
     h1a: "No more booking",
@@ -101,42 +65,15 @@ const COPY = {
     cta: "Try it free for 30 days",
     seeSteps: "See the steps",
     fine: "Card required · no charge for 30 days",
-    phone: {
-      aria: "Garage calendar, example",
-      title: "Calendar", today: "Today", date: "Thursday, September 24", todayTag: "Today",
-      count: "appointments", confirmed: "Confirmed", online: "Online", newAppt: "+ New appointment",
-      appts: [
-        { s: "08:00", e: "08:30", n: "Marie Tremblay", v: "2021 Honda Civic · Oil change", on: true },
-        { s: "08:00", e: "09:30", n: "Paul Gagnon", v: "2019 Chevrolet Silverado · Brakes", on: true },
-        { s: "08:00", e: "08:30", n: "Sophie Roy", v: "2018 Hyundai Elantra · Oil change", on: false },
-        { s: "08:30", e: "09:30", n: "Karim Benali", v: "2020 Toyota RAV4 · Winter tires", on: true },
-      ],
-    },
-    featuresTitle: "A calendar that fits your shop",
-    f1: { t: "Every service has its own length.", p: "You set the time each service takes. Garago blocks exactly that long in your calendar." },
-    f2: { t: "Several vehicles at once.", p: "Tell us how many bays your garage has. A slot is only full when every bay is busy." },
-    f3: { t: "Fewer missed appointments.", p: "Two days before, the customer gets a text or an email to confirm or cancel. If they cancel, you know right away and the slot opens up. If they don't answer, they show up in your “to call” list." },
-    dash: {
-      title: "Services", sub: "Tick the services you offer", save: "Save",
-      oil: "Oil change", brakes: "Brakes", duration: "Duration", h: "h", min: "min",
-      capLabel: "Vehicles handled at the same time", capUnit: "work bays",
-      capHelp: "Number of bays or employees who can each work on a vehicle at the same time. A time slot is only full when all your bays are busy.",
-    },
-    card: {
-      name: "Paul Gagnon", when: "Thursday, October 15 · 08:00 – 09:30",
-      planned: "Scheduled", confirmedByClient: "Confirmed by the customer", bookedOnline: "Booked online",
-      line: "Brakes · 2019 Chevrolet Silverado", note: "Grinding noise when braking, mostly at low speed.",
-      done: "Complete", move: "Reschedule", cancel: "Cancel", close: "Close",
-    },
     steps: {
       title: "From sign-up to your first appointment",
-      lead: "Five steps. You always know where you are and what comes next.",
+      needLabel: "What you need",
       list: [
-        { t: "Create your account and your garage", p: "Your name, the garage name, its address and its Quebec business number (NEQ).", tag: "Have your NEQ handy", green: false },
+        { t: "Create your account and your garage", p: "Your name, the garage name, its address and its Quebec business number (NEQ).", need: "Your NEQ." },
         { t: "Choose your services and brands", p: "Tick what you do and the vehicles you work on. You can change everything later." },
-        { t: "Choose your plan and add a card", p: "Monthly or annual. The card activates your 30-day trial.", tag: "Nothing is charged for 30 days", green: true },
+        { t: "Choose your plan and add a card", p: "Monthly or annual. The card activates your 30-day trial.", need: "A card. Nothing is charged for 30 days." },
         { t: "Set up your dashboard", p: "Your opening hours, the length of each service and how many vehicles you handle at once." },
-        { t: "We check your NEQ, then you're live", p: "Our team confirms your business before publishing your garage. After that, drivers can book." },
+        { t: "We check your NEQ, then you're live", p: "Our team confirms your business before publishing your garage. After that, drivers can book.", need: "Nothing. Our team takes care of it." },
       ],
       cta: "Get started", fine: "Cancel any time before the trial ends",
     },
@@ -170,18 +107,12 @@ const COPY = {
       ["What if I get a bad review?", "Reviews come from real driver accounts. You can reply publicly to each one from your dashboard."],
       ["Do drivers pay anything?", "No. Garago is free for drivers."],
     ],
-    finalTitle: "Ready to fill your calendar?",
   },
 } as const;
-
-const CHECK = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
-);
 
 export default function GaragistesContent() {
   const { lang } = useLang();
   const c = COPY[lang === "en" ? "en" : "fr"];
-  const ph = c.phone;
 
   return (
     <div className="gp">
@@ -196,106 +127,30 @@ export default function GaragistesContent() {
             <p className="fine">{c.fine}</p>
           </div>
 
-          <div style={{ marginTop: 40, color: "#0b1f3a" }} aria-label={ph.aria}>
-            <AgendaDemo lang={lang === "en" ? "en" : "fr"} mobile />
-          </div>
+          <PresentationVideo lang={lang === "en" ? "en" : "fr"} />
         </div>
       </div>
-
-      {/* ═════ 3 ARGUMENTS ═════ */}
-      <section>
-        <div className="wrap">
-          <h2 className="sec-title">{c.featuresTitle}</h2>
-
-          <div className="feature">
-            <div><h3>{c.f1.t}</h3><p>{c.f1.p}</p></div>
-            <div className="vis">
-              <div className="dash">
-                <div className="dash-head"><div><h4>{c.dash.title}</h4><p>{c.dash.sub}</p></div><span className="save">{c.dash.save}</span></div>
-                <div className="svc-grid">
-                  <div className="svc">
-                    <div className="svc-top"><span className="cb">{CHECK}</span>
-                      <svg className="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>{c.dash.oil}</div>
-                    <span className="lbl">{c.dash.duration}</span>
-                    <div className="dur-in"><div className="input tnum">0</div><em>{c.dash.h}</em><div className="input tnum">30</div><em>{c.dash.min}</em></div>
-                  </div>
-                  <div className="svc">
-                    <div className="svc-top"><span className="cb">{CHECK}</span>
-                      <svg className="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><line x1="4.22" y1="4.22" x2="7.76" y2="7.76" /><line x1="16.24" y1="16.24" x2="19.78" y2="19.78" /><line x1="4.22" y1="19.78" x2="7.76" y2="16.24" /><line x1="16.24" y1="7.76" x2="19.78" y2="4.22" /></svg>{c.dash.brakes}</div>
-                    <span className="lbl">{c.dash.duration}</span>
-                    <div className="dur-in"><div className="input tnum">1</div><em>{c.dash.h}</em><div className="input tnum">30</div><em>{c.dash.min}</em></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="feature flip">
-            <div><h3>{c.f2.t}</h3><p>{c.f2.p}</p></div>
-            <div className="vis">
-              <div className="dash">
-                <div className="dash-head"><div><h4>{c.dash.title}</h4><p>{c.dash.sub}</p></div><span className="save">{c.dash.save}</span></div>
-                <div className="capbox">
-                  <span className="field-label">{c.dash.capLabel}</span>
-                  <div className="cap-row"><div className="input tnum" style={{ width: "7rem" }}>3</div><span className="cap-unit">{c.dash.capUnit}</span></div>
-                  <p className="help">{c.dash.capHelp}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="feature">
-            <div><h3>{c.f3.t}</h3><p>{c.f3.p}</p></div>
-            <div className="vis">
-              <div className="stack">
-                <div className="card" style={{ boxShadow: "0 12px 40px rgba(11,31,58,.18)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 14px", borderBottom: "1px solid #f1f5f9" }}>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: 14, color: "#111827", margin: 0 }}>{c.card.name}</p>
-                      <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{c.card.when}</p>
-                    </div>
-                    <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6", color: "#6b7280", fontWeight: 700, display: "grid", placeItems: "center", flexShrink: 0 }}>×</span>
-                  </div>
-                  <div className="expanded" style={{ borderTop: 0 }}>
-                    <div className="chips">
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#f3f4f6", color: "#374151" }}>{c.card.planned}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#f0fdf4", color: "#15803d" }}>{c.card.confirmedByClient}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "#ede9fe", color: "#6d28d9" }}>{c.card.bookedOnline}</span>
-                    </div>
-                    <div className="chips"><span className="chip tel">(514) 555-0142</span><span className="chip mail">paul.g@exemple.com</span></div>
-                    <p style={{ fontSize: 14, color: "#374151", margin: 0 }}>{c.card.line}</p>
-                    <p className="note">{c.card.note}</p>
-                    <div className="acts">
-                      <span className="act" style={{ background: "#16a34a" }}>{c.card.done}</span>
-                      <span className="act" style={{ background: "#7c3aed" }}>{c.card.move}</span>
-                      <span className="act" style={{ background: "#ef4444" }}>{c.card.cancel}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ═════ PARCOURS GUIDÉ ═════ */}
       <section className="steps-sec" id="etapes">
         <div className="wrap">
           <h2 className="sec-title">{c.steps.title}</h2>
-          <p className="steps-lead">{c.steps.lead}</p>
           <ol className="steps">
             {c.steps.list.map((s, i) => {
-              const last = i === c.steps.list.length - 1;
-              const tag = "tag" in s ? s.tag : undefined;
-              const green = "green" in s ? s.green : false;
+              const need = "need" in s ? s.need : undefined;
               return (
-                <li className={`step${last ? " done" : ""}`} key={s.t}>
-                  <span className="num">{last ? "✓" : i + 1}</span>
-                  <div>
+                <li className="step" key={s.t}>
+                  <span className="num" aria-hidden="true">{i + 1}</span>
+                  <div className="what">
                     <h3>{s.t}</h3>
                     <p>{s.p}</p>
-                    {tag && <span className={`tag${green ? " green" : ""}`}>{tag}</span>}
                   </div>
+                  {need && (
+                    <p className="need">
+                      <span>{c.steps.needLabel}</span>
+                      {need}
+                    </p>
+                  )}
                 </li>
               );
             })}
@@ -351,14 +206,6 @@ export default function GaragistesContent() {
               </details>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="final">
-        <div className="wrap">
-          <h2>{c.finalTitle}</h2>
-          <Link className="btn btn-primary" href={SIGNUP}>{c.cta}</Link>
-          <p className="fine">{c.fine}</p>
         </div>
       </section>
     </div>

@@ -50,7 +50,7 @@ function AccordionItem({ q, a, open, onToggle }: {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function FAQPage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const f = t.faq;
 
   const [tab, setTab]         = useState<"driver" | "garage">("driver");
@@ -232,7 +232,7 @@ export default function FAQPage() {
 
                 {/* Honeypot — invisible aux vrais utilisateurs, rempli par les bots */}
                 <div style={{ position: "absolute", left: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true" tabIndex={-1}>
-                  <label>Ne remplissez pas ce champ</label>
+                  <label>{lang === "en" ? "Leave this field empty" : "Ne remplissez pas ce champ"}</label>
                   <input
                     type="text"
                     name="website"

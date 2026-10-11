@@ -8,6 +8,7 @@
  */
 
 import type { WeekAppointment, WeekAvailability, WeekBlock } from "@/components/AgendaWeekView";
+import { useTr } from "@/lib/dashboard-en";
 
 const STEP = 30;
 const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
@@ -34,6 +35,7 @@ export default function AgendaMonthView({
   onPickDay: (date: string) => void;
   onPickAppointment: (appt: WeekAppointment) => void;
 }) {
+  const tr = useTr();
   const locale = lang === "fr" ? "fr-CA" : "en-CA";
   const now = new Date();
   const todayStr = toDateStr(now);
@@ -79,12 +81,12 @@ export default function AgendaMonthView({
           const free = freeMinutes(date, d.getDay(), dayAppts);
           const closed = free === null;
           const hasRoom = !closed && free > 0;
-          const freeLabel = hasRoom ? `${Math.floor(free / 60)} h${free % 60 ? " 30" : ""} libre${free > 60 ? "s" : ""}` : closed ? "Fermé" : date < todayStr ? "" : "Complet";
+          const freeLabel = hasRoom ? `${Math.floor(free / 60)} h${free % 60 ? " 30" : ""} ${lang === "en" ? "free" : `libre${free > 60 ? "s" : ""}`}` : closed ? tr("Fermé") : date < todayStr ? "" : tr("Complet");
           return (
             <div key={date} className="relative border-t border-l border-gray-100 p-1 flex flex-col gap-0.5"
               style={{ minHeight: 84, background: closed ? "#f1f5f9" : date < todayStr ? PAST_HATCH : hasRoom ? "#f0fdf4" : "#fff", opacity: inMonth ? 1 : 0.45 }}>
               <button type="button" onClick={() => onPickDay(date)}
-                aria-label={`${d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })} : ${dayAppts.length} rendez-vous${freeLabel ? `, ${freeLabel}` : ""}. Ouvrir la semaine`}
+                aria-label={`${d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })} : ${dayAppts.length} ${lang === "en" ? "appointments" : "rendez-vous"}${freeLabel ? `, ${freeLabel}` : ""}. ${lang === "en" ? "Open the week" : "Ouvrir la semaine"}`}
                 className="flex items-baseline justify-between gap-1 text-left rounded hover:bg-black/5 px-0.5">
                 <span className="text-xs font-black" style={date === todayStr
                   ? { background: "#f97316", color: "#fff", borderRadius: 9999, padding: "0 6px" }
@@ -112,11 +114,11 @@ export default function AgendaMonthView({
         })}
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />Libre</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff", border: "1px solid #e2e8f0" }} />Complet</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />Passé</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />Fermé</span>
-        <span>Cliquez sur un jour pour ouvrir sa semaine.</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />{tr("Libre")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff", border: "1px solid #e2e8f0" }} />{tr("Complet")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />{tr("Passé")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé")}</span>
+        <span>{tr("Cliquez sur un jour pour ouvrir sa semaine.")}</span>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { ARTICLES } from "@/lib/articles";
+import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
+import L, { LDate } from "@/components/L";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -17,9 +19,6 @@ const CAT_ICONS: Record<string, string> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-}
 
 function CategoryBadge({ category, dark }: { category: string; dark?: boolean }) {
   return (
@@ -31,7 +30,7 @@ function CategoryBadge({ category, dark }: { category: string; dark?: boolean })
         <img src={CAT_ICONS[category]} alt="" width={12} height={12}
           style={{ filter: dark ? "brightness(0) invert(1)" : "brightness(0) saturate(100%)", opacity: dark ? 0.7 : 1 }} />
       )}
-      {category}
+      <L fr={category} en={CATEGORY_EN[category] ?? category} />
     </span>
   );
 }
@@ -58,23 +57,23 @@ function FeaturedArticle({ article }: { article: Article }) {
           <CategoryBadge category={article.category} dark />
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            {formatDate(article.publishedAt)}
+            <LDate iso={article.publishedAt} />
           </span>
         </div>
         <h2 className="text-2xl md:text-3xl font-black text-white mb-4 leading-tight" style={{ letterSpacing: "-0.02em" }}>
-          {article.title}
+          <L fr={article.title} en={ARTICLES_EN[article.slug]?.title ?? article.title} />
         </h2>
         <p className="text-base leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.55)" }}>
-          {article.excerpt}
+          <L fr={article.excerpt} en={ARTICLES_EN[article.slug]?.excerpt ?? article.excerpt} />
         </p>
         <div className="flex items-center justify-between pt-5 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <ClockIcon />{article.readTime} min de lecture
+            <ClockIcon />{article.readTime} <L fr="min de lecture" en="min read" />
           </span>
           <Link href={`/conseils/${article.slug}`}
             className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
             style={{ background: "#f97316" }}>
-            Lire l'article
+            <L fr="Lire l'article" en="Read the article" />
           </Link>
         </div>
       </div>
@@ -91,20 +90,20 @@ function ArticleCard({ article }: { article: Article }) {
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <CategoryBadge category={article.category} />
           <span className="text-xs font-semibold ml-auto" style={{ color: "#cbd5e1" }}>
-            {formatDate(article.publishedAt)}
+            <LDate iso={article.publishedAt} />
           </span>
         </div>
         <h2 className="text-xl font-black mb-3 leading-snug" style={{ color: "#0b1f3a", letterSpacing: "-0.02em" }}>
-          {article.title}
+          <L fr={article.title} en={ARTICLES_EN[article.slug]?.title ?? article.title} />
         </h2>
-        <p className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}>{article.excerpt}</p>
+        <p className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}><L fr={article.excerpt} en={ARTICLES_EN[article.slug]?.excerpt ?? article.excerpt} /></p>
         <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "#f1f5f9" }}>
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#94a3b8" }}>
-            <ClockIcon />{article.readTime} min de lecture
+            <ClockIcon />{article.readTime} <L fr="min de lecture" en="min read" />
           </span>
           <Link href={`/conseils/${article.slug}`}
             className="text-sm font-bold transition-all hover:gap-2" style={{ color: "#f97316" }}>
-            Lire l'article
+            <L fr="Lire l'article" en="Read the article" />
           </Link>
         </div>
       </div>
@@ -129,11 +128,11 @@ export default function ConseilsPage() {
       <section style={{ background: "#0b1f3a" }} className="py-14 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-            Prenez soin de votre voiture<br />
-            <span style={{ color: "#f97316" }}>toute l'année</span>
+            <L fr="Prenez soin de votre voiture" en="Take care of your car" /><br />
+            <span style={{ color: "#f97316" }}><L fr="toute l'année" en="all year round" /></span>
           </h1>
           <p className="text-base max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Conseils pratiques pour les conducteurs du Québec : entretien, sécurité et saisons.
+            <L fr="Conseils pratiques pour les conducteurs du Québec : entretien, sécurité et saisons." en="Practical advice for Quebec drivers: maintenance, safety and seasons." />
           </p>
         </div>
       </section>
@@ -149,7 +148,7 @@ export default function ConseilsPage() {
                 <img src={CAT_ICONS[cat]} alt="" width={13} height={13}
                   style={{ filter: "brightness(0) saturate(100%)" }} />
               )}
-              {cat}
+              <L fr={cat} en={CATEGORY_EN[cat] ?? cat} />
             </span>
           ))}
         </div>
@@ -164,8 +163,8 @@ export default function ConseilsPage() {
 
           {published.length === 0 && (
             <div className="text-center py-20">
-              <p className="font-bold text-lg" style={{ color: "#0b1f3a" }}>Aucun conseil publié pour le moment.</p>
-              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}>Revenez bientôt, de nouveaux articles arrivent chaque semaine.</p>
+              <p className="font-bold text-lg" style={{ color: "#0b1f3a" }}><L fr="Aucun conseil publié pour le moment." en="No articles published yet." /></p>
+              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}><L fr="Revenez bientôt, de nouveaux articles arrivent chaque semaine." en="Check back soon: new articles arrive every week." /></p>
             </div>
           )}
 
@@ -181,16 +180,16 @@ export default function ConseilsPage() {
       <section className="py-14 px-4" style={{ background: "#0b1f3a" }}>
         <div className="max-w-xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: "#f97316" }}>
-            Ne manquez rien
+            <L fr="Ne manquez rien" en="Don't miss a thing" />
           </p>
-          <h2 className="text-2xl font-black text-white mb-3">Recevez ces conseils par courriel</h2>
+          <h2 className="text-2xl font-black text-white mb-3"><L fr="Recevez ces conseils par courriel" en="Get these tips by email" /></h2>
           <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
-            Créez un compte Garago et activez les communications dans vos préférences pour recevoir les conseils chaque semaine.
+            <L fr="Créez un compte Garago et activez les communications dans vos préférences pour recevoir les conseils chaque semaine." en="Create a Garago account and turn on communications in your preferences to receive the tips every week." />
           </p>
           <Link href="/inscription/conducteur"
             className="inline-block px-8 py-3.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90"
             style={{ background: "#f97316" }}>
-            Créer un compte gratuitement
+            <L fr="Créer un compte gratuitement" en="Create a free account" />
           </Link>
         </div>
       </section>

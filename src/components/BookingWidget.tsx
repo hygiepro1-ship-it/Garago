@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
 import { formatPrice } from "@/lib/price";
+import { translateServiceName } from "@/lib/services";
+import L from "@/components/L";
 import Turnstile, { turnstileActive } from "@/components/Turnstile";
 
 interface BookingWidgetProps {
@@ -49,7 +51,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [tsToken, setTsToken] = useState("");
   const [tsReset, setTsReset] = useState(0);
   const needCaptcha = turnstileActive && !session?.user;
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const b = t.booking;
 
   const [step, setStep]           = useState<Step>("service");
@@ -350,9 +352,9 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                     <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 ${checked ? "bg-orange-500 border-orange-500" : "border-gray-300 bg-white"}`} style={{ borderRadius: 4 }}>
                       {checked && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
                     </span>
-                    <span className="flex-1">{sv.category.name}</span>
+                    <span className="flex-1">{translateServiceName(sv.category.name, lang)}</span>
                     <span className="flex flex-col items-end flex-shrink-0 leading-tight">
-                      {formatPrice(sv.priceMin) && <span className="text-xs font-bold" style={{ color: "#c2410c" }}>À partir de {formatPrice(sv.priceMin)}</span>}
+                      {formatPrice(sv.priceMin) && <span className="text-xs font-bold" style={{ color: "#c2410c" }}><L fr="À partir de" en="From" /> {formatPrice(sv.priceMin)}</span>}
                       {sv.durationMin ? <span className="text-xs text-gray-400">~{sv.durationMin} min</span> : null}
                     </span>
                   </button>
@@ -498,7 +500,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
           <div className="space-y-3">
             {/* Summary */}
             <div className="bg-orange-50 rounded-xl p-3 border border-orange-100 text-xs text-orange-700 mb-4">
-              {service && <p><strong>{service}</strong></p>}
+              {service && <p><strong>{translateServiceName(service, lang)}</strong></p>}
               <p><strong>{selectedDate ? formatDateFr(selectedDate) : ""}</strong> à <strong>{selectedSlot}</strong></p>
             </div>
 

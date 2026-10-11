@@ -1,4 +1,5 @@
 import Link from "next/link";
+import L from "@/components/L";
 
 export default function NotFound() {
   return (
@@ -10,13 +11,13 @@ export default function NotFound() {
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
         </div>
-        <h1 className="text-2xl font-black mb-2" style={{ color: "#0b1f3a" }}>Page introuvable</h1>
+        <h1 className="text-2xl font-black mb-2" style={{ color: "#0b1f3a" }}><L fr="Page introuvable" en="Page not found" /></h1>
         <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
-          La page que vous cherchez n'existe pas ou a été déplacée.
+          <L fr="La page que vous cherchez n'existe pas ou a été déplacée." en="The page you are looking for does not exist or has been moved." />
         </p>
         <Link href="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-transform active:scale-[0.98]"
           style={{ background: "#f97316" }}>
-          Retour à l'accueil
+          <L fr="Retour à l'accueil" en="Back to home" />
         </Link>
       </div>
     </div>

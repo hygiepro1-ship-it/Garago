@@ -7,7 +7,7 @@ import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
-import { SERVICE_CATEGORIES, QUEBEC_CITIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, QUEBEC_CITIES, serviceLabel } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
 import LocationPicker from "@/components/LocationPicker";
@@ -52,7 +52,7 @@ interface SearchGarage {
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const s = t.search;
 
   const [garages, setGarages] = useState<SearchGarage[]>([]);
@@ -278,7 +278,7 @@ function SearchContent() {
               value={service} onChange={(e) => setService(e.target.value)}
             >
               <option value="">{s.service}</option>
-              {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+              {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{serviceLabel(sc, lang)}</option>)}
             </select>
 
             <button
@@ -342,7 +342,7 @@ function SearchContent() {
                   <label htmlFor="filter-service" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.prestation}</label>
                   <select id="filter-service" className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                     <option value="">{s.allServices}</option>
-                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{serviceLabel(sc, lang)}</option>)}
                   </select>
                 </div>
                 <div>
@@ -402,7 +402,7 @@ function SearchContent() {
                     }
                   >
                     <ServiceIcon id={sc.id} size={16} />
-                    <span>{sc.name}</span>
+                    <span>{serviceLabel(sc, lang)}</span>
                     {service === sc.id && (
                       <svg className="ml-auto flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"/>
@@ -424,7 +424,7 @@ function SearchContent() {
                   {selectedService ? (
                     <span className="inline-flex items-center gap-2">
                       <ServiceIcon id={selectedService.id} size={20} />
-                      {selectedService.name}
+                      {serviceLabel(selectedService, lang)}
                     </span>
                   ) : s.allGarages}
                   {city && <span style={{ color: "#94a3b8" }}> · {city}</span>}
@@ -468,7 +468,7 @@ function SearchContent() {
                     <span className="badge badge-blue flex items-center gap-1">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={selectedService.iconPath} alt="" width={13} height={13} style={{ filter: "brightness(0) invert(1)", opacity: 0.85 }} />
-                      {selectedService.name}
+                      {serviceLabel(selectedService, lang)}
                     </span>
                   )}
                   {city && <span className="badge badge-gray flex items-center gap-1">
@@ -644,7 +644,7 @@ function SearchContent() {
                 <label htmlFor="drawer-service" className="block text-xs font-bold mb-2" style={{ color: "#475569" }}>{s.prestation}</label>
                 <select id="drawer-service" className="doc-input" value={service} onChange={(e) => setService(e.target.value)}>
                   <option value="">{s.allServices}</option>
-                  {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+                  {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.id}>{serviceLabel(sc, lang)}</option>)}
                 </select>
               </div>
               <div>

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ARTICLES, getArticle, getRelatedArticles } from "@/lib/articles";
 import { ArticleImage } from "./ArticleImage";
+import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
+import L, { LDate } from "@/components/L";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -23,9 +25,6 @@ export function generateStaticParams() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" });
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,18 +33,18 @@ type ArticleSection = NonNullable<Article>["sections"][number];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ArticleSectionBlock({ section, categoryColor }: { section: ArticleSection; categoryColor: string }) {
+function ArticleSectionBlock({ section, en, categoryColor }: { section: ArticleSection; en: ArticleSection; categoryColor: string }) {
   return (
     <div>
       {section.heading && (
         <h2 className="text-xl font-black mb-3 pb-2"
           style={{ color: "#0b1f3a", borderBottom: `3px solid ${categoryColor}`, display: "inline-block" }}>
-          {section.heading}
+          <L fr={section.heading} en={en.heading ?? section.heading} />
         </h2>
       )}
 
       <p className="text-base leading-relaxed" style={{ color: "#475569" }}>
-        {section.content}
+        <L fr={section.content} en={en.content} />
       </p>
 
       {section.tips && section.tips.length > 0 && (
@@ -56,7 +55,7 @@ function ArticleSectionBlock({ section, categoryColor }: { section: ArticleSecti
                 style={{ background: categoryColor + "22", color: categoryColor }}>
                 ✓
               </span>
-              <span className="text-sm leading-relaxed" style={{ color: "#334155" }}>{tip}</span>
+              <span className="text-sm leading-relaxed" style={{ color: "#334155" }}><L fr={tip} en={en.tips?.[j] ?? tip} /></span>
             </li>
           ))}
         </ul>
@@ -70,7 +69,7 @@ function ArticleSectionBlock({ section, categoryColor }: { section: ArticleSecti
             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
             <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
-          <p className="text-sm leading-relaxed font-semibold" style={{ color: "#991b1b" }}>{section.warning}</p>
+          <p className="text-sm leading-relaxed font-semibold" style={{ color: "#991b1b" }}><L fr={section.warning} en={en.warning ?? section.warning} /></p>
         </div>
       )}
 
@@ -80,7 +79,7 @@ function ArticleSectionBlock({ section, categoryColor }: { section: ArticleSecti
           <img src="/icons/pricing/bulb.png" alt="" width={20} height={20}
             className="flex-shrink-0 mt-0.5"
             style={{ filter: "brightness(0) saturate(100%) invert(20%) sepia(80%) saturate(500%) hue-rotate(200deg)" }} />
-          <p className="text-sm leading-relaxed" style={{ color: "#1e40af" }}>{section.note}</p>
+          <p className="text-sm leading-relaxed" style={{ color: "#1e40af" }}><L fr={section.note} en={en.note ?? section.note} /></p>
         </div>
       )}
     </div>
@@ -105,14 +104,14 @@ function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
         <div className="absolute top-2 left-2">
           <span className="text-xs font-black px-2 py-0.5 rounded-full"
             style={{ background: article.categoryColor, color: "white" }}>
-            {article.category}
+            <L fr={article.category} en={CATEGORY_EN[article.category] ?? article.category} />
           </span>
         </div>
       </div>
       <div className="p-4 flex-1">
         <p className="text-sm font-black leading-snug group-hover:text-orange-500 transition-colors"
           style={{ color: "#0b1f3a" }}>
-          {article.title}
+          <L fr={article.title} en={ARTICLES_EN[article.slug]?.title ?? article.title} />
         </p>
         <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{article.readTime} min</p>
       </div>
@@ -128,6 +127,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   if (!article) notFound();
 
   const related = getRelatedArticles(article, 3);
+  const en = ARTICLES_EN[article.slug];
+  const title = <L fr={article.title} en={en?.title ?? article.title} />;
 
   return (
     <main>
@@ -148,11 +149,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="absolute top-6 left-0 right-0 px-4">
           <div className="max-w-3xl mx-auto">
             <nav className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
+              <Link href="/" className="hover:text-white transition-colors"><L fr="Accueil" en="Home" /></Link>
               <span>/</span>
-              <Link href="/conseils" className="hover:text-white transition-colors">Conseils auto</Link>
+              <Link href="/conseils" className="hover:text-white transition-colors"><L fr="Conseils auto" en="Car tips" /></Link>
               <span>/</span>
-              <span style={{ color: "rgba(255,255,255,0.35)" }} className="truncate max-w-xs">{article.title}</span>
+              <span style={{ color: "rgba(255,255,255,0.35)" }} className="truncate max-w-xs">{title}</span>
             </nav>
           </div>
         </div>
@@ -166,9 +167,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                 <img src={CAT_ICONS[article.category]} alt="" width={13} height={13}
                   style={{ filter: "brightness(0) invert(1)" }} />
               )}
-              {article.category}
+              <L fr={article.category} en={CATEGORY_EN[article.category] ?? article.category} />
             </span>
-            <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">{article.title}</h1>
+            <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">{title}</h1>
           </div>
         </div>
       </div>
@@ -179,17 +180,17 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <span className="flex items-center gap-1">
             <img src="/icons/pricing/calendar.png" alt="" width={12} height={12}
               style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
-            {formatDate(article.publishedAt)}
+            <LDate iso={article.publishedAt} />
           </span>
           <span>·</span>
           <span className="flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            {article.readTime} min de lecture
+            {article.readTime} <L fr="min de lecture" en="min read" />
           </span>
           <span>·</span>
-          <Link href="/conseils" className="hover:text-orange-400 transition-colors">Tous les conseils</Link>
+          <Link href="/conseils" className="hover:text-orange-400 transition-colors"><L fr="Tous les conseils" en="All tips" /></Link>
         </div>
       </div>
 
@@ -198,25 +199,25 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="max-w-3xl mx-auto">
           <p className="text-lg leading-relaxed mb-10 pb-8 font-medium"
             style={{ color: "#334155", borderBottom: "2px solid #e2e8f0" }}>
-            {article.excerpt}
+            <L fr={article.excerpt} en={en?.excerpt ?? article.excerpt} />
           </p>
 
           <div className="space-y-10">
             {article.sections.map((section, i) => (
-              <ArticleSectionBlock key={i} section={section} categoryColor={article.categoryColor} />
+              <ArticleSectionBlock key={i} section={section} en={en?.sections[i] ?? section} categoryColor={article.categoryColor} />
             ))}
           </div>
 
           {/* ── CTA ── */}
           <div className="mt-12 p-6 rounded-2xl text-center" style={{ background: "#0b1f3a" }}>
             <p className="text-sm font-bold mb-1" style={{ color: "rgba(255,255,255,0.55)" }}>
-              Un garage près de chez vous peut s'en occuper
+              <L fr="Un garage près de chez vous peut s'en occuper" en="A garage near you can take care of it" />
             </p>
-            <h3 className="text-xl font-black text-white mb-4">Obtenez un devis ou prenez rendez-vous en ligne</h3>
+            <h3 className="text-xl font-black text-white mb-4"><L fr="Obtenez un devis ou prenez rendez-vous en ligne" en="Get a quote or book an appointment online" /></h3>
             <Link href={`/rechercher?service=${article.category.toLowerCase()}`}
               className="inline-block px-6 py-3 rounded-xl text-sm font-black text-white"
               style={{ background: "#f97316" }}>
-              Trouver un garage
+              <L fr="Trouver un garage" en="Find a garage" />
             </Link>
           </div>
         </div>
@@ -226,7 +227,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       {related.length > 0 && (
         <section className="py-12 px-4" style={{ background: "#f1f5f9" }}>
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-xl font-black mb-6" style={{ color: "#0b1f3a" }}>Articles similaires</h2>
+            <h2 className="text-xl font-black mb-6" style={{ color: "#0b1f3a" }}><L fr="Articles similaires" en="Related articles" /></h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {related.map((rel) => <RelatedArticleCard key={rel.slug} article={rel} />)}
             </div>

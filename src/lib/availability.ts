@@ -88,6 +88,78 @@ export interface BlockedRow {
 export interface BookedRow {
   startTime: string;
   endTime: string;
+  /** Poste attribué (1..capacité). Absent ou null : le rendez-vous occupe un poste, sans qu'on sache lequel. */
+  bay?: number | null;
+}
+
+// ── Postes de travail ─────────────────────────────────────────────────────────
+// Un garage peut réserver certains postes à certains services (ex. l'alignement ne
+// se fait qu'au poste 2). Chaque service porte la liste des postes où il se fait ;
+// une liste vide veut dire « tous ». Un rendez-vous pris en ligne n'est offert que
+// si un poste autorisé est libre, et il va d'abord sur le poste le plus spécialisé,
+// pour garder les postes polyvalents libres pour les autres services.
+
+const validBay = (b: unknown, capacity: number): b is number => typeof b === "number" && Number.isInteger(b) && b >= 1 && b <= capacity;
+
+/**
+ * Postes où un rendez-vous peut se faire, pour les services demandés (une liste de
+ * postes par service ; liste vide = tous). Plusieurs services : les postes qui les
+ * font tous ; s'il n'y en a aucun, ceux qui en font au moins un.
+ */
+export function allowedBaysFor(capacity: number, serviceBays: number[][]): number[] {
+  const all = Array.from({ length: Math.max(1, capacity) }, (_, i) => i + 1);
+  const lists = serviceBays.map((l) => l.filter((b) => validBay(b, capacity))).filter((l) => l.length > 0);
+  if (lists.length === 0) return all;
+  const common = all.filter((b) => lists.every((l) => l.includes(b)));
+  return common.length > 0 ? common : all.filter((b) => lists.some((l) => l.includes(b)));
+}
+
+/** Pour chaque poste (indice = numéro − 1), nombre de services du garage qui peuvent s'y faire. */
+export function bayVersatility(capacity: number, allServiceBays: number[][]): number[] {
+  const count = Array.from({ length: Math.max(1, capacity) }, () => 0);
+  for (const raw of allServiceBays) {
+    const list = raw.filter((b) => validBay(b, capacity));
+    for (let b = 1; b <= count.length; b++) if (list.length === 0 || list.includes(b)) count[b - 1]++;
+  }
+  return count;
+}
+
+/** true si aucun rendez-vous déjà attribué à ce poste ne chevauche [startTime, startTime + durationMin). */
+export function bayIsFree(bay: number, startTime: string, durationMin: number, existing: BookedRow[]): boolean {
+  const start = toMinutes(startTime);
+  const end = start + durationMin;
+  return !existing.some((a) => a.bay === bay && overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime)));
+}
+
+/**
+ * Poste à attribuer à un nouveau rendez-vous, ou null si rien n'est possible :
+ * garage plein sur cette plage, ou aucun poste autorisé libre. Parmi les postes
+ * possibles : celui demandé (`prefer`) s'il est libre, sinon le plus spécialisé
+ * (celui où le moins de services se font), puis le plus petit numéro.
+ */
+export function pickBay(
+  startTime: string,
+  durationMin: number,
+  existing: BookedRow[],
+  capacity: number,
+  opts: { allowed?: number[]; versatility?: number[]; prefer?: number | null } = {},
+): number | null {
+  const cap = Math.max(1, capacity);
+  const start = toMinutes(startTime);
+  const end = start + durationMin;
+  const over = existing.filter((a) => overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime)));
+  if (over.length >= cap) return null;
+  const taken = new Set(over.map((a) => a.bay).filter((b) => validBay(b, cap)));
+  // Les rendez-vous sans poste attribué occuperont chacun un des postes encore libres.
+  const floating = over.filter((a) => !validBay(a.bay, cap)).length;
+  const free = Array.from({ length: cap }, (_, i) => i + 1).filter((b) => !taken.has(b));
+  if (free.length - floating < 1) return null;
+  const allowed = opts.allowed;
+  const candidates = allowed ? free.filter((b) => allowed.includes(b)) : free;
+  if (candidates.length === 0) return null;
+  if (opts.prefer && candidates.includes(opts.prefer)) return opts.prefer;
+  const v = opts.versatility;
+  return [...candidates].sort((x, y) => (v ? (v[x - 1] ?? 0) - (v[y - 1] ?? 0) : 0) || x - y)[0];
 }
 
 /**
@@ -100,7 +172,7 @@ export function computeFreeSlots(
   blocks: BlockedRow[],
   booked: BookedRow[],
   durationMin: number,
-  opts: { isToday?: boolean; now?: Date; capacity?: number } = {}
+  opts: { isToday?: boolean; now?: Date; capacity?: number; allowedBays?: number[] } = {}
 ): string[] {
   if (!avail || avail.isClosed) return [];
   // Un blocage (vacances, fermeture exceptionnelle) ferme tout le garage, peu
@@ -113,9 +185,7 @@ export function computeFreeSlots(
   const blockedIntervals = blocks
     .filter((b): b is { startTime: string; endTime: string; allDay: boolean } => !!b.startTime && !!b.endTime)
     .map((b) => ({ start: toMinutes(b.startTime), end: toMinutes(b.endTime) }));
-  const bookedIntervals = booked.map((a) => ({ start: toMinutes(a.startTime), end: toMinutes(a.endTime) }));
-
-  const { isToday = false, now = new Date(), capacity = 1 } = opts;
+  const { isToday = false, now = new Date(), capacity = 1, allowedBays } = opts;
   const nowMinutes = quebecMinutes(now) + 30;
 
   return candidates.filter((s) => {
@@ -124,10 +194,9 @@ export function computeFreeSlots(
     if (isToday && start <= nowMinutes) return false; // passé
     if (blockedIntervals.some((b) => overlaps(start, end, b.start, b.end))) return false;
     // Un créneau n'est complet que lorsque tous les postes de travail sont
-    // occupés en même temps — pas dès le premier RDV qui le chevauche.
-    const concurrent = bookedIntervals.filter((b) => overlaps(start, end, b.start, b.end)).length;
-    if (concurrent >= capacity) return false;
-    return true;
+    // occupés en même temps — pas dès le premier RDV qui le chevauche. Si le
+    // service ne se fait qu'à certains postes, il faut que l'un d'eux soit libre.
+    return pickBay(s, durationMin, booked, capacity, { allowed: allowedBays }) !== null;
   });
 }
 
