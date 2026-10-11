@@ -7,7 +7,9 @@ import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, t
 import { loadBayRules } from "@/lib/bays";
 import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
-import { sendRescheduleSMS, sendCancelledByGarageSMS } from "@/lib/sms";
+import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS } from "@/lib/sms";
+import { cleanText, isValidEmail } from "@/lib/abuse";
+import { formatPhone, isFormattedPhone } from "@/lib/contact-format";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -69,6 +71,34 @@ export async function PATCH(
     }
   }
 
+  // Le garage peut corriger toute la fiche : client, service, véhicule. Seuls les champs envoyés changent.
+  const details: Record<string, string | number | null> = {};
+  if (isGarageOwner) {
+    if (body.customerName !== undefined) {
+      const name = cleanText(body.customerName, 80);
+      if (name.length < 2) return NextResponse.json({ error: "Entrez le nom du client." }, { status: 400 });
+      details.customerName = name;
+    }
+    if (body.customerPhone !== undefined) {
+      const phone = formatPhone(String(body.customerPhone));
+      if (!isFormattedPhone(phone)) return NextResponse.json({ error: "Entrez un numéro de téléphone à 10 chiffres, par exemple (514) 555-0123." }, { status: 400 });
+      details.customerPhone = phone;
+    }
+    if (body.customerEmail !== undefined) {
+      const email = String(body.customerEmail ?? "").trim().toLowerCase();
+      if (email && !isValidEmail(email)) return NextResponse.json({ error: "Adresse courriel invalide" }, { status: 400 });
+      if (!email && appt.contactChannel === "EMAIL") return NextResponse.json({ error: "Ce client reçoit ses messages par courriel : gardez une adresse." }, { status: 400 });
+      details.customerEmail = email || null;
+    }
+    if (body.serviceName !== undefined) details.serviceName = cleanText(body.serviceName, 120) || null;
+    if (body.vehicleYear !== undefined) {
+      const year = Number(body.vehicleYear);
+      details.vehicleYear = Number.isInteger(year) && year >= 1950 && year <= new Date().getFullYear() + 1 ? year : null;
+    }
+    if (body.vehicleMake !== undefined) details.vehicleMake = cleanText(body.vehicleMake, 60) || null;
+    if (body.vehicleModel !== undefined) details.vehicleModel = cleanText(body.vehicleModel, 60) || null;
+  }
+
   // « Confirmé par téléphone » : le garage a joint lui-même un client qui n'avait pas répondu.
   const phoneConfirmed = body.phoneConfirmed === true && isGarageOwner
     && ["SCHEDULED", "AWAITING", "NO_RESPONSE"].includes(appt.confirmationStatus)
@@ -81,6 +111,9 @@ export async function PATCH(
   const bayAsked = isGarageOwner && body.bay !== undefined;
   let newEndTimeForClient: string | null = null;
   let newBay: number | null | undefined = undefined;
+  // Rendez-vous suivants que cette modification repousse (envoyés par l'agenda du garage).
+  type Row = Awaited<ReturnType<typeof prisma.appointment.findMany>>[number];
+  const shifted: { row: Row; startTime: string; endTime: string; bay: number | null; durationMin: number }[] = [];
   if (movesAppt || bayAsked) {
     const newDate      = date ?? appt.date;
     const newStartTime = startTime ?? appt.startTime;
@@ -95,9 +128,44 @@ export async function PATCH(
     }
     const sameDay = await prisma.appointment.findMany({
       where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-      select: { startTime: true, endTime: true, bay: true },
+      select: { id: true, startTime: true, endTime: true, bay: true },
     });
     const capacity = appt.garage.capacity ?? 1;
+
+    // Décalage en chaîne : tout est vérifié ici, puis enregistré d'un seul coup plus bas.
+    // Si un seul décalage est impossible, rien ne change, ni pour ce rendez-vous ni pour les autres.
+    const rawShifts: unknown[] = isGarageOwner && Array.isArray(body.shifts) ? body.shifts.slice(0, 40) : [];
+    if (rawShifts.length > 0) {
+      const wanted = new Map<string, { startTime: string; bay?: number }>();
+      for (const raw of rawShifts) {
+        const x = (raw ?? {}) as Record<string, unknown>;
+        if (typeof x.id !== "string" || x.id === id || !isTime(x.startTime)) {
+          return NextResponse.json({ error: "Décalage invalide." }, { status: 400 });
+        }
+        const b = Number(x.bay);
+        wanted.set(x.id, { startTime: x.startTime as string, ...(Number.isInteger(b) && b >= 1 && b <= capacity ? { bay: b } : {}) });
+      }
+      const rows = await prisma.appointment.findMany({
+        where: { id: { in: [...wanted.keys()] }, garageId: appt.garageId, date: newDate, status: { in: ["PENDING", "CONFIRMED"] } },
+      });
+      if (rows.length !== wanted.size) {
+        return NextResponse.json({ error: "Un des rendez-vous à décaler a changé entre-temps. Rechargez l'agenda et réessayez. Rien n'a été modifié." }, { status: 409 });
+      }
+      for (const row of rows) {
+        const w = wanted.get(row.id)!;
+        const dur = toMinutes(row.endTime) - toMinutes(row.startTime);
+        if (toMinutes(w.startTime) + dur > 24 * 60 - 1) {
+          return NextResponse.json({ error: `Le rendez-vous de ${row.customerName} dépasserait minuit. Rien n'a été modifié.` }, { status: 400 });
+        }
+        shifted.push({ row, startTime: w.startTime, endTime: toHHMM(toMinutes(w.startTime) + dur), bay: w.bay ?? row.bay, durationMin: dur });
+      }
+      // La journée telle qu'elle sera après les décalages : c'est contre elle que tout se vérifie.
+      for (const other of sameDay) {
+        const sh = shifted.find((x) => x.row.id === other.id);
+        if (sh) { other.startTime = sh.startTime; other.endTime = sh.endTime; other.bay = sh.bay; }
+      }
+    }
+
     if (movesAppt && wouldExceedCapacity(newStartTime, durationMin, sameDay, capacity)) {
       return NextResponse.json({ error: "Toutes les portes du garage sont déjà occupées sur ce créneau." }, { status: 409 });
     }
@@ -135,30 +203,44 @@ export async function PATCH(
       newBay = pickBay(newStartTime, durationMin, sameDay, capacity, { allowed: allowedBays, versatility: bayRules.versatility })
         ?? (clientOnly ? null : pickBay(newStartTime, durationMin, sameDay, capacity, { versatility: bayRules.versatility }));
     }
+
+    // Chaque rendez-vous décalé doit tenir à sa nouvelle place : garage pas plein, porte libre.
+    const mainAfter = { id, startTime: newStartTime, endTime: newEndTime, bay: newBay ?? null };
+    for (const sh of shifted) {
+      const others = [...sameDay.filter((o) => o.id !== sh.row.id), mainAfter];
+      if (wouldExceedCapacity(sh.startTime, sh.durationMin, others, capacity) || (sh.bay !== null && !bayIsFree(sh.bay, sh.startTime, sh.durationMin, others))) {
+        return NextResponse.json({ error: `Impossible de décaler le rendez-vous de ${sh.row.customerName} à ${sh.startTime} : la place est prise. Rien n'a été modifié.` }, { status: 409 });
+      }
+    }
   }
 
   // Un rendez-vous déplacé repart à zéro côté confirmation : sinon une échéance ou un rappel de
   // l'ancienne date pourrait libérer le créneau (ou rester muet) à la nouvelle date.
-  const resetConfirmation = movesAppt && (date || startTime) && appt.status !== "CANCELLED" && appt.status !== "COMPLETED"
-    ? (() => {
-        const newStart = quebecInstant(date ?? appt.date, startTime ?? appt.startTime);
-        const enabled = appt.garage.requireConfirmation ?? true;
-        const plan = appt.source === "MANUAL"
-          ? planManualConfirmation(newStart, new Date(), {
-              enabled,
-              reachable: appt.contactChannel === "SMS" || (appt.contactChannel === "EMAIL" && !!appt.customerEmail),
-            })
-          : planConfirmation(newStart, new Date(), { enabled, hasEmail: !!appt.customerEmail });
-        return {
-          confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier, confirmBy: plan.confirmBy,
-          confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
-          confirmNudgeAt: null, arrivalReminderAt: null, reminderSent: false,
-          confirmedVia: null, confirmRespondedAt: null, noResponseAt: null,
-        };
-      })()
+  const freshConfirmation = (a: { source: string; contactChannel: string | null; customerEmail: string | null }, d: string, t: string) => {
+    const newStart = quebecInstant(d, t);
+    const enabled = appt.garage.requireConfirmation ?? true;
+    const plan = a.source === "MANUAL"
+      ? planManualConfirmation(newStart, new Date(), {
+          enabled,
+          reachable: a.contactChannel === "SMS" || (a.contactChannel === "EMAIL" && !!a.customerEmail),
+        })
+      : planConfirmation(newStart, new Date(), { enabled, hasEmail: !!a.customerEmail });
+    return {
+      confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier, confirmBy: plan.confirmBy,
+      confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
+      confirmNudgeAt: null, arrivalReminderAt: null, reminderSent: false,
+      confirmedVia: null, confirmRespondedAt: null, noResponseAt: null,
+    };
+  };
+  // La date ou l'heure change vraiment (pas seulement renvoyée telle quelle, ni la durée seule).
+  const timeChanged = (!!date && date !== appt.date) || (!!startTime && startTime !== appt.startTime);
+  const resetConfirmation = timeChanged && appt.status !== "CANCELLED" && appt.status !== "COMPLETED"
+    ? freshConfirmation(appt, date ?? appt.date, startTime ?? appt.startTime)
     : {};
 
-  const updated = await prisma.appointment.update({
+  // Ce rendez-vous et ceux qu'il repousse s'enregistrent ensemble : tout passe, ou rien.
+  const [updated, ...shiftedRows] = await prisma.$transaction([
+    prisma.appointment.update({
     where: { id },
     data: {
       ...(status                        ? { status }         : {}),
@@ -168,13 +250,20 @@ export async function PATCH(
       ...(newEndTimeForClient           ? { endTime: newEndTimeForClient } : endTime ? { endTime } : {}),
       ...(completionNote !== undefined  ? { completionNote } : {}),
       ...(newBay !== undefined          ? { bay: newBay }    : {}),
+      ...details,
       ...resetConfirmation,
       ...(phoneConfirmed ? { confirmationStatus: "CONFIRMED", confirmedVia: "PHONE", confirmRespondedAt: appt.confirmRespondedAt ?? new Date() } : {}),
       ...(status === "CANCELLED" && appt.status !== "CANCELLED" ? { cancelledBy: isGarageOwner ? "GARAGE" : "CLIENT", cancelledAt: new Date() } : {}),
       ...(status && status !== "CANCELLED" && appt.status === "CANCELLED" ? { cancelledBy: null, cancelledAt: null } : {}),
     },
     include: { garage: true },
-  });
+    }),
+    ...shifted.map((sh) => prisma.appointment.update({
+      where: { id: sh.row.id },
+      data: { startTime: sh.startTime, endTime: sh.endTime, bay: sh.bay, ...freshConfirmation(sh.row, sh.row.date, sh.startTime) },
+      include: { garage: true },
+    })),
+  ]);
 
   // ── Annulation : l'autre partie doit toujours être prévenue ──────────────────────
   // Garage qui annule -> courriel au client ; client qui annule -> courriel au garage.
@@ -207,55 +296,35 @@ export async function PATCH(
     await Promise.all(jobs);
   }
 
-  // ── Notification "déplacement" quand le garage change la date/heure ──────────
-  const isReschedule = isGarageOwner && !!(date || startTime);
-  if (isReschedule) {
-    const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
-    const garagePhone   = updated.garage.phone ?? "";
-
-    // Récupère l'email du compte client (si RDV lié à un compte)
-    const userRecord = updated.userId
-      ? await prisma.user.findUnique({
-          where:  { id: updated.userId },
-          select: { email: true },
-        })
-      : null;
-
-    // Priorité : email stocké dans le RDV, sinon email du compte Garago
-    const recipientEmail = updated.customerEmail || userRecord?.email || null;
-
-    const reschedulePromises: Promise<void>[] = [];
-
-    if (updated.contactChannel === "SMS") {
-      reschedulePromises.push(
-        sendRescheduleSMS({
-          to: updated.customerPhone, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
-          garagePhone, date: updated.date, startTime: updated.startTime,
-        }).catch(e => console.error("[RESCHEDULE SMS]", e))
-      );
+  // ── Le client n'est prévenu que de ce qui le touche : la date, l'heure ou le service ──
+  // (un nom corrigé, une note, une porte ou une durée allongée ne lui envoient rien).
+  const serviceChanged = isGarageOwner && details.serviceName !== undefined
+    && String(details.serviceName ?? "") !== String(appt.serviceName ?? "");
+  const notifyChange = async (a: typeof updated, what: "time" | "service") => {
+    const garageAddress = [a.garage.address, a.garage.city].filter(Boolean).join(", ");
+    const garagePhone   = a.garage.phone ?? "";
+    // Priorité : courriel du rendez-vous, sinon celui du compte Garago du client.
+    const userRecord = a.userId ? await prisma.user.findUnique({ where: { id: a.userId }, select: { email: true } }) : null;
+    const recipientEmail = a.customerEmail || userRecord?.email || null;
+    const lang = a.language === "en" ? "en" : "fr";
+    if (a.contactChannel === "SMS") {
+      const sms = { to: a.customerPhone, lang, garageName: a.garage.name, garagePhone, date: a.date, startTime: a.startTime } as const;
+      await (what === "time" ? sendRescheduleSMS(sms) : sendServiceChangedSMS({ ...sms, serviceName: a.serviceName }))
+        .catch((e) => console.error("[CHANGE SMS]", e));
     } else if (recipientEmail) {
-      reschedulePromises.push(
-        sendRescheduleNotification({
-          to:           recipientEmail,
-          customerName: updated.customerName,
-          garageName:   updated.garage.name,
-          garagePhone,
-          garageAddress,
-          date:         updated.date,
-          startTime:    updated.startTime,
-          endTime:      updated.endTime,
-          serviceName:  updated.serviceName,
-        }).catch(e => console.error("[RESCHEDULE EMAIL]", e))
-      );
+      await sendRescheduleNotification({
+        to: recipientEmail, customerName: a.customerName, garageName: a.garage.name, garagePhone, garageAddress,
+        date: a.date, startTime: a.startTime, endTime: a.endTime, serviceName: a.serviceName, what,
+      }).catch((e) => console.error("[CHANGE EMAIL]", e));
     }
-
-    await Promise.all(reschedulePromises);
-
     // Déplacé à moins de 48 h : la demande de confirmation part tout de suite.
-    if (updated.confirmTier === "MANUAL" && updated.confirmationStatus === "SCHEDULED") {
-      await processRdvConfirmations(new Date(), updated.id).catch(e => console.error("[RESCHEDULE CONFIRMATION]", e));
+    if (what === "time" && a.confirmTier === "MANUAL" && a.confirmationStatus === "SCHEDULED") {
+      await processRdvConfirmations(new Date(), a.id).catch((e) => console.error("[RESCHEDULE CONFIRMATION]", e));
     }
-  }
+  };
+  if (isGarageOwner && timeChanged) await notifyChange(updated, "time");
+  else if (serviceChanged) await notifyChange(updated, "service");
+  for (const row of shiftedRows) await notifyChange(row, "time");
 
   // ── Notifications "véhicule prêt" quand le garage marque COMPLETED
   if (status === "COMPLETED") {

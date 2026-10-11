@@ -146,6 +146,16 @@ export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: st
   await sendSMS(params.to, msg);
 }
 
+/** Le garage a changé le service du rendez-vous (la date et l'heure ne bougent pas). */
+export async function sendServiceChangedSMS(params: RdvSmsParams & { garagePhone: string; serviceName: string | null }) {
+  const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
+  const service = (params.serviceName ?? "").replace(/\s+/g, " ").trim().slice(0, 40);
+  const msg = params.lang === "en"
+    ? `${smsName(params.garageName)}: your appointment ${when} was updated${service ? ` (service: ${service})` : ""}. Questions: ${params.garagePhone}`
+    : `${smsName(params.garageName)}: votre RDV du ${when} a été modifié${service ? ` (service : ${service})` : ""}. Questions: ${params.garagePhone}`;
+  await sendSMS(params.to, msg);
+}
+
 /** Le garage a annulé le rendez-vous. */
 export async function sendCancelledByGarageSMS(params: RdvSmsParams & { garagePhone: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;

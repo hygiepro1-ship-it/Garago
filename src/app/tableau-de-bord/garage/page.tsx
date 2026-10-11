@@ -738,6 +738,8 @@ export default function DashboardGaragePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("apercu");
+  // Ouvre un rendez-vous en modification dans l'agenda (bouton « Modifier » de la liste).
+  const agendaEdit = useRef<((id: string) => void) | null>(null);
   const [garage, setGarage] = useState<Garage | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -2012,13 +2014,9 @@ export default function DashboardGaragePage() {
                             </button>
                           )}
                           {(a.status === "PENDING" || a.status === "CONFIRMED") && (
-                            <button onClick={() => {
-                              setRescheduleAppt(a);
-                              setRescheduleDate(a.date);
-                              fetchGarageSlots(a.date, a.id);
-                            }}
+                            <button onClick={() => agendaEdit.current?.(a.id)}
                               className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                              {tr("Déplacer")}
+                              {tr("Modifier")}
                             </button>
                           )}
                           {(a.status === "PENDING" || a.status === "CONFIRMED") && (
@@ -2048,6 +2046,7 @@ export default function DashboardGaragePage() {
             lang={lang}
             onReload={loadCalendarData}
             updatedAt={rdvUpdatedAt}
+            editRef={agendaEdit}
           />
 
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}

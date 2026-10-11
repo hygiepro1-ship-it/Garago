@@ -10,7 +10,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import AgendaWeekView, { type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
-import AgendaDayView from "@/components/AgendaDayView";
+import AgendaDayView, { assignPosts } from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
 import { findNextFreeStart } from "@/lib/availability";
 import type { CustomerMatch } from "@/lib/customers";
@@ -156,7 +156,7 @@ const EMPTY_FORM = {
 };
 
 export default function GarageAgenda({
-  appointments, services, availability, capacity, blocked, lang, onReload, updatedAt,
+  appointments, services, availability, capacity, blocked, lang, onReload, updatedAt, editRef,
 }: {
   appointments: AgendaAppointment[];
   services: AgendaService[];
@@ -168,6 +168,8 @@ export default function GarageAgenda({
   onReload: () => Promise<void> | void;
   /** Heure du dernier chargement réussi (le tableau de bord se recharge tout seul). */
   updatedAt?: Date | null;
+  /** Reçoit la fonction qui ouvre un rendez-vous en modification (bouton « Modifier » d'une liste hors de l'agenda). */
+  editRef?: React.RefObject<((id: string) => void) | null>;
 }) {
   const tr = useTr();
   const today = toDateStr(new Date());
@@ -242,13 +244,30 @@ export default function GarageAgenda({
   const showMatches = nameFocused && nameQuery.length >= 2 && matches.length > 0;
 
   const [openId, setOpenId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"view" | "move" | "complete" | "cancel">("view");
-  const [move, setMove] = useState({ date: "", startTime: "", durationMin: 60, bay: "" });
+  const [mode, setMode] = useState<"view" | "edit" | "complete" | "cancel">("view");
+  // Modification complète d'un rendez-vous : client, plage, porte, service, véhicule, notes.
+  const [edit, setEdit] = useState({
+    customerName: "", customerPhone: "", customerEmail: "", serviceName: "",
+    vehicleYear: "", vehicleMake: "", vehicleModel: "",
+    date: "", startTime: "", durationMin: 60, bay: "", notes: "",
+  });
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
 
   const open = openId ? appointments.find((a) => a.id === openId) ?? null : null;
+  // Le tableau de bord garde cette fonction pour ouvrir un rendez-vous en modification depuis sa liste.
+  useEffect(() => {
+    if (!editRef) return;
+    editRef.current = (id: string) => {
+      const a = appointments.find((x) => x.id === id);
+      if (!a) return;
+      setWeekStart(mondayOf(a.date));
+      setDayRef(a.date);
+      setOpenId(a.id);
+      startEdit(a);
+    };
+  });
   const weekAppts = appointments.filter((a) => a.date >= days[0] && a.date <= days[6]);
   const toCall = appointments
     .filter((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && a.date >= today)
@@ -338,6 +357,119 @@ export default function GarageAgenda({
       setFormError(tr("Erreur réseau. Réessayez."));
     } finally {
       setSaving(false);
+    }
+  }
+
+  function startEdit(a: AgendaAppointment) {
+    setActionError("");
+    setEdit({
+      customerName: a.customerName, customerPhone: formatPhone(a.customerPhone), customerEmail: a.customerEmail ?? "",
+      serviceName: a.serviceName ?? "",
+      vehicleYear: a.vehicleYear ? String(a.vehicleYear) : "", vehicleMake: a.vehicleMake ?? "", vehicleModel: a.vehicleModel ?? "",
+      date: a.date, startTime: a.startTime, durationMin: Math.max(10, toMin(a.endTime) - toMin(a.startTime)),
+      bay: a.bay ? String(a.bay) : "", notes: a.notes ?? "",
+    });
+    setMode("edit");
+  }
+
+  /** Heure de fermeture (en minutes) ce jour-là, ou null si le garage est fermé ou la date vide. */
+  function closingOf(date: string): number | null {
+    if (!date) return null;
+    const h = availability.find((x) => x.dayOfWeek === new Date(date + "T12:00:00").getDay());
+    return h && !h.isClosed ? toMin(h.closeTime) : null;
+  }
+
+  /**
+   * Porte de chaque rendez-vous d'une journée, telle que la vue Jour la montre : la porte
+   * enregistrée, sinon la première porte libre (anciens rendez-vous, pris avant les portes).
+   */
+  function lanesOf(date: string) {
+    const lanes = new Map<string, number>();
+    const day = appointments
+      .filter((a) => a.date === date && a.status !== "CANCELLED" && a.status !== "NO_SHOW")
+      .map((a) => ({ ...a, serviceName: a.serviceName ?? undefined }));
+    assignPosts(day, capacity).forEach((list, i) => { if (i < capacity) for (const a of list) lanes.set(a.id, i + 1); });
+    return lanes;
+  }
+
+  /**
+   * Rendez-vous suivants, à la même porte, que la nouvelle plage repousse. Chacun glisse
+   * juste assez pour commencer à la fin du précédent, en gardant sa durée.
+   */
+  function shiftsFor(appt: AgendaAppointment, date: string, startTime: string, durationMin: number, bay: string) {
+    if (!date || !startTime) return [];
+    const lanes = lanesOf(date);
+    const lane = bay ? Number(bay) : date === appt.date ? lanes.get(appt.id) ?? null : null;
+    if (!lane) return [];
+    const start = toMin(startTime);
+    let cursor = start + durationMin;
+    const out: { appt: AgendaAppointment; start: string; end: string; lane: number; pastMidnight: boolean }[] = [];
+    const followers = appointments
+      .filter((a) => a.id !== appt.id && a.date === date && (a.status === "CONFIRMED" || a.status === "PENDING")
+        && lanes.get(a.id) === lane && toMin(a.startTime) >= start)
+      .sort((x, y) => x.startTime.localeCompare(y.startTime));
+    for (const a of followers) {
+      const s0 = toMin(a.startTime), e0 = toMin(a.endTime);
+      if (s0 < cursor) {
+        const e1 = cursor + (e0 - s0);
+        out.push({ appt: a, start: toHHMM(cursor), end: toHHMM(Math.min(e1, 24 * 60 - 1)), lane, pastMidnight: e1 > 24 * 60 - 1 });
+        cursor = e1;
+      } else cursor = Math.max(cursor, e0);
+    }
+    return out;
+  }
+
+  async function submitEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!open) return;
+    const send = (id: string, body: Record<string, unknown>) =>
+      fetch(`/api/appointments/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const shifts = shiftsFor(open, edit.date, edit.startTime, edit.durationMin, edit.bay);
+    if (toMin(edit.startTime) + edit.durationMin > 24 * 60 - 1 || shifts.some((x) => x.pastMidnight)) {
+      setActionError(en ? "This would run past midnight: shorten the duration." : "Cela dépasserait minuit : réduisez la durée.");
+      return;
+    }
+    setBusy(true);
+    setActionError("");
+    try {
+      // Seuls les champs changés partent : un rendez-vous dont l'heure ne bouge pas ne déclenche aucun message au client.
+      const body: Record<string, unknown> = {};
+      const end = toHHMM(toMin(edit.startTime) + edit.durationMin);
+      const moved = edit.date !== open.date || edit.startTime !== open.startTime;
+      if (moved) { body.date = edit.date; body.startTime = edit.startTime; }
+      if (moved || end !== open.endTime) body.endTime = end;
+      const bay = edit.bay ? Number(edit.bay) : null;
+      if (capacity > 1 && bay !== (open.bay ?? null)) body.bay = bay;
+      // Les rendez-vous repoussés partent avec celui-ci : le serveur enregistre tout d'un coup, ou rien.
+      if (shifts.length > 0) {
+        body.shifts = shifts.map((x) => ({ id: x.appt.id, startTime: x.start, bay: x.lane }));
+        if (capacity > 1 && body.bay === undefined && !open.bay) body.bay = shifts[0].lane;
+      }
+      const changed = (next: string, prev: string | null | undefined) => next.trim() !== (prev ?? "").trim();
+      if (changed(edit.customerName, open.customerName)) body.customerName = edit.customerName.trim();
+      if (changed(edit.customerPhone, formatPhone(open.customerPhone))) body.customerPhone = edit.customerPhone.trim();
+      if (changed(edit.customerEmail, open.customerEmail)) body.customerEmail = edit.customerEmail.trim();
+      if (changed(edit.serviceName, open.serviceName)) body.serviceName = edit.serviceName.trim();
+      if (changed(edit.vehicleYear, open.vehicleYear ? String(open.vehicleYear) : "")) body.vehicleYear = edit.vehicleYear.trim();
+      if (changed(edit.vehicleMake, open.vehicleMake)) body.vehicleMake = edit.vehicleMake.trim();
+      if (changed(edit.vehicleModel, open.vehicleModel)) body.vehicleModel = edit.vehicleModel.trim();
+      if (changed(edit.notes, open.notes)) body.notes = edit.notes.trim() || null;
+      if (Object.keys(body).length > 0) {
+        const res = await send(open.id, body);
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          setActionError(d.error ?? tr("Action impossible. Réessayez."));
+          await onReload();
+          return;
+        }
+      }
+      await onReload();
+      if (moved) { setWeekStart(mondayOf(edit.date)); setDayRef(edit.date); }
+      setMode("view");
+    } catch {
+      setActionError(tr("Erreur réseau. Réessayez."));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -672,8 +804,7 @@ export default function GarageAgenda({
                 {(open.status === "PENDING" || open.status === "CONFIRMED") && (
                   <>
                     <button type="button" className={actionBtn} style={{ background: "#16a34a" }} onClick={() => { setNote(""); setMode("complete"); }}>{tr("Terminer")}</button>
-                    <button type="button" className={actionBtn} style={{ background: "#7c3aed" }}
-                      onClick={() => { setMove({ date: open.date, startTime: open.startTime, durationMin: Math.max(10, toMin(open.endTime) - toMin(open.startTime)), bay: open.bay ? String(open.bay) : "" }); setMode("move"); }}>{tr("Déplacer")}</button>
+                    <button type="button" className={actionBtn} style={{ background: "#7c3aed" }} onClick={() => startEdit(open)}>{tr("Modifier")}</button>
                     {new Date(`${open.date}T${open.startTime}:00`).getTime() + 15 * 60 * 1000 <= new Date().getTime() && (
                       <button type="button" disabled={busy} className={actionBtn} style={{ background: "#b91c1c" }} onClick={() => patch(open.id, { status: "NO_SHOW" })}>{tr("Client absent")}</button>
                     )}
@@ -686,43 +817,90 @@ export default function GarageAgenda({
               </div>
             )}
 
-            {mode === "move" && (
-              <form className="grid grid-cols-2 gap-2 pt-1" onSubmit={(e) => {
-                e.preventDefault();
-                const taken = takenBays(move.date, move.startTime, move.durationMin, open.id);
-                patch(open.id, {
-                  date: move.date, startTime: move.startTime, endTime: toHHMM(Math.min(toMin(move.startTime) + move.durationMin, 24 * 60 - 1)),
-                  ...(capacity > 1 ? { bay: move.bay && !taken.has(Number(move.bay)) ? Number(move.bay) : null } : {}),
-                });
-              }}>
-                <div>
-                  <label className={label} htmlFor="mv-date">{tr("Nouvelle date")}</label>
-                  <input id="mv-date" required type="date" className={input} value={move.date} onChange={(e) => setMove({ ...move, date: e.target.value })} />
-                </div>
-                <div>
-                  <label className={label} htmlFor="mv-time">{tr("Heure")}</label>
-                  <input id="mv-time" required type="time" step={600} className={input} value={move.startTime} onChange={(e) => setMove({ ...move, startTime: e.target.value })} />
-                </div>
-                <div className="col-span-2">
-                  <label className={label} htmlFor="mv-dur-h">{tr("Durée")}</label>
-                  <DurationPicker idPrefix="mv-dur" value={move.durationMin} onChange={(v) => setMove({ ...move, durationMin: v })} />
-                </div>
-                {capacity > 1 && (() => {
-                  const taken = takenBays(move.date, move.startTime, move.durationMin, open.id);
-                  return (
+            {mode === "edit" && (() => {
+              const shifts = shiftsFor(open, edit.date, edit.startTime, edit.durationMin, edit.bay);
+              const close = closingOf(edit.date);
+              const endMin = toMin(edit.startTime || "00:00") + edit.durationMin;
+              const late = close === null ? [] : [
+                ...(endMin > close ? [en ? `This appointment will end at ${toHHMM(Math.min(endMin, 24 * 60 - 1))}.` : `Ce rendez-vous finira à ${toHHMM(Math.min(endMin, 24 * 60 - 1))}.`] : []),
+                ...shifts.filter((x) => toMin(x.end) > close).map((x) => (en ? `${x.appt.customerName} will end at ${x.end}.` : `${x.appt.customerName} finira à ${x.end}.`)),
+              ];
+              const taken = takenBays(edit.date, edit.startTime, edit.durationMin, open.id);
+              for (const x of shifts) if (x.appt.bay) taken.delete(x.appt.bay); // ceux-là vont glisser : leur porte se libère
+              return (
+                <form className="grid grid-cols-2 gap-2 pt-1" onSubmit={submitEdit}>
+                  <div className="col-span-2">
+                    <label className={label} htmlFor="ed-name">{tr("Nom du client")}</label>
+                    <input id="ed-name" required minLength={2} maxLength={80} className={input} value={edit.customerName} onChange={(e) => setEdit({ ...edit, customerName: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="ed-phone">{tr("Téléphone")}</label>
+                    <input id="ed-phone" required type="tel" inputMode="tel" autoComplete="off" className={input} value={edit.customerPhone}
+                      onChange={(e) => setEdit({ ...edit, customerPhone: formatPhone(e.target.value) })} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="ed-email">{tr("Courriel")}</label>
+                    <input id="ed-email" type="email" autoComplete="off" className={input} value={edit.customerEmail} onChange={(e) => setEdit({ ...edit, customerEmail: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="ed-date">Date</label>
+                    <input id="ed-date" required type="date" className={input} value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={label} htmlFor="ed-time">{tr("Heure")}</label>
+                    <input id="ed-time" required type="time" step={600} className={input} value={edit.startTime} onChange={(e) => setEdit({ ...edit, startTime: e.target.value })} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className={label} htmlFor="ed-dur-h">{tr("Durée prévue")} <span className="font-normal text-gray-400">· {en ? "ends at" : "fin à"} {toHHMM(Math.min(endMin, 24 * 60 - 1))}</span></label>
+                    <DurationPicker idPrefix="ed-dur" value={edit.durationMin} onChange={(v) => setEdit({ ...edit, durationMin: v })} />
+                  </div>
+                  {capacity > 1 && (
                     <div className="col-span-2">
-                      <label className={label} htmlFor="mv-bay">{en ? "Bay" : "Porte"}</label>
-                      <BaySelect id="mv-bay" value={taken.has(Number(move.bay)) ? "" : move.bay} capacity={capacity} taken={taken} en={en}
-                        autoLabel={tr("Automatique (la porte qui convient le mieux)")} onChange={(v) => setMove({ ...move, bay: v })} />
+                      <label className={label} htmlFor="ed-bay">{en ? "Bay" : "Porte"}</label>
+                      <BaySelect id="ed-bay" value={taken.has(Number(edit.bay)) ? "" : edit.bay} capacity={capacity} taken={taken} en={en}
+                        autoLabel={tr("Automatique (la porte qui convient le mieux)")} onChange={(v) => setEdit({ ...edit, bay: v })} />
                     </div>
-                  );
-                })()}
-                <div className="col-span-2 flex gap-2 justify-end">
-                  <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
-                  <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#f97316" }}>{busy ? "…" : tr("Déplacer")}</button>
-                </div>
-              </form>
-            )}
+                  )}
+                  <div className="col-span-2">
+                    <label className={label} htmlFor="ed-service">Service</label>
+                    <input id="ed-service" maxLength={120} className={input} value={edit.serviceName} onChange={(e) => setEdit({ ...edit, serviceName: e.target.value })} />
+                  </div>
+                  <div className="col-span-2">
+                    <span className={label}>{tr("Véhicule (facultatif)")}</span>
+                    <div className="grid grid-cols-3 gap-1">
+                      <input aria-label={tr("Année")} inputMode="numeric" placeholder={tr("Année")} className={input} value={edit.vehicleYear} onChange={(e) => setEdit({ ...edit, vehicleYear: e.target.value.replace(/\D/g, "").slice(0, 4) })} />
+                      <input aria-label={tr("Marque")} placeholder={tr("Marque")} className={input} value={edit.vehicleMake} onChange={(e) => setEdit({ ...edit, vehicleMake: e.target.value })} />
+                      <input aria-label={tr("Modèle")} placeholder={tr("Modèle")} className={input} value={edit.vehicleModel} onChange={(e) => setEdit({ ...edit, vehicleModel: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className={label} htmlFor="ed-notes">{tr("Notes (visibles seulement par vous)")}</label>
+                    <textarea id="ed-notes" rows={2} maxLength={1000} className={input} value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} />
+                  </div>
+
+                  {shifts.length > 0 && (
+                    <div className="col-span-2 text-xs rounded-lg px-3 py-2" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e3a8a" }}>
+                      <p className="font-bold">{en ? "These appointments will be moved later, and their customers notified:" : "Ces rendez-vous seront décalés, et leurs clients avertis :"}</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {shifts.map((x) => <li key={x.appt.id}>{x.appt.customerName} : {x.appt.startTime} → <b>{x.start}</b></li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {late.length > 0 && close !== null && (
+                    <div className="col-span-2 text-xs rounded-lg px-3 py-2" role="alert" style={{ background: "#fffbeb", border: "1px solid #fcd34d", color: "#92400e" }}>
+                      <p className="font-bold">{en ? `After closing time (${toHHMM(close)}):` : `Après l'heure de fermeture (${toHHMM(close)}) :`}</p>
+                      <ul className="mt-1 space-y-0.5">{late.map((m) => <li key={m}>{m}</li>)}</ul>
+                      <p className="mt-1">{en ? "You can still save." : "Vous pouvez quand même enregistrer."}</p>
+                    </div>
+                  )}
+
+                  <div className="col-span-2 flex gap-2 justify-end">
+                    <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
+                    <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#f97316" }}>{busy ? "…" : tr("Enregistrer")}</button>
+                  </div>
+                </form>
+              );
+            })()}
 
             {mode === "complete" && (
               <form className="space-y-2 pt-1" onSubmit={(e) => { e.preventDefault(); patch(open.id, { status: "COMPLETED", completionNote: note || null }); }}>
