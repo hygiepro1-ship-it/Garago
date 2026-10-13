@@ -273,3 +273,10 @@ div.rounded-full:not([class*="w-"]):not([class*="h-"]) { border-radius: 3px; }
 a.rounded-full:not([class*="w-"]):not([class*="h-"]),
 button.rounded-full:not([class*="w-"]):not([class*="h-"]) { border-radius: 5px; }
 
+
+/* Indicateur de focus clavier visible partout (boutons, liens, cases) — les champs de texte gardent le leur. */
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible,
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible, select:focus-visible {
+  outline: 2px solid #e0600c;
+  outline-offset: 2px;
+}

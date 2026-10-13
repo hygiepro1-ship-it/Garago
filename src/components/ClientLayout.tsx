@@ -25,8 +25,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
+      {/* Lien d'évitement : visible seulement au clavier, mène directement au contenu (WCAG 2.4.1). */}
+      <a href="#contenu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-bold focus:text-white"
+        style={{ background: "#0b1f3a" }}>
+        Aller au contenu principal
+      </a>
       {!isAuth && <Header />}
-      <main className="flex-1">{children}</main>
+      <main id="contenu" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
       {!isAuth && <Footer />}
     </>
   );
