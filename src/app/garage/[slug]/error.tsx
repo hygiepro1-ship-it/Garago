@@ -31,7 +31,7 @@ export default function GarageProfileError({
         <button
           onClick={reset}
           className="text-white px-5 py-2 rounded-xl font-semibold text-sm"
-          style={{ background: "#f97316" }}
+          style={{ background: "#c45305" }}
         >
           Réessayer
         </button>

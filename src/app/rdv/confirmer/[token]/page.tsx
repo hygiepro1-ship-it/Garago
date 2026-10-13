@@ -114,7 +114,7 @@ export default function ConfirmerRdvPage() {
     </a>
   );
 
-  const btnPrimary: React.CSSProperties = { background: "#f97316", color: "#fff", width: "100%", padding: "14px 20px", borderRadius: 5, fontWeight: 800, fontSize: 15 };
+  const btnPrimary: React.CSSProperties = { background: "#c45305", color: "#fff", width: "100%", padding: "14px 20px", borderRadius: 5, fontWeight: 800, fontSize: 15 };
   const btnGhost: React.CSSProperties = { background: "transparent", color: "#475569", width: "100%", padding: "13px 20px", borderRadius: 5, fontWeight: 700, fontSize: 14, border: "1.5px solid #cbd5e1", marginTop: 10 };
 
   return (

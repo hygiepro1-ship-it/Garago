@@ -343,7 +343,7 @@ export default function GarageProfilePage() {
             {/* Phone (mobile-first CTA) */}
             <a href={`tel:${garage.phone}`}
               className="ml-auto flex items-center gap-2 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors text-sm flex-shrink-0"
-              style={{ background: "#f97316" }}>
+              style={{ background: "#c45305" }}>
               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 19.79 19.79 0 01.99 1.18 2 2 0 013 .01h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
               </svg>
@@ -448,7 +448,7 @@ export default function GarageProfilePage() {
               {session && !isOwner && (
                 <button onClick={() => setShowReviewForm(!showReviewForm)}
                   className="text-sm text-white px-4 py-2 rounded-xl font-semibold transition-colors flex-shrink-0"
-                  style={{ background: "#f97316" }}>
+                  style={{ background: "#c45305" }}>
                   {g.leaveReview}
                 </button>
               )}
@@ -491,7 +491,7 @@ export default function GarageProfilePage() {
                 <div className="flex gap-2 pt-1">
                   <button type="submit" disabled={submitting}
                     className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
-                    style={{ background: "#f97316" }}>
+                    style={{ background: "#c45305" }}>
                     {submitting ? g.submitting : g.submitReview}
                   </button>
                   <button type="button" onClick={() => setShowReviewForm(false)}
@@ -528,7 +528,7 @@ export default function GarageProfilePage() {
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 text-center">
                 <h3 className="font-bold text-gray-900 text-sm mb-1">Rendez-vous par téléphone</h3>
                 <p className="text-sm text-gray-500 mb-4">Ce garage prend ses rendez-vous par téléphone.</p>
-                <a href={`tel:${garage.phone}`} className="block w-full py-3 rounded-xl font-bold text-white" style={{ background: "#f97316" }}>
+                <a href={`tel:${garage.phone}`} className="block w-full py-3 rounded-xl font-bold text-white" style={{ background: "#c45305" }}>
                   {garage.phone}
                 </a>
               </div>

@@ -224,7 +224,7 @@ export default function GarageCustomers({
 
             <div className="col-span-2 flex items-center justify-between gap-3 pt-1">
               <p className="text-[11px] text-gray-500">{tr("Ses rendez-vous à venir prendront ces coordonnées.")}</p>
-              <button type="submit" disabled={saving} className="flex-shrink-0 text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#f97316" }}>
+              <button type="submit" disabled={saving} className="flex-shrink-0 text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#c45305" }}>
                 {saving ? "…" : tr("Enregistrer")}
               </button>
             </div>

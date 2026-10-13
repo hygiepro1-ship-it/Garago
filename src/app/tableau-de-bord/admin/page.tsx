@@ -739,7 +739,7 @@ export default function AdminDashboard() {
                     <div key={c.city} className="flex items-center gap-3 text-sm">
                       <span className="w-28 truncate text-gray-600">{c.city}</span>
                       <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                        <div className="h-2 rounded-full" style={{ width: `${(c.count / stats.garages.byCity[0].count) * 100}%`, background: "#f97316" }} />
+                        <div className="h-2 rounded-full" style={{ width: `${(c.count / stats.garages.byCity[0].count) * 100}%`, background: "#c45305" }} />
                       </div>
                       <span className="w-6 text-right font-bold text-gray-900">{c.count}</span>
                     </div>

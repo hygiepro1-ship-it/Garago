@@ -377,7 +377,7 @@ function DescriptionSection({
               disabled={submitting || remaining <= 0}
               onClick={handleSubmit}
               className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
-              style={{ background: "#f97316" }}>
+              style={{ background: "#c45305" }}>
               {submitting ? tr("Envoi en cours…") : tr("Faire vérifier")}
             </button>
           </div>
@@ -616,7 +616,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
           </span>
           {garage.referralCode && (
             <button type="button" onClick={onCopyCode}
-              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+              className="bg-[#c45305] hover:bg-[#a84504] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
               {tr("Copier le code")}
             </button>
           )}
@@ -651,7 +651,7 @@ function AmbassadeurTab({ tier, count, garage, stats, onCopyCode }: {
                   ? { background: "rgba(31,46,103,0.05)", border: "1px dashed rgba(31,46,103,0.2)" }
                   : { background: "#f8fafc", border: "1px solid #f1f5f9" }}>
                 <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 text-sm font-black"
-                  style={done ? { background: "#f97316", color: "#fff" } : { background: "#e2e8f0", color: "#94a3b8" }}>
+                  style={done ? { background: "#c45305", color: "#fff" } : { background: "#e2e8f0", color: "#94a3b8" }}>
                   {done ? "✓" : palierNum}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1316,7 +1316,7 @@ export default function DashboardGaragePage() {
         </p>
         <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
           className="text-white px-6 py-3 rounded-xl font-bold text-sm disabled:opacity-60"
-          style={{ background: "#f97316" }}>
+          style={{ background: "#c45305" }}>
           {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
         </button>
         <p className="mt-6 text-xs text-gray-400">
@@ -1720,7 +1720,7 @@ export default function DashboardGaragePage() {
           <div className="flex flex-col items-end gap-1">
             <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
               className={`text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60 ${isTrialExpiring ? "bg-red-600 hover:bg-red-700" : ""}`}
-              style={isTrialExpiring ? undefined : { background: "#f97316" }}>
+              style={isTrialExpiring ? undefined : { background: "#c45305" }}>
               {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
             </button>
           </div>
@@ -1817,7 +1817,7 @@ export default function DashboardGaragePage() {
           <div className="flex flex-col items-end gap-1">
             <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
               className="text-white px-5 py-2 rounded-xl font-bold text-sm whitespace-nowrap disabled:opacity-60"
-              style={{ background: "#f97316" }}>
+              style={{ background: "#c45305" }}>
               {checkoutLoading ? tr("Chargement…") : tr("Activer mon abonnement annuel maintenant (−20 %)")}
             </button>
             <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
@@ -1857,7 +1857,7 @@ export default function DashboardGaragePage() {
             <button key={tab.id} onClick={() => { if (!locked) setActiveTab(tab.id); }} disabled={locked}
               title={locked ? "Enregistrez d'abord vos horaires" : undefined}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"} ${locked ? "opacity-40 cursor-not-allowed" : ""}`}
-              style={activeTab === tab.id ? { background: "#f97316" } : {}}>
+              style={activeTab === tab.id ? { background: "#c45305" } : {}}>
               {tabIcons[tab.id]}{tr(tab.label)}
             </button>
           );
@@ -2101,7 +2101,7 @@ export default function DashboardGaragePage() {
                     className={`h-16 flex flex-col items-start p-1.5 text-left transition-colors border-b border-gray-100 ${colIndex < 6 ? "border-r" : ""} ${isSelected ? "bg-orange-50" : "hover:bg-gray-50"}`}
                   >
                     <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-white" : "text-gray-700"}`}
-                      style={isToday && !isSelected ? { background: "#f97316" } : isSelected ? { background: "#f97316", outline: "2px solid #ea580c", outlineOffset: "1px" } : {}}>
+                      style={isToday && !isSelected ? { background: "#c45305" } : isSelected ? { background: "#c45305", outline: "2px solid #ea580c", outlineOffset: "1px" } : {}}>
                       {day}
                     </span>
                     <div className="flex flex-wrap gap-0.5">
@@ -2225,7 +2225,7 @@ export default function DashboardGaragePage() {
                     </div>
                     {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
                     <div className="flex gap-2 pt-1">
-                      <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+                      <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>
                         {savingRdv ? tr("Ajout…") : tr("Ajouter")}
                       </button>
                       <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
@@ -2364,7 +2364,7 @@ export default function DashboardGaragePage() {
                 {garage.referralCode && (
                   <button type="button"
                     onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess(tr("Code copié ✓")); setTimeout(() => setSuccess(""), 3000); }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                    className="bg-[#c45305] hover:bg-[#a84504] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
                     {tr("Copier")}
                   </button>
                 )}
@@ -2380,7 +2380,7 @@ export default function DashboardGaragePage() {
                   : <>Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).</>}
               </p>
               <button type="button" onClick={() => setActiveTab("abonnement")}
-                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
+                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#c45305" }}>
                 Voir l&apos;abonnement
               </button>
             </div>
@@ -2504,7 +2504,7 @@ export default function DashboardGaragePage() {
                         <div className="flex gap-2">
                           <button onClick={() => saveReply(r.id)} disabled={savingReply}
                             className="text-white text-xs px-4 py-1.5 rounded-lg font-semibold disabled:opacity-50"
-                            style={{ background: "#f97316" }}>
+                            style={{ background: "#c45305" }}>
                             {savingReply ? tr("Envoi…") : tr("Publier la réponse")}
                           </button>
                           {r.ownerReply && (
@@ -2538,7 +2538,7 @@ export default function DashboardGaragePage() {
                 {tr("Cochez les services que vous offrez et indiquez, pour chacun, le prix « à partir de » : c'est le prix minimum que le client verra")}
               </p>
             </div>
-            <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+            <button onClick={saveServices} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>
               {saving ? d.saving : t.common.save}
             </button>
           </div>
@@ -2676,7 +2676,7 @@ export default function DashboardGaragePage() {
               <p className="text-gray-500 text-sm mt-0.5">{tr("Cliquez ✓ pour accepter, pour refuser.")}</p>
             </div>
             <button onClick={saveBrands} disabled={saving}
-              className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex-shrink-0" style={{ background: "#f97316" }}>
+              className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 flex-shrink-0" style={{ background: "#c45305" }}>
               {saving ? d.saving : t.common.save}
             </button>
           </div>
@@ -2769,7 +2769,7 @@ export default function DashboardGaragePage() {
               </div>
             </div>
             <div className="px-6 py-4" style={{ borderTop: "1px solid #f1f5f9" }}>
-              <button onClick={() => setExpandedBrand(null)} className="w-full text-white py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#f97316" }}>
+              <button onClick={() => setExpandedBrand(null)} className="w-full text-white py-2.5 rounded-xl text-sm font-semibold" style={{ background: "#c45305" }}>
                 {tr("Terminé")}
               </button>
             </div>
@@ -2785,7 +2785,7 @@ export default function DashboardGaragePage() {
               <h2 className="font-bold text-gray-900 text-lg">{d.hours}</h2>
               <p className="text-gray-500 text-sm">{tr("Configurez vos heures d'ouverture pour chaque jour")}</p>
             </div>
-            <button onClick={saveHoraires} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+            <button onClick={saveHoraires} disabled={saving} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>
               {saving ? d.saving : t.common.save}
             </button>
           </div>
@@ -2899,7 +2899,7 @@ export default function DashboardGaragePage() {
               )}
               <div className="flex gap-2 pt-1">
                 <button type="submit" disabled={savingRdv}
-                  className="flex-1 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+                  className="flex-1 text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>
                   {savingRdv ? tr("Ajout…") : tr("Ajouter le rendez-vous")}
                 </button>
                 <button type="button" onClick={() => setShowAddRdv(false)}
@@ -2967,7 +2967,7 @@ export default function DashboardGaragePage() {
                           onClick={() => setRescheduleSlot(slot === rescheduleSlot ? "" : slot)}
                           className="py-2 rounded-xl text-sm font-semibold border-2 transition-all"
                           style={slot === rescheduleSlot
-                            ? { background: "#f97316", borderColor: "#f97316", color: "#fff" }
+                            ? { background: "#c45305", borderColor: "#f97316", color: "#fff" }
                             : { background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
                           {slot}
                         </button>
@@ -2988,7 +2988,7 @@ export default function DashboardGaragePage() {
                 disabled={!rescheduleSlot || !rescheduleDate || rescheduleLoading}
                 onClick={submitReschedule}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-colors"
-                style={{ background: "#f97316" }}>
+                style={{ background: "#c45305" }}>
                 {rescheduleLoading ? tr("Déplacement…") : tr("Confirmer le déplacement")}
               </button>
             </div>
@@ -3351,7 +3351,7 @@ export default function DashboardGaragePage() {
                 <p className="text-xs text-gray-400 mt-1 ml-6">{tr("Si désactivé, votre courriel reste visible uniquement pour vous.")}</p>
               </div>
 
-              <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#f97316" }}>
+              <button type="submit" disabled={saving} className="text-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>
                 {saving ? d.saving : d.save}
               </button>
             </form>
@@ -3461,7 +3461,7 @@ export default function DashboardGaragePage() {
                     {tr("Annuler")}
                   </button>
                   <button type="submit" disabled={branchSaving}
-                    className="flex-1 text-white rounded-xl py-2.5 text-sm font-black disabled:opacity-50" style={{ background: "#f97316" }}>
+                    className="flex-1 text-white rounded-xl py-2.5 text-sm font-black disabled:opacity-50" style={{ background: "#c45305" }}>
                     {branchSaving ? tr("Ajout…") : tr("Ajouter la succursale")}
                   </button>
                 </div>
@@ -3479,7 +3479,7 @@ export default function DashboardGaragePage() {
               </p>
               <button
                 onClick={() => { const p = myGarages.find(g => g.parentId === null); if (p) switchGarage(p.id); }}
-                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#f97316" }}>
+                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#c45305" }}>
                 {tr("Aller au garage principal")}
               </button>
             </div>
@@ -3511,7 +3511,7 @@ export default function DashboardGaragePage() {
                 {!garage.stripePriceId && (
                   <div className="mb-4">
                     <button onClick={() => addTrialCard("monthly")} disabled={addCardLoading}
-                      className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                      className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#c45305" }}>
                       {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
                     </button>
                   </div>
@@ -3563,7 +3563,7 @@ export default function DashboardGaragePage() {
                     : tr("Mettez votre moyen de paiement à jour pour rester visible dans la recherche.")}
                 </p>
                 <button onClick={openBillingPortal} disabled={portalLoading}
-                  className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                  className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#c45305" }}>
                   {portalLoading ? tr("Ouverture…") : tr("Mettre à jour ma carte")}
                 </button>
               </>
@@ -3581,7 +3581,7 @@ export default function DashboardGaragePage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
-                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#f97316" }}>
+                    className="text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-60" style={{ background: "#c45305" }}>
                     {checkoutLoading ? tr("Chargement…") : "Activer : 88,00 $/mois (annuel, −20 %)"}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
@@ -3667,7 +3667,7 @@ export default function DashboardGaragePage() {
                   {cancelError && <p className="text-xs text-red-600 mb-3">{cancelError}</p>}
                   <button onClick={() => cancelSubscription(true)} disabled={cancelLoading}
                     className="text-sm font-bold text-white rounded-xl px-4 py-2 disabled:opacity-50"
-                    style={{ background: "#f97316" }}>
+                    style={{ background: "#c45305" }}>
                     {cancelLoading ? tr("Chargement…") : tr("Réactiver le renouvellement")}
                   </button>
                 </>

@@ -190,7 +190,7 @@ export default function PrestationsPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/rechercher"
               className="px-8 py-3.5 rounded-xl text-base font-black text-white transition-all hover:opacity-90"
-              style={{ background: "#f97316" }}>
+              style={{ background: "#c45305" }}>
               {tx.near}
             </Link>
             <Link href="/inscription/garage"
