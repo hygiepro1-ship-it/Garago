@@ -1376,9 +1376,35 @@ export default function DashboardGaragePage() {
           style={{ background: "#e0600c" }}>
           {addCardLoading ? tr("Redirection…") : tr("Ajouter ma carte")}
         </button>
-        <p className="mt-6 text-xs text-gray-400">
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="underline hover:no-underline">{tr("Se déconnecter")}</button>
+        <p className="mt-6 text-sm text-gray-500 flex flex-wrap items-center justify-center gap-x-5">
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="underline hover:no-underline min-h-[44px]">{tr("Se déconnecter")}</button>
+          {!showDeleteConfirm && (
+            <button onClick={() => setShowDeleteConfirm(true)} className="underline hover:no-underline min-h-[44px] text-red-600">
+              {tr("Supprimer mon compte")}
+            </button>
+          )}
         </p>
+        {/* Un garage qui vient de s'inscrire peut toujours supprimer son compte, même sans carte ni vérification terminée. */}
+        {showDeleteConfirm && (
+          <div className="mt-4 rounded-xl p-4 text-left" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+            <p className="text-sm font-semibold text-red-800 mb-3">{tr("Êtes-vous certain(e) ? Cette action est irréversible et annule votre abonnement.")}</p>
+            <div className="mb-3">
+              <label htmlFor="del-pwd-card" className="block text-xs font-semibold text-red-800 mb-1">{tr("Entrez votre mot de passe pour confirmer (laissez vide si vous vous connectez avec Google)")}</label>
+              <input id="del-pwd-card" type="password" autoComplete="current-password" className="w-full border border-red-300 rounded-xl px-3 py-2 text-base bg-white" value={deletePwd} onChange={(e) => setDeletePwd(e.target.value)} />
+            </div>
+            {deleteError && <p className="text-xs text-red-600 mb-3" role="alert">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button onClick={deleteAccount} disabled={deleting}
+                className="text-sm font-bold text-white bg-red-600 rounded-xl px-4 py-2 min-h-[44px] hover:bg-red-700 disabled:opacity-50">
+                {deleting ? tr("Suppression…") : tr("Oui, tout supprimer")}
+              </button>
+              <button onClick={() => { setShowDeleteConfirm(false); setDeletePwd(""); setDeleteError(""); }} disabled={deleting}
+                className="text-sm font-semibold text-gray-600 rounded-xl px-4 py-2 min-h-[44px] hover:bg-gray-100">
+                {tr("Retour")}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
