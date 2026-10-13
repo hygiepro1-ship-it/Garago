@@ -28,6 +28,12 @@ export async function GET(req: NextRequest) {
   let sent = 0;
   for (const reminder of reminders) {
     if (!reminder.user.email) continue;
+    // Réservation atomique : deux déclencheurs simultanés n'envoient pas le rappel deux fois.
+    const claimed = await prisma.maintenanceReminder.updateMany({
+      where: { id: reminder.id, reminderSent: false },
+      data:  { reminderSent: true },
+    });
+    if (claimed.count === 0) continue;
     try {
       await sendMaintenanceReminder({
         to:           reminder.user.email,
@@ -37,13 +43,10 @@ export async function GET(req: NextRequest) {
         dueDate:      reminder.dueDate!.toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" }),
         vehicleLabel: reminder.vehicle ? `${reminder.vehicle.make} ${reminder.vehicle.model} ${reminder.vehicle.year}` : null,
       });
-      await prisma.maintenanceReminder.update({
-        where: { id: reminder.id },
-        data:  { reminderSent: true },
-      });
       sent++;
     } catch (err) {
       console.error(`Maintenance reminder failed for ${reminder.id}:`, err);
+      await prisma.maintenanceReminder.update({ where: { id: reminder.id }, data: { reminderSent: false } }).catch(() => {});
     }
   }
 

@@ -49,15 +49,19 @@ export async function GET(req: NextRequest) {
     if (!recipient) continue;
 
     const isFinal = targetCount >= SCHEDULE_DAYS.length;
+    // Réservation atomique du compteur : deux déclencheurs simultanés n'envoient pas la même relance deux fois.
+    const claimed = await prisma.garage.updateMany({
+      where: { id: garage.id, cardReminderCount: garage.cardReminderCount },
+      data:  { cardReminderCount: targetCount, cardReminderSentAt: new Date() },
+    });
+    if (claimed.count === 0) continue;
     try {
       await sendCardReminder({ to: recipient, garageName: garage.name, isFinal });
-      await prisma.garage.update({
-        where: { id: garage.id },
-        data:  { cardReminderCount: targetCount, cardReminderSentAt: new Date() },
-      });
       sent++;
     } catch (err) {
       console.error(`[card-reminders] Échec pour ${garage.id}:`, err);
+      // L'envoi a échoué : on remet le compteur pour que le prochain passage réessaie.
+      await prisma.garage.update({ where: { id: garage.id }, data: { cardReminderCount: garage.cardReminderCount } }).catch(() => {});
     }
   }
 
