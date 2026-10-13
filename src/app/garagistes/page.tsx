@@ -3,9 +3,10 @@ import GaragistesContent from "./GaragistesContent";
 import "./garagistes.css";
 
 export const metadata: Metadata = {
-  title: "Garago pour les garages : rendez-vous en ligne, sans téléphone",
+  title: "Prise de rendez-vous en ligne pour garage au Québec | Moins d'absences | Garago",
   description:
-    "Vos clients réservent eux-mêmes en ligne, selon vos heures d'ouverture et la durée de chaque service. Essai gratuit de 30 jours.",
+    "Agenda et réservation en ligne pour garage : vos clients réservent 24 h sur 24, reçoivent confirmation et rappel, et vous réduisez les rendez-vous manqués. Essai gratuit de 30 jours.",
+  alternates: { canonical: `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/garagistes` },
 };
 
 export default function GaragistesPage() {
