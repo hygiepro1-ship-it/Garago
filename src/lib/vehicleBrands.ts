@@ -1,6 +1,7 @@
 /**
  * Car brand logos — two sources:
  *
+ *  Fichiers hébergés dans public/brands/ (copiés depuis car-logos-dataset et Wikimedia Commons).
  *  CDN  : cdn.jsdelivr.net mirror of filippofilip95/car-logos-dataset (stable brands)
  *  WIKI : upload.wikimedia.org — SVG logos for recently-rebranded makes (2019-2026)
  *  WP   : commons.wikimedia.org/wiki/Special:FilePath — when only filename is known
@@ -20,122 +21,122 @@ export interface VehicleBrand {
 
 export const BRANDS: VehicleBrand[] = [
   // ── A ─────────────────────────────────────────────────────────────────────
-  { name: "Acura",        logoUrl: `${CDN}/acura.png`,                                              color: "#cc0000" },
-  { name: "Alfa Romeo",   logoUrl: `${CDN}/alfa-romeo.png`,                                         color: "#a6001a" },
-  { name: "Aston Martin", logoUrl: `${CDN}/aston-martin.png`,                                       color: "#004236" },
-  { name: "Audi",         logoUrl: `${CDN}/audi.png`,                                               color: "#000000" },
+  { name: "Acura",        logoUrl: "/brands/acura.webp",                                              color: "#cc0000" },
+  { name: "Alfa Romeo",   logoUrl: "/brands/alfa-romeo.webp",                                         color: "#a6001a" },
+  { name: "Aston Martin", logoUrl: "/brands/aston-martin.webp",                                       color: "#004236" },
+  { name: "Audi",         logoUrl: "/brands/audi.webp",                                               color: "#000000" },
 
   // ── B ─────────────────────────────────────────────────────────────────────
-  { name: "Bentley", logoUrl: `${CDN}/bentley.png`,           color: "#1a1a1a" },
+  { name: "Bentley", logoUrl: "/brands/bentley.webp",           color: "#1a1a1a" },
   // BMW 2020 — transparent flat badge (SVG Wikimedia)
-  { name: "BMW",     logoUrl: `${WIKI}/4/44/BMW.svg`,         color: "#0066b2" },
-  { name: "Buick",   logoUrl: `${CDN}/buick.png`,             color: "#8a0000" },
+  { name: "BMW",     logoUrl: "/brands/bmw.svg",         color: "#0066b2" },
+  { name: "Buick",   logoUrl: "/brands/buick.webp",             color: "#8a0000" },
 
   // ── C ─────────────────────────────────────────────────────────────────────
   // Cadillac 2021 — new flat crest
-  { name: "Cadillac",  logoUrl: `${WP}/Cadillac_Logo_2021.svg`,  color: "#b8985a" },
+  { name: "Cadillac",  logoUrl: "/brands/cadillac.svg",  color: "#b8985a" },
   // Chevrolet 2023 — modern flat bowtie
-  { name: "Chevrolet", logoUrl: `${WP}/Chevrolet_bowtie_2023.svg`, color: "#d4a017" },
-  { name: "Chrysler",  logoUrl: `${CDN}/chrysler.png`,             color: "#231f20" },
+  { name: "Chevrolet", logoUrl: "/brands/chevrolet.svg", color: "#d4a017" },
+  { name: "Chrysler",  logoUrl: "/brands/chrysler.webp",             color: "#231f20" },
 
   // ── D ─────────────────────────────────────────────────────────────────────
-  { name: "Dodge", logoUrl: `${CDN}/dodge.png`, color: "#d01f2b" },
+  { name: "Dodge", logoUrl: "/brands/dodge.webp", color: "#d01f2b" },
 
   // ── F ─────────────────────────────────────────────────────────────────────
-  { name: "Ferrari", logoUrl: `${CDN}/ferrari.png`,                           color: "#cc0000" },
+  { name: "Ferrari", logoUrl: "/brands/ferrari.webp",                           color: "#cc0000" },
   // Fiat 2020 — new serif wordmark (SVG Wikimedia)
-  { name: "Fiat",    logoUrl: `${WIKI}/b/b5/FIAT_logo_%282020%29.svg`,        color: "#c0392b" },
-  { name: "Ford",    logoUrl: `${CDN}/ford.png`,                              color: "#003087" },
+  { name: "Fiat",    logoUrl: "/brands/fiat.svg",        color: "#c0392b" },
+  { name: "Ford",    logoUrl: "/brands/ford.webp",                              color: "#003087" },
 
   // ── G ─────────────────────────────────────────────────────────────────────
   // Genesis 2021 — new G crest
-  { name: "Genesis", logoUrl: `${WP}/Genesis_Logo.svg`,   color: "#111111" },
+  { name: "Genesis", logoUrl: "/brands/genesis.svg",   color: "#111111" },
   // GMC 2021 — updated logo
-  { name: "GMC",     logoUrl: `${WP}/GMC-Logo.svg`,       color: "#cc0000" },
+  { name: "GMC",     logoUrl: "/brands/gmc.svg",       color: "#cc0000" },
 
   // ── H ─────────────────────────────────────────────────────────────────────
-  { name: "Honda",   logoUrl: `${CDN}/honda.png`,                        color: "#e40521" },
+  { name: "Honda",   logoUrl: "/brands/honda.webp",                        color: "#e40521" },
   // Hummer — marque relancée en camion électrique GMC, mais de nombreux VUS
   // Hummer H2/H3 des années 2000 sont encore sur la route et à entretenir.
-  { name: "Hummer",  logoUrl: `${CDN}/hummer.png`,                       color: "#4a4a4a" },
+  { name: "Hummer",  logoUrl: "/brands/hummer.webp",                       color: "#4a4a4a" },
   // Hyundai 2021 — new geometric H
-  { name: "Hyundai", logoUrl: `${WP}/Hyundai_logo.svg`,                  color: "#003087" },
+  { name: "Hyundai", logoUrl: "/brands/hyundai.svg",                  color: "#003087" },
 
   // ── I ─────────────────────────────────────────────────────────────────────
-  { name: "Infiniti", logoUrl: `${CDN}/infiniti.png`, color: "#111111" },
+  { name: "Infiniti", logoUrl: "/brands/infiniti.webp", color: "#111111" },
   // Isuzu a quitté le marché nord-américain des véhicules légers en 2009, mais
   // ses camions et VUS (Rodeo, Trooper, Ascender) roulent encore et se réparent.
-  { name: "Isuzu",    logoUrl: `${CDN}/isuzu.png`,    color: "#cc0000" },
+  { name: "Isuzu",    logoUrl: "/brands/isuzu.webp",    color: "#cc0000" },
 
   // ── J ─────────────────────────────────────────────────────────────────────
   // Jaguar 2024 — completely redesigned logo
-  { name: "Jaguar", logoUrl: `${WP}/Jaguar_2024.svg`,              color: "#1a1a1a" },
+  { name: "Jaguar", logoUrl: "/brands/jaguar.svg", color: "#1a1a1a" },
   // Jeep 2022 — flat logo (SVG Wikimedia)
-  { name: "Jeep",   logoUrl: `${WIKI}/0/0d/Jeep_logo.svg`,         color: "#3a6b35" },
+  { name: "Jeep",   logoUrl: "/brands/jeep.svg", color: "#3a6b35" },
 
   // ── K ─────────────────────────────────────────────────────────────────────
   // Kia 2021 — new angular KIA lettering
-  { name: "Kia", logoUrl: `${WP}/KIA_logo3.svg`, color: "#bb162b" },
+  { name: "Kia", logoUrl: "/brands/kia.svg", color: "#bb162b" },
 
   // ── L ─────────────────────────────────────────────────────────────────────
-  { name: "Lamborghini", logoUrl: `${CDN}/lamborghini.png`, color: "#c9a227" },
-  { name: "Land Rover",  logoUrl: `${CDN}/land-rover.png`,  color: "#005a2b" },
+  { name: "Lamborghini", logoUrl: "/brands/lamborghini.webp", color: "#c9a227" },
+  { name: "Land Rover",  logoUrl: "/brands/land-rover.webp",  color: "#005a2b" },
   // Lexus — current L mark
-  { name: "Lexus",       logoUrl: `${WP}/Lexus.svg`,        color: "#1a1a1a" },
-  { name: "Lincoln",     logoUrl: `${CDN}/lincoln.png`,     color: "#111111" },
-  { name: "Lotus",       logoUrl: `${CDN}/lotus.png`,       color: "#007a3e" },
-  { name: "Lucid",       logoUrl: `${CDN}/lucid.png`,       color: "#0a0a0a" },
+  { name: "Lexus",       logoUrl: "/brands/lexus.svg",        color: "#1a1a1a" },
+  { name: "Lincoln",     logoUrl: "/brands/lincoln.webp",     color: "#111111" },
+  { name: "Lotus",       logoUrl: "/brands/lotus.webp",       color: "#007a3e" },
+  { name: "Lucid",       logoUrl: "/brands/lucid.webp",       color: "#0a0a0a" },
 
   // ── M ─────────────────────────────────────────────────────────────────────
-  { name: "Maserati",      logoUrl: `${CDN}/maserati.png`,      color: "#003087" },
-  { name: "Mazda",         logoUrl: `${CDN}/mazda.png`,         color: "#910000" },
-  { name: "McLaren",       logoUrl: `${CDN}/mclaren.png`,       color: "#e47216" },
-  { name: "Mercedes-Benz", logoUrl: `${CDN}/mercedes-benz.png`, color: "#111111" },
+  { name: "Maserati",      logoUrl: "/brands/maserati.webp",      color: "#003087" },
+  { name: "Mazda",         logoUrl: "/brands/mazda.webp",         color: "#910000" },
+  { name: "McLaren",       logoUrl: "/brands/mclaren.webp",       color: "#e47216" },
+  { name: "Mercedes-Benz", logoUrl: "/brands/mercedes-benz.webp", color: "#111111" },
   // Mercury a fermé en 2011 — encore beaucoup de Sable, Grand Marquis et
   // Mountaineer sur la route au Canada.
-  { name: "Mercury",       logoUrl: `${CDN}/mercury.png`,       color: "#5a5a5a" },
-  { name: "MINI",          logoUrl: `${CDN}/mini.png`,          color: "#000000" },
-  { name: "Mitsubishi",    logoUrl: `${CDN}/mitsubishi.png`,    color: "#e60012" },
+  { name: "Mercury",       logoUrl: "/brands/mercury.webp",       color: "#5a5a5a" },
+  { name: "MINI",          logoUrl: "/brands/mini.webp",          color: "#000000" },
+  { name: "Mitsubishi",    logoUrl: "/brands/mitsubishi.webp",    color: "#e60012" },
 
   // ── N ─────────────────────────────────────────────────────────────────────
   // Nissan 2020 — flat 2D logo (SVG Wikimedia)
-  { name: "Nissan", logoUrl: `${WIKI}/2/23/Nissan_2020_logo.svg`, color: "#c3002f" },
+  { name: "Nissan", logoUrl: "/brands/nissan.svg", color: "#c3002f" },
 
   // ── O ─────────────────────────────────────────────────────────────────────
   // Oldsmobile a fermé en 2004 — plusieurs modèles encore en circulation.
-  { name: "Oldsmobile", logoUrl: `${CDN}/oldsmobile.png`, color: "#8a0000" },
+  { name: "Oldsmobile", logoUrl: "/brands/oldsmobile.webp", color: "#8a0000" },
 
   // ── P ─────────────────────────────────────────────────────────────────────
-  { name: "Polestar", logoUrl: `${CDN}/polestar.png`, color: "#0a0a0a" },
+  { name: "Polestar", logoUrl: "/brands/polestar.webp", color: "#0a0a0a" },
   // Pontiac a fermé en 2010 — Vibe, G6 et Grand Prix encore courants.
-  { name: "Pontiac",  logoUrl: `${CDN}/pontiac.png`,  color: "#8a0000" },
-  { name: "Porsche",  logoUrl: `${CDN}/porsche.png`,  color: "#c9a227" },
+  { name: "Pontiac",  logoUrl: "/brands/pontiac.webp",  color: "#8a0000" },
+  { name: "Porsche",  logoUrl: "/brands/porsche.webp",  color: "#c9a227" },
 
   // ── R ─────────────────────────────────────────────────────────────────────
-  { name: "RAM",         logoUrl: `${CDN}/ram.png`,         color: "#c8102e" },
-  { name: "Rivian",      logoUrl: `${CDN}/rivian.png`,      color: "#00b050" },
-  { name: "Rolls-Royce", logoUrl: `${CDN}/rolls-royce.png`, color: "#6e1a36" },
+  { name: "RAM",         logoUrl: "/brands/ram.webp",         color: "#c8102e" },
+  { name: "Rivian",      logoUrl: "/brands/rivian.webp",      color: "#00b050" },
+  { name: "Rolls-Royce", logoUrl: "/brands/rolls-royce.webp", color: "#6e1a36" },
 
   // ── S ─────────────────────────────────────────────────────────────────────
   // Saab a fermé en 2011 ; Saturn en 2010 — véhicules encore entretenus.
-  { name: "Saab",    logoUrl: `${CDN}/saab.png`,    color: "#003087" },
-  { name: "Saturn",  logoUrl: `${CDN}/saturn.png`,  color: "#8a0000" },
+  { name: "Saab",    logoUrl: "/brands/saab.webp",    color: "#003087" },
+  { name: "Saturn",  logoUrl: "/brands/saturn.webp",  color: "#8a0000" },
   // Scion (marque jeunesse de Toyota) a fermé en 2016 — tC, xB, FR-S courants.
-  { name: "Scion",   logoUrl: `${CDN}/scion.png`,   color: "#111111" },
-  { name: "Subaru",  logoUrl: `${CDN}/subaru.png`,  color: "#003087" },
+  { name: "Scion",   logoUrl: "/brands/scion.webp",   color: "#111111" },
+  { name: "Subaru",  logoUrl: "/brands/subaru.webp",  color: "#003087" },
   // Suzuki a quitté le marché automobile nord-américain en 2013, mais Swift,
   // SX4 et Grand Vitara restent nombreux à entretenir.
-  { name: "Suzuki",  logoUrl: `${CDN}/suzuki.png`,  color: "#e30016" },
+  { name: "Suzuki",  logoUrl: "/brands/suzuki.webp",  color: "#e30016" },
 
   // ── T ─────────────────────────────────────────────────────────────────────
-  { name: "Tesla",  logoUrl: `${CDN}/tesla.png`,  color: "#e82127" },
-  { name: "Toyota", logoUrl: `${CDN}/toyota.png`, color: "#eb0a1e" },
+  { name: "Tesla",  logoUrl: "/brands/tesla.webp",  color: "#e82127" },
+  { name: "Toyota", logoUrl: "/brands/toyota.webp", color: "#eb0a1e" },
 
   // ── V ─────────────────────────────────────────────────────────────────────
   // Volkswagen 2019 — flat design (SVG Wikimedia)
-  { name: "Volkswagen", logoUrl: `${WIKI}/6/6d/Volkswagen_logo_2019.svg`, color: "#001e50" },
+  { name: "Volkswagen", logoUrl: "/brands/volkswagen.svg", color: "#001e50" },
   // Volvo 2021 — iron mark
-  { name: "Volvo",      logoUrl: `${WP}/Volvo-Iron-Mark-Black.svg`,       color: "#003e7e" },
+  { name: "Volvo",      logoUrl: "/brands/volvo.svg",       color: "#003e7e" },
   // VinFast (Vietnam) est arrivé au Canada en 2024 avec ses VUS électriques.
   { name: "VinFast",    logoUrl: `${WP}/VinFast_logo.svg`,                color: "#0a0a0a" },
 ];
