@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { clientIp, isRateLimited } from "@/lib/abuse";
+import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 
 const VALID_REASONS = ["usurpation", "erreur", "retrait", "autre"];
 
@@ -17,6 +18,9 @@ export async function POST(
     return NextResponse.json({ error: "Trop de signalements. Réessayez plus tard." }, { status: 429 });
   }
   const body = await req.json().catch(() => ({}));
+  if (!(await verifyTurnstile(body.turnstileToken, clientIp(req)))) {
+    return NextResponse.json({ error: CAPTCHA_ERROR }, { status: 400 });
+  }
   const reason = String(body.reason ?? "");
   const message = body.message ? String(body.message).trim().slice(0, 1000) : null;
   const reporterEmail = body.reporterEmail ? String(body.reporterEmail).trim().toLowerCase() : null;
@@ -37,8 +41,17 @@ export async function POST(
 
   // Retrait demandé sur une fiche pas encore réclamée : on la masque tout de
   // suite, un admin tranche ensuite (retrait définitif ou remise en ligne).
+  // Plafond global : au-delà de 15 retraits automatiques en 24 h, la demande est enregistrée pour l'équipe mais
+  // la fiche reste en ligne (un réseau de robots ne peut pas vider l'annuaire ; l'équipe tranche ensuite).
+  let hidden = false;
   if (reason === "retrait" && garage.claimStatus === "non_reclamee") {
-    await prisma.garage.update({ where: { id: garage.id }, data: { hiddenByReport: true } });
+    const hiddenToday = await prisma.garageReport.count({
+      where: { reason: "retrait", createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    });
+    if (hiddenToday <= 15) {
+      await prisma.garage.update({ where: { id: garage.id }, data: { hiddenByReport: true } });
+      hidden = true;
+    }
   }
 
   await prisma.auditLog.create({
@@ -51,5 +64,5 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, hidden });
 }

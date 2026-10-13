@@ -207,6 +207,9 @@ function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [tsToken, setTsToken] = useState("");
+  const [tsReset, setTsReset] = useState(0);
+  const [hidden, setHidden] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -215,11 +218,15 @@ function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     const res = await fetch(`/api/garages/${slug}/report`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason, message: message || undefined, reporterEmail: reporterEmail || undefined }),
+      body: JSON.stringify({ reason, message: message || undefined, reporterEmail: reporterEmail || undefined, turnstileToken: tsToken }),
     });
     setSubmitting(false);
-    if (res.ok) setDone(true);
-    else {
+    setTsReset((n) => n + 1);
+    if (res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setHidden(!!d.hidden);
+      setDone(true);
+    } else {
       const d = await res.json().catch(() => ({}));
       setError(d.error ?? (en ? "The report could not be sent." : "Impossible d'envoyer le signalement."));
     }
@@ -230,7 +237,7 @@ function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
       <Modal title={en ? "Report sent" : "Signalement envoyé"} onClose={onClose}>
         <div className="p-6 text-center">
           <p className="text-sm text-gray-600">
-            {reason === "retrait"
+            {reason === "retrait" && hidden
               ? (en ? "This listing has been hidden while your request is being verified." : "Cette fiche a été masquée en attendant la vérification de votre demande.")
               : (en ? "Thank you, our team will review your report." : "Merci, notre équipe va examiner votre signalement.")}
           </p>
@@ -260,8 +267,9 @@ function ReportModal({ slug, onClose }: { slug: string; onClose: () => void }) {
           <label className="block text-xs font-semibold text-gray-500 mb-1">{en ? "Your email" : "Votre courriel"} <span className="font-normal text-gray-400">({en ? "optional, so we can reply" : "optionnel, pour vous répondre"})</span></label>
           <input className={inputCls} type="email" value={reporterEmail} onChange={e => setReporterEmail(e.target.value)} placeholder="vous@exemple.com" />
         </div>
+        <Turnstile onToken={setTsToken} resetKey={tsReset} />
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
-        <button type="submit" disabled={submitting}
+        <button type="submit" disabled={submitting || (turnstileActive && !tsToken)}
           className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#0b1f3a" }}>
           {submitting ? (en ? "Sending…" : "Envoi…") : (en ? "Send" : "Envoyer")}
         </button>
