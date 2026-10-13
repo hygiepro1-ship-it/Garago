@@ -12,6 +12,10 @@ export async function GET(req: NextRequest) {
   const postcode = req.nextUrl.searchParams.get("postcode"); // exact postcode filter
 
   if (q.trim().length < 3) return NextResponse.json([]);
+  // Entrées bornées avant d'être relayées au service de géocodage : requête courte, coordonnées numériques.
+  if (q.length > 150) return NextResponse.json([]);
+  const num = (v: string | null) => (v !== null && /^-?\d{1,3}(\.\d{1,8})?$/.test(v) ? v : null);
+  const safeLat = num(lat), safeLng = num(lng);
 
   const url = new URL("https://photon.komoot.io/api/");
   url.searchParams.set("q", q);
@@ -19,9 +23,9 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("lang", "fr");
   url.searchParams.set("bbox", "-141,42,-52,84");
 
-  if (lat && lng) {
-    url.searchParams.set("lat", lat);
-    url.searchParams.set("lon", lng);
+  if (safeLat && safeLng) {
+    url.searchParams.set("lat", safeLat);
+    url.searchParams.set("lon", safeLng);
   } else {
     url.searchParams.set("lat", "46.0");
     url.searchParams.set("lon", "-73.0");
