@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           </svg>
         </div>
         <h1 className="text-2xl font-black mb-2" style={{ color: "#0b1f3a" }}>Une erreur est survenue</h1>
-        <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
+        <p className="text-sm mb-8" style={{ color: "#64748b" }}>
           Quelque chose s'est mal passé. Veuillez réessayer.
         </p>
         <button onClick={reset} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-transform active:scale-[0.98]"

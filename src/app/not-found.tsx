@@ -12,7 +12,7 @@ export default function NotFound() {
           </svg>
         </div>
         <h1 className="text-2xl font-black mb-2" style={{ color: "#0b1f3a" }}><L fr="Page introuvable" en="Page not found" /></h1>
-        <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
+        <p className="text-sm mb-8" style={{ color: "#64748b" }}>
           <L fr="La page que vous cherchez n'existe pas ou a été déplacée." en="The page you are looking for does not exist or has been moved." />
         </p>
         <Link href="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-transform active:scale-[0.98]"
