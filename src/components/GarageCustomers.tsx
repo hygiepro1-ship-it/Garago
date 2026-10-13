@@ -147,7 +147,7 @@ export default function GarageCustomers({
                       {c.language === "en" ? (en ? " · English" : " · anglais") : ""}
                     </p>
                   </div>
-                  <a href={`tel:${c.phone}`} className="order-3 sm:order-none col-span-2 sm:col-span-1 text-sm font-semibold tabular-nums whitespace-nowrap" style={{ color: "#15803d" }}>{c.phone}</a>
+                  <a href={`tel:${c.phone}`} className="order-3 sm:order-none col-span-2 sm:col-span-1 inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold tabular-nums whitespace-nowrap" style={{ color: "#15803d" }}>{c.phone}</a>
                   <p className="order-3 sm:order-none col-span-2 sm:col-span-1 text-sm text-gray-700 truncate min-w-0">
                     {c.email ? <a href={`mailto:${c.email}`} style={{ color: "#1d4ed8" }}>{c.email}</a> : <span className="text-gray-400">{tr("Pas de courriel")}</span>}
                   </p>
