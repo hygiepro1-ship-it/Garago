@@ -26,11 +26,11 @@ export async function GET() {
 
   const subs = await stripe.subscriptions.list({
     customer: garage.stripeCustomerId,
-    status: "active",
-    limit: 1,
+    status: "all",
+    limit: 10,
     expand: ["data.default_payment_method"],
   });
-  const sub = subs.data[0];
+  const sub = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
   if (!sub) return NextResponse.json({ hasSubscription: false });
 
   const subAny = sub as any;
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
   const { default: Stripe } = await import("stripe");
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-  const origin = req.headers.get("origin") ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXTAUTH_URL ?? req.headers.get("origin") ?? "http://localhost:3000";
 
   try {
     const portal = await stripe.billingPortal.sessions.create({

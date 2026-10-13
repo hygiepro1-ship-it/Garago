@@ -32,8 +32,10 @@ export async function POST(req: NextRequest) {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-  const subs = await stripe.subscriptions.list({ customer: garage.stripeCustomerId, status: "active", limit: 1 });
-  const sub = subs.data[0];
+  // « active » seul laissait sans recours un garage en essai avec carte enregistrée : son abonnement démarre
+  // tout seul à la fin de l'essai et il ne pouvait pas l'annuler (essai « trialing » et impayé « past_due » inclus).
+  const subs = await stripe.subscriptions.list({ customer: garage.stripeCustomerId, status: "all", limit: 10 });
+  const sub = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
   if (!sub) return NextResponse.json({ error: "Aucun abonnement actif" }, { status: 400 });
 
   const updated = await stripe.subscriptions.update(sub.id, { cancel_at_period_end: !resume });

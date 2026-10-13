@@ -36,6 +36,15 @@ export async function POST(req: NextRequest) {
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
 
+  // Un abonnement vivant (actif, en essai avec carte, impayé) existe déjà : en ouvrir un second ferait payer deux
+  // fois le même dossier. Le garage gère l'existant (carte, annulation) au lieu d'en créer un autre.
+  if (garage.stripeCustomerId) {
+    const existing = await stripe.subscriptions.list({ customer: garage.stripeCustomerId, status: "all", limit: 10 });
+    if (existing.data.some((s) => ["active", "trialing", "past_due"].includes(s.status))) {
+      return NextResponse.json({ error: "Un abonnement est déjà en cours pour votre dossier. Gérez-le depuis l'onglet Abonnement." }, { status: 409 });
+    }
+  }
+
   // Ensure a Stripe customer exists for this garage
   let customerId = garage.stripeCustomerId ?? undefined;
   if (!customerId) {

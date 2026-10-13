@@ -884,7 +884,7 @@ export default function DashboardGaragePage() {
       const res = await fetch("/api/stripe/billing", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (data.url) { window.location.href = data.url; return; }
-      setPortalError(data.error ?? "Impossible d'ouvrir le portail de facturation.");
+      setPortalError(data.error ?? tr("Impossible d'ouvrir le portail de facturation."));
     } catch {
       setPortalError(tr("Erreur réseau."));
     } finally { setPortalLoading(false); }
@@ -897,7 +897,12 @@ export default function DashboardGaragePage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume }),
-    });
+    }).catch(() => null);
+    if (!res) {
+      setCancelError(tr("Erreur réseau."));
+      setCancelLoading(false);
+      return;
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setCancelError(data.error ?? tr("Une erreur est survenue. Réessayez plus tard."));
@@ -909,16 +914,23 @@ export default function DashboardGaragePage() {
     setCancelLoading(false);
   }
 
+  const [payError, setPayError] = useState("");
   async function startCheckout(plan: "monthly" | "annual" = "monthly") {
     setCheckoutLoading(true);
-    const res = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setCheckoutLoading(false);
+    setPayError("");
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.url) { window.location.href = data.url; return; }
+      setPayError(data.error ?? tr("Impossible d'ouvrir la page de paiement. Réessayez dans un instant."));
+    } catch {
+      setPayError(tr("Erreur réseau."));
+    }
+    setCheckoutLoading(false);
   }
 
   // Ajoute une carte sans quitter l'essai en cours — Stripe ne facture qu'à la
@@ -934,7 +946,10 @@ export default function DashboardGaragePage() {
       });
       const data = await res.json().catch(() => ({}));
       if (data.url) { window.location.href = data.url; return; }
-    } catch {}
+      setPayError(data.error ?? tr("Impossible d'ouvrir la page de paiement. Réessayez dans un instant."));
+    } catch {
+      setPayError(tr("Erreur réseau."));
+    }
     setAddCardLoading(false);
   }
 
@@ -3575,16 +3590,19 @@ export default function DashboardGaragePage() {
                     </button>
                   </div>
                 )}
+                {payError && <p role="alert" className="text-sm text-red-600 mb-3">{payError}</p>}
+                {!garage.stripePriceId && (
                 <div className="flex flex-wrap items-center gap-3">
                   <button onClick={() => startCheckout("annual")} disabled={checkoutLoading}
-                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    className="inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#c2410c" }}>
                     {checkoutLoading ? tr("Chargement…") : tr("Ou activer immédiatement : 88,00 $/mois (annuel, −20 %)")}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    className="inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#c2410c" }}>
                     {tr("ou payer mensuellement (109,99 $/mois)")}
                   </button>
                 </div>
+                )}
               </>
             )}
 
@@ -3644,17 +3662,18 @@ export default function DashboardGaragePage() {
                     {checkoutLoading ? tr("Chargement…") : "Activer : 88,00 $/mois (annuel, −20 %)"}
                   </button>
                   <button onClick={() => startCheckout("monthly")} disabled={checkoutLoading}
-                    className="text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#f97316" }}>
+                    className="inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold underline hover:no-underline disabled:opacity-60" style={{ color: "#c2410c" }}>
                     {tr("ou payer mensuellement (109,99 $/mois)")}
                   </button>
                 </div>
+                {payError && <p role="alert" className="text-sm text-red-600 mt-3">{payError}</p>}
               </>
             )}
           </div>
           )}
 
           {/* ── Facturation + moyen de paiement (garage principal, abonné) ── */}
-          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
+          {garage.parentId === null && (garage.subscriptionStatus === "ACTIVE" || (garage.subscriptionStatus === "TRIAL" && garage.stripePriceId)) && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-4">{tr("Facturation")}</h2>
 
@@ -3714,7 +3733,7 @@ export default function DashboardGaragePage() {
           )}
 
           {/* ── Annulation / réactivation (abonnement actif, garage principal) ── */}
-          {garage.parentId === null && garage.subscriptionStatus === "ACTIVE" && (
+          {garage.parentId === null && (garage.subscriptionStatus === "ACTIVE" || (garage.subscriptionStatus === "TRIAL" && garage.stripePriceId)) && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-1">{tr("Renouvellement")}</h2>
               {garage.cancelAtPeriodEnd ? (

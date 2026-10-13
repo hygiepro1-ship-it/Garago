@@ -60,6 +60,8 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Aucun": "None",
   "Impossible d'effectuer cette action. Vérifiez votre connexion ou reconnectez-vous, puis réessayez.": "Unable to complete this action. Check your connection or sign in again, then retry.",
   "Code couleur hexadécimal": "Hex colour code",
+  "Impossible d'ouvrir la page de paiement. Réessayez dans un instant.": "Unable to open the payment page. Please try again in a moment.",
+  "Impossible d'ouvrir le portail de facturation.": "Unable to open the billing portal.",
   "Supprimer ce véhicule ?": "Delete this vehicle?",
   "Impossible d'ajouter le rappel. Réessayez.": "Unable to add the reminder. Please try again.",
   "Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!": "No reviews yet. Encourage your customers to leave one!",
