@@ -114,8 +114,11 @@ export async function DELETE(req: NextRequest) {
       try {
         const { default: Stripe } = await import("stripe");
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-        const subs = await stripe.subscriptions.list({ customer: stripeCustomerId, status: "active" });
+        // « active » seul laissait vivant l'abonnement d'un garage en essai avec carte (« trialing ») : la carte
+        // aurait été débitée à la fin de l'essai pour un compte supprimé. On résilie tout abonnement non terminé.
+        const subs = await stripe.subscriptions.list({ customer: stripeCustomerId, status: "all", limit: 20 });
         for (const sub of subs.data) {
+          if (["canceled", "incomplete_expired"].includes(sub.status)) continue;
           await stripe.subscriptions.cancel(sub.id);
         }
       } catch (e) {

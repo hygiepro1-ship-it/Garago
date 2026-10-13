@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getBillingGarage } from "@/lib/garage-access";
+import { countBranches, extraPriceForInterval } from "@/lib/stripe-branches";
 
 export const dynamic = "force-dynamic";
 
@@ -74,10 +75,17 @@ export async function POST(req: NextRequest) {
       ? `${origin}/inscription/garage?step=3&cardError=1`
       : `${origin}/tableau-de-bord/garage?trial=skipped`;
 
+    // Succursales déjà ajoutées pendant l'essai : elles doivent figurer dans l'abonnement dès la saisie de la carte,
+    // sinon elles ne seraient jamais facturées à la fin de l'essai.
+    const lineItems: { price: string; quantity: number }[] = [{ price: priceId, quantity: 1 }];
+    const branchCount = await countBranches(userId);
+    const extraPriceId = extraPriceForInterval(plan === "annual" ? "year" : "month");
+    if (branchCount > 0 && extraPriceId) lineItems.push({ price: extraPriceId, quantity: branchCount });
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: lineItems,
       subscription_data: { trial_period_days: trialDays },
       success_url: `${origin}/tableau-de-bord/garage?trial=started`,
       cancel_url:  cancelUrl,

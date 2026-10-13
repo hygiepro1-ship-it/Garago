@@ -51,8 +51,10 @@ export async function DELETE(
     try {
       const { default: Stripe } = await import("stripe");
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
-      const subs = await stripe.subscriptions.list({ customer: branch.stripeCustomerId, status: "active", limit: 1 });
-      if (subs.data[0]) await syncBranchQuantity(stripe, subs.data[0], userId);
+      const subs = await stripe.subscriptions.list({ customer: branch.stripeCustomerId, status: "all", limit: 10 });
+      // Abonnement vivant : actif, mais aussi en essai avec carte (sinon les succursales ne seraient jamais facturées).
+      const live = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
+      if (live) await syncBranchQuantity(stripe, live, userId);
     } catch (e) {
       console.error("[garage/branch] Erreur sync Stripe (retrait) :", e);
     }
