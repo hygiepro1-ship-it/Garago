@@ -645,7 +645,7 @@ export default function DashboardConducteurPage() {
               <div className="rounded-2xl p-4 flex items-center gap-4"
                 style={{ background: "linear-gradient(135deg, #fff7ed, #fff)", border: "1.5px solid #fed7aa" }}>
                 <div className="w-12 h-12 rounded-xl flex-shrink-0 flex flex-col items-center justify-center"
-                  style={{ background: "#c45305" }}>
+                  style={{ background: "#e0600c" }}>
                   <span className="text-white text-xs font-black leading-none uppercase">
                     {new Date(prochainRdv.date + "T12:00:00").toLocaleDateString(tr.locale, { month: "short" })}
                   </span>
@@ -660,7 +660,7 @@ export default function DashboardConducteurPage() {
                 </div>
                 <Link href={`/garage/${prochainRdv.garage.slug}`}
                   className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors hover:opacity-80"
-                  style={{ background: "#c45305", color: "#fff" }}>
+                  style={{ background: "#e0600c", color: "#fff" }}>
                   {tr("Voir")}
                 </Link>
               </div>
@@ -692,7 +692,7 @@ export default function DashboardConducteurPage() {
                 key={tb.id}
                 onClick={() => setTab(tb.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
-                style={tab === tb.id ? { background: "#c45305" } : {}}
+                style={tab === tb.id ? { background: "#e0600c" } : {}}
               >
                 {tb.icon}{tr(tb.label)}
               </button>
@@ -798,7 +798,7 @@ export default function DashboardConducteurPage() {
                                     onClick={() => setRescheduleSlot(slot)}
                                     className="py-2 rounded-xl text-sm font-bold border-2 transition-all"
                                     style={rescheduleSlot === slot
-                                      ? { borderColor: "#f97316", background: "#c45305", color: "#fff" }
+                                      ? { borderColor: "#f97316", background: "#e0600c", color: "#fff" }
                                       : { borderColor: "#e5e7eb", background: "#fff", color: "#374151" }}
                                   >
                                     {slot}
@@ -816,7 +816,7 @@ export default function DashboardConducteurPage() {
                             type="submit"
                             disabled={rescheduling || !rescheduleSlot}
                             className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm disabled:opacity-40"
-                            style={{ background: "#c45305" }}
+                            style={{ background: "#e0600c" }}
                           >
                             {rescheduling ? "…" : tr("Confirmer")}
                           </button>
@@ -845,7 +845,7 @@ export default function DashboardConducteurPage() {
                       <input id="pf-phone" type="tel" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" value={prof.phone} onChange={(e) => setProf({ ...prof, phone: e.target.value })} />
                     </div>
                     <div className="sm:col-span-2 flex items-center gap-3">
-                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#c45305" }}>{tr("Enregistrer")}</button>
+                      <button type="submit" className="text-white px-5 py-2 rounded-xl text-sm font-semibold" style={{ background: "#e0600c" }}>{tr("Enregistrer")}</button>
                       {profMsg && <span className="text-sm font-semibold" role="status" style={{ color: profMsg.ok ? "#15803d" : "#b91c1c" }}>{profMsg.text}</span>}
                     </div>
                   </form>
@@ -930,7 +930,7 @@ export default function DashboardConducteurPage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-bold text-gray-900 text-lg">{d.myVehicles}</h2>
-                <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="text-sm text-white px-4 py-2 rounded-xl" style={{ background: "#c45305" }}>{d.addVehicle}</button>
+                <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="text-sm text-white px-4 py-2 rounded-xl" style={{ background: "#e0600c" }}>{d.addVehicle}</button>
               </div>
               {showAddVehicle && (
                 <form onSubmit={addVehicle} className="rounded-xl p-4 mb-4 space-y-3" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
@@ -1008,7 +1008,7 @@ export default function DashboardConducteurPage() {
                   </div>
                   {vehicleError && <p className="text-sm font-semibold" style={{ color: "#b91c1c" }} role="alert">{vehicleError}</p>}
                   <div className="flex gap-2">
-                    <button type="submit" disabled={savingVehicle} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>{savingVehicle ? d.adding : d.add}</button>
+                    <button type="submit" disabled={savingVehicle} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#e0600c" }}>{savingVehicle ? d.adding : d.add}</button>
                     <button type="button" onClick={() => setShowAddVehicle(false)} className="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">{d.cancel}</button>
                   </div>
                 </form>
@@ -1080,7 +1080,7 @@ export default function DashboardConducteurPage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-bold text-gray-900 text-lg">{d.maintenanceReminders}</h2>
-                <button onClick={() => setShowAddReminder(!showAddReminder)} className="text-sm text-white px-4 py-2 rounded-xl" style={{ background: "#c45305" }}>{d.newReminder}</button>
+                <button onClick={() => setShowAddReminder(!showAddReminder)} className="text-sm text-white px-4 py-2 rounded-xl" style={{ background: "#e0600c" }}>{d.newReminder}</button>
               </div>
 
               {/* Add form */}
@@ -1127,7 +1127,7 @@ export default function DashboardConducteurPage() {
                     <input className={inputClass} value={rNotes} onChange={e => setRNotes(e.target.value)} placeholder={tr("Ex: Faire vérifier les plaquettes en même temps")} />
                   </div>
                   <div className="flex gap-2">
-                    <button type="submit" disabled={savingReminder} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#c45305" }}>{savingReminder ? d.adding : d.add}</button>
+                    <button type="submit" disabled={savingReminder} className="text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50" style={{ background: "#e0600c" }}>{savingReminder ? d.adding : d.add}</button>
                     <button type="button" onClick={() => setShowAddReminder(false)} className="border border-gray-300 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">{d.cancel}</button>
                   </div>
                 </form>

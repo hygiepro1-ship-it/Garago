@@ -531,7 +531,7 @@ export default function GarageAgenda({
           )}
           <a href={exportHref} className="text-xs font-semibold underline text-gray-600 inline-flex items-center min-h-[44px] sm:min-h-0" title={tr("Télécharger tous vos rendez-vous dans un fichier Excel")}>{tr("Exporter (Excel)")}</a>
           <button type="button" onClick={() => openFormAtNextFree(view === "day" ? dayRef : view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0])}
-            className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#c45305" }}>
+            className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#e0600c" }}>
             {tr("+ Rendez-vous")}
           </button>
         </div>
@@ -764,7 +764,7 @@ export default function GarageAgenda({
                     ? `The customer gets ${form.contactChannel === "SMS" ? "a text" : "an email"} 48 h before; with no reply 24 h before, you are told to call them.`
                     : `Le client reçoit un ${form.contactChannel === "SMS" ? "texto" : "courriel"} 48 h avant ; sans réponse 24 h avant, vous êtes prévenu pour l'appeler.`}
               </p>
-              <button type="submit" disabled={saving} className="flex-shrink-0 text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#c45305" }}>
+              <button type="submit" disabled={saving} className="flex-shrink-0 text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#e0600c" }}>
                 {saving ? "…" : tr("Enregistrer")}
               </button>
             </div>
@@ -896,7 +896,7 @@ export default function GarageAgenda({
 
                   <div className="col-span-2 flex gap-2 justify-end">
                     <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
-                    <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#c45305" }}>{busy ? "…" : tr("Enregistrer")}</button>
+                    <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#e0600c" }}>{busy ? "…" : tr("Enregistrer")}</button>
                   </div>
                 </form>
               );

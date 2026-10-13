@@ -191,7 +191,7 @@ export default function FAQPage() {
                   <Link
                     href="/"
                     className="text-sm px-4 py-2.5 rounded-xl text-white font-semibold transition-opacity hover:opacity-80"
-                    style={{ background: "#c45305" }}
+                    style={{ background: "#e0600c" }}
                   >
                     {f.backHome}
                   </Link>
@@ -302,7 +302,7 @@ export default function FAQPage() {
                   type="submit"
                   disabled={sending || !form.question.trim()}
                   className="w-full text-white py-3.5 rounded-xl font-bold text-sm disabled:opacity-50 transition-opacity hover:opacity-90"
-                  style={{ background: "#c45305" }}
+                  style={{ background: "#e0600c" }}
                 >
                   {sending ? f.sending : f.submit}
                 </button>

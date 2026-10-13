@@ -89,7 +89,7 @@ export default function HomeNearbyGarages({
                 : "Turn on location to see the three closest garages, or enter your postal code in the search at the top of the page."}
             </p>
             <button type="button" onClick={onLocate} disabled={locating}
-              className="px-6 py-3 rounded-xl font-black text-white text-sm disabled:opacity-60" style={{ background: "#c45305" }}>
+              className="px-6 py-3 rounded-xl font-black text-white text-sm disabled:opacity-60" style={{ background: "#e0600c" }}>
               {locating ? (fr ? "Localisation en cours…" : "Locating…") : (fr ? "Utiliser ma position" : "Use my location")}
             </button>
             {locError && (

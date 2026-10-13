@@ -25,7 +25,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             <button onClick={reset} style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
               padding: "12px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14,
-              color: "#fff", background: "#c45305", border: "none", cursor: "pointer",
+              color: "#fff", background: "#e0600c", border: "none", cursor: "pointer",
             }}>
               Réessayer
             </button>

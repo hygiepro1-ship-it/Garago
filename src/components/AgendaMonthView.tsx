@@ -89,7 +89,7 @@ export default function AgendaMonthView({
                 aria-label={`${d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })} : ${dayAppts.length} ${lang === "en" ? "appointments" : "rendez-vous"}${freeLabel ? `, ${freeLabel}` : ""}. ${lang === "en" ? "Open the week" : "Ouvrir la semaine"}`}
                 className="flex items-baseline justify-between gap-1 text-left rounded hover:bg-black/5 px-0.5">
                 <span className="text-xs font-black" style={date === todayStr
-                  ? { background: "#c45305", color: "#fff", borderRadius: 9999, padding: "0 6px" }
+                  ? { background: "#e0600c", color: "#fff", borderRadius: 9999, padding: "0 6px" }
                   : { color: closed ? "#94a3b8" : "#0b1f3a" }}>{d.getDate()}</span>
                 <span className="text-[10px] font-semibold truncate" style={{ color: hasRoom ? "#15803d" : "#94a3b8" }}>{freeLabel}</span>
               </button>

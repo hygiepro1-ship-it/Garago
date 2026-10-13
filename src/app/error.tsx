@@ -22,7 +22,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           Quelque chose s'est mal passé. Veuillez réessayer.
         </p>
         <button onClick={reset} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-transform active:scale-[0.98]"
-          style={{ background: "#c45305" }}>
+          style={{ background: "#e0600c" }}>
           Réessayer
         </button>
       </div>

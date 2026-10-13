@@ -16,7 +16,7 @@ export default function NotFound() {
           <L fr="La page que vous cherchez n'existe pas ou a été déplacée." en="The page you are looking for does not exist or has been moved." />
         </p>
         <Link href="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-transform active:scale-[0.98]"
-          style={{ background: "#c45305" }}>
+          style={{ background: "#e0600c" }}>
           <L fr="Retour à l'accueil" en="Back to home" />
         </Link>
       </div>

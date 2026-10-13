@@ -119,7 +119,7 @@ function iconBadge(type: IconType): string {
 }
 
 /** Primary CTA button. */
-function primaryBtn(href: string, label: string, color = "#c45305"): string {
+function primaryBtn(href: string, label: string, color = "#e0600c"): string {
   return `<a href="${href}"
      style="display:inline-block;background:${color};color:#fff;padding:12px 28px;
             border-radius:5px;text-decoration:none;font-weight:700;font-size:14px">

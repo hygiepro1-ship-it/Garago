@@ -69,7 +69,7 @@ export default function LocationGuide({ className = "" }: { className?: string }
             <ol className="overflow-y-auto px-5 py-4 space-y-5">
               {STEPS[platform].map((step, i) => (
                 <li key={`${platform}-${i}`} className="flex gap-3">
-                  <span className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black text-white" style={{ background: "#c45305" }}>{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black text-white" style={{ background: "#e0600c" }}>{i + 1}</span>
                   <div className="min-w-0">
                     <p className="text-sm text-gray-700 leading-relaxed">{step.text}</p>
                     {step.image && (
