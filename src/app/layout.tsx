@@ -8,10 +8,10 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
-  title: "Garago | Trouver un garage et prendre rendez-vous en ligne au Québec",
+  title: "Garago | Trouvez le bon garage pour votre véhicule",
   description:
-    "Trouvez un garage près de chez vous au Québec : avis de conducteurs, pneus d'hiver, vidange, freins et mécanique. Filtrez par marque, service et disponibilité, puis réservez en ligne.",
-  keywords: ["garage Québec", "garage Montréal", "rendez-vous garage en ligne", "pneus d'hiver", "changement de pneus", "vidange d'huile", "mécanicien", "réparation auto", "freins", "garage près de moi"],
+    "Trouvez le meilleur garage pour votre véhicule exact au Canada. Filtrez par marque, modèle, finition, service et disponibilité. Avis vérifiés, réservation en ligne.",
+  keywords: ["garage", "mécanique", "Québec", "pneus", "entretien", "réparation auto", "vidange", "freins"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

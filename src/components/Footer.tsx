@@ -5,7 +5,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import L from "@/components/L";
 
 export default function Footer() {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const f = t.footer;
 
   const DRIVER_LINKS = [
@@ -14,15 +14,12 @@ export default function Footer() {
     { label: f.winterTires, href: "/rechercher?service=tires-winter" },
     { label: f.brakes,      href: "/rechercher?service=brakes" },
     { label: f.ac,          href: "/rechercher?service=ac" },
-    { label: lang === "en" ? "Garages by city" : "Garages par ville", href: "/garages" },
     { label: f.myAccount,   href: "/tableau-de-bord/conducteur" },
   ];
 
   const GARAGE_LINKS = [
     { label: f.registerFree, href: "/inscription/garage" },
     { label: f.pricing,      href: "/garagistes" },
-    { label: lang === "en" ? "Reduce no-shows" : "Réduire les rendez-vous manqués", href: "/garagistes/rendez-vous-manques" },
-    { label: lang === "en" ? "Online booking guide" : "Guide : agenda en ligne", href: "/garagistes/agenda-en-ligne" },
     { label: f.dashboard,    href: "/tableau-de-bord/garage" },
     { label: f.signIn,       href: "/connexion" },
   ];
