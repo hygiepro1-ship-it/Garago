@@ -128,7 +128,7 @@ const PLANS = [
       "Support prioritaire 7j/7",
     ],
     cta: "Commencer l'essai 30j gratuit",
-    ctaStyle: { backgroundColor: "#f97316", color: "white" },
+    ctaStyle: { backgroundColor: "#c45305", color: "white" },
   },
   {
     id: "annual",
@@ -419,7 +419,7 @@ export default function InscriptionGaragePage() {
                     step > s.num
                       ? { backgroundColor: "#22c55e", color: "white" }
                       : step === s.num
-                      ? { backgroundColor: "#f97316", color: "white" }
+                      ? { backgroundColor: "#c45305", color: "white" }
                       : { backgroundColor: "#e2e8f0", color: "#94a3b8" }
                   }
                 >
@@ -658,7 +658,7 @@ export default function InscriptionGaragePage() {
                     type="submit"
                     disabled={loading || !acceptTerms || password !== confirmPwd || !password}
                     className="w-full py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90 disabled:opacity-60"
-                    style={{ backgroundColor: "#f97316" }}
+                    style={{ backgroundColor: "#c45305" }}
                   >
                     {loading ? r.creating : r.next}
                   </button>
@@ -817,7 +817,7 @@ export default function InscriptionGaragePage() {
                 onClick={handleStep2}
                 disabled={savingConfig}
                 className="flex-1 py-3 rounded-xl font-black text-white transition-all hover:opacity-90 disabled:opacity-60"
-                style={{ backgroundColor: "#f97316" }}
+                style={{ backgroundColor: "#c45305" }}
               >
                 {savingConfig ? t.common.save + "…" : r.next}
               </button>
@@ -871,12 +871,12 @@ export default function InscriptionGaragePage() {
                     }}
                   >
                     {plan.tag && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black text-white" style={{ backgroundColor: "#f97316" }}>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black text-white" style={{ backgroundColor: "#c45305" }}>
                         {plan.tag}
                       </div>
                     )}
                     {isSelected && (
-                      <div className="absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: "#f97316" }}>✓</div>
+                      <div className="absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: "#c45305" }}>✓</div>
                     )}
                     <h3 className="font-black text-lg mb-1" style={{ color: plan.textColor }}>{plan.label}</h3>
                     <div className="flex items-baseline gap-1 mb-4">
@@ -917,7 +917,7 @@ export default function InscriptionGaragePage() {
                 onClick={handleFinish}
                 disabled={startingTrial}
                 className="flex-1 py-4 rounded-xl font-black text-white text-base transition-all hover:opacity-90 disabled:opacity-60"
-                style={{ backgroundColor: "#f97316" }}
+                style={{ backgroundColor: "#c45305" }}
               >
                 {startingTrial ? "Redirection…" : r.toDashboard}
               </button>

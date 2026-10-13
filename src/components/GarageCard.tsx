@@ -173,7 +173,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${garage.phone}`; }}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${garage.phone}`; } }}
                   className="w-full py-3 text-center text-sm font-bold block cursor-pointer transition-opacity hover:opacity-90"
-                  style={{ background: "#f97316", color: "#1c0a00", borderRadius: 5 }}>
+                  style={{ background: "#c45305", color: "#1c0a00", borderRadius: 5 }}>
                   {fr ? "Appeler" : "Call"} · {garage.phone}
                 </span>
               )}
@@ -195,7 +195,7 @@ export default function GarageCard({ garage, highlightService, distance, nextAva
                 )}
               </div>
               <div className="w-full py-3 text-center text-sm font-bold transition-opacity hover:opacity-90"
-                style={{ background: "#f97316", color: "#1c0a00", borderRadius: 5 }}>
+                style={{ background: "#c45305", color: "#1c0a00", borderRadius: 5 }}>
                 {fr ? "Réserver un rendez-vous" : c.bookAppt}
               </div>
             </>

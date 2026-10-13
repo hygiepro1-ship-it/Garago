@@ -263,7 +263,7 @@ export default function HomePage() {
               <div className="pr-2 py-2">
                 <button type="submit" aria-label={h.searchBtn}
                   className="flex items-center justify-center gap-1.5 px-4 sm:px-6 min-h-[44px] sm:min-h-0 py-2 sm:py-3 rounded-xl font-black text-white text-sm"
-                  style={{ background: "#f97316" }}>
+                  style={{ background: "#c45305" }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                   </svg>
@@ -346,7 +346,7 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-3">
                 <Link href="/inscription/garage"
                   className="px-6 py-3.5 rounded-xl font-black text-white text-sm"
-                  style={{ background: "#f97316" }}>
+                  style={{ background: "#c45305" }}>
                   {h.ctaBtn}
                 </Link>
                 <Link href="/garagistes"

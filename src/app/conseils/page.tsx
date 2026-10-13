@@ -72,7 +72,7 @@ function FeaturedArticle({ article }: { article: Article }) {
           </span>
           <Link href={`/conseils/${article.slug}`}
             className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
-            style={{ background: "#f97316" }}>
+            style={{ background: "#c45305" }}>
             <L fr="Lire l'article" en="Read the article" />
           </Link>
         </div>
@@ -188,7 +188,7 @@ export default function ConseilsPage() {
           </p>
           <Link href="/inscription/conducteur"
             className="inline-block px-8 py-3.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90"
-            style={{ background: "#f97316" }}>
+            style={{ background: "#c45305" }}>
             <L fr="Créer un compte gratuitement" en="Create a free account" />
           </Link>
         </div>

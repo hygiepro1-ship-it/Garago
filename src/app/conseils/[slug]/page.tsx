@@ -216,7 +216,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <h3 className="text-xl font-black text-white mb-4"><L fr="Obtenez un devis ou prenez rendez-vous en ligne" en="Get a quote or book an appointment online" /></h3>
             <Link href={`/rechercher?service=${article.category.toLowerCase()}`}
               className="inline-block px-6 py-3 rounded-xl text-sm font-black text-white"
-              style={{ background: "#f97316" }}>
+              style={{ background: "#c45305" }}>
               <L fr="Trouver un garage" en="Find a garage" />
             </Link>
           </div>

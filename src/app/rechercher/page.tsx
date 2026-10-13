@@ -284,7 +284,7 @@ function SearchContent() {
             <button
               onClick={applyFilters}
               className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
-              style={{ background: "#f97316" }}
+              style={{ background: "#c45305" }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -301,7 +301,7 @@ function SearchContent() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
               </svg>
-              {s.filters} {activeCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-white text-xs font-black" style={{ background: "#f97316" }}>{activeCount}</span>}
+              {s.filters} {activeCount > 0 && <span className="px-1.5 py-0.5 rounded-full text-white text-xs font-black" style={{ background: "#c45305" }}>{activeCount}</span>}
             </button>
 
             {/* Active vehicle chip */}
@@ -369,7 +369,7 @@ function SearchContent() {
                         onClick={() => setMinRating(r)}
                         className="flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all"
                         style={minRating === r
-                          ? { background: "#f97316", color: "white", borderColor: "#f97316" }
+                          ? { background: "#c45305", color: "white", borderColor: "#f97316" }
                           : { background: "white", color: "#475569", borderColor: "#e2e8f0" }
                         }
                       >
@@ -666,7 +666,7 @@ function SearchContent() {
                   {["", "3", "4", "4.5"].map((r) => (
                     <button key={r} onClick={() => setMinRating(r)}
                       className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all"
-                      style={minRating === r ? { background: "#f97316", color: "white", borderColor: "#f97316" } : { color: "#475569", borderColor: "#e2e8f0" }}>
+                      style={minRating === r ? { background: "#c45305", color: "white", borderColor: "#f97316" } : { color: "#475569", borderColor: "#e2e8f0" }}>
                       {r ? `${r}★` : s.all}
                     </button>
                   ))}
