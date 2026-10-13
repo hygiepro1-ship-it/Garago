@@ -1413,6 +1413,12 @@ export default function DashboardGaragePage() {
       setBlockedSlots(prev => [...prev, slot]);
       setShowBlockForm(false);
       setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
+      const clash = Number(slot.conflicts) || 0;
+      if (clash > 0) {
+        window.alert(tr.en
+          ? `Slot blocked. Note: ${clash} appointment${clash > 1 ? "s are" : " is"} already booked in this period. Blocking does not cancel them: contact ${clash > 1 ? "those customers" : "that customer"} if needed.`
+          : `Créneau bloqué. Attention : ${clash} rendez-vous ${clash > 1 ? "sont déjà prévus" : "est déjà prévu"} sur cette période. Bloquer ne les annule pas : prévenez ${clash > 1 ? "ces clients" : "ce client"} au besoin.`);
+      }
       setSuccess(tr("Créneau bloqué ✓"));
       setTimeout(() => setSuccess(""), 3000);
     } else {
@@ -1466,6 +1472,7 @@ export default function DashboardGaragePage() {
     e.preventDefault();
     setSavingBlock(true);
     let saved = 0;
+    let clashes = 0;
     let failure = "";
     for (const date of selectedDays) {
       const res = await gfetch("/api/blocked-slots", {
@@ -1477,6 +1484,7 @@ export default function DashboardGaragePage() {
         const slot = await res.json();
         setBlockedSlots(prev => [...prev, slot]);
         saved++;
+        clashes += Number(slot.conflicts) || 0;
       } else {
         const d = await res.json().catch(() => ({}));
         failure = d.error ?? tr("Impossible de bloquer ces journées.");
@@ -1486,6 +1494,11 @@ export default function DashboardGaragePage() {
     if (saved === 0) { window.alert(failure); return; }
     setShowBlockForm(false);
     setBlockForm({ date: "", startTime: "08:00", endTime: "17:00", reason: "", allDay: false });
+    if (clashes > 0) {
+      window.alert(tr.en
+        ? `Slots blocked. Note: ${clashes} appointment${clashes > 1 ? "s are" : " is"} already booked in these periods. Blocking does not cancel them: contact the customers if needed.`
+        : `Créneaux bloqués. Attention : ${clashes} rendez-vous ${clashes > 1 ? "sont déjà prévus" : "est déjà prévu"} sur ces périodes. Bloquer ne les annule pas : prévenez les clients au besoin.`);
+    }
     setSuccess(tr.en ? `Slots blocked for ${saved} day${saved > 1 ? "s" : ""} ✓` : `Créneaux bloqués pour ${saved} jour${saved > 1 ? "s" : ""} ✓`);
     setTimeout(() => setSuccess(""), 3000);
   }
