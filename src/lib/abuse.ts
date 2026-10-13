@@ -22,6 +22,19 @@ export async function isRateLimited(key: string, max: number, windowMs: number):
   return false;
 }
 
+/** Lecture seule : vrai si la limite est atteinte, sans enregistrer de tentative (voir recordAttempt). */
+export async function isOverLimit(key: string, max: number, windowMs: number): Promise<boolean> {
+  const recent = await prisma.registrationAttempt.count({
+    where: { ip: key, createdAt: { gt: new Date(Date.now() - windowMs) } },
+  });
+  return recent >= max;
+}
+
+/** Enregistre une tentative pour la clé (à appeler seulement quand l'action a vraiment eu lieu). */
+export async function recordAttempt(key: string): Promise<void> {
+  await prisma.registrationAttempt.create({ data: { ip: key } });
+}
+
 /** Téléphone nord-américain : 10 chiffres (ou 11 avec l'indicatif 1). Retourne les 10 chiffres, ou null. */
 export function normalizePhone(raw: unknown): string | null {
   const digits = String(raw ?? "").replace(/\D/g, "");

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
-import { cleanText, isValidEmail, isRateLimited } from "@/lib/abuse";
+import { cleanText, isValidEmail, isOverLimit, recordAttempt } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { toE164 } from "@/lib/sms";
@@ -81,13 +81,15 @@ export async function POST(req: NextRequest) {
     if (!e164) {
       return NextResponse.json({ error: "Les textos ne partent que vers un numéro canadien à 10 chiffres. Choisissez le courriel, ou corrigez le numéro." }, { status: 400 });
     }
+    // Le compteur n'avance qu'une fois le rendez-vous créé : une saisie refusée (créneau occupé, erreur de
+    // formulaire) n'envoie aucun texto et ne doit pas user le plafond.
     // Chaque texto est facturé à Garago : plafond par garage et par numéro destinataire (compte piraté, saisie en rafale).
     // 200 par jour : un garage qui reporte d'un coup tout son carnet de rendez-vous (début de saison
     // des pneus) ne doit pas être bloqué en cours de saisie.
-    if (await isRateLimited(`smsg:${garage.id}`, 200, 24 * 60 * 60 * 1000)) {
+    if (await isOverLimit(`smsg:${garage.id}`, 200, 24 * 60 * 60 * 1000)) {
       return NextResponse.json({ error: "Limite de textos atteinte pour aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
     }
-    if (await isRateLimited(`smsn:${e164}`, 3, 24 * 60 * 60 * 1000)) {
+    if (await isOverLimit(`smsn:${e164}`, 3, 24 * 60 * 60 * 1000)) {
       return NextResponse.json({ error: "Ce numéro a déjà reçu plusieurs textos aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
     }
   }
@@ -173,6 +175,12 @@ export async function POST(req: NextRequest) {
       confirmBy: plan.confirmBy, confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
     },
   });
+
+  if (contactChannel === "SMS") {
+    const e164 = toE164(String(customerPhone));
+    await Promise.all([recordAttempt(`smsg:${garage.id}`), e164 ? recordAttempt(`smsn:${e164}`) : null])
+      .catch((e) => console.error("[SMS LIMIT]", e));
+  }
 
   // À moins de 48 h, la demande de confirmation part tout de suite (sinon la tâche planifiée s'en charge).
   if (plan.confirmTier === "MANUAL" && start.getTime() - now.getTime() <= MANUAL_REQUEST_HOURS_BEFORE * 60 * 60 * 1000) {
