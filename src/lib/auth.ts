@@ -7,6 +7,8 @@ import prisma from "@/lib/prisma";
 
 const MAX_LOGIN_ATTEMPTS = 8;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+// Empreinte factice (coût 12, comme les vrais mots de passe) ; elle ne correspond à aucun mot de passe réel.
+const DUMMY_HASH = "$2b$12$bbhpbTGWnMLjtHdE.zC2y.xxzxA2WB8nxeXDX1vZRnHyblWaSmqgi";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
@@ -62,6 +64,9 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
 
         if (!user || !user.password) {
+          // Même durée de traitement qu'un vrai mot de passe : sans cela, la réponse instantanée trahirait
+          // qu'aucun compte n'existe pour ce courriel (énumération des comptes par le temps de réponse).
+          await bcrypt.compare(credentials.password, DUMMY_HASH);
           await prisma.loginAttempt.create({ data: { email } });
           return null;
         }
