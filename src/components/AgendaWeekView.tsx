@@ -247,7 +247,7 @@ export default function AgendaWeekView({
           <div>
             {rows.map((m) => (
               <div key={m} className="text-[12px] font-black text-right pr-1.5 tabular-nums" style={{ height: ROW_H, lineHeight: "12px", color: "#0b1f3a" }}>
-                {m % 60 === 0 ? toHHMM(m) : ""}
+                {m % 60 === 0 ? toHHMM(m) : <span className="font-semibold" style={{ color: "#64748b" }}>{toHHMM(m)}</span>}
               </div>
             ))}
           </div>
@@ -305,10 +305,10 @@ export default function AgendaWeekView({
                     <button key={m} type="button" onClick={() => onPickSlot(d, toHHMM(m))}
                       aria-label={tr(`Disponible : ${label}. Ajouter un rendez-vous`, `Available: ${label}. Add an appointment`)}
                       className="block w-full hover:bg-green-100 focus-visible:bg-green-100"
-                      style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #dcfce7`, touchAction: "manipulation" }} />
+                      style={{ height: ROW_H, background: "#f0fdf4", borderTop: `1px solid ${m % 60 === 0 ? "#86efac" : "#bbf7d0"}`, touchAction: "manipulation" }} />
                   ) : (
                     <div key={m} aria-hidden="true"
-                      style={{ height: ROW_H, background: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} ${open ? "#f1f5f9" : "#e2e8f0"}` }} />
+                      style={{ height: ROW_H, background: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", borderTop: `1px solid ${m % 60 === 0 ? "#cbd5e1" : "#e2e8f0"}` }} />
                   );
                 })}
 
