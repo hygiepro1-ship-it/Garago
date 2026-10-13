@@ -124,6 +124,24 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+function hexToHue(hex: string | null): number {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex ?? "");
+  if (!m) return 0;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (d === 0) return 0;
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return Math.round(((h * 60) + 360) % 360);
+}
+
+// La pipette (EyeDropper) n'existe que sur Chrome/Edge de bureau : on ne montre pas un bouton qui ne marche pas.
+function useEyeDropper(): boolean {
+  const [ok, setOk] = useState(false);
+  useEffect(() => { setOk("EyeDropper" in window); }, []);
+  return ok;
+}
+
 const BG_PRESETS = [
   "#ffffff","#f8fafc","#f1f5f9","#e2e8f0","#94a3b8","#64748b","#334155","#1e293b","#0f172a","#000000",
   "#fef9c3","#fde047","#eab308","#ca8a04","#78350f",
@@ -148,12 +166,12 @@ function BgColorPicker({ value, onChange, onClose }: {
     <div className="border border-gray-200 rounded-xl p-3 bg-white shadow-lg space-y-3 z-10 relative">
       {/* Preset swatches */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">{tr("Couleurs rapides")}</p>
-        <div className="grid grid-cols-10 gap-1">
+        <p className="text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wide">{tr("Couleurs rapides")}</p>
+        <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 sm:gap-1">
           {BG_PRESETS.map(c => (
-            <button key={c} type="button" title={c}
+            <button key={c} type="button" title={c} aria-label={c} aria-pressed={value === c}
               onClick={() => { onChange(c); setHex(c); }}
-              className={`w-6 h-6 rounded-md transition-all hover:scale-110 border-2 ${value === c ? "border-orange-500 scale-110" : "border-transparent hover:border-gray-300"}`}
+              className={`w-full min-h-[36px] sm:w-6 sm:h-6 sm:min-h-0 rounded-md transition-all hover:scale-110 border-2 ${value === c ? "border-orange-500 scale-110" : "border-gray-200 sm:border-transparent hover:border-gray-300"}`}
               style={{ background: c }}
             />
           ))}
@@ -162,16 +180,33 @@ function BgColorPicker({ value, onChange, onClose }: {
 
       {/* Hue strip — click to pick */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wide">{tr("Teinte personnalisée")}</p>
+        <p className="text-xs text-gray-500 mb-1.5 font-medium uppercase tracking-wide">{tr("Teinte personnalisée")}</p>
         <div
-          className="h-7 rounded-lg cursor-crosshair border border-gray-200 select-none"
-          style={{ background: "linear-gradient(to right,hsl(0,70%,55%),hsl(30,70%,55%),hsl(60,70%,55%),hsl(90,70%,55%),hsl(120,70%,55%),hsl(150,70%,55%),hsl(180,70%,55%),hsl(210,70%,55%),hsl(240,70%,55%),hsl(270,70%,55%),hsl(300,70%,55%),hsl(330,70%,55%),hsl(360,70%,55%))" }}
-          onClick={(e) => {
+          role="slider" tabIndex={0} aria-label={tr("Teinte personnalisée")}
+          aria-valuemin={0} aria-valuemax={360} aria-valuenow={hexToHue(value)}
+          className="h-11 sm:h-7 rounded-lg cursor-crosshair border border-gray-200 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+          onKeyDown={(e) => {
+            const step = e.key === "ArrowRight" || e.key === "ArrowUp" ? 5 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -5 : 0;
+            if (!step) return;
+            e.preventDefault();
+            const color = hslToHex((hexToHue(value) + step + 360) % 360, 70, 55);
+            onChange(color); setHex(color);
+          }}
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
             const color = hslToHex(Math.round(ratio * 360), 70, 55);
             onChange(color); setHex(color);
           }}
+          onPointerMove={(e) => {
+            if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const color = hslToHex(Math.round(ratio * 360), 70, 55);
+            onChange(color); setHex(color);
+          }}
+          style={{ touchAction: "none", background: "linear-gradient(to right,hsl(0,70%,55%),hsl(30,70%,55%),hsl(60,70%,55%),hsl(90,70%,55%),hsl(120,70%,55%),hsl(150,70%,55%),hsl(180,70%,55%),hsl(210,70%,55%),hsl(240,70%,55%),hsl(270,70%,55%),hsl(300,70%,55%),hsl(330,70%,55%),hsl(360,70%,55%))" }}
         />
       </div>
 
@@ -179,26 +214,32 @@ function BgColorPicker({ value, onChange, onClose }: {
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg border border-gray-200 flex-shrink-0 shadow-sm"
           style={{ background: value ?? "linear-gradient(135deg,#ccc 50%,#fff 50%)" }} />
-        <input type="text" placeholder="#rrggbb"
-          className="flex-1 text-xs font-mono border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
-          value={hex}
-          onChange={e => { setHex(e.target.value); if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value); }}
+        <input type="text" placeholder="#rrggbb" aria-label={tr("Code couleur hexadécimal")}
+          className="flex-1 min-w-0 min-h-[44px] sm:min-h-0 text-base sm:text-xs font-mono border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
+          value={hex} maxLength={7} autoCapitalize="none" spellCheck={false}
+          onChange={e => {
+            const v = e.target.value.trim();
+            setHex(v);
+            // « ff7a00 » sans dièse est accepté : on le complète.
+            const full = /^[0-9a-fA-F]{6}$/.test(v) ? `#${v}` : v;
+            if (/^#[0-9a-fA-F]{6}$/.test(full)) onChange(full.toLowerCase());
+          }}
         />
         <input ref={nativeRef} type="color" className="hidden"
           value={value ?? "#000000"}
           onChange={e => { onChange(e.target.value); setHex(e.target.value); }} />
         <button type="button" title={tr("Ouvrir la palette complète du système")}
           onClick={() => nativeRef.current?.click()}
-          className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 font-medium whitespace-nowrap">
+          className="text-xs px-3 min-h-[44px] sm:min-h-0 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium whitespace-nowrap">
           {tr("Palette…")}
         </button>
-        <button type="button" onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 font-bold px-1">✕</button>
+        <button type="button" onClick={onClose} aria-label={tr("Fermer")}
+          className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-gray-500 hover:text-gray-700 font-bold px-1">✕</button>
       </div>
 
       {/* Reset */}
       <button type="button" onClick={() => { onChange(null); setHex(""); onClose(); }}
-        className="w-full text-xs py-1.5 rounded-lg border border-dashed border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors">
+        className="w-full text-xs py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-dashed border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors">
         {tr("↺ Fond automatique (image floutée)")}
       </button>
     </div>
@@ -1120,6 +1161,7 @@ export default function DashboardGaragePage() {
   const [coverBgColor, setCoverBgColor]         = useState<string | null>(null);
   const [logoBgColor,  setLogoBgColor]          = useState<string | null>(null);
   const [showCoverColorPicker, setShowCoverColorPicker] = useState(false);
+  const hasEyeDropper = useEyeDropper();
   const [showLogoColorPicker,  setShowLogoColorPicker]  = useState(false);
   useEffect(() => {
     if (garage) {
@@ -3091,7 +3133,7 @@ export default function DashboardGaragePage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500 w-16 flex-shrink-0">Zoom</span>
                     <input
-                      type="range" min="0.2" max="3" step="0.01"
+                      type="range" min="0.2" max="3" step="0.01" aria-label="Zoom"
                       value={coverPos.zoom}
                       onChange={e => setCoverPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
                       className="flex-1 accent-orange-500 h-2 cursor-pointer"
@@ -3099,27 +3141,29 @@ export default function DashboardGaragePage() {
                     <span className="text-xs text-gray-500 w-10 text-right font-mono">{Math.round(coverPos.zoom * 100)}%</span>
                   </div>
                   {/* Background color toggle */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-gray-500 w-16 flex-shrink-0">{tr("Fond")}</span>
-                    <button type="button"
+                    <button type="button" aria-expanded={showCoverColorPicker}
                       onClick={() => setShowCoverColorPicker(v => !v)}
-                      className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium">
+                      className="flex items-center gap-1.5 text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium">
                       <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
                         style={{ background: coverBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
                       {coverBgColor ?? "Auto"}
                     </button>
                     {coverBgColor && (
                       <button type="button" onClick={() => { setCoverBgColor(null); setShowCoverColorPicker(false); }}
-                        className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                        aria-label={tr("↺ Fond automatique (image floutée)")}
+                        className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-gray-500 hover:text-gray-700 font-bold">✕</button>
                     )}
+                    {hasEyeDropper && (
                     <button type="button" title={tr("Pipette : choisir une couleur à l'écran")}
                       onClick={async () => {
-                        if (!("EyeDropper" in window)) { alert("Pipette non disponible sur ce navigateur (Chrome/Edge requis)."); return; }
                         try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
                       }}
-                      className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
+                      className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                       {tr("Pipette")}
                     </button>
+                    )}
                   </div>
                   {showCoverColorPicker && (
                     <BgColorPicker
@@ -3131,16 +3175,16 @@ export default function DashboardGaragePage() {
                   <div className="flex items-center gap-2">
                     <button type="button"
                       onClick={() => coverInputRef.current?.click()}
-                      className="text-xs px-3 py-1.5 rounded-lg font-semibold border"
+                      className="text-xs px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg font-semibold border"
                       style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
                       {uploadingCover ? tr("Téléchargement…") : "Changer l'image"}
                     </button>
                     <button type="button"
                       onClick={() => setCoverPos({ tx: 0, ty: 0, zoom: 1 })}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+                      className="text-xs px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
                       {tr("Réinitialiser")}
                     </button>
-                    <span className="text-xs text-gray-400 ml-1">{tr("Sauvegardez pour appliquer")}</span>
+                    <span className="text-xs text-gray-500 ml-1">{tr("Sauvegardez pour appliquer")}</span>
                   </div>
                 </div>
               )}
@@ -3222,7 +3266,7 @@ export default function DashboardGaragePage() {
                   {garage.logoUrl && (
                     <div className="mt-2 w-24 space-y-1.5 relative">
                       <input
-                        type="range" min="0.2" max="3" step="0.01"
+                        type="range" min="0.2" max="3" step="0.01" aria-label="Zoom"
                         value={logoPos.zoom}
                         onChange={e => setLogoPos(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
                         className="w-full accent-orange-500 cursor-pointer"
@@ -3230,25 +3274,27 @@ export default function DashboardGaragePage() {
                       <p className="text-xs text-gray-400 text-center font-mono">{Math.round(logoPos.zoom * 100)}%</p>
                       {/* Background colour toggle */}
                       <div className="flex items-center gap-1 pt-0.5">
-                        <button type="button"
+                        <button type="button" aria-expanded={showLogoColorPicker}
                           onClick={() => setShowLogoColorPicker(v => !v)}
-                          className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 flex-1 justify-center">
+                          className="flex items-center gap-1 text-xs px-1.5 py-0.5 min-h-[44px] sm:min-h-0 rounded border border-gray-200 hover:bg-gray-50 text-gray-600 flex-1 justify-center">
                           <div className="w-3.5 h-3.5 rounded border border-gray-300 flex-shrink-0"
                             style={{ background: logoBgColor ?? "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" }} />
                           {tr("Fond")}
                         </button>
                         {logoBgColor && (
                           <button type="button" onClick={() => { setLogoBgColor(null); setShowLogoColorPicker(false); }}
-                            className="text-xs text-gray-400 hover:text-gray-600 font-bold">✕</button>
+                            aria-label={tr("↺ Fond automatique (image floutée)")}
+                            className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-gray-500 hover:text-gray-700 font-bold">✕</button>
                         )}
+                        {hasEyeDropper && (
                         <button type="button" title={tr("Pipette")}
                           onClick={async () => {
-                            if (!("EyeDropper" in window)) { alert("Pipette non disponible."); return; }
                             try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
                           }}
-                          className="text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500">
+                          className="text-xs px-1.5 py-0.5 min-h-[44px] sm:min-h-0 rounded border border-gray-200 hover:bg-gray-50 text-gray-600">
                           {tr("Pipette")}
                         </button>
+                        )}
                       </div>
                       {showLogoColorPicker && (
                         <div className="absolute left-0 top-full mt-1 z-20 w-72">
