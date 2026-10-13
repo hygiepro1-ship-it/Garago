@@ -20,7 +20,14 @@ export async function syncSubscriptionToGarage(sub: import("stripe").Stripe.Subs
     ? new Date(subAny.current_period_end * 1000)
     : null;
 
-  const status = isTrialing ? "TRIAL" : isActive ? "ACTIVE" : sub.status.toUpperCase();
+  // Le tableau de bord ne connaît que TRIAL, ACTIVE, PAST_DUE et EXPIRED : tout autre statut Stripe (« canceled »,
+  // « unpaid », « incomplete_expired ») y afficherait une page vide. « incomplete » (paiement en cours de
+  // confirmation) et « paused » ne changent rien : le garage garde son état actuel.
+  if (["incomplete", "paused"].includes(sub.status)) return;
+  const status = isTrialing ? "TRIAL"
+    : isActive ? "ACTIVE"
+    : sub.status === "past_due" ? "PAST_DUE"
+    : "EXPIRED";
 
   await prisma.garage.updateMany({
     where: { stripeCustomerId: sub.customer as string },

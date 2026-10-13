@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
       // ── Abonnement activé / renouvelé ────────────────────────────────────
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        const sub = event.data.object as import("stripe").Stripe.Subscription;
+        const eventSub = event.data.object as import("stripe").Stripe.Subscription;
+        // Stripe ne garantit pas l'ordre de livraison : un ancien « updated » arrivant après un plus récent
+        // écraserait l'état réel. On relit donc l'abonnement courant plutôt que de croire la copie de l'événement.
+        const sub = await stripe.subscriptions.retrieve(eventSub.id).catch(() => eventSub);
         await handleSubscriptionChange(sub);
         break;
       }
@@ -50,24 +53,40 @@ export async function POST(req: NextRequest) {
       // ── Abonnement résilié ───────────────────────────────────────────────
       case "customer.subscription.deleted": {
         const sub = event.data.object as import("stripe").Stripe.Subscription;
-        await prisma.garage.updateMany({
-          where: { stripeCustomerId: sub.customer as string },
-          data:  { subscriptionStatus: "EXPIRED", pastDueSince: null },
-        });
+        // L'événement d'un ancien abonnement peut arriver après un réabonnement : on ne coupe l'accès que si
+        // le client n'a plus aucun abonnement vivant.
+        const live = (await stripe.subscriptions.list({ customer: sub.customer as string, status: "all", limit: 10 }))
+          .data.find((s) => s.id !== sub.id && ["active", "trialing", "past_due"].includes(s.status));
+        if (live) {
+          await syncSubscriptionToGarage(live);
+        } else {
+          await prisma.garage.updateMany({
+            where: { stripeCustomerId: sub.customer as string },
+            data:  { subscriptionStatus: "EXPIRED", pastDueSince: null },
+          });
+        }
         break;
       }
 
       // ── Paiement réussi (renouvellement mensuel + parrainage) ────────────
       case "invoice.payment_succeeded": {
         const inv = event.data.object as any;
-        if (inv.subscription) {
+        // Depuis l'API « basil », l'abonnement d'une facture n'est plus dans `invoice.subscription` mais dans
+        // `invoice.parent.subscription_details.subscription` : l'ancien champ seul rendait tout ce bloc inerte
+        // (aucune récompense de parrainage). On lit les deux.
+        const invSubRaw = inv.parent?.subscription_details?.subscription ?? inv.subscription;
+        const invSubId: string | null = typeof invSubRaw === "string" ? invSubRaw : invSubRaw?.id ?? null;
+        if (invSubId) {
           const { default: Stripe2 } = await import("stripe");
           const stripe2 = new Stripe2(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-04-22.dahlia" });
-          const sub = await stripe2.subscriptions.retrieve(inv.subscription as string);
+          const sub = await stripe2.subscriptions.retrieve(invSubId);
           await handleSubscriptionChange(sub);
 
           // ── Commission de parrainage au 1er paiement ──────────────────
-          if (inv.billing_reason === "subscription_create" && (inv.amount_paid ?? 0) > 0) {
+          // Tous les nouveaux garages commencent par un essai : la facture de création est à 0 $ et le premier
+          // paiement réel arrive avec la facture de renouvellement. La récompense se déclenche donc à la première
+          // facture payée, quelle que soit sa nature ; le drapeau referralRewardGranted empêche tout doublon.
+          if ((inv.amount_paid ?? 0) > 0) {
             const newGarage = await prisma.garage.findFirst({
               where: { stripeCustomerId: inv.customer as string },
             });
@@ -121,13 +140,13 @@ export async function POST(req: NextRequest) {
                 if (newTier >= 3 && !referrer.palier3Applied && referrer.stripeCustomerId) {
                   updateData.palier3Applied = true;
                   try {
-                    const isAnnual = inv.lines?.data?.[0]?.plan?.interval === "year";
+                    const subs = await stripe2.subscriptions.list({ customer: referrer.stripeCustomerId, status: "active", limit: 1 });
+                    const isAnnual = subs.data[0]?.items?.data?.[0]?.price?.recurring?.interval === "year";
                     const pct = isAnnual ? 30 : 20;
                     const COUPON_ID3 = `garago-ambassador-${pct}pct`;
                     try { await stripe2.coupons.retrieve(COUPON_ID3); } catch {
                       await stripe2.coupons.create({ id: COUPON_ID3, percent_off: pct, duration: "once", name: `−${pct}% Ambassadeur Garago (palier 3)` });
                     }
-                    const subs = await stripe2.subscriptions.list({ customer: referrer.stripeCustomerId, status: "active", limit: 1 });
                     if (subs.data[0]) await stripe2.subscriptions.update(subs.data[0].id, { discounts: [{ coupon: COUPON_ID3 }] });
                   } catch (e) { console.error("Erreur coupon palier 3 :", e); }
                 }
@@ -159,6 +178,13 @@ export async function POST(req: NextRequest) {
       // ── Paiement échoué ──────────────────────────────────────────────────
       case "invoice.payment_failed": {
         const inv = event.data.object as any;
+        const failedSubRaw = inv.parent?.subscription_details?.subscription ?? inv.subscription;
+        const failedSubId: string | null = typeof failedSubRaw === "string" ? failedSubRaw : failedSubRaw?.id ?? null;
+        if (failedSubId) {
+          const failedSub = await stripe.subscriptions.retrieve(failedSubId).catch(() => null);
+          // Facture d'un abonnement déjà résilié ou expiré : ne pas remettre le garage en « paiement échoué ».
+          if (failedSub && ["canceled", "incomplete_expired"].includes(failedSub.status)) break;
+        }
         // Démarre la période de grâce au 1er échec seulement (ne pas remettre le
         // compteur à zéro à chaque nouvelle tentative de Stripe).
         await prisma.garage.updateMany({
