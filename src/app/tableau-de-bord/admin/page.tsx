@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminPilotStats from "@/components/AdminPilotStats";
+import { isPilotGarage } from "@/lib/pilot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -903,7 +904,7 @@ export default function AdminDashboard() {
                           <span>{g.avgRating ? `${g.avgRating}/5` : "—"} ({g.reviewCount} avis) · {g.appointmentCount} RDV</span>
                           <span>{new Date(g.createdAt).toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}</span>
                         </div>
-                        {!cm && (
+                        {!cm && isPilotGarage(g.slug) && (
                           <button type="button" onClick={() => { setPilotGarage({ id: g.id, name: g.name }); setTab("pilote"); }}
                             className="mt-2 text-xs font-semibold underline text-orange-600">Résultats du projet pilote</button>
                         )}
@@ -956,7 +957,7 @@ export default function AdminDashboard() {
                                   {g.name}{g.isAmbassador && " ★"}
                                 </Link>
                                 <p className="text-xs text-gray-400">{g.owner?.email ?? "—"}</p>
-                                {!cm && (
+                                {!cm && isPilotGarage(g.slug) && (
                                   <button type="button" onClick={() => { setPilotGarage({ id: g.id, name: g.name }); setTab("pilote"); }}
                                     className="text-xs font-semibold underline text-orange-600">Résultats du projet pilote</button>
                                 )}
