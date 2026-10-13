@@ -1667,7 +1667,7 @@ export default function DashboardGaragePage() {
               <span className="bg-red-400 text-red-900 text-xs font-bold px-2 py-1 rounded-full">{tr("Expiré")}</span>
             )}
             <Link href={`/garage/${garage.slug}?from=dashboard`}
-              className="bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
+              className="inline-flex items-center min-h-[44px] sm:min-h-0 bg-white/20 border border-white/30 text-white text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-white/30 transition-colors whitespace-nowrap">
               {tr("Voir mon profil")}
             </Link>
           </div>
@@ -1972,7 +1972,7 @@ export default function DashboardGaragePage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
-              <a href="#agenda" className="text-sm font-semibold underline text-gray-600 whitespace-nowrap">{tr("Voir le calendrier ↓")}</a>
+              <a href="#agenda" className="inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold underline text-gray-600 whitespace-nowrap">{tr("Voir le calendrier ↓")}</a>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
@@ -2079,7 +2079,7 @@ export default function DashboardGaragePage() {
                   ‹
                 </button>
                 <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
+                  className="text-xs px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                   {tr("Aujourd'hui")}
                 </button>
                 <button onClick={() => changeMonth(1)} aria-label={tr("Mois suivant")}
@@ -2449,7 +2449,7 @@ export default function DashboardGaragePage() {
                         ) : (
                           <button
                             onClick={() => { setReportingId(reportingId === r.id ? null : r.id); setReportReason(""); }}
-                            className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
+                            className="text-xs px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg border font-medium transition-colors"
                             style={{ background: reportingId === r.id ? "#fef2f2" : undefined, borderColor: "#fca5a5", color: "#dc2626" }}>
                             {tr("Signaler")}
                           </button>
@@ -2459,7 +2459,7 @@ export default function DashboardGaragePage() {
                             if (replyingTo === r.id) { setReplyingTo(null); setReplyText(""); }
                             else { setReplyingTo(r.id); setReplyText(r.ownerReply ?? ""); }
                           }}
-                          className="text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors"
+                          className="text-xs px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg border font-medium transition-colors"
                           style={{ background: "#fff4ed", borderColor: "#fed7aa", color: "#c2410c" }}>
                           {r.ownerReply ? tr("Modifier") : tr("Répondre")}
                         </button>
@@ -2653,7 +2653,7 @@ export default function DashboardGaragePage() {
                         if (posts < 2) return null;
                         const chosen = (active.bays ?? []).filter((b) => b >= 1 && b <= posts);
                         const setBays = (bays: number[]) => setServices(services.map((s) => s.categoryId === cat.id ? { ...s, bays } : s));
-                        const chip = (on: boolean) => `px-2.5 py-1 rounded-lg text-xs font-bold border ${on ? "text-white border-transparent" : "bg-white text-gray-600 border-gray-300"}`;
+                        const chip = (on: boolean) => `px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-bold border ${on ? "text-white border-transparent" : "bg-white text-gray-600 border-gray-300"}`;
                         return (
                           <div role="group" aria-label={tr.en ? `Bays for ${cat.nameEn}` : `Portes pour ${cat.name}`}>
                             <span className="block text-xs text-gray-500 mb-1">{tr("Portes où ce service se fait")}</span>
@@ -2806,14 +2806,14 @@ export default function DashboardGaragePage() {
             {DAYS.map((day, i) => {
               const h = horaires[i];
               return (
-                <div key={day} className={`flex items-center gap-4 p-3 rounded-xl border ${h.isClosed ? "border-gray-100 bg-gray-50" : "border-gray-200"}`}>
+                <div key={day} className={`flex flex-wrap items-center gap-x-4 gap-y-2 p-3 rounded-xl border ${h.isClosed ? "border-gray-100 bg-gray-50" : "border-gray-200"}`}>
                   <span className="w-24 text-sm font-semibold text-gray-700">{day}</span>
-                  <input type="time" value={h.openTime} onChange={(e) => setHoraireField(i, "openTime", e.target.value)}
+                  <input type="time" aria-label={`${day} : ${tr("Ouverture")}`} value={h.openTime} onChange={(e) => setHoraireField(i, "openTime", e.target.value)}
                     disabled={h.isClosed} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm disabled:opacity-40" />
                   <span className="text-gray-400 text-sm">—</span>
-                  <input type="time" value={h.closeTime} onChange={(e) => setHoraireField(i, "closeTime", e.target.value)}
+                  <input type="time" aria-label={`${day} : ${tr("Fermeture")}`} value={h.closeTime} onChange={(e) => setHoraireField(i, "closeTime", e.target.value)}
                     disabled={h.isClosed} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm disabled:opacity-40" />
-                  <label className="flex items-center gap-2 text-sm text-gray-600 ml-auto cursor-pointer">
+                  <label className="flex items-center gap-2 min-h-[44px] sm:min-h-0 text-sm text-gray-600 ml-auto cursor-pointer">
                     <input type="checkbox" checked={h.isClosed} onChange={(e) => setHoraireField(i, "isClosed", e.target.checked)} className="accent-red-500" />
                     {tr("Fermé")}
                   </label>
