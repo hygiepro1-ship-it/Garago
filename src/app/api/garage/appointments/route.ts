@@ -83,12 +83,8 @@ export async function POST(req: NextRequest) {
     }
     // Le compteur n'avance qu'une fois le rendez-vous créé : une saisie refusée (créneau occupé, erreur de
     // formulaire) n'envoie aucun texto et ne doit pas user le plafond.
-    // Chaque texto est facturé à Garago : plafond par garage et par numéro destinataire (compte piraté, saisie en rafale).
-    // 200 par jour : un garage qui reporte d'un coup tout son carnet de rendez-vous (début de saison
-    // des pneus) ne doit pas être bloqué en cours de saisie.
-    if (await isOverLimit(`smsg:${garage.id}`, 200, 24 * 60 * 60 * 1000)) {
-      return NextResponse.json({ error: "Limite de textos atteinte pour aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
-    }
+    // Aucun plafond quotidien par garage (début de saison : le carnet entier peut être saisi d'un coup).
+    // Seul garde-fou : 3 textos par jour vers un même numéro (saisie en rafale, erreur de frappe).
     if (await isOverLimit(`smsn:${e164}`, 3, 24 * 60 * 60 * 1000)) {
       return NextResponse.json({ error: "Ce numéro a déjà reçu plusieurs textos aujourd'hui. Choisissez le courriel ou réessayez demain." }, { status: 429 });
     }
@@ -178,7 +174,7 @@ export async function POST(req: NextRequest) {
 
   if (contactChannel === "SMS") {
     const e164 = toE164(String(customerPhone));
-    await Promise.all([recordAttempt(`smsg:${garage.id}`), e164 ? recordAttempt(`smsn:${e164}`) : null])
+    if (e164) await recordAttempt(`smsn:${e164}`)
       .catch((e) => console.error("[SMS LIMIT]", e));
   }
 
