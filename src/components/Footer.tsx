@@ -34,7 +34,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer style={{ background: "#071428", color: "#475569" }}>
+    <footer style={{ background: "#071428", color: "#94a3b8" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-8 md:gap-10 mb-10 md:mb-12">
 
@@ -43,7 +43,7 @@ export default function Footer() {
             <Link href="/" className="inline-flex mb-5">
               <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-10 w-auto object-contain" />
             </Link>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
               {f.tagline}
             </p>
 

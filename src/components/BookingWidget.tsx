@@ -318,7 +318,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                 if (done) setStep(s);
               }}
               className="flex-1 py-2.5 text-xs font-semibold transition-colors relative"
-              style={{ color: active ? "#f97316" : done ? "#6b7280" : "#d1d5db" }}
+              style={{ color: active ? "#c2410c" : done ? "#4b5563" : "#6b7280" }}
             >
               <span className="block">{i+1}. {labels[i]}</span>
               {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-400" />}
@@ -386,7 +386,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             )}
             <button
               onClick={() => { setSelectedCats([]); setStep("date"); }}
-              className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
+              className="mt-3 min-h-[44px] inline-flex items-center text-xs text-gray-600 hover:text-gray-800 underline"
             >
               {b.continueWithout}
             </button>

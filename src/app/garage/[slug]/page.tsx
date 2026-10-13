@@ -453,7 +453,7 @@ export default function GarageProfilePage() {
                 </button>
               )}
               {!session && (
-                <Link href="/connexion" className="text-sm font-semibold hover:underline flex-shrink-0" style={{ color: "#f97316" }}>
+                <Link href="/connexion" className="text-sm font-semibold hover:underline flex-shrink-0 inline-flex items-center min-h-[44px]" style={{ color: "#c2410c" }}>
                   {g.signInToReview}
                 </Link>
               )}
