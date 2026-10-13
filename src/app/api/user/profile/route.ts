@@ -2,7 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { cleanText } from "@/lib/abuse";
+import { cleanText, normalizePhone } from "@/lib/abuse";
 import { countUpcomingAppointments } from "@/lib/garage-access";
 import bcrypt from "bcryptjs";
 import { isRateLimited } from "@/lib/abuse";
@@ -48,6 +48,8 @@ export async function PATCH(req: NextRequest) {
   const phone = phoneRaw === undefined ? undefined : cleanText(phoneRaw, 30);
   const name  = nameRaw  === undefined ? undefined : cleanText(nameRaw, 100);
   if (name !== undefined && name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
+  // Téléphone facultatif, mais s'il est rempli il doit être un vrai numéro nord-américain.
+  if (phone && !normalizePhone(phone)) return NextResponse.json({ error: "Entrez un numéro de téléphone à 10 chiffres, par exemple (514) 555-0123." }, { status: 400 });
 
   // Validation notifPref (SMS non disponible pour le moment)
   const validPrefs = ["EMAIL"];

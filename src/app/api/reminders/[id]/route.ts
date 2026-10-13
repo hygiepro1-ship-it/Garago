@@ -25,7 +25,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   });
 
-  return NextResponse.json(reminder);
+  if (reminder.count === 0) return NextResponse.json({ error: "Rappel introuvable" }, { status: 404 });
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -34,6 +35,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const userId = session.user.id;
   const { id }   = await params;
 
-  await prisma.maintenanceReminder.deleteMany({ where: { id, userId } });
+  const removed = await prisma.maintenanceReminder.deleteMany({ where: { id, userId } });
+  if (removed.count === 0) return NextResponse.json({ error: "Rappel introuvable" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

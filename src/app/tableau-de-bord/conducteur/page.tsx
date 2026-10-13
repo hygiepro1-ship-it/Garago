@@ -220,7 +220,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
           <Link
             href={`/rechercher?year=${v.year}&make=${v.make}&model=${v.model}`}
             className="block text-center text-xs font-semibold px-3 py-2 rounded-xl w-full transition-colors hover:opacity-90"
-            style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}
+            style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}
           >{findGarageLabel}</Link>
         </div>
       </div>
@@ -499,19 +499,29 @@ export default function DashboardConducteurPage() {
     } finally { setRescheduling(false); }
   }
 
+  // Message d'échec d'une action rapide (suppression, annulation, rappel) : sans lui, un échec
+  // réseau ou une session expirée laisse croire que l'action a réussi.
+  const [actionError, setActionError] = useState("");
+  const failed = () => setActionError(tr("Impossible d'effectuer cette action. Vérifiez votre connexion ou reconnectez-vous, puis réessayez."));
+
   async function deleteVehicle(id: string) {
-    const res = await fetch(`/api/vehicles?id=${id}`, { method: "DELETE" });
-    if (res.ok) setVehicles(prev => prev.filter(v => v.id !== id));
+    if (!confirm(tr("Supprimer ce véhicule ?"))) return;
+    setActionError("");
+    const res = await fetch(`/api/vehicles?id=${id}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) setVehicles(prev => prev.filter(v => v.id !== id));
+    else failed();
   }
 
   async function cancelAppt(id: string) {
     if (!confirm("Confirmer l'annulation de ce rendez-vous ?")) return;
+    setActionError("");
     const res = await fetch(`/api/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "CANCELLED" }),
-    });
-    if (res.ok) setAppts(prev => prev.map(a => a.id === id ? { ...a, status: "CANCELLED" } : a));
+    }).catch(() => null);
+    if (res?.ok) setAppts(prev => prev.map(a => a.id === id ? { ...a, status: "CANCELLED" } : a));
+    else failed();
   }
 
   async function lookupVin() {
@@ -566,20 +576,26 @@ export default function DashboardConducteurPage() {
   }
 
   async function removeFav(garageId: string) {
-    await fetch(`/api/favorites/${garageId}`, { method: "DELETE" });
-    setFavorites(prev => prev.filter(f => f.garageId !== garageId));
+    setActionError("");
+    const res = await fetch(`/api/favorites/${garageId}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) setFavorites(prev => prev.filter(f => f.garageId !== garageId));
+    else failed();
   }
 
   async function addReminder(e: React.FormEvent) {
     e.preventDefault();
     setSavingReminder(true);
+    setActionError("");
     const title = rTitle === "Autre" ? rCustom : rTitle;
     const res = await fetch("/api/reminders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, notes: rNotes || null, dueDate: rDate || null, vehicleId: rVehicle || null, priority: rPriority }),
-    });
-    if (res.ok) {
+    }).catch(() => null);
+    if (!res?.ok) {
+      const err = res ? await res.json().catch(() => ({})) : {};
+      setActionError(err?.error || tr("Impossible d'ajouter le rappel. Réessayez."));
+    } else {
       const r = await res.json();
       setReminders(prev => [r, ...prev]);
       setShowAddReminder(false);
@@ -589,13 +605,17 @@ export default function DashboardConducteurPage() {
   }
 
   async function toggleDone(id: string, done: boolean) {
-    await fetch(`/api/reminders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: !done }) });
-    setReminders(prev => prev.map(r => r.id === id ? { ...r, done: !done } : r));
+    setActionError("");
+    const res = await fetch(`/api/reminders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: !done }) }).catch(() => null);
+    if (res?.ok) setReminders(prev => prev.map(r => r.id === id ? { ...r, done: !done } : r));
+    else failed();
   }
 
   async function deleteReminder(id: string) {
-    await fetch(`/api/reminders/${id}`, { method: "DELETE" });
-    setReminders(prev => prev.filter(r => r.id !== id));
+    setActionError("");
+    const res = await fetch(`/api/reminders/${id}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) setReminders(prev => prev.filter(r => r.id !== id));
+    else failed();
   }
 
   if (status === "loading") return <div className="flex items-center justify-center py-20 text-gray-500">{t.common.loading}</div>;
@@ -654,7 +674,7 @@ export default function DashboardConducteurPage() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black uppercase tracking-widest mb-0.5" style={{ color: "#f97316" }}>{tr("Prochain rendez-vous")}</p>
+                  <p className="text-xs font-black uppercase tracking-widest mb-0.5" style={{ color: "#c2410c" }}>{tr("Prochain rendez-vous")}</p>
                   <p className="font-bold text-gray-900 text-sm truncate">{prochainRdv.garage.name}</p>
                   <p className="text-xs text-gray-500">{prochainRdv.startTime} – {prochainRdv.endTime}{prochainRdv.serviceName ? ` · ${translateServiceName(prochainRdv.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
                 </div>
@@ -691,13 +711,17 @@ export default function DashboardConducteurPage() {
               <button
                 key={tb.id}
                 onClick={() => setTab(tb.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
+                className={`flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === tb.id ? "text-white" : "bg-white border border-gray-200 text-gray-600"}`}
                 style={tab === tb.id ? { background: "#e0600c" } : {}}
               >
                 {tb.icon}{tr(tb.label)}
               </button>
             ))}
           </div>
+
+          {actionError && (
+            <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{actionError}</p>
+          )}
 
           {/* ── Rendez-vous ── */}
           {tab === "rdv" && (() => {
@@ -721,7 +745,7 @@ export default function DashboardConducteurPage() {
                     </div>
                     <p className="font-bold text-gray-700 mb-1">{tr("Aucun rendez-vous")}</p>
                     <p className="text-sm text-gray-400 mb-4">{tr("Vos réservations en ligne apparaîtront ici.")}</p>
-                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#f97316" }}>{tr("Trouver un garage")}</Link>
+                    <Link href="/rechercher" className="text-sm font-semibold hover:underline" style={{ color: "#c2410c" }}>{tr("Trouver un garage")}</Link>
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-5">
@@ -733,7 +757,7 @@ export default function DashboardConducteurPage() {
                     )}
                     {active.length > 0 && (
                       <div>
-                        <p className="text-xs font-black text-orange-500 uppercase tracking-widest mb-3">{tr("Aujourd'hui")}</p>
+                        <p className="text-xs font-black text-orange-700 uppercase tracking-widest mb-3">{tr("Aujourd'hui")}</p>
                         <div className="space-y-3">{active.map(a => <ApptRow key={a.id} appt={a} onReschedule={openReschedule} onCancel={cancelAppt} />)}</div>
                       </div>
                     )}
@@ -1045,7 +1069,7 @@ export default function DashboardConducteurPage() {
                   </svg>
                   <p className="text-sm font-medium mb-1">{d.noFavourites}</p>
                   <p className="text-xs mb-4">{d.noFavouritesSub}</p>
-                  <Link href="/rechercher" className="text-sm hover:underline" style={{ color: "#f97316" }}>{d.findGarage}</Link>
+                  <Link href="/rechercher" className="text-sm hover:underline" style={{ color: "#c2410c" }}>{d.findGarage}</Link>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1065,7 +1089,7 @@ export default function DashboardConducteurPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#f97316" }}>{tr("Voir")}</Link>
+                        <Link href={`/garage/${f.garage.slug}`} className="text-xs font-medium hover:underline" style={{ color: "#c2410c" }}>{tr("Voir")}</Link>
                         <button onClick={() => removeFav(f.garageId)} className="text-xs font-medium text-gray-400 hover:text-red-500 transition-colors" title={tr("Retirer des favoris")}>{tr("Retirer")}</button>
                       </div>
                     </div>
@@ -1166,7 +1190,7 @@ export default function DashboardConducteurPage() {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Link
                             href={`/rechercher${r.title ? `?service=${encodeURIComponent(r.title)}` : ""}`}
-                            className="text-xs font-medium hover:underline whitespace-nowrap" style={{ color: "#f97316" }}
+                            className="text-xs font-medium hover:underline whitespace-nowrap" style={{ color: "#c2410c" }}
                             title={tr("Trouver un garage pour ce service")}
                           >
                             {d.book}
@@ -1231,7 +1255,7 @@ export default function DashboardConducteurPage() {
           <Link
             href="/suggestions"
             className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl border-2 text-sm font-semibold transition-all hover:opacity-80"
-            style={{ borderColor: "#f97316", color: "#f97316", background: "rgba(249,115,22,0.05)" }}
+            style={{ borderColor: "#f97316", color: "#c2410c", background: "rgba(249,115,22,0.05)" }}
           >
             {d.suggestionLink}
           </Link>
