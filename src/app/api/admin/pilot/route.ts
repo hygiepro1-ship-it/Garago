@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { quebecInstant } from "@/lib/rdv-confirmation";
+import { PILOT_GARAGE_SLUGS } from "@/lib/pilot";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,8 @@ export async function GET(req: NextRequest) {
   if (!isDate(from) || !isDate(to)) return NextResponse.json({ error: "Période invalide" }, { status: 400 });
 
   const rows = await prisma.appointment.findMany({
-    where: { source: "MANUAL", date: { gte: from, lte: to }, ...(garageId ? { garageId } : {}) },
+    // Seuls les garages inscrits au projet pilote comptent (voir src/lib/pilot.ts).
+    where: { source: "MANUAL", date: { gte: from, lte: to }, garage: { slug: { in: PILOT_GARAGE_SLUGS } }, ...(garageId ? { garageId } : {}) },
     select: {
       garageId: true, date: true, startTime: true, status: true, contactChannel: true,
       confirmationStatus: true, confirmedVia: true, confirmRequestedAt: true, confirmRespondedAt: true,
@@ -38,10 +40,9 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  // Les garages du pilote (réservation en ligne fermée : ils saisissent eux-mêmes leurs rendez-vous)
-  // et le garage demandé apparaissent toujours, même sans rendez-vous sur la période.
+  // Les garages du pilote apparaissent toujours, même sans rendez-vous sur la période.
   const listed = await prisma.garage.findMany({
-    where: garageId ? { id: garageId } : { onlineBooking: false, claimStatus: "activee" },
+    where: { slug: { in: PILOT_GARAGE_SLUGS }, ...(garageId ? { id: garageId } : {}) },
     select: { id: true, name: true, slug: true, city: true },
   });
 
