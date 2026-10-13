@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import ClientLayout from "@/components/ClientLayout";
 import VisitorTracker from "@/components/VisitorTracker";
+import LabelLinker from "@/components/LabelLinker";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <Providers>
           <VisitorTracker />
+          <LabelLinker />
           <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>

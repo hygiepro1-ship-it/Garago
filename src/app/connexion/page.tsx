@@ -147,7 +147,7 @@ export default function ConnexionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{a.password}</label>
-                <Link href="/mot-de-passe-oublie" className="text-xs font-semibold" style={{ color: "#f97316" }}>
+                <Link href="/mot-de-passe-oublie" className="text-xs font-semibold inline-block py-3 -my-3 sm:py-0 sm:my-0" style={{ color: "#f97316" }}>
                   {a.forgotPwd}
                 </Link>
               </div>
