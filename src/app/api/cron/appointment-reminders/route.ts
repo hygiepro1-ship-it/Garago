@@ -33,6 +33,13 @@ export async function GET(req: NextRequest) {
   let sent = 0;
   for (const appt of appointments) {
     if (!appt.customerEmail) continue;
+    // Réservation atomique du rappel : si deux déclencheurs (Vercel, GitHub Actions, service externe) passent en
+    // même temps, un seul obtient la ligne et envoie le courriel.
+    const claimed = await prisma.appointment.updateMany({
+      where: { id: appt.id, reminderSent: false },
+      data:  { reminderSent: true },
+    });
+    if (claimed.count === 0) continue;
     try {
       await sendBookingReminder({
         to:            appt.customerEmail,
@@ -46,13 +53,11 @@ export async function GET(req: NextRequest) {
         serviceName:   appt.serviceName,
         appointmentId: appt.id,
       });
-      await prisma.appointment.update({
-        where: { id: appt.id },
-        data:  { reminderSent: true },
-      });
       sent++;
     } catch (err) {
       console.error(`Reminder failed for appt ${appt.id}:`, err);
+      // L'envoi a échoué : on libère la réservation pour que le prochain passage réessaie.
+      await prisma.appointment.update({ where: { id: appt.id }, data: { reminderSent: false } }).catch(() => {});
     }
   }
 
