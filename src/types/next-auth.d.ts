@@ -21,5 +21,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id:   string;
     role: string;
+    /** Empreinte du mot de passe à l'ouverture de la session (« oauth » pour Google). */
+    pwv?: string;
   }
 }

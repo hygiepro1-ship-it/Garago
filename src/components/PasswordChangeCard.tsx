@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
 
 // Changement de mot de passe depuis le tableau de bord (mot de passe actuel requis). Masqué pour les comptes Google.
@@ -28,7 +29,12 @@ export default function PasswordChangeCard() {
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    if (res.ok) { setCur(""); setNext(""); setMsg({ ok: true, text: en ? "Password changed." : "Mot de passe modifié." }); }
+    if (res.ok) {
+      setCur(""); setNext("");
+      // Le changement ferme toutes les sessions ouvertes, y compris celle-ci : on reconnecte proprement.
+      setMsg({ ok: true, text: en ? "Password changed. Please sign in again." : "Mot de passe modifié. Reconnectez-vous." });
+      setTimeout(() => signOut({ callbackUrl: "/connexion" }), 1800);
+    }
     else setMsg({ ok: false, text: data.error ?? (en ? "The password could not be changed." : "Impossible de changer le mot de passe.") });
   }
 

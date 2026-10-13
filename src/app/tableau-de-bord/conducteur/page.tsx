@@ -371,7 +371,12 @@ export default function DashboardConducteurPage() {
       body: JSON.stringify({ currentPassword: pwd.current, newPassword: pwd.next }),
     });
     const data = await res.json().catch(() => ({}));
-    if (res.ok) { setPwd({ current: "", next: "" }); setPwdMsg({ ok: true, text: tr("Mot de passe modifié.") }); }
+    if (res.ok) {
+      setPwd({ current: "", next: "" });
+      // Le changement ferme toutes les sessions ouvertes, y compris celle-ci : on reconnecte proprement.
+      setPwdMsg({ ok: true, text: tr("Mot de passe modifié. Reconnectez-vous.") });
+      setTimeout(() => signOut({ callbackUrl: "/connexion" }), 1800);
+    }
     else setPwdMsg({ ok: false, text: data.error ?? tr("Impossible de changer le mot de passe.") });
   }
 

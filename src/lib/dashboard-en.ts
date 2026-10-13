@@ -62,6 +62,7 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Code couleur hexadécimal": "Hex colour code",
   "Impossible d'ouvrir la page de paiement. Réessayez dans un instant.": "Unable to open the payment page. Please try again in a moment.",
   "Impossible d'ouvrir le portail de facturation.": "Unable to open the billing portal.",
+  "Mot de passe modifié. Reconnectez-vous.": "Password changed. Please sign in again.",
   "Supprimer ce véhicule ?": "Delete this vehicle?",
   "Impossible d'ajouter le rappel. Réessayez.": "Unable to add the reminder. Please try again.",
   "Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!": "No reviews yet. Encourage your customers to leave one!",
