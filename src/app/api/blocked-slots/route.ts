@@ -64,7 +64,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(slot);
+    // Bloquer ne déplace ni n'annule rien : on signale les rendez-vous déjà pris sur ce créneau pour que
+    // le garage prévienne ces clients lui-même.
+    const conflicts = await prisma.appointment.count({
+      where: {
+        garageId: garage.id, date, status: { in: ["PENDING", "CONFIRMED"] },
+        ...(allDay ? {} : { startTime: { lt: endTime }, endTime: { gt: startTime } }),
+      },
+    });
+
+    return NextResponse.json({ ...slot, conflicts });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
