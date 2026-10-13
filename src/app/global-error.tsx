@@ -19,7 +19,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               </svg>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8, color: "#0b1f3a" }}>Une erreur est survenue</h1>
-            <p style={{ fontSize: 14, marginBottom: 32, color: "#94a3b8" }}>
+            <p style={{ fontSize: 14, marginBottom: 32, color: "#64748b" }}>
               Quelque chose s&apos;est mal passé. Veuillez réessayer.
             </p>
             <button onClick={reset} style={{
