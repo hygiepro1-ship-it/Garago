@@ -4,6 +4,7 @@ import Providers from "@/components/Providers";
 import ClientLayout from "@/components/ClientLayout";
 import VisitorTracker from "@/components/VisitorTracker";
 import LabelLinker from "@/components/LabelLinker";
+import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
@@ -37,6 +38,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           backgroundColor: "#f8fafc",
         }}
       >
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Garago",
+              legalName: "Garago Technologies Inc.",
+              url: "https://garagopro.ca",
+              logo: "https://garagopro.ca/logo-garago-700.webp",
+              email: "info@garagopro.ca",
+              areaServed: "CA",
+              sameAs: ["https://www.linkedin.com/company/garago-canada/", "https://www.instagram.com/garago.ca"],
+            },
+            { "@type": "WebSite", name: "Garago", url: "https://garagopro.ca", inLanguage: "fr-CA" },
+          ],
+        }} />
         <Providers>
           <VisitorTracker />
           <LabelLinker />
