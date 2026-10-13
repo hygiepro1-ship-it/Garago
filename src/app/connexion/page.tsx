@@ -31,7 +31,7 @@ function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"]
 
         <h2 className="text-3xl font-black text-white leading-snug mb-4">
           {a.welcomeTitle.split("Garago.")[0]}<br />
-          <span style={{ color: "#f97316" }}>Garago.</span>
+          <span style={{ color: "#c2410c" }}>Garago.</span>
         </h2>
         <p className="text-sm leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.4)" }}>
           {a.welcomeSub}
@@ -99,9 +99,9 @@ export default function ConnexionPage() {
           </div>
 
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>{a.signIn}</h1>
-          <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
+          <p className="text-sm mb-8" style={{ color: "#64748b" }}>
             {a.noAccount}{" "}
-            <Link href="/inscription/conducteur" className="font-bold" style={{ color: "#f97316" }}>
+            <Link href="/inscription/conducteur" className="font-bold" style={{ color: "#c2410c" }}>
               {a.signUpFree}
             </Link>
           </p>
@@ -123,7 +123,7 @@ export default function ConnexionPage() {
           </div>
           <div className="flex items-center gap-3 mb-6">
             <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
-            <span style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" }}>{lang === "en" ? "or continue with email" : "ou continuer avec e-mail"}</span>
+            <span style={{ color: "#64748b", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" }}>{lang === "en" ? "or continue with email" : "ou continuer avec e-mail"}</span>
             <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
           </div>
 
@@ -147,7 +147,7 @@ export default function ConnexionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-bold" style={{ color: "#0b1f3a" }}>{a.password}</label>
-                <Link href="/mot-de-passe-oublie" className="text-xs font-semibold inline-block py-3 -my-3 sm:py-0 sm:my-0" style={{ color: "#f97316" }}>
+                <Link href="/mot-de-passe-oublie" className="text-xs font-semibold inline-block py-3 -my-3 sm:py-0 sm:my-0" style={{ color: "#c2410c" }}>
                   {a.forgotPwd}
                 </Link>
               </div>
@@ -183,9 +183,9 @@ export default function ConnexionPage() {
           </form>
 
           <div className="mt-8 pt-6 text-center" style={{ borderTop: "1px solid #e2e8f0" }}>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>
+            <p className="text-sm" style={{ color: "#64748b" }}>
               {a.garageOwner}{" "}
-              <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
+              <Link href="/inscription/garage" className="font-bold" style={{ color: "#c2410c" }}>
                 {a.registerGarage}
               </Link>
             </p>

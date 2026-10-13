@@ -68,7 +68,7 @@ function LeftPanel() {
 
         <h2 className="text-3xl font-black text-white leading-snug mb-3">
           Trouvez le bon<br />garage pour<br />
-          <span style={{ color: "#f97316" }}>votre voiture.</span>
+          <span style={{ color: "#c2410c" }}>votre voiture.</span>
         </h2>
         <p className="text-sm leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>
           Créez votre compte gratuitement et accédez aux garages partenaires au Québec.
@@ -256,9 +256,9 @@ export default function InscriptionConducteurPage() {
           </div>
 
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>{r.titleDriver}</h1>
-          <p className="text-sm mb-7" style={{ color: "#94a3b8" }}>
+          <p className="text-sm mb-7" style={{ color: "#64748b" }}>
             {r.alreadyAccount}{" "}
-            <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>{r.signIn}</Link>
+            <Link href="/connexion" className="font-bold" style={{ color: "#c2410c" }}>{r.signIn}</Link>
           </p>
 
           {/* Social login */}
@@ -278,7 +278,7 @@ export default function InscriptionConducteurPage() {
           </div>
           <div className="flex items-center gap-3 mb-6">
             <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
-            <span style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" }}>{lang === "en" ? "or create an account with email" : "ou créer un compte avec e-mail"}</span>
+            <span style={{ color: "#64748b", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" }}>{lang === "en" ? "or create an account with email" : "ou créer un compte avec e-mail"}</span>
             <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
           </div>
 
@@ -348,7 +348,7 @@ export default function InscriptionConducteurPage() {
             {/* Téléphone */}
             <div>
               <label htmlFor="phone" className="block text-sm font-bold mb-1.5" style={{ color: "#0b1f3a" }}>
-                {lang === "en" ? "Phone" : "Téléphone"} <span style={{ fontWeight: 500, color: "#94a3b8" }}>({lang === "en" ? "optional" : "optionnel"})</span>
+                {lang === "en" ? "Phone" : "Téléphone"} <span style={{ fontWeight: 500, color: "#64748b" }}>({lang === "en" ? "optional" : "optionnel"})</span>
               </label>
               <input id="phone" type="tel" className="garago-input" placeholder="(514) 555-1234"
                 value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} />
@@ -375,7 +375,7 @@ export default function InscriptionConducteurPage() {
                         ? (pwdStrength === 3 ? "#10b981" : pwdStrength === 2 ? "#f59e0b" : "#ef4444")
                         : "#e2e8f0" }} />
                   ))}
-                  <span className="text-xs ml-1" style={{ color: "#94a3b8" }}>
+                  <span className="text-xs ml-1" style={{ color: "#64748b" }}>
                     {pwdStrength === 1 ? "Faible" : pwdStrength === 2 ? "Moyen" : pwdStrength === 3 ? "Fort" : ""}
                   </span>
                 </div>
@@ -418,10 +418,10 @@ export default function InscriptionConducteurPage() {
                   className="mt-0.5 w-4 h-4 rounded flex-shrink-0" style={{ accentColor: "#f97316" }} />
                 <span className="text-sm" style={{ color: "#374151" }}>
                   {lang === "en" ? "I accept the" : "J'accepte les"}{" "}
-                  <Link href="/conditions" target="_blank" className="font-semibold underline" style={{ color: "#f97316" }}>
+                  <Link href="/conditions" target="_blank" className="font-semibold underline" style={{ color: "#c2410c" }}>
                     {lang === "en" ? "terms of use" : "conditions d'utilisation"}
                   </Link>{" "}{lang === "en" ? "and the" : "et la"}{" "}
-                  <Link href="/confidentialite" target="_blank" className="font-semibold underline" style={{ color: "#f97316" }}>
+                  <Link href="/confidentialite" target="_blank" className="font-semibold underline" style={{ color: "#c2410c" }}>
                     {lang === "en" ? "privacy policy" : "politique de confidentialité"}
                   </Link>{" "}
                   <span style={{ color: "#ef4444" }}>*</span>
@@ -455,9 +455,9 @@ export default function InscriptionConducteurPage() {
           </form>
 
           <div className="mt-6 pt-6 text-center" style={{ borderTop: "1px solid #e2e8f0" }}>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>
+            <p className="text-sm" style={{ color: "#64748b" }}>
               {t.auth.garageOwner}{" "}
-              <Link href="/inscription/garage" className="font-bold" style={{ color: "#f97316" }}>
+              <Link href="/inscription/garage" className="font-bold" style={{ color: "#c2410c" }}>
                 {r.registerGarage}
               </Link>
             </p>

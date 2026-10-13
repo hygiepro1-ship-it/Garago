@@ -113,7 +113,7 @@ function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
           style={{ color: "#0b1f3a" }}>
           <L fr={article.title} en={ARTICLES_EN[article.slug]?.title ?? article.title} />
         </p>
-        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{article.readTime} min</p>
+        <p className="text-xs mt-1" style={{ color: "#64748b" }}>{article.readTime} min</p>
       </div>
     </Link>
   );

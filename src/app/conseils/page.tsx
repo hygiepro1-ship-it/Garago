@@ -89,7 +89,7 @@ function ArticleCard({ article }: { article: Article }) {
       <div className="p-4 pl-6 sm:p-7 sm:pl-9">
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <CategoryBadge category={article.category} />
-          <span className="text-xs font-semibold ml-auto" style={{ color: "#cbd5e1" }}>
+          <span className="text-xs font-semibold ml-auto" style={{ color: "#64748b" }}>
             <LDate iso={article.publishedAt} />
           </span>
         </div>
@@ -98,11 +98,11 @@ function ArticleCard({ article }: { article: Article }) {
         </h2>
         <p className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}><L fr={article.excerpt} en={ARTICLES_EN[article.slug]?.excerpt ?? article.excerpt} /></p>
         <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: "#f1f5f9" }}>
-          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#94a3b8" }}>
+          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#64748b" }}>
             <ClockIcon />{article.readTime} <L fr="min de lecture" en="min read" />
           </span>
           <Link href={`/conseils/${article.slug}`}
-            className="text-sm font-bold transition-all hover:gap-2" style={{ color: "#f97316" }}>
+            className="text-sm font-bold transition-all hover:gap-2 inline-flex items-center min-h-[44px]" style={{ color: "#c2410c" }}>
             <L fr="Lire l'article" en="Read the article" />
           </Link>
         </div>
@@ -157,14 +157,14 @@ export default function ConseilsPage() {
       {/* ── Articles ── */}
       <section className="py-10 px-4" style={{ background: "#f8fafc" }}>
         <div className="max-w-4xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-7" style={{ color: "#94a3b8" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-7" style={{ color: "#64748b" }}>
             {published.length} article{published.length !== 1 ? "s" : ""}
           </p>
 
           {published.length === 0 && (
             <div className="text-center py-20">
               <p className="font-bold text-lg" style={{ color: "#0b1f3a" }}><L fr="Aucun conseil publié pour le moment." en="No articles published yet." /></p>
-              <p className="text-sm mt-2" style={{ color: "#94a3b8" }}><L fr="Revenez bientôt, de nouveaux articles arrivent chaque semaine." en="Check back soon: new articles arrive every week." /></p>
+              <p className="text-sm mt-2" style={{ color: "#64748b" }}><L fr="Revenez bientôt, de nouveaux articles arrivent chaque semaine." en="Check back soon: new articles arrive every week." /></p>
             </div>
           )}
 

@@ -134,7 +134,7 @@ export default function MotDePasseOubliePage() {
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>
             {step === "done" ? tx.titleDone : tx.title}
           </h1>
-          <p className="text-sm" style={{ color: "#94a3b8" }}>
+          <p className="text-sm" style={{ color: "#64748b" }}>
             {step === "email" && tx.leadEmail}
             {step === "reset" && tx.leadReset(email)}
             {step === "done" && tx.leadDone}
@@ -164,8 +164,8 @@ export default function MotDePasseOubliePage() {
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-base">
               {loading ? tx.sending : tx.send}
             </button>
-            <p className="text-center text-sm" style={{ color: "#94a3b8" }}>
-              <Link href="/connexion" className="font-bold" style={{ color: "#f97316" }}>{tx.back}</Link>
+            <p className="text-center text-sm" style={{ color: "#64748b" }}>
+              <Link href="/connexion" className="font-bold" style={{ color: "#c2410c" }}>{tx.back}</Link>
             </p>
           </form>
         )}
