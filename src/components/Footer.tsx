@@ -77,10 +77,10 @@ export default function Footer() {
           {/* Conducteurs */}
           <div>
             <h4 className="font-black text-white text-sm mb-4">{f.drivers}</h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-0 sm:space-y-2.5 text-sm">
               {DRIVER_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
+                  <Link href={l.href} className="block py-2.5 sm:py-0 transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -89,10 +89,10 @@ export default function Footer() {
           {/* Garages */}
           <div>
             <h4 className="font-black text-white text-sm mb-4">{f.garages}</h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-0 sm:space-y-2.5 text-sm">
               {GARAGE_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="transition-colors hover:text-white">{l.label}</Link>
+                  <Link href={l.href} className="block py-2.5 sm:py-0 transition-colors hover:text-white">{l.label}</Link>
                 </li>
               ))}
             </ul>
@@ -101,10 +101,10 @@ export default function Footer() {
           {/* Services : sur deux colonnes sous les deux autres listes, sur téléphone */}
           <div className="col-span-2 md:col-span-1">
             <h4 className="font-black text-white text-sm mb-4">{f.popularServices}</h4>
-            <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-6 gap-y-2.5 text-sm">
+            <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-6 gap-y-0 md:gap-y-2.5 text-sm">
               {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="flex items-center gap-2 transition-colors hover:text-white">
+                  <Link href={l.href} className="flex items-center gap-2 py-2.5 md:py-0 transition-colors hover:text-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={l.icon} alt="" width={16} height={16} style={{ filter: "brightness(0) invert(1)", opacity: 0.5, flexShrink: 0 }} />
                     {l.label}
@@ -122,13 +122,13 @@ export default function Footer() {
             © {new Date().getFullYear()} Garago Technologies Inc. {f.rights}
           </p>
           {/* Les liens passent à la ligne au lieu de déborder de l'écran. */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>
-            <Link href="/confidentialite" className="hover:text-white transition-colors">{f.privacy}</Link>
-            <Link href="/conditions" className="hover:text-white transition-colors">{f.terms}</Link>
-            <Link href="/a-propos" className="hover:text-white transition-colors"><L fr="À propos" en="About" /></Link>
-            <Link href="/faq" className="hover:text-white transition-colors">{f.faq}</Link>
-            <Link href="/garagistes" className="hover:text-white transition-colors">{f.pricing}</Link>
-            <Link href="/suggestions" className="hover:text-white transition-colors flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-0 text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <Link href="/confidentialite" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors">{f.privacy}</Link>
+            <Link href="/conditions" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors">{f.terms}</Link>
+            <Link href="/a-propos" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors"><L fr="À propos" en="About" /></Link>
+            <Link href="/faq" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors">{f.faq}</Link>
+            <Link href="/garagistes" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors">{f.pricing}</Link>
+            <Link href="/suggestions" className="inline-flex items-center min-h-[44px] sm:min-h-0 hover:text-white transition-colors gap-1">
               <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18h6M12 2a7 7 0 00-4 12.9V17a2 2 0 002 2h4a2 2 0 002-2v-2.1A7 7 0 0012 2z"/>
               </svg>

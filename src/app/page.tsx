@@ -229,8 +229,9 @@ export default function HomePage() {
                 { label: h.modelLabel, value: model, setter: setModel, opts: models.map(m => ({ v: m, l: m })), disabled: !make },
               ].map((f, i) => (
                 <div key={f.label} className={`flex flex-col px-2 py-1.5 sm:px-4 sm:py-3 ${i < 2 ? "border-r border-gray-100" : ""}`}>
-                  <label className="font-black truncate" style={{ color: "#64748b", fontSize: "11px" }}>{f.label}</label>
+                  <label htmlFor={`home-vehicle-${i}`} className="font-black truncate" style={{ color: "#64748b", fontSize: "12px" }}>{f.label}</label>
                   <select
+                    id={`home-vehicle-${i}`}
                     className="w-full border-0 bg-transparent py-1.5 sm:py-1 text-base sm:text-sm focus:outline-none text-gray-800"
                     value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
@@ -245,8 +246,8 @@ export default function HomePage() {
             {/* Location + search button — always horizontal */}
             <div className="flex items-center">
               <button type="button" onClick={handleLocate} disabled={locating}
-                className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 ml-2 flex items-center justify-center rounded-lg transition-colors"
-                style={{ background: "#fff4ed", color: "#f97316" }} title="Me localiser">
+                className="flex-shrink-0 w-11 h-11 sm:w-8 sm:h-8 ml-1 sm:ml-2 flex items-center justify-center rounded-lg transition-colors"
+                style={{ background: "#fff4ed", color: "#f97316" }} title="Me localiser" aria-label="Me localiser">
                 {locating
                   ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                   : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -256,12 +257,12 @@ export default function HomePage() {
                 <input type="text" value={location} onChange={(e) => handlePostalInput(e.target.value)}
                   placeholder={h.cityPlaceholder} aria-label={h.cityLabel} autoComplete="postal-code"
                   inputMode="text" maxLength={7} aria-invalid={!!postalError}
-                  className="block w-full text-base sm:text-sm focus:outline-none bg-transparent text-gray-800"
+                  className="block w-full min-h-[40px] sm:min-h-0 text-base sm:text-sm focus:outline-none bg-transparent text-gray-800"
                   style={{ color: "#374151" }} />
               </div>
               <div className="pr-2 py-2">
-                <button type="submit"
-                  className="flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-black text-white text-sm"
+                <button type="submit" aria-label={h.searchBtn}
+                  className="flex items-center justify-center gap-1.5 px-4 sm:px-6 min-h-[44px] sm:min-h-0 py-2 sm:py-3 rounded-xl font-black text-white text-sm"
                   style={{ background: "#f97316" }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
