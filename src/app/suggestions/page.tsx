@@ -108,7 +108,7 @@ export default function SuggestionsPage() {
                 {s.sendAnother}
               </button>
               <Link href="/" className="text-sm px-4 py-2 rounded-xl text-white font-semibold"
-                style={{ background: "#c45305" }}>
+                style={{ background: "#e0600c" }}>
                 {s.backHome}
               </Link>
             </div>
@@ -209,7 +209,7 @@ export default function SuggestionsPage() {
 
             <button type="submit" disabled={sending || !form.content.trim() || !captchaVal.trim()}
               className="w-full text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity"
-              style={{ background: "#c45305" }}>
+              style={{ background: "#e0600c" }}>
               {sending ? s.sending : s.submit}
             </button>
           </form>

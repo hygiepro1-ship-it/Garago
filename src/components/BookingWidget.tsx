@@ -349,7 +349,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                         : "border-gray-200 hover:border-orange-300 text-gray-700"
                     }`}
                   >
-                    <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 ${checked ? "bg-[#c45305] border-orange-500" : "border-gray-300 bg-white"}`} style={{ borderRadius: 4 }}>
+                    <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border-2 ${checked ? "bg-[#e0600c] border-orange-500" : "border-gray-300 bg-white"}`} style={{ borderRadius: 4 }}>
                       {checked && <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
                     </span>
                     <span className="flex-1">{translateServiceName(sv.category.name, lang)}</span>
@@ -378,7 +378,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                   type="button"
                   onClick={() => setStep("date")}
                   className="w-full py-3 text-sm font-bold"
-                  style={{ background: "#c45305", color: "#1c0a00", borderRadius: 5 }}
+                  style={{ background: "#e0600c", color: "#1c0a00", borderRadius: 5 }}
                 >
                   Continuer
                 </button>
@@ -434,7 +434,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                     title={!isPast && isUnavailable ? b.garageUnavailable : undefined}
                     onClick={() => { setSelectedDate(d); setStep("slot"); }}
                     className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
-                      ${isSel      ? "bg-[#c45305] text-white"          : ""}
+                      ${isSel      ? "bg-[#e0600c] text-white"          : ""}
                       ${isToday && !isSel ? "border border-orange-300 text-orange-600" : ""}
                       ${isDisabled ? "text-gray-200 cursor-not-allowed"  : !isSel ? "hover:bg-orange-50 text-gray-700" : ""}
                     `}
@@ -482,7 +482,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
                       onClick={() => { setSelectedSlot(s); setStep("info"); }}
                       className={`py-2.5 rounded-xl border text-sm font-semibold transition-all ${
                         selectedSlot === s
-                          ? "border-orange-400 bg-[#c45305] text-white"
+                          ? "border-orange-400 bg-[#e0600c] text-white"
                           : "border-gray-200 hover:border-orange-300 hover:bg-orange-50 text-gray-700"
                       }`}
                     >
@@ -581,7 +581,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
               onClick={handleSubmit}
               disabled={submitting || !name || !phone || !emailOk || (needCaptcha && !tsToken)}
               className="w-full py-3 rounded-xl font-bold text-white text-sm transition hover:opacity-90 disabled:opacity-50 mt-2"
-              style={{ backgroundColor: "#c45305" }}
+              style={{ backgroundColor: "#e0600c" }}
             >
               {submitting ? b.submitting : b.confirm}
             </button>

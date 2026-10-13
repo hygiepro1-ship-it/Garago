@@ -163,7 +163,7 @@ body {
 
 /* ── Buttons ─────────────────────────────────────────── */
 .btn-primary {
-  background: #c45305;
+  background: #e0600c;
   color: white;
   font-weight: 700;
   border-radius: var(--radius-sm);
@@ -174,7 +174,7 @@ body {
   box-shadow: var(--shadow-orange);
   transition: background 0.2s, transform 0.1s;
 }
-.btn-primary:hover  { background: #a84504; }
+.btn-primary:hover  { background: #c45305; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 

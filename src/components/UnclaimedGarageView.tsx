@@ -65,7 +65,7 @@ export default function UnclaimedGarageView({ garage }: Props) {
         <div className="mt-6 flex flex-wrap gap-3">
           <a href={`tel:${garage.phone}`}
             className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm w-full sm:w-auto"
-            style={{ background: "#c45305", color: "#1c0a00" }}>
+            style={{ background: "#e0600c", color: "#1c0a00" }}>
             Appeler · {garage.phone}
           </a>
           {garage.claimStatus === "non_reclamee" && (
@@ -191,7 +191,7 @@ function ClaimModal({ slug, onClose }: { slug: string; onClose: () => void }) {
         <Turnstile onToken={setTsToken} resetKey={tsReset} />
         {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
         <button type="submit" disabled={submitting || (turnstileActive && !tsToken)}
-          className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#c45305" }}>
+          className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-60" style={{ background: "#e0600c" }}>
           {submitting ? (en ? "Sending…" : "Envoi…") : (en ? "Send the request" : "Envoyer la demande")}
         </button>
       </form>

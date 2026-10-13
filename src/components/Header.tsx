@@ -69,7 +69,7 @@ function SearchBar() {
         style={{ color: "white" }}
       />
       <button type="submit" className="px-4 py-2.5 text-sm font-bold text-white flex-shrink-0"
-        style={{ background: "#c45305" }}>
+        style={{ background: "#e0600c" }}>
         {en ? "Search" : "Chercher"}
       </button>
     </form>
@@ -94,7 +94,7 @@ function UserMenu({ session, role }: UserMenuProps) {
         className="flex items-center gap-2 px-3 py-2 rounded-xl transition-colors"
         style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}>
         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-          style={{ background: "#c45305" }}>
+          style={{ background: "#e0600c" }}>
           {initial}
         </div>
         <span className="hidden md:block text-sm font-semibold text-white">
@@ -170,7 +170,7 @@ function MobileMenu({ open, session, navItems, onClose }: MobileMenuProps) {
                 onClick={onClose}>{t.nav.signIn}</Link>
               <Link href="/inscription/conducteur"
                 className="block px-4 py-3 text-sm font-bold text-center rounded-xl text-white"
-                style={{ background: "#c45305" }}
+                style={{ background: "#e0600c" }}
                 onClick={onClose}>{t.nav.signUp}</Link>
               <Link href="/inscription/garage"
                 className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-center rounded-xl border"
@@ -261,7 +261,7 @@ export default function Header() {
               </Link>
               <Link href="/inscription/conducteur"
                 className="text-sm font-bold px-4 py-2 rounded-lg text-white"
-                style={{ background: "#c45305" }}>
+                style={{ background: "#e0600c" }}>
                 {t.nav.signUp}
               </Link>
               <Link href="/inscription/garage"
