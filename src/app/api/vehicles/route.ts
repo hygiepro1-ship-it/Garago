@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
   if (count >= 20) return NextResponse.json({ error: "Limite de 20 véhicules atteinte." }, { status: 400 });
 
   const year = Number.isInteger(Number(yearRaw)) && Number(yearRaw) >= 1950 && Number(yearRaw) <= new Date().getFullYear() + 1 ? Number(yearRaw) : null;
-  const make = cleanText(makeRaw, 60), model = cleanText(modelRaw, 60);
+  const noTags = (v: string) => v.replace(/[<>]/g, "").trim();
+  const make = noTags(cleanText(makeRaw, 60)), model = noTags(cleanText(modelRaw, 60));
   if (!year || !make || !model) return NextResponse.json({ error: "Année, marque et modèle valides requis." }, { status: 400 });
   const trim = cleanText(trimRaw, 80) || null, color = cleanText(colorRaw, 40) || null, licensePlate = cleanText(plateRaw, 15) || null;
   const mileage = Number.isFinite(Number(mileageRaw)) && Number(mileageRaw) >= 0 && Number(mileageRaw) < 3_000_000 && mileageRaw !== "" && mileageRaw != null ? Math.round(Number(mileageRaw)) : null;
