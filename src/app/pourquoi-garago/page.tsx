@@ -28,33 +28,77 @@ const CONDUCTEURS: Theme[] = [
   { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, batterie, vidange : des guides pratiques pour le Québec." },
 ];
 
-// Chiffres : seulement des faits sourcés. Les estimations d'éditeurs de logiciels sont présentées comme telles.
-const FAITS = [
+// Chiffres : seulement des données sourcées, avec leur pays et leur nature (étude, estimation d'éditeur).
+interface Fait { chiffre: string; texte: string; porte: string; source: string; href: string }
+
+const FAITS_GARAGES: Fait[] = [
   {
-    chiffre: "1er décembre",
-    texte: "Date à partir de laquelle les pneus d'hiver sont obligatoires au Québec. L'amende va de 200 $ à 300 $, plus les frais.",
-    source: "CAA-Québec, communiqué du 8 octobre 2024",
-    href: "https://www.caaquebec.com/fr/salle-de-presse/communiques-de-presse/pneus-d-hiver-vous-n-etes-pas-aussi-tot-que-vous-le-croyez",
+    chiffre: "jusqu'à 21 %",
+    texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.",
+    porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)",
+    source: "Marchex",
+    href: "https://www.marchex.com/up-to-21-percent-of-automotive-service-customer-calls-go-unanswered-creating-significant-revenue-leakage/",
   },
   {
-    chiffre: "≈ 7 °C",
-    texte: "Température à partir de laquelle CAA-Québec recommande de passer aux pneus d'hiver, quand elle se maintient plusieurs jours : parfois dès octobre.",
-    source: "CAA-Québec, communiqué du 8 octobre 2024",
-    href: "https://www.caaquebec.com/fr/salle-de-presse/communiques-de-presse/pneus-d-hiver-vous-n-etes-pas-aussi-tot-que-vous-le-croyez",
+    chiffre: "≈ 30 %",
+    texte: "Des appels entrants aux services automobiles représentent une occasion de revenu manquée : 13 % ne se connectent pas et 17 % n'aboutissent pas à un rendez-vous malgré l'intention du client.",
+    porte: "États-Unis, 8,7 millions d'appels analysés (rapport 2019)",
+    source: "Marchex, 2019 Auto Services Industry Report",
+    href: "https://www.marchex.com/wp-content/uploads/2019/11/2019-Auto-Services-Industry-Report.pdf",
   },
   {
     chiffre: "10 à 15 %",
-    texte: "Part des rendez-vous qui ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation, selon une estimation d'un éditeur de logiciel (France). Aucune étude indépendante québécoise n'existe à notre connaissance.",
-    source: "Car Spot, guide de gestion des rendez-vous de garage (estimation d'éditeur)",
+    texte: "Des rendez-vous ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation. Une demande de confirmation et un rappel sont les moyens les plus simples de les réduire.",
+    porte: "Estimation d'un éditeur de logiciel (France). Aucune statistique indépendante québécoise à notre connaissance.",
+    source: "Car Spot",
     href: "https://car-spot.io/fr/guides/how-to-manage-garage-appointments",
   },
   {
-    chiffre: "10 à 25 %",
-    texte: "Fourchette de taux d'absence en atelier de réparation relevée dans des sources américaines d'éditeurs de logiciels. Elle varie beaucoup d'un atelier à l'autre : le plus fiable est de mesurer le vôtre.",
-    source: "Synthèse de sources d'éditeurs (Koalendar, Autodots, Klipboard)",
-    href: "https://www.klipboard.com/blog/why-nearly-1-in-10-of-garage-appointments-are-no-shows-and-how-to-fix-it",
+    chiffre: "Plus de postes vacants que de travailleurs",
+    texte: "C'est le constat du gouvernement fédéral pour les mécaniciens de véhicules automobiles de la région de Montréal en 2023-2025. Quand l'équipe est rare, chaque heure passée au téléphone est une heure de moins à l'atelier.",
+    porte: "Région de Montréal, métier CNP 72410",
+    source: "Guichet-emplois (Gouvernement du Canada)",
+    href: "https://www.guichetemplois.gc.ca/rapportmarche/perspectives-profession/14857/geo25154",
   },
 ];
+
+const FAITS_CONDUCTEURS: Fait[] = [
+  {
+    chiffre: "87 %",
+    texte: "Des consommateurs lisent les avis en ligne avant de choisir une entreprise locale. Sur Garago, chaque avis vient d'un conducteur qui a réellement eu un rendez-vous dans le garage.",
+    porte: "Sondage de consommateurs, 2020",
+    source: "BrightLocal, Local Consumer Review Survey",
+    href: "https://www.brightlocal.com/research/local-consumer-review-survey-2020/",
+  },
+  {
+    chiffre: "76 %",
+    texte: "Des clients d'un service automobile qui ont réservé en ligne disent qu'ils le referaient. La réservation en ligne convainc ceux qui l'essaient.",
+    porte: "États-Unis, clients de services de concessionnaires (2017)",
+    source: "Cox Automotive",
+    href: "https://www.coxautoinc.com/?p=2809",
+  },
+  {
+    chiffre: "45 %",
+    texte: "Des clients qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un endroit où l'on voit d'un coup d'œil quels garages prennent les rendez-vous en ligne règle ce problème.",
+    porte: "États-Unis, clients de services de concessionnaires (2017)",
+    source: "Cox Automotive",
+    href: "https://www.coxautoinc.com/?p=2809",
+  },
+];
+
+function FaitCard({ f }: { f: Fait }) {
+  return (
+    <li className="rounded-2xl border border-gray-200 bg-white p-5">
+      <span className="block text-2xl sm:text-3xl font-black leading-tight" style={{ color: "#c2410c" }}>{f.chiffre}</span>
+      <span className="block mt-2 text-sm leading-relaxed text-gray-700">{f.texte}</span>
+      <span className="block mt-2 text-xs text-gray-500">{f.porte}</span>
+      <a href={f.href} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center min-h-[44px] sm:min-h-0 mt-1 text-xs font-semibold underline text-gray-600">
+        Source : {f.source}
+      </a>
+    </li>
+  );
+}
 
 function ThemeCard({ t }: { t: Theme }) {
   return (
@@ -117,18 +161,16 @@ export default function PourquoiGarago() {
         <section aria-labelledby="h-chiffres">
           <h2 id="h-chiffres" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>Les chiffres, avec leurs sources</h2>
           <p className="mt-1 text-gray-600">
-            Nous n&apos;affichons que des données sourcées. Quand il s&apos;agit d&apos;une estimation d&apos;éditeur de logiciel, nous le disons.
+            Chaque donnée indique d&apos;où elle vient. Quand elle n&apos;est pas québécoise ou qu&apos;il s&apos;agit d&apos;une estimation
+            d&apos;éditeur de logiciel, nous le disons.
           </p>
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2">
-            {FAITS.map((f) => (
-              <li key={f.chiffre} className="rounded-2xl border border-gray-200 bg-white p-5">
-                <span className="block text-3xl font-black" style={{ color: "#c2410c" }}>{f.chiffre}</span>
-                <span className="block mt-2 text-sm leading-relaxed text-gray-700">{f.texte}</span>
-                <a href={f.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[44px] sm:min-h-0 mt-2 text-xs font-semibold underline text-gray-600">
-                  Source : {f.source}
-                </a>
-              </li>
-            ))}
+          <h3 className="mt-6 text-lg font-black" style={{ color: "#0b1f3a" }}>Pour les garages</h3>
+          <ul className="mt-3 grid gap-4 sm:grid-cols-2">
+            {FAITS_GARAGES.map((f) => <FaitCard key={f.chiffre} f={f} />)}
+          </ul>
+          <h3 className="mt-8 text-lg font-black" style={{ color: "#0b1f3a" }}>Pour les conducteurs</h3>
+          <ul className="mt-3 grid gap-4 sm:grid-cols-2">
+            {FAITS_CONDUCTEURS.map((f) => <FaitCard key={f.chiffre + f.source} f={f} />)}
           </ul>
         </section>
 
