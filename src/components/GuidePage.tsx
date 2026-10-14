@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import JsonLd from "@/components/JsonLd";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -14,6 +15,7 @@ export default function GuidePage({
   crumb = { label: "Pour les garages", href: "/garagistes" },
   cta = { label: "Commencer l'essai gratuit", href: "/inscription/garage", secondary: { label: "Voir les tarifs", href: "/garagistes" } },
   heroCta = { label: "Essayer Garago 30 jours gratuitement", href: "/inscription/garage" },
+  media,
 }: {
   path: string;
   h1: string;
@@ -27,6 +29,8 @@ export default function GuidePage({
   crumb?: { label: string; href: string };
   cta?: { label: string; href: string; secondary: { label: string; href: string } };
   heroCta?: { label: string; href: string };
+  /** Contenu affiché sous l'introduction (par exemple une vidéo). */
+  media?: ReactNode;
 }) {
   const url = `${BASE_URL}${path}`;
   return (
@@ -71,6 +75,7 @@ export default function GuidePage({
             className="inline-flex items-center mt-6 px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>
             {heroCta.label}
           </Link>
+          {media}
         </div>
       </section>
 

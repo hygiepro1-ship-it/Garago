@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import GuidePage from "@/components/GuidePage";
+import GuideVideo from "@/components/GuideVideo";
+import JsonLd from "@/components/JsonLd";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 const PATH = "/conducteurs/reserver-garage-en-ligne";
@@ -18,11 +20,24 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
+    <>
+    <JsonLd data={{
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: "Réserver son garage en ligne, sans appeler",
+      description: "Trouver un garage proche, disponible bientôt et qui s'occupe de votre véhicule, puis réserver en ligne en quatre étapes avec Garago.",
+      thumbnailUrl: `${BASE_URL}/videos/garago-reserver-fr.jpg`,
+      contentUrl: `${BASE_URL}/videos/garago-reserver-fr.mp4`,
+      uploadDate: "2026-10-14",
+      duration: "PT54S",
+      inLanguage: "fr-CA",
+    }} />
     <GuidePage
       path={PATH}
       datePublished="2026-10-14"
       crumb={{ label: "Pour les conducteurs", href: "/pourquoi-garago#conducteurs" }}
       heroCta={{ label: "Trouver un garage", href: "/rechercher" }}
+      media={<GuideVideo name="garago-reserver" label={{ fr: "Vidéo : réserver son garage en ligne, sans appeler", en: "Video: book your garage online, without calling" }} />}
       cta={{ label: "Trouver un garage près de chez moi", href: "/rechercher", secondary: { label: "Voir les garages par ville", href: "/garages" } }}
       h1="Réserver son garage en ligne, sans appeler"
       intro="Plus besoin d'appeler entre deux réunions ni de rappeler le lendemain. Vous choisissez le garage, le service, la date et l'heure parmi les disponibilités réelles, et vous recevez votre confirmation par courriel."
@@ -73,5 +88,6 @@ export default function Page() {
         { href: "/pourquoi-garago", label: "Pourquoi Garago" },
       ]}
     />
+    </>
   );
 }
