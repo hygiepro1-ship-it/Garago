@@ -22,7 +22,7 @@ export default function Page() {
       path={PATH}
       datePublished="2026-10-14"
       h1="Agenda et prise de rendez-vous en ligne pour garage : comment choisir"
-      intro="Un agenda générique de salon de coiffure ne comprend pas qu'une vidange dure 30 minutes et des freins 90 minutes, ni que trois véhicules peuvent être sur les ponts en même temps. Voici les critères à vérifier avant de choisir un outil de rendez-vous en ligne pour votre garage."
+      intro="Une vidange prend 30 minutes, des freins 90 minutes, et trois véhicules peuvent être sur les ponts en même temps : un agenda qui ne connaît pas ces réalités vous fait perdre des créneaux ou vous envoie plus de clients que l'atelier ne peut en recevoir. Voici les critères à vérifier avant de choisir un outil de rendez-vous en ligne pour votre garage."
       sections={[
         {
           h2: "Pourquoi prendre les rendez-vous en ligne",
@@ -45,7 +45,7 @@ export default function Page() {
         {
           h2: "Les erreurs fréquentes",
           bullets: [
-            "Choisir un outil générique qui ne connaît ni les durées de service ni la capacité de l'atelier.",
+            "Choisir un agenda qui bloque toujours la même durée, sans tenir compte du service ni du nombre de ponts disponibles.",
             "Garder deux agendas, un papier et un en ligne, et se retrouver avec des chevauchements.",
             "Ne pas mettre à jour les heures d'ouverture avant la saison des pneus ou les vacances.",
             "Laisser les rendez-vous ouverts trop loin dans le temps : plus c'est loin, plus les absences augmentent.",

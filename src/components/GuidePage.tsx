@@ -11,6 +11,9 @@ export interface GuideSection { h2: string; paragraphs?: string[]; bullets?: str
  */
 export default function GuidePage({
   path, h1, intro, sections, faq, ctaTitle, ctaText, related, datePublished,
+  crumb = { label: "Pour les garages", href: "/garagistes" },
+  cta = { label: "Commencer l'essai gratuit", href: "/inscription/garage", secondary: { label: "Voir les tarifs", href: "/garagistes" } },
+  heroCta = { label: "Essayer Garago 30 jours gratuitement", href: "/inscription/garage" },
 }: {
   path: string;
   h1: string;
@@ -21,6 +24,9 @@ export default function GuidePage({
   ctaText: string;
   related: { href: string; label: string }[];
   datePublished: string;
+  crumb?: { label: string; href: string };
+  cta?: { label: string; href: string; secondary: { label: string; href: string } };
+  heroCta?: { label: string; href: string };
 }) {
   const url = `${BASE_URL}${path}`;
   return (
@@ -32,7 +38,7 @@ export default function GuidePage({
             "@type": "BreadcrumbList",
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "Accueil", item: BASE_URL },
-              { "@type": "ListItem", position: 2, name: "Pour les garages", item: `${BASE_URL}/garagistes` },
+              { "@type": "ListItem", position: 2, name: crumb.label, item: `${BASE_URL}${crumb.href}` },
               { "@type": "ListItem", position: 3, name: h1, item: url },
             ],
           },
@@ -57,13 +63,13 @@ export default function GuidePage({
       <section style={{ background: "linear-gradient(135deg,#071428 0%,#0b1f3a 60%,#1a3a6b 100%)" }}>
         <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
           <nav aria-label="Fil d'Ariane" className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.7)" }}>
-            <Link href="/" className="hover:underline">Accueil</Link> › <Link href="/garagistes" className="hover:underline">Pour les garages</Link>
+            <Link href="/" className="hover:underline">Accueil</Link> › <Link href="/pourquoi-garago" className="hover:underline">Pourquoi Garago</Link> › <Link href={crumb.href} className="hover:underline">{crumb.label}</Link>
           </nav>
           <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight" style={{ textWrap: "balance" }}>{h1}</h1>
           <p className="mt-4 text-base sm:text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{intro}</p>
-          <Link href="/inscription/garage"
+          <Link href={heroCta.href}
             className="inline-flex items-center mt-6 px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>
-            Essayer Garago 30 jours gratuitement
+            {heroCta.label}
           </Link>
         </div>
       </section>
@@ -99,11 +105,11 @@ export default function GuidePage({
           <h2 className="text-xl font-black" style={{ color: "#0b1f3a" }}>{ctaTitle}</h2>
           <p className="mt-1 text-sm text-gray-700">{ctaText}</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Link href="/inscription/garage" className="inline-flex items-center px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>
-              Commencer l&apos;essai gratuit
+            <Link href={cta.href} className="inline-flex items-center px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>
+              {cta.label}
             </Link>
-            <Link href="/garagistes" className="inline-flex items-center px-5 py-3 rounded-xl text-sm font-bold border border-gray-300 bg-white text-gray-800">
-              Voir les tarifs
+            <Link href={cta.secondary.href} className="inline-flex items-center px-5 py-3 rounded-xl text-sm font-bold border border-gray-300 bg-white text-gray-800">
+              {cta.secondary.label}
             </Link>
           </div>
         </section>

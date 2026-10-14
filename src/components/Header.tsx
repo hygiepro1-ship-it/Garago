@@ -207,6 +207,7 @@ export default function Header() {
   // voir globals.css) : c'est la porte d'entrée des garagistes vers l'abonnement.
   const NAV = [
     { label: t.nav.pricing,    href: "/garagistes", highlight: true },
+    { label: lang === "en" ? "Why Garago" : "Pourquoi Garago", href: "/pourquoi-garago" },
     { label: t.nav.catalog,    href: "/prestations" },
     { label: t.nav.tips,       href: "/conseils" },
   ];
