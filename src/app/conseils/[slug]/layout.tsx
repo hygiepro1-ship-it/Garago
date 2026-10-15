@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getArticle } from "@/lib/articles";
+import JsonLd from "@/components/JsonLd";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -16,6 +17,40 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function Layout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = getArticle(slug);
+  const url = `${BASE_URL}/conseils/${slug}`;
+  return (
+    <>
+      {/* Données structurées : Google comprend qu'il s'agit d'un article de conseils, et où il se situe dans le site. */}
+      {article && (
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Article",
+              headline: article.title,
+              description: article.excerpt,
+              datePublished: article.publishedAt,
+              dateModified: article.publishedAt,
+              inLanguage: "fr-CA",
+              mainEntityOfPage: url,
+              author: { "@type": "Organization", name: "Garago" },
+              publisher: { "@type": "Organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700.webp` } },
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Accueil", item: BASE_URL },
+                { "@type": "ListItem", position: 2, name: "Conseils auto", item: `${BASE_URL}/conseils` },
+                { "@type": "ListItem", position: 3, name: article.title, item: url },
+              ],
+            },
+          ],
+        }} />
+      )}
+      {children}
+    </>
+  );
 }
