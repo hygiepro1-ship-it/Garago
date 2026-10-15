@@ -15,7 +15,7 @@ export const fr: Guide = {
   intro: "Vos clients cherchent un garage le soir, sur leur téléphone, quand l'atelier est fermé. La prise de rendez-vous en ligne leur permet de réserver à ce moment-là, sans appel. Voici comment la mettre en place correctement dans un garage, étape par étape.",
   sections: [
     {
-      h2: "Pourquoi c'est devenu indispensable",
+      h2: "Pourquoi Garago est devenu indispensable",
       paragraphs: [
         "Selon une analyse de Marchex publiée en 2026, jusqu'à 21 % des appels reçus par les services automobiles restent sans réponse ou échouent, alors qu'un taux sain se situe à 10 % ou moins. Un client qui tombe sur la boîte vocale appelle souvent le garage suivant.",
         "Côté clients, une étude de Cox Automotive (États-Unis, 2017) indique que 76 % des clients de services automobiles qui ont réservé en ligne le referaient, et que 45 % de ceux qui ne l'avaient pas fait ignoraient que l'option existait. Proposer la réservation en ligne ne suffit donc pas : il faut aussi la rendre visible.",
@@ -112,7 +112,7 @@ export const en: Guide = {
   intro: "Your customers look for a garage in the evening, on their phone, when the shop is closed. Online booking lets them book right then, without a call. Here is how to set it up properly in an auto repair shop, step by step.",
   sections: [
     {
-      h2: "Why it has become essential",
+      h2: "Why Garago has become essential",
       paragraphs: [
         "According to a Marchex analysis published in 2026, up to 21% of calls to automotive service departments go unanswered or fail, while a healthy rate is 10% or less. A customer who reaches voicemail often calls the next shop.",
         "On the customer side, a Cox Automotive study (United States, 2017) found that 76% of automotive service customers who booked online would do it again, and 45% of those who hadn't didn't know the option existed. Offering online booking isn't enough: you have to make it visible.",

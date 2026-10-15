@@ -1702,9 +1702,9 @@ export default function DashboardGaragePage() {
     { id: "services", label: d.services  },
     { id: "marques",  label: d.brands    },
     { id: "horaires", label: d.hours     },
+    { id: "ambassadeur", label: tr.en ? "Referral" : "Parrainage" },
     { id: "profil",   label: d.profile   },
     { id: "abonnement", label: tr("Abonnement") },
-    { id: "ambassadeur", label: tr.en ? "Referral" : "Parrainage" },
   ];
 
   // Le programme de parrainage / ambassadeur est réservé aux garages abonnés

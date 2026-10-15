@@ -44,7 +44,7 @@ const UI = {
   fr: {
     home: { label: "Accueil", href: "/" }, hub: { label: "Pourquoi Garago", href: "/pourquoi-garago" },
     breadcrumb: "Fil d'Ariane", faq: "Questions fréquentes", related: "À lire aussi", relatedAria: "Guides liés", sources: "Sources",
-    crumb: { label: "Pour les garages", href: "/garagistes" },
+    crumb: { label: "Guides pour les garages", href: "/pourquoi-garago#garagistes" },
     cta: { label: "Commencer l'essai gratuit", href: "/inscription/garage", secondary: { label: "Voir les tarifs", href: "/garagistes" } },
     heroCta: { label: "Essayer Garago 30 jours gratuitement", href: "/inscription/garage" },
     sticky: {
@@ -56,7 +56,7 @@ const UI = {
   en: {
     home: { label: "Home", href: "/en" }, hub: { label: "Why Garago", href: "/en/why-garago" },
     breadcrumb: "Breadcrumb", faq: "Frequently asked questions", related: "Related guides", relatedAria: "Related guides", sources: "Sources",
-    crumb: { label: "For garages", href: "/en/garage-owners" },
+    crumb: { label: "Guides for garages", href: "/en/why-garago#garages" },
     cta: { label: "Start the free trial", href: "/inscription/garage", secondary: { label: "See pricing", href: "/en/garage-owners" } },
     heroCta: { label: "Try Garago free for 30 days", href: "/inscription/garage" },
     sticky: {

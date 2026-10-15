@@ -7,7 +7,7 @@
  * Chaque rendez-vous s'affiche dans la colonne du poste qui lui est attribué.
  */
 
-import { apptColors, PAST_HATCH, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import { apptColors, PAST_HATCH, PAST_OVERLAY, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
 
@@ -122,6 +122,7 @@ export default function AgendaDayView({
 
             {posts.map((list, i) => (
               <div key={i} className="relative border-l border-gray-100">
+                {date < todayStr && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
                 {rows.map((m) => {
                   const open = !!hours && m >= hours.open && m + STEP <= hours.close;
                   const past = date < todayStr || (date === todayStr && m < nowMin);
@@ -172,6 +173,7 @@ export default function AgendaDayView({
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />{tr("Confirmé")}</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />{tr("À appeler")}</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé")}</span>
+        {date < todayStr && <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: `${PAST_OVERLAY}, #ecfdf5`, border: "1px solid #e2e8f0" }} />{tr("Journée passée")}</span>}
       </div>
     </div>
   );
