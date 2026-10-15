@@ -12,7 +12,7 @@ export default function Footer() {
   const DRIVER_LINKS = [
     { label: f.findGarage,  href: "/rechercher" },
     { label: f.oilChange,   href: "/rechercher?service=oil" },
-    { label: f.winterTires, href: "/rechercher?service=tires-winter" },
+    { label: f.winterTires, href: "/rechercher?service=tires" },
     { label: f.brakes,      href: "/rechercher?service=brakes" },
     { label: f.ac,          href: "/rechercher?service=ac" },
     { label: lang === "en" ? "Garages by city" : "Garages par ville", href: "/garages" },
@@ -32,7 +32,7 @@ export default function Footer() {
 
   const SERVICE_LINKS = [
     { icon: "/icons/oil.png",         label: f.oilChange,   href: "/rechercher?service=oil" },
-    { icon: "/icons/tires-winter.png",label: f.winterTires, href: "/rechercher?service=tires-winter" },
+    { icon: "/icons/tires-winter.png",label: f.winterTires, href: "/rechercher?service=tires" },
     { icon: "/icons/brakes.png",      label: f.brakes,      href: "/rechercher?service=brakes" },
     { icon: "/icons/ac.png",          label: f.ac,          href: "/rechercher?service=ac" },
     { icon: "/icons/electrical.png",  label: f.diagnostic,  href: "/rechercher?service=electrical" },

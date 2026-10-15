@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { toMinutes } from "@/lib/availability";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, normalizeServiceId } from "@/lib/services";
 import { cleanText } from "@/lib/abuse";
 
 const KNOWN_CATEGORIES = new Map(SERVICE_CATEGORIES.map((c) => [c.id, c]));
@@ -89,7 +89,7 @@ export async function PUT(req: NextRequest) {
   for (const raw of list) {
     const s = (raw ?? {}) as Record<string, unknown>;
     // Seules les catégories officielles sont acceptées : un garage ne peut pas créer de catégories dans la base commune.
-    const known = typeof s.categoryId === "string" ? KNOWN_CATEGORIES.get(s.categoryId) : undefined;
+    const known = typeof s.categoryId === "string" ? KNOWN_CATEGORIES.get(normalizeServiceId(s.categoryId)) : undefined;
     if (!known) return NextResponse.json({ error: "Catégorie de service inconnue." }, { status: 400 });
     if (seen.has(known.id)) continue;
     seen.add(known.id);

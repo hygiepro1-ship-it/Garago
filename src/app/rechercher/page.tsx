@@ -7,7 +7,7 @@ import GarageCard from "@/components/GarageCard";
 import GarageCardSkeleton from "@/components/GarageCardSkeleton";
 import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
-import { SERVICE_CATEGORIES, QUEBEC_CITIES, serviceLabel } from "@/lib/services";
+import { SERVICE_CATEGORIES, QUEBEC_CITIES, serviceLabel, normalizeServiceId } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
 import { getBestPosition } from "@/lib/geolocate";
 import LocationPicker from "@/components/LocationPicker";
@@ -71,7 +71,7 @@ function SearchContent() {
   // uniquement — un garage n'indique pas les années qu'il traite, seulement les modèles.
   const [model,     setModel]     = useState(searchParams.get("model")   ?? "");
   const [year,      setYear]      = useState(searchParams.get("year")    ?? "");
-  const [service,   setService]   = useState(searchParams.get("service") ?? "");
+  const [service,   setService]   = useState(normalizeServiceId(searchParams.get("service") ?? ""));
   const [city,      setCity]      = useState(searchParams.get("city")    ?? "");
   const [walkInOnly, setWalkInOnly] = useState(false);
   const [minRating,  setMinRating]  = useState("");

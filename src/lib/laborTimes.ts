@@ -30,6 +30,7 @@ interface LaborEntry {
 // Clés = id de SERVICE_CATEGORIES dans src/lib/services.ts
 export const LABOR_CATALOG: Record<string, LaborEntry> = {
   "oil":          { baseHours: 0.5,  partsMin: 30,  partsMax: 60,  note: "Huile + filtre" },
+  "tires":        { baseHours: 1.0,  partsMin: 20,  partsMax: 40,  note: "Montage + balancement 4 pneus" },
   "tires-winter": { baseHours: 1.0,  partsMin: 20,  partsMax: 40,  note: "Montage + balancement 4 pneus" },
   "tires-summer": { baseHours: 1.0,  partsMin: 20,  partsMax: 40,  note: "Montage + balancement 4 pneus" },
   "brakes":       { baseHours: 1.2,  partsMin: 80,  partsMax: 200, note: "Plaquettes avant" },

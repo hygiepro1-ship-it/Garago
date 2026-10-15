@@ -27,7 +27,7 @@ function currentSeason(lang: string, now = new Date()): Season | null {
       title: fr ? "Pneus d'hiver : date limite le 1er décembre" : "Winter tires: deadline December 1",
       body: fr ? "Les garages se remplissent vite à l'automne. Voyez qui a encore de la place dans votre quartier."
                : "Garages fill up fast in the fall. See who still has room in your neighbourhood.",
-      service: "tires-winter",
+      service: "tires",
       image: {
         src: "/saison-pneus.webp",
         // Photo Freepik (senivpetro), n° 13781719. Affichée sans mention d'auteur à la demande
@@ -40,7 +40,7 @@ function currentSeason(lang: string, now = new Date()): Season | null {
     return {
       title: fr ? "Pneus d'été : vous pouvez les remettre à partir du 16 mars" : "Summer tires: you can put them back on from March 16",
       body: fr ? "Voyez les garages qui ont de la place dans votre quartier." : "See which garages have room in your neighbourhood.",
-      service: "tires-summer",
+      service: "tires",
     };
   }
   return null;

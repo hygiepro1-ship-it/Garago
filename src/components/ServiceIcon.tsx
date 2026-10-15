@@ -8,6 +8,13 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
     </svg>
   ),
+  tires: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>
+      <line x1="12" y1="2.5" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="21.5"/>
+      <line x1="2.5" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="21.5" y2="12"/>
+    </svg>
+  ),
   "tires-winter": (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>
@@ -183,12 +190,14 @@ const FALLBACK = (
 // Name → id mapping (French + English)
 const NAME_TO_ID: Record<string, string> = {
   "Vidange d'huile": "oil", "Oil Change": "oil",
+  "Installation de pneus": "tires", "Tire installation": "tires", "Tire Installation": "tires",
   "Pneus d'hiver": "tires-winter", "Winter Tires": "tires-winter",
   "Pneus d'été / toutes saisons": "tires-summer", "Summer / All-Season Tires": "tires-summer",
   "Freins": "brakes", "Brakes": "brakes",
   "Climatisation": "ac", "Air Conditioning": "ac",
   "Mécanique générale": "engine", "General Mechanics": "engine",
   "Inspection mécanique": "inspection", "Mechanical Inspection": "inspection",
+  "Inspection pré-achat": "inspection", "Pre-purchase inspection": "inspection", "Pre-Purchase Inspection": "inspection",
   "Batterie": "battery", "Battery": "battery",
   "Transmission": "transmission",
   "Carrosserie": "bodywork", "Bodywork": "bodywork",

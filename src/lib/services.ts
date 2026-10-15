@@ -9,22 +9,13 @@ export const SERVICE_CATEGORIES = [
     description: "Changement d'huile moteur et filtre",
   },
   {
-    id: "tires-winter",
-    name: "Pneus d'hiver",
-    nameEn: "Winter tires",
-    descriptionEn: "Winter tire installation, storage and sales",
-    icon: "❄️",
+    id: "tires",
+    name: "Installation de pneus",
+    nameEn: "Tire installation",
+    descriptionEn: "Winter, summer and all-season tire changes, mounting and balancing",
+    icon: "🛞",
     iconPath: "/icons/tires-winter.png",
-    description: "Installation, entreposage et vente de pneus d'hiver",
-  },
-  {
-    id: "tires-summer",
-    name: "Pneus d'été / toutes saisons",
-    nameEn: "Summer / all-season tires",
-    descriptionEn: "Summer and all-season tire installation and sales",
-    icon: "☀️",
-    iconPath: "/icons/tires-summer.png",
-    description: "Installation et vente de pneus d'été et toutes saisons",
+    description: "Changement de pneus d'hiver, d'été et toutes saisons, pose et balancement",
   },
   {
     id: "brakes",
@@ -55,12 +46,12 @@ export const SERVICE_CATEGORIES = [
   },
   {
     id: "inspection",
-    name: "Inspection mécanique",
-    nameEn: "Mechanical inspection",
-    descriptionEn: "Pre-purchase and general inspection",
+    name: "Inspection pré-achat",
+    nameEn: "Pre-purchase inspection",
+    descriptionEn: "Full inspection before buying a used vehicle",
     icon: "🔍",
     iconPath: "/icons/inspection.png",
-    description: "Inspection pré-achat et inspection générale",
+    description: "Inspection complète avant l'achat d'un véhicule d'occasion",
   },
   {
     id: "battery",
@@ -228,12 +219,31 @@ export const SERVICE_CATEGORIES = [
 
 type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
 
+/**
+ * Anciens services remplacés : leurs identifiants restent reconnus (liens déjà partagés,
+ * services enregistrés avant le changement) et renvoient au service qui les remplace.
+ */
+export const LEGACY_SERVICE_IDS: Record<string, string> = { "tires-winter": "tires", "tires-summer": "tires" };
+
+/** Identifiant actuel d'un service (« tires-winter » → « tires »). */
+export const normalizeServiceId = (id: string) => LEGACY_SERVICE_IDS[id] ?? id;
+
+/** Identifiants à chercher en base pour un service : le sien et ceux des anciens services qu'il remplace. */
+export function serviceIdsFor(id: string): string[] {
+  const current = normalizeServiceId(id);
+  return [current, ...Object.keys(LEGACY_SERVICE_IDS).filter((old) => LEGACY_SERVICE_IDS[old] === current)];
+}
+
 /** Nom d'un service dans la langue du visiteur. */
 export const serviceLabel = (cat: ServiceCategory, lang: string) => (lang === "en" ? cat.nameEn : cat.name);
 /** Description d'un service dans la langue du visiteur. */
 export const serviceDescription = (cat: ServiceCategory, lang: string) => (lang === "en" ? cat.descriptionEn : cat.description);
 
-const EN_BY_NAME = new Map<string, string>(SERVICE_CATEGORIES.map((c) => [c.name.toLowerCase(), c.nameEn]));
+const EN_BY_NAME = new Map<string, string>([
+  ...SERVICE_CATEGORIES.map((c) => [c.name.toLowerCase(), c.nameEn] as [string, string]),
+  // Anciens noms, encore présents dans des rendez-vous et services enregistrés
+  ["pneus d'hiver", "Winter tires"], ["pneus d'été / toutes saisons", "Summer / all-season tires"], ["inspection mécanique", "Mechanical inspection"],
+]);
 
 /**
  * Traduit un nom de service enregistré en français (catégorie d'un garage, service d'un

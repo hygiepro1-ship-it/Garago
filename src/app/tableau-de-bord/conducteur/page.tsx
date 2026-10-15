@@ -1239,7 +1239,7 @@ export default function DashboardConducteurPage() {
                 <img src="/icons/step1.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.findGarage}</span>
               </Link>
-              <Link href="/rechercher?service=tires-winter" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
+              <Link href="/rechercher?service=tires" className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/tires-winter.png" alt="" width={22} height={22} style={{ opacity: 0.6 }} />
                 <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">{d.winterTires}</span>

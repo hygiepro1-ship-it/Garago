@@ -2107,35 +2107,12 @@ export default function DashboardGaragePage() {
                             {tr(sc.label)}
                           </span>
                         </div>
-                        {/* Actions */}
+                        {/* Une seule action : la fiche du rendez-vous, où tout se modifie */}
                         <div className="flex flex-wrap gap-1.5 pl-[76px]">
-                          {a.status === "PENDING" && (
-                            <button onClick={() => updateApptStatus(a.id, "CONFIRMED")}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold hover:bg-green-100 transition-colors">
-                              {tr("✓ Confirmer")}
-                            </button>
-                          )}
-                          {a.status === "CONFIRMED" && (
-                            <button onClick={() => updateApptStatus(a.id, "COMPLETED")}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold hover:bg-purple-100 transition-colors">
-                              {tr("✓ Terminé")}
-                            </button>
-                          )}
-                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
-                            <button onClick={() => agendaEdit.current?.(a.id)}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                              {tr("Modifier")}
-                            </button>
-                          )}
-                          {(a.status === "PENDING" || a.status === "CONFIRMED") && (
-                            <button onClick={async () => {
-                              if (!window.confirm(tr("Annuler ce rendez-vous ?"))) return;
-                              await updateApptStatus(a.id, "CANCELLED");
-                            }}
-                              className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold hover:bg-red-100 transition-colors">
-                              {tr("Annuler")}
-                            </button>
-                          )}
+                          <button onClick={() => agendaEdit.current?.(a.id)}
+                            className="text-xs px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
+                            {tr.en ? "Open" : "Ouvrir"}
+                          </button>
                         </div>
                       </div>
                     );

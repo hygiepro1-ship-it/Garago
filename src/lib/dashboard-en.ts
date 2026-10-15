@@ -229,6 +229,8 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Indiquez le prix minimum de ce service.": "Enter the minimum price for this service.",
   "Informations du garage": "Garage information",
   "Inspection mécanique": "Mechanical inspection",
+  "Inspection pré-achat": "Pre-purchase inspection",
+  "Installation de pneus": "Tire installation",
   "Janvier": "January",
   "Jeudi": "Thursday",
   "Jour": "Day",
