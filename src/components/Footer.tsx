@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 import L from "@/components/L";
+import { localHref } from "@/lib/alternates";
 
 export default function Footer() {
   const { t, lang } = useLang();
@@ -23,9 +24,11 @@ export default function Footer() {
     { label: f.pricing,      href: "/garagistes" },
     { label: lang === "en" ? "Reduce no-shows" : "Réduire les rendez-vous manqués", href: "/garagistes/rendez-vous-manques" },
     { label: lang === "en" ? "Online booking guide" : "Guide : agenda en ligne", href: "/garagistes/agenda-en-ligne" },
+    { label: lang === "en" ? "Auto repair shop software" : "Logiciel de garage automobile", href: "/garagistes/logiciel-garage-automobile" },
+    { label: lang === "en" ? "Free invoice template" : "Modèle de facture gratuit", href: "/garagistes/modele-facture-garage" },
     { label: f.dashboard,    href: "/tableau-de-bord/garage" },
     { label: f.signIn,       href: "/connexion" },
-  ];
+  ].map((l) => ({ ...l, href: localHref(l.href, lang) }));
 
   const SERVICE_LINKS = [
     { icon: "/icons/oil.png",         label: f.oilChange,   href: "/rechercher?service=oil" },
@@ -43,7 +46,7 @@ export default function Footer() {
 
           {/* Brand */}
           <div className="col-span-2">
-            <Link href="/" className="inline-flex mb-5">
+            <Link href={localHref("/", lang)} className="inline-flex mb-5">
               <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-10 w-auto object-contain" />
             </Link>
             <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.6)" }}>

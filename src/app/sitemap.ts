@@ -2,20 +2,15 @@ import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { getCities, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
+import { PAGE_PAIRS, languagesFor } from "@/lib/alternates";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
+// Pages en une seule version. Les pages traduites (français et anglais) viennent de PAGE_PAIRS.
 const STATIC_ROUTES = [
-  "",
   "/rechercher",
   "/prestations",
   "/conseils",
-  "/garagistes",
-  "/garagistes/rendez-vous-manques",
-  "/garagistes/agenda-en-ligne",
-  "/garagistes/saison-pneus-hiver",
-  "/conducteurs/reserver-garage-en-ligne",
-  "/pourquoi-garago",
   "/garages",
   "/faq",
   "/a-propos",
@@ -27,11 +22,20 @@ const STATIC_ROUTES = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Chaque page traduite annonce ses deux versions : Google montre la bonne selon la langue de la recherche.
+  const pairedEntries: MetadataRoute.Sitemap = PAGE_PAIRS.flat().map((path) => ({
+    url: `${BASE_URL}${path === "/" ? "" : path}`,
+    lastModified: new Date(),
+    changeFrequency: path === "/" || path === "/en" ? "daily" : "weekly",
+    priority: path === "/" ? 1 : path === "/en" ? 0.9 : 0.7,
+    alternates: { languages: languagesFor(path) },
+  }));
+
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((path) => ({
     url: `${BASE_URL}${path}`,
     lastModified: new Date(),
-    changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : 0.6,
+    changeFrequency: "weekly",
+    priority: 0.6,
   }));
 
   const subOr = activeSubscriptionOr();
@@ -64,5 +68,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-  return [...staticEntries, ...cityEntries, ...garageEntries];
+  return [...pairedEntries, ...staticEntries, ...cityEntries, ...garageEntries];
 }
