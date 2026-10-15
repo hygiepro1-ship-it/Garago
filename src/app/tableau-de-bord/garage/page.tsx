@@ -1283,7 +1283,7 @@ export default function DashboardGaragePage() {
 
   // ── RDV / Calendar ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeTab === "apercu" && !rdvLoaded && garage) {
+    if ((activeTab === "apercu" || activeTab === "horaires") && !rdvLoaded && garage) {
       Promise.all([
         gfetch("/api/garage/appointments").then(r => r.json()),
         // Tous les blocages, pas seulement ceux du mois affiché : l'agenda navigue de semaine en semaine.
@@ -1704,8 +1704,7 @@ export default function DashboardGaragePage() {
     { id: "horaires", label: d.hours     },
     { id: "profil",   label: d.profile   },
     { id: "abonnement", label: tr("Abonnement") },
-    ...(garage.subscriptionStatus === "ACTIVE" && garage.ambassadorTier >= 1
-      ? [{ id: "ambassadeur" as Tab, label: "Ambassadeur" }] : []),
+    { id: "ambassadeur", label: tr.en ? "Referral" : "Parrainage" },
   ];
 
   // Le programme de parrainage / ambassadeur est réservé aux garages abonnés
@@ -2121,351 +2120,6 @@ export default function DashboardGaragePage() {
             );
           })()}
 
-          {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
-          {/* Calendar header */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #f1f5f9" }}>
-              <div>
-                <h2 className="font-bold text-gray-900 text-lg">
-                  {tr.en ? "Availability and time off" : "Disponibilités et absences"} · {tr(MONTH_NAMES_FR[calMonth])} {calYear}
-                </h2>
-                <p className="hidden sm:block text-gray-500 text-sm">{tr("Cliquez pour sélectionner · recliquez pour désélectionner ·")} <kbd className="bg-gray-100 px-1 rounded text-xs">{tr("Maj")}</kbd>{tr("+clic pour une plage")}</p>
-                <p className="sm:hidden text-gray-500 text-xs">{tr("Touchez un jour pour le sélectionner")}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => changeMonth(-1)} aria-label={tr("Mois précédent")}
-                  className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
-                  ‹
-                </button>
-                <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
-                  className="text-xs px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
-                  {tr("Aujourd'hui")}
-                </button>
-                <button onClick={() => changeMonth(1)} aria-label={tr("Mois suivant")}
-                  className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
-                  ›
-                </button>
-              </div>
-            </div>
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 text-center" style={{ borderBottom: "1px solid #f1f5f9" }}>
-              {DAY_ABBR_FR.map((d) => (
-                <div key={d} className="py-2 text-xs font-bold text-gray-400">{d}</div>
-              ))}
-            </div>
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7">
-              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-16 border-r border-b border-gray-50" />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const dayStr = toDateStr(day);
-                const isToday = dayStr === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-                const isSelected = selectedDays.includes(dayStr);
-                const apptCount  = apptCountForDay(dayStr);
-                const blockCount = blockCountForDay(dayStr);
-                const colIndex = (firstDayOfWeek + i) % 7;
-                return (
-                  <button key={day}
-                    onClick={(e) => toggleDay(dayStr, e)}
-                    title={tr("Clic = sélectionner · Ctrl+clic = ajouter · Maj+clic = plage")}
-                    className={`h-16 flex flex-col items-start p-1.5 text-left transition-colors border-b border-gray-100 ${colIndex < 6 ? "border-r" : ""} ${isSelected ? "bg-orange-50" : "hover:bg-gray-50"}`}
-                  >
-                    <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-white" : "text-gray-700"}`}
-                      style={isToday && !isSelected ? { background: "#e0600c" } : isSelected ? { background: "#e0600c", outline: "2px solid #ea580c", outlineOffset: "1px" } : {}}>
-                      {day}
-                    </span>
-                    <div className="flex flex-wrap gap-0.5">
-                      {apptCount > 0 && (
-                        <span className="text-xs px-1 rounded font-bold leading-tight"
-                          style={{ background: "#fef3c7", color: "#92400e" }}>
-                          {apptCount} RDV
-                        </span>
-                      )}
-                      {blockCount > 0 && (
-                        <span className="flex items-center gap-0.5 text-xs px-1 rounded font-bold leading-tight"
-                          style={{ background: "#fee2e2", color: "#991b1b" }}>
-                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                          {blockCount}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>{tr("RDV : rendez-vous")}</span>
-            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>{tr("créneau bloqué")}</span>
-            {selectedDays.length > 0 && (
-              <button onClick={() => setSelectedDays([])}
-                className="ml-auto text-gray-400 hover:text-gray-600 font-semibold underline">
-                {tr("Tout désélectionner")} ({selectedDays.length})
-              </button>
-            )}
-          </div>
-
-          {/* Selected day(s) detail */}
-          {selectedDays.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                {isMultiSelect ? (
-                  <div>
-                    <h3 className="font-bold text-gray-900">
-                      {selectedDays.length} {tr.en ? "days selected" : "jours sélectionnés"}
-                    </h3>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {selectedDays.map(d => new Date(d + "T12:00:00").toLocaleDateString(tr.locale, { day: "numeric", month: "short" })).join(" · ")}
-                    </p>
-                  </div>
-                ) : (
-                  <h3 className="font-bold text-gray-900">
-                    {new Date(selectedDay! + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "long", day: "numeric", month: "long" })}
-                  </h3>
-                )}
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
-                    className="text-sm px-4 py-2 rounded-xl font-semibold border"
-                    style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
-                    {isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer ce créneau")}
-                  </button>
-                </div>
-              </div>
-
-              {/* Manual RDV form */}
-              {showManualForm && (
-                <div className="rounded-xl p-4 mb-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Nouveau rendez-vous")}</h4>
-                    <button onClick={() => setShowManualForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
-                  </div>
-                  <form onSubmit={isMultiSelect ? saveBulkManualRdv : saveManualRdv} className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Nom du client *")}</label>
-                        <input className={inputClass} required value={manualForm.customerName} onChange={e=>setManualForm(f=>({...f,customerName:e.target.value}))} placeholder="Jean Tremblay" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Téléphone *")}</label>
-                        <input className={inputClass} required type="tel" value={manualForm.customerPhone} onChange={e=>setManualForm(f=>({...f,customerPhone:e.target.value}))} placeholder="514 555-0100" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Courriel")}</label>
-                        <input className={inputClass} type="email" value={manualForm.customerEmail} onChange={e=>setManualForm(f=>({...f,customerEmail:e.target.value}))} placeholder="jean@exemple.com" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">Service</label>
-                        <select className={inputClass} value={manualForm.categoryId}
-                          onChange={e => {
-                            const cat = services.find(s => s.categoryId === e.target.value);
-                            setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
-                          }}>
-                          <option value="">{tr("Autre / non précisé")}</option>
-                          {services.map(s => (
-                            <option key={s.categoryId} value={s.categoryId}>
-                              {translateServiceName(s.categoryName, tr.en ? "en" : "fr")}{s.durationMin ? ` (${s.durationMin} min)` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure *")}</label>
-                        <input className={inputClass} required type="time" value={manualForm.startTime} onChange={e=>setManualForm(f=>({...f,startTime:e.target.value}))} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Marque")}</label>
-                        <input className={inputClass} value={manualForm.vehicleMake} onChange={e=>setManualForm(f=>({...f,vehicleMake:e.target.value}))} placeholder="Toyota" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Modèle")}</label>
-                        <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">{tr("(visibles seulement par vous)")}</span></label>
-                      <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
-                        value={manualForm.notes ?? ""}
-                        onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
-                        placeholder={tr("Ex. : client déjà venu, apporte ses pneus, bruit au freinage…")} />
-                    </div>
-                    {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
-                    <div className="flex gap-2 pt-1">
-                      <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#e0600c" }}>
-                        {savingRdv ? tr("Ajout…") : tr("Ajouter")}
-                      </button>
-                      <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Block slot form */}
-              {showBlockForm && (
-                <div className="rounded-xl p-4 mb-4" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Bloquer un créneau")}</h4>
-                    <button onClick={() => setShowBlockForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
-                  </div>
-                  <form onSubmit={isMultiSelect ? saveBulkBlock : saveBlockSlot} className="space-y-3">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                      <input type="checkbox" checked={blockForm.allDay}
-                        onChange={e => setBlockForm(f => ({ ...f, allDay: e.target.checked }))}
-                        className="accent-red-500 w-4 h-4" />
-                      {tr("Journée entière")}
-                    </label>
-                    {!blockForm.allDay && (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure début")}</label>
-                          <input className={inputClass} type="time" value={blockForm.startTime} onChange={e=>setBlockForm(f=>({...f,startTime:e.target.value}))} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure fin")}</label>
-                          <input className={inputClass} type="time" value={blockForm.endTime} onChange={e=>setBlockForm(f=>({...f,endTime:e.target.value}))} />
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Raison (optionnel)")}</label>
-                      <input className={inputClass} value={blockForm.reason} onChange={e=>setBlockForm(f=>({...f,reason:e.target.value}))} placeholder={tr("Congé, formation, fermeture exceptionnelle…")} />
-                    </div>
-                    <div className="flex gap-2">
-                      <button type="submit" disabled={savingBlock}
-                        className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
-                        style={{ background: "#dc2626" }}>
-                        {savingBlock ? tr("Blocage…") : isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer le créneau")}
-                      </button>
-                      <button type="button" onClick={() => setShowBlockForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Multi-day summary */}
-              {isMultiSelect && !showManualForm && !showBlockForm && (
-                <MultiDaySummary
-                  appointments={appointments}
-                  selectedDays={selectedDays}
-                  blockedSlots={blockedSlots}
-                  onDeleteBlock={deleteBlockSlot}
-                />
-              )}
-
-              {/* Single-day: appointments */}
-              {!isMultiSelect && selectedDayAppts.length > 0 && (
-                <div className="space-y-3 mb-4">
-                  <p className="text-sm font-semibold text-gray-700">Rendez-vous ({selectedDayAppts.length})</p>
-                  {selectedDayAppts.map(a => {
-                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
-                    return (
-                      <div key={a.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <div className="text-center min-w-[50px]">
-                          <p className="text-lg font-extrabold text-orange-500 leading-none">{a.startTime}</p>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{tr(sc.label)}</span>
-                          </div>
-                          <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
-                          {(a as any).notes && (
-                            <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                              {(a as any).notes}
-                            </p>
-                          )}
-                          <div className="flex flex-wrap gap-1.5 mt-1.5">
-                            {a.status === "PENDING" && <>
-                              <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">{tr("✓ Confirmer")}</button>
-                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">{tr("Refuser")}</button>
-                            </>}
-                            {a.status === "CONFIRMED" && <>
-                              <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>
-                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">{tr("Annuler")}</button>
-                            </>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Single-day: blocked slots */}
-              {!isMultiSelect && selectedDayBlocks.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-gray-700">{tr("Créneaux bloqués")}</p>
-                  {selectedDayBlocks.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
-                      <svg className="w-5 h-5 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-red-800">
-                          {s.allDay ? tr("Journée entière") : `${s.startTime} – ${s.endTime}`}
-                        </p>
-                        {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
-                      </div>
-                      <button onClick={() => deleteBlockSlot(s.id)}
-                        className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">
-                        {tr("Retirer")}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {!isMultiSelect && selectedDayAppts.length === 0 && selectedDayBlocks.length === 0 && !showManualForm && !showBlockForm && (
-                <p className="text-gray-400 text-sm text-center py-4">{tr("Aucun événement ce jour.")}</p>
-              )}
-            </div>
-          )}
-
-          {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
-          {referralUnlocked ? (
-            <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{tr("Code de parrainage")}</p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
-                  {garage.referralCode ?? "—"}
-                </span>
-                {garage.referralCode && (
-                  <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess(tr("Code copié ✓")); setTimeout(() => setSuccess(""), 3000); }}
-                    className="bg-[#e0600c] hover:bg-[#c45305] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                    {tr("Copier")}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-3">{tr("Partagez ce code : le garage parrainé bénéficie de")} <strong>{tr("60 jours d'essai gratuit")}</strong> {tr("au lieu de 30.")}</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{tr("Programme de parrainage")}</p>
-              <p className="text-sm text-gray-600 mb-3">
-                {tr.en
-                  ? <>Activate your subscription to unlock your referral code: the garage you refer gets <strong>60 days of free trial</strong> instead of 30, and you join the Ambassador program (discounts on your invoice, priority in search, Certified badge).</>
-                  : <>Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).</>}
-              </p>
-              <button type="button" onClick={() => setActiveTab("abonnement")}
-                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#e0600c" }}>
-                Voir l&apos;abonnement
-              </button>
-            </div>
-          )}
-
-          {/* Bloc 2 — Programme Ambassadeur (réservé aux abonnés) */}
-          {referralUnlocked && (
-            <AmbassadorOverviewCard
-              tier={garage.ambassadorTier ?? 0}
-              onViewDetails={() => setActiveTab("ambassadeur")}
-            />
-          )}
-
           {/* Suggestion link */}
           <Link
             href="/suggestions"
@@ -2851,6 +2505,7 @@ export default function DashboardGaragePage() {
 
       {/* ══ HORAIRES ════════════════════════════════════════════════════════ */}
       {activeTab === "horaires" && (
+        <div className="space-y-6">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -2880,6 +2535,311 @@ export default function DashboardGaragePage() {
               );
             })}
           </div>
+        </div>
+          {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
+          {/* Calendar header */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <div>
+                <h2 className="font-bold text-gray-900 text-lg">
+                  {tr.en ? "Availability and time off" : "Disponibilités et absences"} · {tr(MONTH_NAMES_FR[calMonth])} {calYear}
+                </h2>
+                <p className="hidden sm:block text-gray-500 text-sm">{tr("Cliquez pour sélectionner · recliquez pour désélectionner ·")} <kbd className="bg-gray-100 px-1 rounded text-xs">{tr("Maj")}</kbd>{tr("+clic pour une plage")}</p>
+                <p className="sm:hidden text-gray-500 text-xs">{tr("Touchez un jour pour le sélectionner")}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={() => changeMonth(-1)} aria-label={tr("Mois précédent")}
+                  className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
+                  ‹
+                </button>
+                <button onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDays([]); setRdvLoaded(false); }}
+                  className="text-xs px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
+                  {tr("Aujourd'hui")}
+                </button>
+                <button onClick={() => changeMonth(1)} aria-label={tr("Mois suivant")}
+                  className="w-9 h-9 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
+                  ›
+                </button>
+              </div>
+            </div>
+            {/* Day-of-week headers */}
+            <div className="grid grid-cols-7 text-center" style={{ borderBottom: "1px solid #f1f5f9" }}>
+              {DAY_ABBR_FR.map((d) => (
+                <div key={d} className="py-2 text-xs font-bold text-gray-400">{d}</div>
+              ))}
+            </div>
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7">
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} className="h-16 border-r border-b border-gray-50" />
+              ))}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const dayStr = toDateStr(day);
+                const isToday = dayStr === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+                const isSelected = selectedDays.includes(dayStr);
+                const apptCount  = apptCountForDay(dayStr);
+                const blockCount = blockCountForDay(dayStr);
+                const colIndex = (firstDayOfWeek + i) % 7;
+                return (
+                  <button key={day}
+                    onClick={(e) => toggleDay(dayStr, e)}
+                    title={tr("Clic = sélectionner · Ctrl+clic = ajouter · Maj+clic = plage")}
+                    className={`h-16 flex flex-col items-start p-1.5 text-left transition-colors border-b border-gray-100 ${colIndex < 6 ? "border-r" : ""} ${isSelected ? "bg-orange-50" : "hover:bg-gray-50"}`}
+                  >
+                    <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-0.5 ${isToday ? "text-white" : isSelected ? "text-white" : "text-gray-700"}`}
+                      style={isToday && !isSelected ? { background: "#e0600c" } : isSelected ? { background: "#e0600c", outline: "2px solid #ea580c", outlineOffset: "1px" } : {}}>
+                      {day}
+                    </span>
+                    <div className="flex flex-wrap gap-0.5">
+                      {apptCount > 0 && (
+                        <span className="text-xs px-1 rounded font-bold leading-tight"
+                          style={{ background: "#fef3c7", color: "#92400e" }}>
+                          {apptCount} RDV
+                        </span>
+                      )}
+                      {blockCount > 0 && (
+                        <span className="flex items-center gap-0.5 text-xs px-1 rounded font-bold leading-tight"
+                          style={{ background: "#fee2e2", color: "#991b1b" }}>
+                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                          {blockCount}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fef3c7", color: "#92400e" }}>{tr("RDV : rendez-vous")}</span>
+            <span className="px-2.5 py-1 rounded-full font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>{tr("créneau bloqué")}</span>
+            {selectedDays.length > 0 && (
+              <button onClick={() => setSelectedDays([])}
+                className="ml-auto text-gray-400 hover:text-gray-600 font-semibold underline">
+                {tr("Tout désélectionner")} ({selectedDays.length})
+              </button>
+            )}
+          </div>
+
+          {/* Selected day(s) detail */}
+          {selectedDays.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                {isMultiSelect ? (
+                  <div>
+                    <h3 className="font-bold text-gray-900">
+                      {selectedDays.length} {tr.en ? "days selected" : "jours sélectionnés"}
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {selectedDays.map(d => new Date(d + "T12:00:00").toLocaleDateString(tr.locale, { day: "numeric", month: "short" })).join(" · ")}
+                    </p>
+                  </div>
+                ) : (
+                  <h3 className="font-bold text-gray-900">
+                    {new Date(selectedDay! + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "long", day: "numeric", month: "long" })}
+                  </h3>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => { setBlockForm(f => ({ ...f, date: isMultiSelect ? "" : selectedDay! })); setShowBlockForm(true); setShowManualForm(false); }}
+                    className="text-sm px-4 py-2 rounded-xl font-semibold border"
+                    style={{ background: "#fef2f2", borderColor: "#fca5a5", color: "#dc2626" }}>
+                    {isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer ce créneau")}
+                  </button>
+                </div>
+              </div>
+
+              {/* Manual RDV form */}
+              {showManualForm && (
+                <div className="rounded-xl p-4 mb-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Nouveau rendez-vous")}</h4>
+                    <button onClick={() => setShowManualForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+                  </div>
+                  <form onSubmit={isMultiSelect ? saveBulkManualRdv : saveManualRdv} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Nom du client *")}</label>
+                        <input className={inputClass} required value={manualForm.customerName} onChange={e=>setManualForm(f=>({...f,customerName:e.target.value}))} placeholder="Jean Tremblay" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Téléphone *")}</label>
+                        <input className={inputClass} required type="tel" value={manualForm.customerPhone} onChange={e=>setManualForm(f=>({...f,customerPhone:e.target.value}))} placeholder="514 555-0100" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Courriel")}</label>
+                        <input className={inputClass} type="email" value={manualForm.customerEmail} onChange={e=>setManualForm(f=>({...f,customerEmail:e.target.value}))} placeholder="jean@exemple.com" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Service</label>
+                        <select className={inputClass} value={manualForm.categoryId}
+                          onChange={e => {
+                            const cat = services.find(s => s.categoryId === e.target.value);
+                            setManualForm(f => ({ ...f, categoryId: e.target.value, serviceName: cat?.categoryName ?? "" }));
+                          }}>
+                          <option value="">{tr("Autre / non précisé")}</option>
+                          {services.map(s => (
+                            <option key={s.categoryId} value={s.categoryId}>
+                              {translateServiceName(s.categoryName, tr.en ? "en" : "fr")}{s.durationMin ? ` (${s.durationMin} min)` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure *")}</label>
+                        <input className={inputClass} required type="time" value={manualForm.startTime} onChange={e=>setManualForm(f=>({...f,startTime:e.target.value}))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Marque")}</label>
+                        <input className={inputClass} value={manualForm.vehicleMake} onChange={e=>setManualForm(f=>({...f,vehicleMake:e.target.value}))} placeholder="Toyota" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Modèle")}</label>
+                        <input className={inputClass} value={manualForm.vehicleModel} onChange={e=>setManualForm(f=>({...f,vehicleModel:e.target.value}))} placeholder="Camry" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes <span className="font-normal text-gray-400">{tr("(visibles seulement par vous)")}</span></label>
+                      <textarea className={inputClass} rows={3} maxLength={1000} style={{ resize: "none" }}
+                        value={manualForm.notes ?? ""}
+                        onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
+                        placeholder={tr("Ex. : client déjà venu, apporte ses pneus, bruit au freinage…")} />
+                    </div>
+                    {manualError && <p className="text-sm font-semibold text-red-600">{manualError}</p>}
+                    <div className="flex gap-2 pt-1">
+                      <button type="submit" disabled={savingRdv} className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50" style={{ background: "#e0600c" }}>
+                        {savingRdv ? tr("Ajout…") : tr("Ajouter")}
+                      </button>
+                      <button type="button" onClick={() => setShowManualForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Block slot form */}
+              {showBlockForm && (
+                <div className="rounded-xl p-4 mb-4" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">{tr("Bloquer un créneau")}</h4>
+                    <button onClick={() => setShowBlockForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+                  </div>
+                  <form onSubmit={isMultiSelect ? saveBulkBlock : saveBlockSlot} className="space-y-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={blockForm.allDay}
+                        onChange={e => setBlockForm(f => ({ ...f, allDay: e.target.checked }))}
+                        className="accent-red-500 w-4 h-4" />
+                      {tr("Journée entière")}
+                    </label>
+                    {!blockForm.allDay && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure début")}</label>
+                          <input className={inputClass} type="time" value={blockForm.startTime} onChange={e=>setBlockForm(f=>({...f,startTime:e.target.value}))} />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Heure fin")}</label>
+                          <input className={inputClass} type="time" value={blockForm.endTime} onChange={e=>setBlockForm(f=>({...f,endTime:e.target.value}))} />
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">{tr("Raison (optionnel)")}</label>
+                      <input className={inputClass} value={blockForm.reason} onChange={e=>setBlockForm(f=>({...f,reason:e.target.value}))} placeholder={tr("Congé, formation, fermeture exceptionnelle…")} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" disabled={savingBlock}
+                        className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
+                        style={{ background: "#dc2626" }}>
+                        {savingBlock ? tr("Blocage…") : isMultiSelect ? (tr.en ? `Block ${selectedDays.length} days` : `Bloquer ${selectedDays.length} jours`) : tr("Bloquer le créneau")}
+                      </button>
+                      <button type="button" onClick={() => setShowBlockForm(false)} className="border border-gray-200 px-4 py-2 rounded-xl text-sm hover:bg-gray-50">{tr("Annuler")}</button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Multi-day summary */}
+              {isMultiSelect && !showManualForm && !showBlockForm && (
+                <MultiDaySummary
+                  appointments={appointments}
+                  selectedDays={selectedDays}
+                  blockedSlots={blockedSlots}
+                  onDeleteBlock={deleteBlockSlot}
+                />
+              )}
+
+              {/* Single-day: appointments */}
+              {!isMultiSelect && selectedDayAppts.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  <p className="text-sm font-semibold text-gray-700">Rendez-vous ({selectedDayAppts.length})</p>
+                  {selectedDayAppts.map(a => {
+                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                    return (
+                      <div key={a.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                        <div className="text-center min-w-[50px]">
+                          <p className="text-lg font-extrabold text-orange-500 leading-none">{a.startTime}</p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{tr(sc.label)}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
+                          {(a as any).notes && (
+                            <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
+                              {(a as any).notes}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {a.status === "PENDING" && <>
+                              <button onClick={() => updateApptStatus(a.id, "CONFIRMED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">{tr("✓ Confirmer")}</button>
+                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">{tr("Refuser")}</button>
+                            </>}
+                            {a.status === "CONFIRMED" && <>
+                              <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>
+                              <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">{tr("Annuler")}</button>
+                            </>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Single-day: blocked slots */}
+              {!isMultiSelect && selectedDayBlocks.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-gray-700">{tr("Créneaux bloqués")}</p>
+                  {selectedDayBlocks.map(s => (
+                    <div key={s.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+                      <svg className="w-5 h-5 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-red-800">
+                          {s.allDay ? tr("Journée entière") : `${s.startTime} – ${s.endTime}`}
+                        </p>
+                        {s.reason && <p className="text-xs text-red-600">{s.reason}</p>}
+                      </div>
+                      <button onClick={() => deleteBlockSlot(s.id)}
+                        className="text-xs text-red-400 hover:text-red-600 font-semibold px-2">
+                        {tr("Retirer")}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!isMultiSelect && selectedDayAppts.length === 0 && selectedDayBlocks.length === 0 && !showManualForm && !showBlockForm && (
+                <p className="text-gray-400 text-sm text-center py-4">{tr("Aucun événement ce jour.")}</p>
+              )}
+            </div>
+          )}
+
         </div>
       )}
 
@@ -3822,6 +3782,53 @@ export default function DashboardGaragePage() {
       )}
 
       {/* ══ AMBASSADEUR ══════════════════════════════════════════════════════ */}
+      {/* Parrainage avant le premier palier : le code, les paliers à atteindre (ou l'invitation à s'abonner) */}
+      {activeTab === "ambassadeur" && !(referralUnlocked && garage.ambassadorTier >= 1) && (
+        <div className="space-y-6">
+          {/* Bloc 1 — Code de parrainage (réservé aux abonnés) */}
+          {referralUnlocked ? (
+            <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#fed7aa" }}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{tr("Code de parrainage")}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-lg px-4 py-2 rounded-xl tracking-widest select-all">
+                  {garage.referralCode ?? "—"}
+                </span>
+                {garage.referralCode && (
+                  <button type="button"
+                    onClick={() => { navigator.clipboard.writeText(garage.referralCode!); setSuccess(tr("Code copié ✓")); setTimeout(() => setSuccess(""), 3000); }}
+                    className="bg-[#e0600c] hover:bg-[#c45305] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                    {tr("Copier")}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">{tr("Partagez ce code : le garage parrainé bénéficie de")} <strong>{tr("60 jours d'essai gratuit")}</strong> {tr("au lieu de 30.")}</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{tr("Programme de parrainage")}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {tr.en
+                  ? <>Activate your subscription to unlock your referral code: the garage you refer gets <strong>60 days of free trial</strong> instead of 30, and you join the Ambassador program (discounts on your invoice, priority in search, Certified badge).</>
+                  : <>Activez votre abonnement pour débloquer votre code de parrainage : le garage que vous parrainez obtient <strong>60 jours d&apos;essai gratuit</strong> au lieu de 30, et vous accédez au programme Ambassadeur (réductions sur votre facture, priorité dans la recherche, badge Certifié).</>}
+              </p>
+              <button type="button" onClick={() => setActiveTab("abonnement")}
+                className="text-sm font-bold text-white rounded-xl px-4 py-2" style={{ background: "#e0600c" }}>
+                Voir l&apos;abonnement
+              </button>
+            </div>
+          )}
+
+          {/* Programme Ambassadeur (réservé aux abonnés) */}
+          {referralUnlocked && (
+            <AmbassadorOverviewCard
+              tier={garage.ambassadorTier ?? 0}
+              onViewDetails={() => setActiveTab("ambassadeur")}
+            />
+          )}
+
+        </div>
+      )}
+
       {activeTab === "ambassadeur" && referralUnlocked && garage.ambassadorTier >= 1 && (
         <AmbassadeurTab
           tier={garage.ambassadorTier ?? 0}
