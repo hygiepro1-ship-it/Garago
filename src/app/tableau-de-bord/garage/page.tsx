@@ -1966,6 +1966,76 @@ export default function DashboardGaragePage() {
       {/* ══ APERÇU ══════════════════════════════════════════════════════════ */}
       {activeTab === "apercu" && (
         <div className="space-y-6">
+          {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
+          <GarageAgenda
+            appointments={appointments}
+            services={garage.services as any[]}
+            availability={garage.availability}
+            capacity={garage.capacity ?? 1}
+            blocked={blockedSlots}
+            lang={lang}
+            onReload={loadCalendarData}
+            updatedAt={rdvUpdatedAt}
+            editRef={agendaEdit}
+          />
+
+          {/* Upcoming appointments list */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
+            </div>
+            {!rdvLoaded ? (
+              <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
+            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr()).length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">{tr("Aucun rendez-vous à venir.")}</p>
+            ) : (
+              <div className="space-y-2">
+                {appointments
+                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr())
+                  .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+                  .slice(0, 10)
+                  .map(a => {
+                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                    const dateObj = new Date(a.date + "T12:00:00");
+                    const dateFr = dateObj.toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
+                    return (
+                      <div key={a.id} onClick={() => agendaEdit.current?.(a.id)} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2 cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px] flex-shrink-0">
+                            <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
+                            <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
+                            <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
+                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
+                            {(a.vehicleMake || a.vehicleModel) && (
+                              <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
+                            )}
+                            {(a as any).notes && (
+                              <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
+                                {(a as any).notes}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                            {tr(sc.label)}
+                          </span>
+                        </div>
+                        {/* Une seule action : la fiche du rendez-vous, où tout se modifie */}
+                        <div className="flex flex-wrap gap-1.5 pl-[76px]">
+                          <button onClick={(e) => { e.stopPropagation(); agendaEdit.current?.(a.id); }}
+                            className="text-xs px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
+                            {tr.en ? "Open" : "Ouvrir"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+
           {/* Stats grid */}
           {(() => {
             // Dates locales (pas toISOString, qui bascule en UTC le soir).
@@ -2050,76 +2120,6 @@ export default function DashboardGaragePage() {
               </>
             );
           })()}
-
-          {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
-          <GarageAgenda
-            appointments={appointments}
-            services={garage.services as any[]}
-            availability={garage.availability}
-            capacity={garage.capacity ?? 1}
-            blocked={blockedSlots}
-            lang={lang}
-            onReload={loadCalendarData}
-            updatedAt={rdvUpdatedAt}
-            editRef={agendaEdit}
-          />
-
-          {/* Upcoming appointments list */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
-            </div>
-            {!rdvLoaded ? (
-              <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
-            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr()).length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">{tr("Aucun rendez-vous à venir.")}</p>
-            ) : (
-              <div className="space-y-2">
-                {appointments
-                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr())
-                  .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-                  .slice(0, 10)
-                  .map(a => {
-                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
-                    const dateObj = new Date(a.date + "T12:00:00");
-                    const dateFr = dateObj.toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
-                    return (
-                      <div key={a.id} className="p-3 rounded-xl border border-gray-100 hover:bg-gray-50 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className="text-center bg-gray-50 rounded-xl px-2.5 py-1.5 border border-gray-100 min-w-[64px] flex-shrink-0">
-                            <p className="text-xs text-gray-400 font-medium capitalize">{dateFr.split(" ")[0]}</p>
-                            <p className="text-base font-extrabold text-gray-900 leading-none">{dateObj.getDate()}</p>
-                            <p className="text-xs font-bold text-orange-500">{a.startTime}</p>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm">{a.customerName}</p>
-                            <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
-                            {(a.vehicleMake || a.vehicleModel) && (
-                              <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
-                            )}
-                            {(a as any).notes && (
-                              <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                                {(a as any).notes}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ backgroundColor: sc.bg, color: sc.color }}>
-                            {tr(sc.label)}
-                          </span>
-                        </div>
-                        {/* Une seule action : la fiche du rendez-vous, où tout se modifie */}
-                        <div className="flex flex-wrap gap-1.5 pl-[76px]">
-                          <button onClick={() => agendaEdit.current?.(a.id)}
-                            className="text-xs px-3 py-1 min-h-[44px] sm:min-h-0 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors">
-                            {tr.en ? "Open" : "Ouvrir"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
 
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
           {/* Calendar header */}
