@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { getCities, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
 import { PAGE_PAIRS, languagesFor } from "@/lib/alternates";
+import { ARTICLES } from "@/lib/articles";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -38,6 +39,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Articles de conseils pour les conducteurs
+  const articleEntries: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
+    url: `${BASE_URL}/conseils/${a.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   const subOr = activeSubscriptionOr();
   const garages = await prisma.garage.findMany({
     where: {
@@ -68,5 +77,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-  return [...pairedEntries, ...staticEntries, ...cityEntries, ...garageEntries];
+  return [...pairedEntries, ...staticEntries, ...articleEntries, ...cityEntries, ...garageEntries];
 }
