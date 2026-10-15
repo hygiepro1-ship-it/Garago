@@ -26,7 +26,7 @@ export const fr: Guide = {
     },
     {
       h2: "3. Permettre la réservation en ligne",
-      paragraphs: ["Selon Cox Automotive (États-Unis, 2017), 45 % des clients de services automobiles qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un bouton « Prendre rendez-vous » visible sur votre site et votre fiche Google capte les clients qui cherchent le soir, quand l'atelier est fermé."],
+      paragraphs: ["Selon Cox Automotive (États-Unis, 2017), 45 % des clients de services automobiles qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un bouton « Prendre rendez-vous » visible sur votre site et votre fiche Google capte les clients qui cherchent le soir, quand l'atelier est fermé. Avec Garago, vous obtenez ce lien de réservation : les clients choisissent un créneau réellement libre selon vos services, vos heures et vos portes."],
     },
     {
       h2: "4. Un site web simple qui répond aux questions",
@@ -36,6 +36,7 @@ export const fr: Guide = {
         "Vos heures, votre adresse avec une carte, votre téléphone cliquable.",
         "Des prix indicatifs pour les services courants, si vous le pouvez.",
         "Le bouton de réservation en haut de chaque page.",
+        "Pas de site ? Votre fiche Garago en tient lieu : services, marques, heures, adresse, avis et réservation en ligne, sur une page que vous pouvez partager.",
       ],
     },
     {
@@ -44,7 +45,7 @@ export const fr: Guide = {
     },
     {
       h2: "6. Fidéliser plutôt que toujours recruter",
-      paragraphs: ["Un client qui revient n'a pas besoin d'être convaincu une deuxième fois. Gardez ses coordonnées et l'historique de son véhicule, et proposez-lui le prochain entretien au bon moment. Pour les messages promotionnels par courriel ou texto, obtenez d'abord son consentement, comme l'exige la Loi canadienne anti-pourriel."],
+      paragraphs: ["Un client qui revient n'a pas besoin d'être convaincu une deuxième fois. Gardez ses coordonnées et l'historique de son véhicule, et proposez-lui le prochain entretien au bon moment. Garago tient ce carnet pour vous : chaque rendez-vous que vous ajoutez à l'agenda enregistre le client, et la fois suivante ses coordonnées et son véhicule reviennent d'eux-mêmes. Pour les messages promotionnels par courriel ou texto, obtenez d'abord son consentement, comme l'exige la Loi canadienne anti-pourriel."],
     },
     {
       h2: "7. Créer des partenariats locaux",
@@ -101,7 +102,7 @@ export const en: Guide = {
         "Answer every review, including negative ones, calmly and with facts. Potential customers read your replies as much as the reviews.",
       ],
     },
-    { h2: "3. Let customers book online", paragraphs: ["According to Cox Automotive (United States, 2017), 45% of automotive service customers who hadn't booked online didn't know the option existed. A visible \"Book an appointment\" button on your website and Google profile captures customers who search in the evening, when the shop is closed."] },
+    { h2: "3. Let customers book online", paragraphs: ["According to Cox Automotive (United States, 2017), 45% of automotive service customers who hadn't booked online didn't know the option existed. A visible \"Book an appointment\" button on your website and Google profile captures customers who search in the evening, when the shop is closed. With Garago, you get that booking link: customers pick a slot that's actually free based on your services, hours and bays."] },
     {
       h2: "4. A simple website that answers questions",
       bullets: [
@@ -110,10 +111,11 @@ export const en: Guide = {
         "Your hours, your address with a map, a tap-to-call phone number.",
         "Indicative prices for routine services, if you can.",
         "The booking button at the top of every page.",
+        "No website? Your Garago page does the job: services, makes, hours, address, reviews and online booking, on a page you can share.",
       ],
     },
     { h2: "5. Prepare tire season early", paragraphs: ["Contact last year's customers at the end of summer so they book before the rush. In Quebec, winter tires are mandatory from December 1: drivers who plan ahead choose the shop that makes it easy to get a slot."] },
-    { h2: "6. Keep customers instead of always finding new ones", paragraphs: ["A returning customer doesn't need to be won over a second time. Keep their contact details and vehicle history, and suggest the next service at the right time. For promotional emails or texts, get their consent first, as Canada's Anti-Spam Legislation requires."] },
+    { h2: "6. Keep customers instead of always finding new ones", paragraphs: ["A returning customer doesn't need to be won over a second time. Keep their contact details and vehicle history, and suggest the next service at the right time. Garago keeps this customer list for you: every appointment you add to the calendar records the customer, and next time their details and vehicle fill in by themselves. For promotional emails or texts, get their consent first, as Canada's Anti-Spam Legislation requires."] },
     {
       h2: "7. Build local partnerships",
       bullets: [

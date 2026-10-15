@@ -22,7 +22,6 @@ export const fr: Guide = {
       ],
       downloads: [
         { label: "Modèle de facture de garage (Excel, français)", href: "/modeles/modele-facture-garage-quebec.xlsx", note: "Facture, évaluation écrite et bon de travail. Gratuit, sans inscription." },
-        { label: "Auto repair invoice template (Excel, English)", href: "/modeles/auto-repair-invoice-template-quebec.xlsx", note: "La même chose en anglais, pour vos clients anglophones." },
       ],
     },
     {
@@ -108,7 +107,6 @@ export const en: Guide = {
       ],
       downloads: [
         { label: "Auto repair invoice template (Excel, English)", href: "/modeles/auto-repair-invoice-template-quebec.xlsx", note: "Invoice, written estimate and work order. Free, no sign-up." },
-        { label: "Modèle de facture de garage (Excel, français)", href: "/modeles/modele-facture-garage-quebec.xlsx", note: "The same in French, for your French-speaking customers." },
       ],
     },
     {

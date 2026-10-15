@@ -1,6 +1,7 @@
 import Link from "next/link";
 import JsonLd from "@/components/JsonLd";
 import CoutAbsences from "@/components/CoutAbsences";
+import StickyCta from "@/components/StickyCta";
 import type { PageLang } from "@/lib/alternates";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -57,6 +58,7 @@ const CONTENT = {
     ] as Fait[],
     readyH2: "Prêt à essayer ?", readyText: "Garagistes : 30 jours gratuits, annulable en tout temps. Conducteurs : Garago est gratuit.",
     register: "Inscrire mon garage", find: "Trouver un garage",
+    sticky: "Garago relie les garages et les conducteurs du Québec.",
   },
   en: {
     name: "Why Garago", path: "/en/why-garago",
@@ -98,6 +100,7 @@ const CONTENT = {
     ] as Fait[],
     readyH2: "Ready to try?", readyText: "Garages: 30 days free, cancel anytime. Drivers: Garago is free.",
     register: "Register my garage", find: "Find a garage",
+    sticky: "Garago connects Quebec garages and drivers.",
   },
 };
 
@@ -193,6 +196,7 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
           </div>
         </section>
       </div>
+      <StickyCta text={c.sticky} primary={{ label: c.register, href: "/inscription/garage" }} secondary={{ label: c.find, href: "/rechercher" }} />
     </>
   );
 }

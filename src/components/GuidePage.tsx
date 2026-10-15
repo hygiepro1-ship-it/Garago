@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import JsonLd from "@/components/JsonLd";
+import StickyCta from "@/components/StickyCta";
 import { pageMetadata, type PageLang } from "@/lib/alternates";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -33,6 +34,8 @@ export interface Guide {
   crumb?: GuideLink;
   cta?: GuideLink & { secondary: GuideLink };
   heroCta?: GuideLink;
+  /** Public visé : les garages par défaut, ou les conducteurs (change la barre d'appel à l'action). */
+  audience?: "garages" | "drivers";
 }
 
 const UI = {
@@ -42,6 +45,10 @@ const UI = {
     crumb: { label: "Pour les garages", href: "/garagistes" },
     cta: { label: "Commencer l'essai gratuit", href: "/inscription/garage", secondary: { label: "Voir les tarifs", href: "/garagistes" } },
     heroCta: { label: "Essayer Garago 30 jours gratuitement", href: "/inscription/garage" },
+    sticky: {
+      garages: { text: "Garago : réservation en ligne, agenda et confirmations pour votre garage.", primary: { label: "Essai gratuit 30 jours", href: "/inscription/garage" }, secondary: { label: "Tarifs", href: "/garagistes" } },
+      drivers: { text: "Trouvez un garage près de chez vous et réservez en ligne, gratuitement.", primary: { label: "Trouver un garage", href: "/rechercher" }, secondary: { label: "Par ville", href: "/garages" } },
+    },
     inLanguage: "fr-CA",
   },
   en: {
@@ -50,6 +57,10 @@ const UI = {
     crumb: { label: "For garages", href: "/en/garage-owners" },
     cta: { label: "Start the free trial", href: "/inscription/garage", secondary: { label: "See pricing", href: "/en/garage-owners" } },
     heroCta: { label: "Try Garago free for 30 days", href: "/inscription/garage" },
+    sticky: {
+      garages: { text: "Garago: online booking, calendar and confirmations for your shop.", primary: { label: "Free 30-day trial", href: "/inscription/garage" }, secondary: { label: "Pricing", href: "/en/garage-owners" } },
+      drivers: { text: "Find a garage near you and book online, for free.", primary: { label: "Find a garage", href: "/rechercher" }, secondary: { label: "By city", href: "/garages" } },
+    },
     inLanguage: "en-CA",
   },
 } as const;
@@ -60,7 +71,7 @@ const UI = {
  */
 export default function GuidePage({
   path, h1, intro, sections, faq, ctaTitle, ctaText, related, datePublished, sources,
-  lang = "fr", crumb, cta, heroCta, media,
+  lang = "fr", crumb, cta, heroCta, media, audience = "garages",
 }: Guide & {
   lang?: PageLang;
   /** Contenu affiché sous l'introduction (par exemple une vidéo). */
@@ -207,6 +218,7 @@ export default function GuidePage({
           </section>
         )}
       </article>
+      <StickyCta {...ui.sticky[audience]} />
     </>
   );
 }
