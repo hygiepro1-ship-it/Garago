@@ -70,8 +70,10 @@ function layout(appts: WeekAppointment[]): { appt: WeekAppointment; lane: number
 }
 
 export default function AgendaWeekView({
-  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay,
+  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay, onPickBusySlot,
 }: {
+  /** Clic sur une demi-heure où des rendez-vous sont déjà pris (affichage par portes) : montrer ces rendez-vous. */
+  onPickBusySlot?: (date: string, time: string) => void;
   /**
    * Garage à plusieurs postes : chaque demi-heure affiche le nombre de postes pris
    * (« 5/8 ») au lieu d'empiler les rendez-vous côte à côte, illisibles au-delà de
@@ -278,9 +280,9 @@ export default function AgendaWeekView({
                     const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
                     const taken = tr(`${busy} ${busy > 1 ? "portes prises" : "porte prise"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
                     return (
-                      <button key={m} type="button" onClick={() => (free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
+                      <button key={m} type="button" onClick={() => (busy > 0 && onPickBusySlot ? onPickBusySlot(d, toHHMM(m)) : free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
                         title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · ${tr("voir la journée", "see the day")}`}
-                        aria-label={`${label} : ${taken}${toCall ? tr(", un client à appeler", ", one customer to call") : ""}. ${free ? tr("Ajouter un rendez-vous", "Add an appointment") : tr("Voir la journée", "See the day")}`}
+                        aria-label={`${label} : ${taken}${toCall ? tr(", un client à appeler", ", one customer to call") : ""}. ${busy > 0 && onPickBusySlot ? tr("Voir ces rendez-vous", "See these appointments") : free ? tr("Ajouter un rendez-vous", "Add an appointment") : tr("Voir la journée", "See the day")}`}
                         className="flex w-full items-center justify-between gap-1 px-1.5 text-[11px] font-bold tabular-nums hover:brightness-95 focus-visible:brightness-95"
                         style={{ height: ROW_H, background: c.bg, color: c.text, borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #ffffff`, touchAction: "manipulation" }}>
                         {capacity <= 10 ? (

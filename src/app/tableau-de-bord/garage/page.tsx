@@ -2051,11 +2051,23 @@ export default function DashboardGaragePage() {
             );
           })()}
 
+          {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
+          <GarageAgenda
+            appointments={appointments}
+            services={garage.services as any[]}
+            availability={garage.availability}
+            capacity={garage.capacity ?? 1}
+            blocked={blockedSlots}
+            lang={lang}
+            onReload={loadCalendarData}
+            updatedAt={rdvUpdatedAt}
+            editRef={agendaEdit}
+          />
+
           {/* Upcoming appointments list */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
-              <a href="#agenda" className="inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold underline text-gray-600 whitespace-nowrap">{tr("Voir le calendrier ↓")}</a>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
@@ -2131,19 +2143,6 @@ export default function DashboardGaragePage() {
               </div>
             )}
           </div>
-
-          {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
-          <GarageAgenda
-            appointments={appointments}
-            services={garage.services as any[]}
-            availability={garage.availability}
-            capacity={garage.capacity ?? 1}
-            blocked={blockedSlots}
-            lang={lang}
-            onReload={loadCalendarData}
-            updatedAt={rdvUpdatedAt}
-            editRef={agendaEdit}
-          />
 
           {/* ── Calendrier & Rendez-vous ─────────────────────────────────── */}
           {/* Calendar header */}

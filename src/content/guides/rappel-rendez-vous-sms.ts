@@ -25,6 +25,7 @@ export const fr: Guide = {
     },
     {
       h2: "Comment Garago s'en occupe",
+      image: { src: "/images/guides/texto-confirmation-fr.webp", alt: "Texto de Garago au nom du Garage Lavoie : rendez-vous le vendredi 16 octobre à 9 h, avec un lien pour confirmer ou annuler", width: 1800, height: 1240, caption: "La demande de confirmation que reçoit le client, 48 heures avant son rendez-vous." },
       bullets: [
         "Vous ajoutez le rendez-vous pris au téléphone dans l'agenda. Le client choisit texto ou courriel, et français ou anglais.",
         "48 heures avant, Garago lui envoie une demande de confirmation au nom de votre garage, avec un lien pour confirmer ou annuler.",
@@ -85,6 +86,7 @@ export const en: Guide = {
     },
     {
       h2: "How Garago handles it",
+      image: { src: "/images/guides/texto-confirmation-en.webp", alt: "Garago text message in Lavoie Garage's name: appointment Friday, October 16 at 9 AM, with a link to confirm or cancel", width: 1800, height: 1240, caption: "The confirmation request the customer receives, 48 hours before the appointment." },
       bullets: [
         "You add the phone booking to the calendar. The customer chooses text or email, and English or French.",
         "48 hours before, Garago sends a confirmation request in your shop's name, with a link to confirm or cancel.",

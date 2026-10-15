@@ -11,6 +11,8 @@ export interface GuideSection {
   h2: string;
   paragraphs?: string[];
   bullets?: string[];
+  /** Image affichée sous le titre de la section (capture de Garago). */
+  image?: { src: string; alt: string; width: number; height: number; caption?: string };
   /** Fichiers à télécharger (modèles), affichés en boutons. */
   downloads?: (GuideLink & { note?: string })[];
 }
@@ -140,6 +142,14 @@ export default function GuidePage({
         {sections.map((s) => (
           <section key={s.h2} className="mb-10">
             <h2 className="text-2xl font-black mb-3" style={{ color: "#0b1f3a" }}>{s.h2}</h2>
+            {s.image && (
+              <figure className="mb-4">
+                {/* eslint-disable-next-line @next/next/no-img-element -- image statique déjà optimisée (webp) */}
+                <img src={s.image.src} alt={s.image.alt} width={s.image.width} height={s.image.height} loading="lazy" decoding="async"
+                  className="w-full h-auto rounded-xl border border-gray-200" style={{ boxShadow: "0 10px 30px rgba(11,31,58,0.10)" }} />
+                {s.image.caption && <figcaption className="mt-2 text-sm text-gray-500">{s.image.caption}</figcaption>}
+              </figure>
+            )}
             {s.paragraphs?.map((p) => (
               <p key={p} className="text-base leading-relaxed text-gray-700 mb-3">{p}</p>
             ))}

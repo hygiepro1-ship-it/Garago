@@ -17,6 +17,7 @@ import type { CustomerMatch } from "@/lib/customers";
 import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
+import VehicleFields from "@/components/VehicleFields";
 
 export interface AgendaAppointment {
   id: string;
@@ -214,6 +215,7 @@ export default function GarageAgenda({
   };
   const en = lang === "en";
   const locale = en ? "en-CA" : "fr-CA";
+  const vehicleLabels = { year: tr("Année"), make: tr("Marque"), model: tr("Modèle"), pickMakeFirst: tr("Choisissez d'abord la marque pour voir ses modèles") };
 
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
   const [saving, setSaving] = useState(false);
@@ -243,6 +245,8 @@ export default function GarageAgenda({
   }, [nameQuery]);
   const showMatches = nameFocused && nameQuery.length >= 2 && matches.length > 0;
 
+  // Demi-heure cliquée dans la semaine affichée par portes : ses rendez-vous, et de quoi en ajouter un.
+  const [slotPick, setSlotPick] = useState<{ date: string; time: string } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | "complete" | "cancel">("view");
   // Modification complète d'un rendez-vous : client, plage, porte, service, véhicule, notes.
@@ -574,6 +578,7 @@ export default function GarageAgenda({
           byLoad={byLoad}
           onPickDay={showDay}
           onPickSlot={openForm}
+          onPickBusySlot={(date, time) => setSlotPick({ date, time })}
           onPickAppointment={(a) => openAppointment(a.id)}
         />
       ) : (
@@ -589,6 +594,56 @@ export default function GarageAgenda({
           onPickAppointment={(a) => openAppointment(a.id)}
         />
       )}
+
+      {/* ── Rendez-vous d'une demi-heure (semaine affichée par portes) ── */}
+      {slotPick && (() => {
+        const start = toMin(slotPick.time), end = start + 30;
+        const here = appointments
+          .filter((a) => a.date === slotPick.date && a.status !== "CANCELLED" && toMin(a.startTime) < end && toMin(a.endTime) > start)
+          .sort((x, y) => x.startTime.localeCompare(y.startTime) || x.customerName.localeCompare(y.customerName));
+        const holding = here.filter((a) => a.status !== "NO_SHOW").length;
+        const now = new Date();
+        const past = slotPick.date < today || (slotPick.date === today && start < now.getHours() * 60 + now.getMinutes());
+        const hours = availability.find((h) => h.dayOfWeek === new Date(slotPick.date + "T12:00:00").getDay());
+        const open = !!hours && !hours.isClosed && start >= toMin(hours.openTime) && end <= toMin(hours.closeTime);
+        const canAdd = open && !past && holding < capacity;
+        return (
+          <Dialog title={`${slotPick.time} · ${longDate(slotPick.date, lang)}`}
+            subtitle={en ? `${holding} of ${capacity} bays taken` : `${holding} ${holding > 1 ? "portes prises" : "porte prise"} sur ${capacity}`}
+            onClose={() => setSlotPick(null)}>
+            <ul className="space-y-1.5">
+              {here.map((a) => {
+                const c = confirmationLabel(a, tr, en);
+                return (
+                  <li key={a.id}>
+                    <button type="button" onClick={() => { setSlotPick(null); openAppointment(a.id); }}
+                      className="w-full text-left flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <span className="text-sm font-black tabular-nums text-gray-900 w-[88px] flex-shrink-0">{a.startTime}–{a.endTime}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-gray-900 truncate">{a.customerName}</span>
+                        <span className="block text-xs text-gray-500 truncate">
+                          {[a.serviceName ? translateServiceName(a.serviceName, lang) : "", capacity > 1 && a.bay ? (en ? `Bay ${a.bay}` : `Porte ${a.bay}`) : "", a.status === "NO_SHOW" ? tr("Client absent") : c?.label ?? ""].filter(Boolean).join(" · ")}
+                        </span>
+                      </span>
+                      <span aria-hidden="true" className="text-gray-400 text-lg">›</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="flex flex-wrap gap-2 justify-end pt-3">
+              <button type="button" onClick={() => { const d = slotPick.date; setSlotPick(null); showDay(d); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-700">{en ? "See the day bay by bay" : "Voir la journée porte par porte"}</button>
+              {canAdd && (
+                <button type="button" onClick={() => { const { date, time } = slotPick; setSlotPick(null); openForm(date, time); }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: "#e0600c" }}>
+                  {en ? `+ Appointment at ${slotPick.time}` : `+ Rendez-vous à ${slotPick.time}`}
+                </button>
+              )}
+            </div>
+          </Dialog>
+        );
+      })()}
 
       {/* ── Prise de rendez-vous ── */}
       {form && (
@@ -717,11 +772,8 @@ export default function GarageAgenda({
             </div>
             <div className="col-span-6 sm:col-span-3">
               <span className={label}>{tr("Véhicule (facultatif)")}</span>
-              <div className="grid grid-cols-3 gap-1">
-                <input aria-label={tr("Année")} inputMode="numeric" placeholder={tr("Année")} className={input} value={form.vehicleYear} onChange={(e) => setForm({ ...form, vehicleYear: e.target.value })} />
-                <input aria-label={tr("Marque")} placeholder={tr("Marque")} className={input} value={form.vehicleMake} onChange={(e) => setForm({ ...form, vehicleMake: e.target.value })} />
-                <input aria-label={tr("Modèle")} placeholder={tr("Modèle")} className={input} value={form.vehicleModel} onChange={(e) => setForm({ ...form, vehicleModel: e.target.value })} />
-              </div>
+              <VehicleFields year={form.vehicleYear} make={form.vehicleMake} model={form.vehicleModel} inputClass={input} labels={vehicleLabels}
+                onChange={(v) => setForm({ ...form, ...v })} />
               {known && known.vehicles.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-1" role="group" aria-label={tr("Véhicules de ce client")}>
                   {known.vehicles.map((v, i) => {
@@ -867,11 +919,8 @@ export default function GarageAgenda({
                   </div>
                   <div className="col-span-2">
                     <span className={label}>{tr("Véhicule (facultatif)")}</span>
-                    <div className="grid grid-cols-3 gap-1">
-                      <input aria-label={tr("Année")} inputMode="numeric" placeholder={tr("Année")} className={input} value={edit.vehicleYear} onChange={(e) => setEdit({ ...edit, vehicleYear: e.target.value.replace(/\D/g, "").slice(0, 4) })} />
-                      <input aria-label={tr("Marque")} placeholder={tr("Marque")} className={input} value={edit.vehicleMake} onChange={(e) => setEdit({ ...edit, vehicleMake: e.target.value })} />
-                      <input aria-label={tr("Modèle")} placeholder={tr("Modèle")} className={input} value={edit.vehicleModel} onChange={(e) => setEdit({ ...edit, vehicleModel: e.target.value })} />
-                    </div>
+                    <VehicleFields year={edit.vehicleYear} make={edit.vehicleMake} model={edit.vehicleModel} inputClass={input} labels={vehicleLabels}
+                      onChange={(v) => setEdit({ ...edit, ...v })} />
                   </div>
                   <div className="col-span-2">
                     <label className={label} htmlFor="ed-notes">{tr("Notes (visibles seulement par vous)")}</label>

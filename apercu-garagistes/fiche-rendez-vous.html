@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche d'un rendez-vous : propositions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#0b1f3a; --orange:#e0600c; --grey:#64748b; --line:#e2e8f0; --bg:#eef2f7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Public Sans',system-ui,sans-serif; background:var(--bg); color:#111827; padding:24px 16px 48px; }
+  h1 { color:var(--navy); font-size:26px; margin:0 0 4px; }
+  .lead { color:#475569; margin:0 0 24px; max-width:900px; line-height:1.5; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:28px; align-items:start; }
+  .opt h2 { font-size:17px; color:var(--navy); margin:0 0 4px; }
+  .opt .why { font-size:13px; color:#475569; margin:0 0 12px; line-height:1.45; min-height:56px; }
+  .tag { display:inline-block; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; margin-left:6px; vertical-align:middle; }
+  .dlg { background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(11,31,58,.25); overflow:hidden; }
+  .hd { padding:12px 16px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; gap:12px; }
+  .hd b { display:block; font-size:15px; }
+  .hd small { color:var(--grey); font-size:12px; }
+  .x { width:28px; height:28px; border-radius:50%; background:#f1f5f9; display:grid; place-items:center; font-weight:800; color:var(--grey); flex:none; }
+  .bd { padding:14px 16px; font-size:13px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .chip { font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; }
+  .ok { background:#f0fdf4; color:#15803d; } .wait { background:#fffbeb; color:#b45309; } .call { background:#fef2f2; color:#b91c1c; } .neutral { background:#f1f5f9; color:#334155; } .bay { background:#e0e7ff; color:#1e3a8a; }
+  .row { display:flex; gap:8px; align-items:center; margin:6px 0; color:#334155; }
+  .row .k { width:68px; color:var(--grey); font-size:12px; flex:none; }
+  .lbl { display:block; font-size:11px; font-weight:700; color:var(--grey); margin:0 0 3px; }
+  .in { border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:13px; background:#fff; width:100%; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:8px; }
+  .sect { border-top:1px solid #f1f5f9; margin-top:12px; padding-top:12px; }
+  .sect h4 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--grey); }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; padding:8px 12px; font-weight:800; font-size:12px; border:0; cursor:pointer; }
+  .b-primary { background:var(--orange); color:#fff; } .b-navy { background:var(--navy); color:#fff; }
+  .b-ghost { background:#fff; border:1px solid var(--line); color:#334155; }
+  .b-green { background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; }
+  .b-red-link { background:none; color:#b91c1c; text-decoration:underline; padding:8px 0; font-weight:700; }
+  .help { font-size:11.5px; color:var(--grey); margin:4px 0 0; line-height:1.4; }
+  .actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .note { background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:7px 9px; color:#475569; font-size:12px; }
+  .menu { border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.08); overflow:hidden; margin-top:6px; }
+  .menu div { padding:9px 12px; border-bottom:1px solid #f1f5f9; font-size:12.5px; }
+  .menu div:last-child { border-bottom:0; color:#b91c1c; font-weight:700; }
+  .menu small { display:block; color:var(--grey); font-size:11px; }
+  .steps { display:flex; align-items:center; gap:4px; margin:4px 0 12px; }
+  .st { flex:1; text-align:center; font-size:11px; font-weight:700; color:#94a3b8; }
+  .st i { display:block; height:6px; border-radius:99px; background:#e2e8f0; margin-bottom:4px; }
+  .st.done { color:#15803d; } .st.done i { background:#34d399; }
+  .st.now { color:var(--navy); } .st.now i { background:var(--orange); }
+  .phone { color:#15803d; font-weight:800; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:5px 9px; display:inline-block; }
+  .muted { color:#94a3b8; }
+  .foot { margin-top:28px; background:#fff; border-radius:14px; padding:16px 18px; max-width:900px; font-size:14px; line-height:1.55; color:#334155; }
+  .foot b { color:var(--navy); }
+</style>
+</head>
+<body>
+<h1>Fiche d'un rendez-vous déjà pris : 3 propositions</h1>
+<p class="lead">Ce qui s'ouvre quand le garage clique sur un rendez-vous dans le calendrier. Même exemple partout : Marc Côté, vendredi 16 octobre, 8 h 30 à 10 h 30, freins complets, en attente de réponse au texto.
+Dans les trois versions, on peut modifier le rendez-vous directement, le bouton « Confirmé par téléphone » est expliqué, et « Terminé » n'est plus un bouton qu'on touche par erreur.</p>
+
+<div class="grid">
+
+  <!-- A -->
+  <section class="opt">
+    <h2>A. Tout modifiable tout de suite</h2>
+    <p class="why">La fiche s'ouvre déjà en mode modification : on change l'heure, la porte ou le véhicule et on enregistre. Les autres actions sont rangées dans « Plus d'actions », chacune avec une phrase qui dit ce qu'elle fait.</p>
+    <div class="dlg">
+      <div class="hd"><div><b>Marc Côté</b><small>Vendredi 16 octobre · 08:30 – 10:30</small></div><span class="x">×</span></div>
+      <div class="bd">
+        <div class="chips"><span class="chip wait">Texto envoyé · en attente de réponse</span><span class="chip bay">Porte 2</span></div>
+        <div class="two"><div><span class="lbl">Date</span><input class="in" value="2026-10-16"></div><div><span class="lbl">Heure</span><input class="in" value="08:30"></div></div>
+        <div class="two"><div><span class="lbl">Durée</span><input class="in" value="2 h 00 min"></div><div><span class="lbl">Porte</span><input class="in" value="Porte 2"></div></div>
+        <div class="two"><div><span class="lbl">Téléphone</span><input class="in" value="(514) 555-0101"></div><div><span class="lbl">Service</span><input class="in" value="Freins complets"></div></div>
+        <span class="lbl">Véhicule</span>
+        <div class="three"><input class="in" value="2019"><input class="in" value="Audi ▾"><input class="in" value="Q5 ▾"></div>
+        <div class="actions" style="justify-content:space-between;margin-top:10px">
+          <button class="btn b-ghost">Plus d'actions ▾</button>
+          <button class="btn b-primary">Enregistrer</button>
+        </div>
+        <div class="menu">
+          <div>📞 Le client m'a confirmé au téléphone<small>Plus aucune relance ne lui est envoyée.</small></div>
+          <div>✔ Le client est venu, travail fait<small>Le rendez-vous est classé « terminé ».</small></div>
+          <div>✖ Le client n'est pas venu<small>Compté dans vos absences.</small></div>
+          <div>Annuler le rendez-vous<small style="color:#b91c1c">Le client est prévenu par texto.</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B -->
+  <section class="opt">
+    <h2>B. Rangé par étape <span class="tag">recommandé</span></h2>
+    <p class="why">Un résumé clair, un gros bouton « Modifier », puis les actions rangées selon le moment : avant le rendez-vous (confirmation) et après (venu ou absent). Les boutons « après » n'apparaissent qu'une fois l'heure du rendez-vous passée.</p>
+    <div class="dlg">
+      <div class="hd"><div><b>Marc Côté</b><small>Vendredi 16 octobre · 08:30 – 10:30</small></div><span class="x">×</span></div>
+      <div class="bd">
+        <div class="row"><span class="k">Service</span>Freins complets · <span class="chip bay">Porte 2</span></div>
+        <div class="row"><span class="k">Véhicule</span>2019 Audi Q5</div>
+        <div class="row"><span class="k">Client</span><span class="phone">(514) 555-0101</span></div>
+        <div class="note">Apporte ses pneus d'hiver dans le coffre.</div>
+        <div class="actions" style="margin-top:10px"><button class="btn b-navy" style="flex:1">✎ Modifier le rendez-vous</button></div>
+
+        <div class="sect">
+          <h4>Avant le rendez-vous</h4>
+          <div class="chips"><span class="chip wait">Texto envoyé mercredi · pas encore de réponse</span></div>
+          <button class="btn b-green">📞 Le client m'a confirmé au téléphone</button>
+          <p class="help">Utilisez ce bouton si vous avez appelé le client et qu'il a confirmé : le rendez-vous passe au vert et Garago arrête de le relancer.</p>
+        </div>
+
+        <div class="sect">
+          <h4>Après le rendez-vous</h4>
+          <p class="help muted" style="margin:0 0 6px">Disponible à partir de 8 h 30 le 16 octobre.</p>
+          <div class="actions"><button class="btn b-ghost" disabled style="opacity:.45">✔ Venu, travail fait</button><button class="btn b-ghost" disabled style="opacity:.45">✖ Pas venu</button></div>
+        </div>
+
+        <div class="sect" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="help" style="margin:0">Le client est prévenu s'il est annulé.</span>
+          <button class="btn b-red-link">Annuler le rendez-vous</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- C -->
+  <section class="opt">
+    <h2>C. Suivi en étapes</h2>
+    <p class="why">Une barre montre où en est le rendez-vous : pris, confirmé, terminé. Un seul bouton principal propose l'étape suivante ; « Modifier » et « Annuler » restent toujours accessibles en dessous.</p>
+    <div class="dlg">
+      <div class="hd"><div><b>Marc Côté</b><small>Vendredi 16 octobre · 08:30 – 10:30</small></div><span class="x">×</span></div>
+      <div class="bd">
+        <div class="steps">
+          <div class="st done"><i></i>Pris</div>
+          <div class="st now"><i></i>À confirmer</div>
+          <div class="st"><i></i>Confirmé</div>
+          <div class="st"><i></i>Terminé</div>
+        </div>
+        <div class="row"><span class="k">Service</span>Freins complets · Porte 2</div>
+        <div class="row"><span class="k">Véhicule</span>2019 Audi Q5</div>
+        <div class="row"><span class="k">Client</span><span class="phone">(514) 555-0101</span></div>
+        <div class="sect" style="margin-top:10px">
+          <p class="help" style="margin:0 0 8px;color:#334155"><b>Prochaine étape :</b> le client n'a pas encore répondu au texto envoyé mercredi. Garago vous préviendra jeudi s'il faut l'appeler.</p>
+          <button class="btn b-green" style="width:100%">📞 Il m'a confirmé au téléphone</button>
+        </div>
+        <div class="actions" style="margin-top:10px;justify-content:space-between">
+          <button class="btn b-ghost">✎ Modifier</button>
+          <button class="btn b-red-link">Annuler le rendez-vous</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="foot">
+  <b>À propos du bouton « Confirmé par téléphone » actuel :</b> il sert quand le garage a appelé le client (par exemple après l'alerte « à appeler : sans réponse ») et que le client a dit oui. Il marque le rendez-vous comme confirmé et arrête les relances. Dans les trois propositions, il devient « Le client m'a confirmé au téléphone », avec une phrase d'explication.<br><br>
+  <b>À propos de « Terminé » :</b> aujourd'hui, c'est un gros bouton vert en premier, disponible même avant le rendez-vous. Dans les propositions, il devient « Le client est venu, travail fait » et n'apparaît (ou ne s'active) qu'à partir de l'heure du rendez-vous.
+</div>
+</body>
+</html>

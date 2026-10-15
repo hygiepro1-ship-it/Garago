@@ -54,6 +54,8 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Annulé": "Cancelled",
   "Annulés": "Cancelled",
   "Année": "Year",
+  "Cliquez n'importe où sur un jour pour ouvrir sa semaine.": "Click anywhere on a day to open its week.",
+  "Choisissez d'abord la marque pour voir ses modèles": "Pick the make first to see its models",
   "Août": "August",
   "Appliqué automatiquement, une seule fois": "Applied automatically, one time only",
   "Approuvée": "Approved",

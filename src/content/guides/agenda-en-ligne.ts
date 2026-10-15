@@ -41,6 +41,7 @@ export const fr: Guide = {
     },
     {
       h2: "Ce que fait Garago",
+      image: { src: "/images/guides/agenda-garago-fr.webp", alt: "Agenda de la semaine dans Garago pour un garage à deux portes : rendez-vous confirmés en vert, à confirmer en orange, à appeler en rouge", width: 2240, height: 1220, caption: "L'agenda de Garago, vue semaine : chaque couleur indique où en est la confirmation du client." },
       bullets: [
         "Réservation en ligne selon vos heures, la durée de chaque service et vos portes.",
         "Agenda jour, semaine et mois, sur téléphone ou ordinateur.",
@@ -116,6 +117,7 @@ export const en: Guide = {
     },
     {
       h2: "What Garago does",
+      image: { src: "/images/guides/agenda-garago-en.webp", alt: "Weekly calendar in Garago for a two-bay shop: confirmed appointments in green, to confirm in orange, to call in red", width: 2240, height: 1220, caption: "Garago's calendar, week view: each color shows where the customer's confirmation stands." },
       bullets: [
         "Online booking based on your hours, the length of each service and your bays.",
         "Day, week and month views, on phone or computer.",
