@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
       { source: "/tarifs", destination: "/garagistes", permanent: true },
       // L'agenda est intégré au tableau de bord du garage (anciens liens des courriels, favoris).
       { source: "/tableau-de-bord/garage/agenda", destination: "/tableau-de-bord/garage", permanent: false },
+      // Fiches de garages enregistrées en double (même adresse écrite autrement), fusionnées le 2026-10-16.
+      ...[["chirwan-inc-1", "chirwan-inc"], ["garage-deguire-1", "garage-deguire"], ["garage-martin-jacques-1", "garage-martin-jacques"],
+          ["kamille-automobiles-1", "kamille-automobiles"], ["r-r-services-1", "r-r-services"]]
+        .map(([from, to]) => ({ source: `/garage/${from}`, destination: `/garage/${to}`, permanent: true })),
     ];
   },
 };
