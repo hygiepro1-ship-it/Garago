@@ -26,6 +26,22 @@ import { useTr } from "@/lib/dashboard-en";
 function quebecTodayStr(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
 }
+/** Heure actuelle au Québec, en minutes depuis minuit. */
+function quebecNowMin(): number {
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()).split(":").map(Number);
+  return h * 60 + m;
+}
+const UPCOMING_WINDOW_MIN = 3 * 60;
+/**
+ * « Prochains rendez-vous » : seulement ceux d'aujourd'hui en cours ou qui commencent dans les 3 prochaines heures.
+ * Le reste se lit dans l'agenda, juste au-dessus : la liste reste courte même un jour chargé.
+ */
+function isUpcomingSoon(a: { date: string; startTime: string; endTime: string; status: string }): boolean {
+  if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW" || a.date !== quebecTodayStr()) return false;
+  const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const now = quebecNowMin();
+  return toMin(a.endTime) > now && toMin(a.startTime) < now + UPCOMING_WINDOW_MIN;
+}
 function selectedGarageId(): string | null {
   if (typeof window === "undefined") return null;
   return new URLSearchParams(window.location.search).get("g");
@@ -1981,18 +1997,20 @@ export default function DashboardGaragePage() {
           {/* Upcoming appointments list */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
+              <div>
+                <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
+                <p className="text-xs text-gray-500">{tr.en ? "Today, in progress or starting in the next 3 hours" : "Aujourd'hui, en cours ou dans les 3 prochaines heures"}</p>
+              </div>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
-            ) : appointments.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr()).length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">{tr("Aucun rendez-vous à venir.")}</p>
+            ) : appointments.filter(isUpcomingSoon).length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">{tr.en ? "No appointments in the next 3 hours." : "Aucun rendez-vous dans les 3 prochaines heures."}</p>
             ) : (
               <div className="space-y-2">
                 {appointments
-                  .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.status !== "NO_SHOW" && a.date >= quebecTodayStr())
+                  .filter(isUpcomingSoon)
                   .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-                  .slice(0, 10)
                   .map(a => {
                     const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
                     const dateObj = new Date(a.date + "T12:00:00");
