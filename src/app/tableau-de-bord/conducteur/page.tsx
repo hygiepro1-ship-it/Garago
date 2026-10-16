@@ -8,6 +8,7 @@ import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { useLang } from "@/contexts/LanguageContext";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
+import GoogleReviewCta from "@/components/GoogleReviewCta";
 
 // ── Couleurs de marque ────────────────────────────────────────────────────────
 const BRAND_COLOR: Record<string, string> = {
@@ -1231,6 +1232,7 @@ export default function DashboardConducteurPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          <GoogleReviewCta audience="drivers" />
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-4">{d.quickActions}</h3>
             <div className="space-y-2">

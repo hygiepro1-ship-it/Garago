@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/price";
 import { translateServiceName } from "@/lib/services";
 import L from "@/components/L";
 import Turnstile, { turnstileActive } from "@/components/Turnstile";
+import GoogleReviewCta from "@/components/GoogleReviewCta";
 
 interface BookingWidgetProps {
   garageId:     string;
@@ -286,6 +287,9 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
             )}
           </div>
         </div>
+
+        {/* Le conducteur vient de réserver sans appeler : bon moment pour lui demander un avis sur Garago */}
+        <div className="mt-4"><GoogleReviewCta audience="drivers" compact /></div>
 
         <button
           onClick={() => { setStep("service"); setSelectedDate(null); setSelectedSlot(""); setSelectedCats([]); setAppointmentId(null); }}

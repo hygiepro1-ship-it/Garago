@@ -15,6 +15,7 @@ import { GARAGE_LANGUAGES, parseLanguages } from "@/lib/languages";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
 import GarageAgenda from "@/components/GarageAgenda";
+import GoogleReviewCta from "@/components/GoogleReviewCta";
 import GarageCustomers from "@/components/GarageCustomers";
 import { useTr } from "@/lib/dashboard-en";
 
@@ -2137,6 +2138,9 @@ export default function DashboardGaragePage() {
               </>
             );
           })()}
+
+          {/* Avis Google sur Garago */}
+          <GoogleReviewCta audience="garages" />
 
           {/* Suggestion link */}
           <Link
