@@ -46,7 +46,8 @@ const nextConfig: NextConfig = {
       { source: "/tableau-de-bord/garage/agenda", destination: "/tableau-de-bord/garage", permanent: false },
       // Fiches de garages enregistrées en double (même adresse écrite autrement), fusionnées le 2026-10-16.
       ...[["chirwan-inc-1", "chirwan-inc"], ["garage-deguire-1", "garage-deguire"], ["garage-martin-jacques-1", "garage-martin-jacques"],
-          ["kamille-automobiles-1", "kamille-automobiles"], ["r-r-services-1", "r-r-services"]]
+          ["kamille-automobiles-1", "kamille-automobiles"], ["r-r-services-1", "r-r-services"],
+          ["garage-auto-frah-mecanique-generale-1", "garage-auto-frah-mecanique-generale"], ["mcc-auto-enr-1", "mcc-auto-enr"], ["mecanique-pro-expert-1", "mecanique-pro-expert"], ["napa-autopro-garage-poirier-et-poirier-inc-1", "napa-autopro-garage-poirier-et-poirier-inc"], ["pneus-mecanique-verdun-1", "pneus-mecanique-verdun"], ["solution-auto-mecanique-1", "solution-auto-mecanique"], ["sp-mecanique-1", "sp-mecanique"]]
         .map(([from, to]) => ({ source: `/garage/${from}`, destination: `/garage/${to}`, permanent: true })),
     ];
   },

@@ -7,6 +7,9 @@ import { ARTICLES } from "@/lib/articles";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
+// Régénéré toutes les heures : les garages ajoutés, réclamés ou fusionnés y apparaissent sans attendre une publication.
+export const revalidate = 3600;
+
 // Pages en une seule version. Les pages traduites (français et anglais) viennent de PAGE_PAIRS.
 const STATIC_ROUTES = [
   "/rechercher",
