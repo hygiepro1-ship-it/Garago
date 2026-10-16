@@ -4,11 +4,21 @@ import { activeSubscriptionOr } from "@/lib/garage-access";
 import { getCities, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
 import { PAGE_PAIRS, languagesFor } from "@/lib/alternates";
 import { ARTICLES } from "@/lib/articles";
+import { VIDEOS } from "@/content/videos";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 // Régénéré toutes les heures : les garages ajoutés, réclamés ou fusionnés y apparaissent sans attendre une publication.
 export const revalidate = 3600;
+
+const VIDEO_BY_PATH = new Map(Object.values(VIDEOS).flatMap((byLang) => Object.values(byLang)).map((v) => [v.path, {
+  title: v.h1,
+  description: v.description,
+  thumbnail_loc: `${BASE_URL}${v.poster}`,
+  content_loc: `${BASE_URL}${v.file}`,
+  duration: v.duration === "PT54S" ? 54 : 51,
+  publication_date: v.uploadDate,
+}]));
 
 // Pages en une seule version. Les pages traduites (français et anglais) viennent de PAGE_PAIRS.
 const STATIC_ROUTES = [
@@ -32,6 +42,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: path === "/" || path === "/en" ? "daily" : "weekly",
     priority: path === "/" ? 1 : path === "/en" ? 0.9 : 0.7,
     alternates: { languages: languagesFor(path) },
+    // Pages de lecture des vidéos : la vidéo est annoncée à Google avec sa vignette et son fichier.
+    ...(VIDEO_BY_PATH.get(path) ? { videos: [VIDEO_BY_PATH.get(path)!] } : {}),
   }));
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((path) => ({

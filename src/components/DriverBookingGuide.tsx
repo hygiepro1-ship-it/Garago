@@ -28,7 +28,8 @@ export default function DriverBookingGuide({ lang }: { lang: PageLang }) {
       <GuidePage
         {...guide[lang]}
         lang={lang}
-        media={<GuideVideo name="garago-reserver" label={{ fr: "Vidéo : réserver son garage en ligne, sans appeler", en: "Video: book your garage online, without calling" }} />}
+        media={<GuideVideo name="garago-reserver" label={{ fr: "Vidéo : réserver son garage en ligne, sans appeler", en: "Video: book your garage online, without calling" }}
+          watch={{ fr: "/videos/reserver-son-garage-en-ligne", en: "/en/videos/book-your-garage-online" }} />}
       />
     </>
   );
