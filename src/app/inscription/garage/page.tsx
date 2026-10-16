@@ -679,7 +679,7 @@ export default function InscriptionGaragePage() {
                 </div>
                 <div className="space-y-3">
                   {([
-                    { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: lang === "en" ? "Visibility with Quebec drivers looking for a garage" : "Visibilité auprès de milliers de conducteurs québécois chaque jour" },
+                    { path: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", text: lang === "en" ? "Visibility with Quebec drivers looking for a garage" : "Visibilité auprès des conducteurs du Québec qui cherchent un garage" },
                     { path: "M3 4h18a2 2 0 012 2v13a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2zm0 6h18M8 2v4m8-4v4", text: lang === "en" ? "Manage your hours and availability in real time" : "Gérez vos horaires et disponibilités en temps réel" },
                     { path: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", text: lang === "en" ? "Collect verified reviews that build your reputation" : "Accumulez des avis vérifiés qui construisent votre réputation" },
                     { path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18h-2v1.93A8.001 8.001 0 014.07 13H6v-2H4.07A8.001 8.001 0 0111 4.07V6h2V4.07A8.001 8.001 0 0119.93 11H18v2h1.93A8.001 8.001 0 0113 19.93z", text: lang === "en" ? "List exactly which services you offer" : "Indiquez précisément les services que vous offrez" },
@@ -693,23 +693,6 @@ export default function InscriptionGaragePage() {
                       <span className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{item.text}</span>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-gray-200 p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#fff7ed" }}>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{lang === "en" ? "\"One more customer a week more than covers the subscription\"" : "\"Un client de plus par semaine couvre largement l'abonnement\""}</p>
-                  </div>
-                </div>
-                <p className="text-gray-500 text-xs leading-relaxed">— Patrick G., Garage Auto-Sport, Laval</p>
-                <div className="mt-3 flex">
-                  {Array.from({ length: 5 }).map((_, i) => <span key={i} style={{ color: "#f59e0b" }}>★</span>)}
                 </div>
               </div>
 
@@ -801,7 +784,7 @@ export default function InscriptionGaragePage() {
                     </svg>
                     Conseil
                   </p>
-                  <p className="text-green-600 mt-0.5">Les garages avec des marques configurées reçoivent 40% plus de clics car les conducteurs savent qu'ils seront accueillis.</p>
+                  <p className="text-green-600 mt-0.5">Indiquez les marques que vous réparez : les conducteurs qui filtrent par marque trouveront votre garage, et sauront qu'ils y seront accueillis.</p>
                 </div>
               </div>
             </div>
