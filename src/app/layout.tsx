@@ -8,6 +8,8 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
+  // Propriété vérifiée dans Google Search Console (balise meta, en plus du fichier public/google…html)
+  verification: { google: "D7KBP9yglJHPcnj83H6aZJbrwXQFqAaRrRxRLr4_u6g" },
   title: "Garago | Trouver un garage et prendre rendez-vous en ligne au Québec",
   description:
     "Trouvez un garage près de chez vous au Québec : avis de conducteurs, pneus d'hiver, vidange, freins et mécanique. Filtrez par marque, service et disponibilité, puis réservez en ligne.",
