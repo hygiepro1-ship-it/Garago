@@ -222,6 +222,8 @@ export default function GarageAgenda({
   const [formError, setFormError] = useState("");
   // L'heure proposée suit la date tant que le garage ne l'a pas choisie lui-même.
   const [timeTouched, setTimeTouched] = useState(false);
+  // Courriel et moyen d'envoi mis en avant à l'ouverture du formulaire, jusqu'à ce que le garagiste y touche
+  const [askContact, setAskContact] = useState(true);
 
   // Carnet de clients : dès que le garage tape un nom, ses clients déjà venus sont proposés.
   const [matches, setMatches] = useState<CustomerMatch[]>([]);
@@ -295,6 +297,7 @@ export default function GarageAgenda({
     setKnown(null);
     setMatches([]);
     setTimeTouched(touched);
+    setAskContact(true);
     setForm({ ...EMPTY_FORM, date, startTime: time, bay: bay ? String(bay) : "" });
   }
 
@@ -714,7 +717,8 @@ export default function GarageAgenda({
             <div className="col-span-3 sm:col-span-2">
               <label className={label} htmlFor="rdv-email">{tr("Courriel")}{form.contactChannel === "EMAIL" ? "" : en ? " (optional)" : " (facultatif)"}</label>
               <input id="rdv-email" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false} list="rdv-email-domains"
-                required={form.contactChannel === "EMAIL"} className={input} placeholder={tr("nom@gmail.com")}
+                required={form.contactChannel === "EMAIL"} className={`${input}${askContact ? " ask-attn" : ""}`} placeholder={tr("nom@gmail.com")}
+                onFocus={() => setAskContact(false)}
                 value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value.replace(/\s/g, "") })} />
               {/* Fins d'adresse connues, proposées pendant la frappe (gmail.com, hotmail.com, videotron.ca…) */}
               <datalist id="rdv-email-domains">
@@ -729,6 +733,18 @@ export default function GarageAgenda({
                   </button>
                 );
               })()}
+            </div>
+
+            <div className="col-span-6 flex items-start gap-2 rounded-lg px-3 py-2" role="note"
+              style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#c2410c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-shrink-0 mt-0.5">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+              <p className="text-xs leading-snug" style={{ color: "#9a3412" }}>
+                {en
+                  ? <><strong>Ask the customer:</strong> &laquo;&nbsp;Would you rather get your confirmation by email or by text?&nbsp;&raquo; Email is free; each text has a cost.</>
+                  : <><strong>Demandez au client :</strong> «&nbsp;Préférez-vous recevoir la confirmation par courriel ou par texto&nbsp;?&nbsp;» Le courriel est gratuit ; chaque texto a un coût.</>}
+              </p>
             </div>
 
             <div className="col-span-3 sm:col-span-2">
@@ -800,7 +816,11 @@ export default function GarageAgenda({
 
             <div className="col-span-6 sm:col-span-4">
               <span className={label}>{tr("Demande de confirmation envoyée par")}</span>
-              <Segmented name={tr("Moyen d'envoi")} value={form.contactChannel} onChange={(v) => setForm({ ...form, contactChannel: v })} options={[["SMS", tr("Texto")], ["EMAIL", tr("Courriel")], ["", tr("Aucun")]]} />
+              <div className={askContact ? "ask-attn p-0.5 border" : "p-0.5 border border-transparent rounded-lg"}>
+                <Segmented name={tr("Moyen d'envoi")} value={form.contactChannel}
+                  onChange={(v) => { setAskContact(false); setForm({ ...form, contactChannel: v }); }}
+                  options={[["SMS", tr("Texto")], ["EMAIL", tr("Courriel")], ["", tr("Aucun")]]} />
+              </div>
             </div>
             <div className="col-span-6 sm:col-span-2">
               <span className={label}>{tr("Langue du client")}</span>
