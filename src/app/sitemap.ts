@@ -17,7 +17,6 @@ const STATIC_ROUTES = [
   "/a-propos",
   "/inscription/conducteur",
   "/inscription/garage",
-  "/connexion",
   "/conditions",
   "/confidentialite",
 ];
