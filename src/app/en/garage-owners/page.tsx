@@ -1,5 +1,7 @@
 import GaragistesContent from "@/app/garagistes/GaragistesContent";
 import { pageMetadata } from "@/lib/alternates";
+import JsonLd from "@/components/JsonLd";
+import { VIDEOS, videoJsonLd } from "@/content/videos";
 import "@/app/garagistes/garagistes.css";
 
 export const metadata = pageMetadata({
@@ -12,5 +14,11 @@ export const metadata = pageMetadata({
 });
 
 export default function GarageOwnersPage() {
-  return <GaragistesContent />;
+  return (
+    <>
+      {/* La vidéo de présentation, décrite pour Google ; sa page de lecture est /en/videos/online-booking-for-auto-repair-shops */}
+      <JsonLd data={videoJsonLd(VIDEOS.garagistes.en, "en", process.env.NEXTAUTH_URL ?? "https://garagopro.ca")} />
+      <GaragistesContent />
+    </>
+  );
 }

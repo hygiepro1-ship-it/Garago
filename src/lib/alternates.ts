@@ -23,6 +23,8 @@ export const PAGE_PAIRS: [string, string][] = [
   ["/garagistes/attirer-clients-garage", "/en/garage-owners/get-more-customers"],
   ["/garagistes/ouvrir-un-garage-quebec", "/en/garage-owners/open-auto-repair-shop-quebec"],
   ["/conducteurs/reserver-garage-en-ligne", "/en/drivers/book-garage-online"],
+  ["/videos/reserver-son-garage-en-ligne", "/en/videos/book-your-garage-online"],
+  ["/videos/prise-de-rendez-vous-en-ligne-garage", "/en/videos/online-booking-for-auto-repair-shops"],
 ];
 
 const FR_TO_EN = new Map(PAGE_PAIRS);
