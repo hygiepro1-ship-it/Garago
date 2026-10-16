@@ -17,6 +17,13 @@ const PAIRS: [string, string][] = [
   ["garage-martin-jacques", "garage-martin-jacques-1"],
   ["kamille-automobiles", "kamille-automobiles-1"],
   ["r-r-services", "r-r-services-1"],
+  ["garage-auto-frah-mecanique-generale", "garage-auto-frah-mecanique-generale-1"],
+  ["mcc-auto-enr", "mcc-auto-enr-1"],
+  ["mecanique-pro-expert", "mecanique-pro-expert-1"],
+  ["napa-autopro-garage-poirier-et-poirier-inc", "napa-autopro-garage-poirier-et-poirier-inc-1"],
+  ["pneus-mecanique-verdun", "pneus-mecanique-verdun-1"],
+  ["solution-auto-mecanique", "solution-auto-mecanique-1"],
+  ["sp-mecanique", "sp-mecanique-1"],
 ];
 
 (async () => {
