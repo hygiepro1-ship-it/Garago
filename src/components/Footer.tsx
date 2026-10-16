@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 import L from "@/components/L";
 import { localHref } from "@/lib/alternates";
+import { GOOGLE_REVIEW_URL } from "@/lib/google-business";
 
 export default function Footer() {
   const { t, lang } = useLang();
@@ -78,6 +79,14 @@ export default function Footer() {
                 </svg>
               </a>
             </div>
+
+            {/* Avis sur la fiche Google de Garago */}
+            <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-4 min-h-[44px] sm:min-h-0 text-sm font-semibold transition-colors hover:text-white"
+              style={{ color: "rgba(255,255,255,0.7)" }}>
+              <span aria-hidden="true" style={{ color: "#f59e0b" }}>★</span>
+              {lang === "en" ? "Leave us a Google review" : "Laissez-nous un avis sur Google"}
+            </a>
           </div>
 
           {/* Conducteurs */}
