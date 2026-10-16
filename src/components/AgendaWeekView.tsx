@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { translateServiceName } from "@/lib/services";
+import { assignPosts } from "@/lib/agenda-bays";
 
 /**
  * Vue « semaine » de l'agenda du garage : une colonne par jour, une ligne par
@@ -265,6 +266,10 @@ export default function AgendaWeekView({
             const hours = hoursOf(d);
             const dayAppts = active.filter((a) => a.date === d);
             const holding = dayAppts.filter((a) => a.status !== "NO_SHOW");
+            // Porte de chaque rendez-vous, comme dans la vue jour : celle qui lui est attribuée,
+            // sinon la première libre. Les traits de « 2/3 » s'allument ainsi à la bonne porte.
+            const laneOf = new Map<string, number>();
+            if (byLoad) assignPosts(holding, capacity).forEach((list, i) => { for (const a of list) laneOf.set(a.id, i + 1); });
             return (
               <div key={d} className="relative border-l border-gray-100">
                 {d < todayStr && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
@@ -286,6 +291,7 @@ export default function AgendaWeekView({
                       past:  { bg: !open || isBlocked ? "#f1f5f9" : d < todayStr ? PAST_HATCH : "#fff", text: "#64748b", pip: "#94a3b8" },
                     }[tone];
                     const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
+                    const bayTaken = new Set(holding.filter((a) => toMin(a.startTime) < m + STEP && toMin(a.endTime) > m).map((a) => laneOf.get(a.id)));
                     const taken = tr(`${busy} ${busy > 1 ? "portes prises" : "porte prise"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
                     return (
                       <button key={m} type="button" onClick={() => (busy > 0 && onPickBusySlot ? onPickBusySlot(d, toHHMM(m)) : free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
@@ -296,7 +302,7 @@ export default function AgendaWeekView({
                         {capacity <= 10 ? (
                           <span className="flex gap-[2px]" aria-hidden="true">
                             {Array.from({ length: capacity }, (_, i) => (
-                              <i key={i} className="block rounded-[1px]" style={{ width: 5, height: Math.min(11, ROW_H - 8), background: i < busy ? c.pip : "rgba(11,31,58,0.14)" }} />
+                              <i key={i} className="block rounded-[1px]" style={{ width: 5, height: Math.min(11, ROW_H - 8), background: bayTaken.has(i + 1) ? c.pip : "rgba(11,31,58,0.14)" }} />
                             ))}
                           </span>
                         ) : (
