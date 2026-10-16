@@ -33,6 +33,12 @@ const STEP = 30;     // minutes par ligne
 // sans masquer les anciens rendez-vous posés dessus. La journée en cours n'est
 // jamais hachurée, même pour ses heures déjà écoulées.
 export const PAST_HATCH ="repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
+/**
+ * Journée passée : hachures posées PAR-DESSUS tout le reste (plages, rendez-vous, compteurs),
+ * quel que soit l'état des rendez-vous. Le voile blanc atténue les couleurs, qui restent lisibles.
+ * Les clics passent au travers : un rendez-vous passé s'ouvre toujours.
+ */
+export const PAST_OVERLAY = "repeating-linear-gradient(135deg, rgba(255,255,255,0.5) 0 6px, rgba(71,85,105,0.38) 6px 7.5px)";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
@@ -70,8 +76,10 @@ function layout(appts: WeekAppointment[]): { appt: WeekAppointment; lane: number
 }
 
 export default function AgendaWeekView({
-  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay,
+  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay, onPickBusySlot,
 }: {
+  /** Clic sur une demi-heure où des rendez-vous sont déjà pris (affichage par portes) : montrer ces rendez-vous. */
+  onPickBusySlot?: (date: string, time: string) => void;
   /**
    * Garage à plusieurs postes : chaque demi-heure affiche le nombre de postes pris
    * (« 5/8 ») au lieu d'empiler les rendez-vous côte à côte, illisibles au-delà de
@@ -168,7 +176,8 @@ export default function AgendaWeekView({
           const toCall = list.filter((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED").length;
           return (
             <section key={d} aria-label={dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
-              style={{ background: d === selectedDate ? "#f8fafc" : undefined }}>
+              className="relative" style={{ background: d === selectedDate ? "#f8fafc" : undefined }}>
+              {past && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
               <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: d === todayStr ? "#fff7ed" : "#f8fafc" }}>
                 <button type="button" onClick={() => setShownDays({ ...shownDays, [d]: !shown })} aria-expanded={shown} disabled={list.length === 0}
                   className="min-w-0 flex-1 flex items-center gap-2 text-left min-h-[44px]" style={{ touchAction: "manipulation" }}>
@@ -258,6 +267,7 @@ export default function AgendaWeekView({
             const holding = dayAppts.filter((a) => a.status !== "NO_SHOW");
             return (
               <div key={d} className="relative border-l border-gray-100">
+                {d < todayStr && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
                 {rows.map((m) => {
                   const open = !!hours && m >= hours.open && m + STEP <= hours.close;
                   const past = d < todayStr || (d === todayStr && m < nowMin);
@@ -278,9 +288,9 @@ export default function AgendaWeekView({
                     const toCall = holding.some((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED" && toMin(a.startTime) < m + STEP && toMin(a.endTime) > m);
                     const taken = tr(`${busy} ${busy > 1 ? "portes prises" : "porte prise"} sur ${capacity}`, `${busy} of ${capacity} bays taken`);
                     return (
-                      <button key={m} type="button" onClick={() => (free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
+                      <button key={m} type="button" onClick={() => (busy > 0 && onPickBusySlot ? onPickBusySlot(d, toHHMM(m)) : free ? onPickSlot(d, toHHMM(m)) : onPickDay?.(d))}
                         title={free ? `${toHHMM(m)} · ${taken}` : `${toHHMM(m)} · ${taken} · ${tr("voir la journée", "see the day")}`}
-                        aria-label={`${label} : ${taken}${toCall ? tr(", un client à appeler", ", one customer to call") : ""}. ${free ? tr("Ajouter un rendez-vous", "Add an appointment") : tr("Voir la journée", "See the day")}`}
+                        aria-label={`${label} : ${taken}${toCall ? tr(", un client à appeler", ", one customer to call") : ""}. ${busy > 0 && onPickBusySlot ? tr("Voir ces rendez-vous", "See these appointments") : free ? tr("Ajouter un rendez-vous", "Add an appointment") : tr("Voir la journée", "See the day")}`}
                         className="flex w-full items-center justify-between gap-1 px-1.5 text-[11px] font-bold tabular-nums hover:brightness-95 focus-visible:brightness-95"
                         style={{ height: ROW_H, background: c.bg, color: c.text, borderTop: `1px ${m % 60 === 0 ? "solid" : "dashed"} #ffffff`, touchAction: "manipulation" }}>
                         {capacity <= 10 ? (
@@ -361,7 +371,7 @@ export default function AgendaWeekView({
             <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />{tr("À appeler", "To call")}</span>
           </>
         )}
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />{tr("Passé", "Past")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: `${PAST_OVERLAY}, #ecfdf5`, border: "1px solid #e2e8f0" }} />{tr("Journée passée", "Past day")}</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé", "Closed")}</span>
       </div>
     </div>

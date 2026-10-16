@@ -7,11 +7,10 @@
  * ouvre sa semaine, un clic sur un rendez-vous ouvre sa fiche.
  */
 
-import type { WeekAppointment, WeekAvailability, WeekBlock } from "@/components/AgendaWeekView";
+import { PAST_OVERLAY, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
 import { useTr } from "@/lib/dashboard-en";
 
 const STEP = 30;
-const PAST_HATCH = "repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -83,9 +82,11 @@ export default function AgendaMonthView({
           const hasRoom = !closed && free > 0;
           const freeLabel = hasRoom ? `${Math.floor(free / 60)} h${free % 60 ? " 30" : ""} ${lang === "en" ? "free" : `libre${free > 60 ? "s" : ""}`}` : closed ? tr("Fermé") : date < todayStr ? "" : tr("Complet");
           return (
-            <div key={date} className="relative border-t border-l border-gray-100 p-1 flex flex-col gap-0.5"
-              style={{ minHeight: 84, background: closed ? "#f1f5f9" : date < todayStr ? PAST_HATCH : hasRoom ? "#f0fdf4" : "#fff", opacity: inMonth ? 1 : 0.45 }}>
-              <button type="button" onClick={() => onPickDay(date)}
+            // Toute la case mène à sa semaine (la souris) ; le bouton du numéro reste le point d'accès au clavier.
+            <div key={date} onClick={() => onPickDay(date)} className="relative border-t border-l border-gray-100 p-1 flex flex-col gap-0.5 cursor-pointer hover:brightness-[0.97]"
+              style={{ minHeight: 84, background: closed ? "#f1f5f9" : date < todayStr ? "#fff" : hasRoom ? "#f0fdf4" : "#fff", opacity: inMonth ? 1 : 0.45 }}>
+              {date < todayStr && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
+              <button type="button" onClick={(e) => { e.stopPropagation(); onPickDay(date); }}
                 aria-label={`${d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })} : ${dayAppts.length} ${lang === "en" ? "appointments" : "rendez-vous"}${freeLabel ? `, ${freeLabel}` : ""}. ${lang === "en" ? "Open the week" : "Ouvrir la semaine"}`}
                 className="flex items-baseline justify-between gap-1 text-left rounded hover:bg-black/5 px-0.5">
                 <span className="text-xs font-black" style={date === todayStr
@@ -96,7 +97,7 @@ export default function AgendaMonthView({
               {dayAppts.slice(0, 3).map((a) => {
                 const c = chipColors(a);
                 return (
-                  <button key={a.id} type="button" onClick={() => onPickAppointment(a)}
+                  <button key={a.id} type="button" onClick={(e) => { e.stopPropagation(); onPickAppointment(a); }}
                     title={`${a.startTime}–${a.endTime} · ${a.customerName}${a.serviceName ? ` · ${a.serviceName}` : ""}`}
                     className="text-left text-[10px] leading-tight rounded px-1 py-0.5 truncate"
                     style={{ background: c.bg, borderLeft: `3px solid ${c.border}`, color: c.text }}>
@@ -105,7 +106,7 @@ export default function AgendaMonthView({
                 );
               })}
               {dayAppts.length > 3 && (
-                <button type="button" onClick={() => onPickDay(date)} className="text-left text-[10px] font-semibold text-gray-500 px-1 hover:underline">
+                <button type="button" onClick={(e) => { e.stopPropagation(); onPickDay(date); }} className="text-left text-[10px] font-semibold text-gray-500 px-1 hover:underline">
                   + {dayAppts.length - 3} autre{dayAppts.length - 3 > 1 ? "s" : ""}
                 </button>
               )}
@@ -116,9 +117,9 @@ export default function AgendaMonthView({
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }} />{tr("Libre")}</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff", border: "1px solid #e2e8f0" }} />{tr("Complet")}</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: PAST_HATCH, border: "1px solid #e2e8f0" }} />{tr("Passé")}</span>
+        <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: `${PAST_OVERLAY}, #ecfdf5`, border: "1px solid #e2e8f0" }} />{tr("Journée passée")}</span>
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }} />{tr("Fermé")}</span>
-        <span>{tr("Cliquez sur un jour pour ouvrir sa semaine.")}</span>
+        <span>{tr("Cliquez n'importe où sur un jour pour ouvrir sa semaine.")}</span>
       </div>
     </div>
   );

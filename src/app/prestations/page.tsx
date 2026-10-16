@@ -11,7 +11,7 @@ import { useLang } from "@/contexts/LanguageContext";
 const FILTERS = [
   { id: "all",         label: "Tout",        labelEn: "All",         iconPath: null,                           ids: null },
   { id: "entretien",   label: "Entretien",   labelEn: "Maintenance", iconPath: "/icons/filter-entretien.png",  ids: ["oil", "preventive", "battery", "cooling", "fuel", "inspection"] },
-  { id: "pneus",       label: "Pneus",       labelEn: "Tires",       iconPath: "/icons/tires-summer.png",      ids: ["tires-winter", "tires-summer", "alignment", "bearing"] },
+  { id: "pneus",       label: "Pneus",       labelEn: "Tires",       iconPath: "/icons/tires-summer.png",      ids: ["tires", "alignment", "bearing"] },
   { id: "mecanique",   label: "Mécanique",   labelEn: "Mechanics",   iconPath: "/icons/engine.png",            ids: ["brakes", "engine", "transmission", "suspension", "timing", "clutch", "exhaust"] },
   { id: "carrosserie", label: "Carrosserie", labelEn: "Body work",   iconPath: "/icons/bodywork.png",          ids: ["bodywork", "glass", "rust", "detailing"] },
   { id: "systemes",    label: "Systèmes",    labelEn: "Systems",     iconPath: "/icons/electrical.png",        ids: ["ac", "electrical", "ev"] },

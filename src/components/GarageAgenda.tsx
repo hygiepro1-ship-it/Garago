@@ -17,6 +17,7 @@ import type { CustomerMatch } from "@/lib/customers";
 import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
+import VehicleFields from "@/components/VehicleFields";
 
 export interface AgendaAppointment {
   id: string;
@@ -214,6 +215,7 @@ export default function GarageAgenda({
   };
   const en = lang === "en";
   const locale = en ? "en-CA" : "fr-CA";
+  const vehicleLabels = { year: tr("Année"), make: tr("Marque"), model: tr("Modèle"), pickMakeFirst: tr("Choisissez d'abord la marque pour voir ses modèles") };
 
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
   const [saving, setSaving] = useState(false);
@@ -243,6 +245,8 @@ export default function GarageAgenda({
   }, [nameQuery]);
   const showMatches = nameFocused && nameQuery.length >= 2 && matches.length > 0;
 
+  // Demi-heure cliquée dans la semaine affichée par portes : ses rendez-vous, et de quoi en ajouter un.
+  const [slotPick, setSlotPick] = useState<{ date: string; time: string } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | "complete" | "cancel">("view");
   // Modification complète d'un rendez-vous : client, plage, porte, service, véhicule, notes.
@@ -252,6 +256,8 @@ export default function GarageAgenda({
     date: "", startTime: "", durationMin: 60, bay: "", notes: "",
   });
   const [note, setNote] = useState("");
+  // Menu « Plus d'actions » de la fiche d'un rendez-vous
+  const [moreOpen, setMoreOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -264,8 +270,7 @@ export default function GarageAgenda({
       if (!a) return;
       setWeekStart(mondayOf(a.date));
       setDayRef(a.date);
-      setOpenId(a.id);
-      startEdit(a);
+      openAppointment(a.id);
     };
   });
   const weekAppts = appointments.filter((a) => a.date >= days[0] && a.date <= days[6]);
@@ -327,10 +332,14 @@ export default function GarageAgenda({
     });
   }
 
+  /** Clic sur un rendez-vous : à venir, il s'ouvre directement en modification ; terminé, annulé ou absent, en lecture. */
   function openAppointment(id: string) {
     setActionError("");
-    setMode("view");
+    setMoreOpen(false);
+    const a = appointments.find((x) => x.id === id);
     setOpenId(id);
+    if (a && (a.status === "PENDING" || a.status === "CONFIRMED")) startEdit(a);
+    else setMode("view");
   }
 
   async function submitForm(e: React.FormEvent) {
@@ -465,7 +474,7 @@ export default function GarageAgenda({
       }
       await onReload();
       if (moved) { setWeekStart(mondayOf(edit.date)); setDayRef(edit.date); }
-      setMode("view");
+      setOpenId(null);
     } catch {
       setActionError(tr("Erreur réseau. Réessayez."));
     } finally {
@@ -484,7 +493,8 @@ export default function GarageAgenda({
         return;
       }
       await onReload();
-      if (closeAfter) setOpenId(null); else setMode("view");
+      setMoreOpen(false);
+      if (closeAfter) setOpenId(null); else setMode("edit");
     } catch {
       setActionError(tr("Erreur réseau. Réessayez."));
     } finally {
@@ -574,6 +584,7 @@ export default function GarageAgenda({
           byLoad={byLoad}
           onPickDay={showDay}
           onPickSlot={openForm}
+          onPickBusySlot={(date, time) => setSlotPick({ date, time })}
           onPickAppointment={(a) => openAppointment(a.id)}
         />
       ) : (
@@ -589,6 +600,56 @@ export default function GarageAgenda({
           onPickAppointment={(a) => openAppointment(a.id)}
         />
       )}
+
+      {/* ── Rendez-vous d'une demi-heure (semaine affichée par portes) ── */}
+      {slotPick && (() => {
+        const start = toMin(slotPick.time), end = start + 30;
+        const here = appointments
+          .filter((a) => a.date === slotPick.date && a.status !== "CANCELLED" && toMin(a.startTime) < end && toMin(a.endTime) > start)
+          .sort((x, y) => x.startTime.localeCompare(y.startTime) || x.customerName.localeCompare(y.customerName));
+        const holding = here.filter((a) => a.status !== "NO_SHOW").length;
+        const now = new Date();
+        const past = slotPick.date < today || (slotPick.date === today && start < now.getHours() * 60 + now.getMinutes());
+        const hours = availability.find((h) => h.dayOfWeek === new Date(slotPick.date + "T12:00:00").getDay());
+        const open = !!hours && !hours.isClosed && start >= toMin(hours.openTime) && end <= toMin(hours.closeTime);
+        const canAdd = open && !past && holding < capacity;
+        return (
+          <Dialog title={`${slotPick.time} · ${longDate(slotPick.date, lang)}`}
+            subtitle={en ? `${holding} of ${capacity} bays taken` : `${holding} ${holding > 1 ? "portes prises" : "porte prise"} sur ${capacity}`}
+            onClose={() => setSlotPick(null)}>
+            <ul className="space-y-1.5">
+              {here.map((a) => {
+                const c = confirmationLabel(a, tr, en);
+                return (
+                  <li key={a.id}>
+                    <button type="button" onClick={() => { setSlotPick(null); openAppointment(a.id); }}
+                      className="w-full text-left flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <span className="text-sm font-black tabular-nums text-gray-900 w-[88px] flex-shrink-0">{a.startTime}–{a.endTime}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold text-gray-900 truncate">{a.customerName}</span>
+                        <span className="block text-xs text-gray-500 truncate">
+                          {[a.serviceName ? translateServiceName(a.serviceName, lang) : "", capacity > 1 && a.bay ? (en ? `Bay ${a.bay}` : `Porte ${a.bay}`) : "", a.status === "NO_SHOW" ? tr("Client absent") : c?.label ?? ""].filter(Boolean).join(" · ")}
+                        </span>
+                      </span>
+                      <span aria-hidden="true" className="text-gray-400 text-lg">›</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="flex flex-wrap gap-2 justify-end pt-3">
+              <button type="button" onClick={() => { const d = slotPick.date; setSlotPick(null); showDay(d); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-700">{en ? "See the day bay by bay" : "Voir la journée porte par porte"}</button>
+              {canAdd && (
+                <button type="button" onClick={() => { const { date, time } = slotPick; setSlotPick(null); openForm(date, time); }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: "#e0600c" }}>
+                  {en ? `+ Appointment at ${slotPick.time}` : `+ Rendez-vous à ${slotPick.time}`}
+                </button>
+              )}
+            </div>
+          </Dialog>
+        );
+      })()}
 
       {/* ── Prise de rendez-vous ── */}
       {form && (
@@ -717,11 +778,8 @@ export default function GarageAgenda({
             </div>
             <div className="col-span-6 sm:col-span-3">
               <span className={label}>{tr("Véhicule (facultatif)")}</span>
-              <div className="grid grid-cols-3 gap-1">
-                <input aria-label={tr("Année")} inputMode="numeric" placeholder={tr("Année")} className={input} value={form.vehicleYear} onChange={(e) => setForm({ ...form, vehicleYear: e.target.value })} />
-                <input aria-label={tr("Marque")} placeholder={tr("Marque")} className={input} value={form.vehicleMake} onChange={(e) => setForm({ ...form, vehicleMake: e.target.value })} />
-                <input aria-label={tr("Modèle")} placeholder={tr("Modèle")} className={input} value={form.vehicleModel} onChange={(e) => setForm({ ...form, vehicleModel: e.target.value })} />
-              </div>
+              <VehicleFields year={form.vehicleYear} make={form.vehicleMake} model={form.vehicleModel} inputClass={input} labels={vehicleLabels}
+                onChange={(v) => setForm({ ...form, ...v })} />
               {known && known.vehicles.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-1" role="group" aria-label={tr("Véhicules de ce client")}>
                   {known.vehicles.map((v, i) => {
@@ -786,34 +844,22 @@ export default function GarageAgenda({
               <a href={`tel:${open.customerPhone}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d" }}>{open.customerPhone}</a>
               {open.customerEmail && <a href={`mailto:${open.customerEmail}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm truncate max-w-full" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8" }}>{open.customerEmail}</a>}
             </div>
-            {(open.serviceName || open.vehicleMake || open.vehicleYear) && (
+            {mode !== "edit" && (open.serviceName || open.vehicleMake || open.vehicleYear) && (
               <p className="text-gray-700">{[translateServiceName(open.serviceName, lang), [open.vehicleYear, open.vehicleMake, open.vehicleModel].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</p>
             )}
-            {open.notes && <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-2">{open.notes}</p>}
+            {mode !== "edit" && open.notes && <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-2">{open.notes}</p>}
+            {open.status === "PENDING" && mode === "edit" && (
+              <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                <p className="text-xs text-blue-900">{en ? "Online booking request: accept it to confirm it to the customer." : "Demande réservée en ligne : acceptez-la pour la confirmer au client."}</p>
+                <button type="button" disabled={busy} className={actionBtn} style={{ background: "#2563eb" }} onClick={() => patch(open.id, { status: "CONFIRMED" }, false)}>{tr("Accepter")}</button>
+              </div>
+            )}
 
             {actionError && <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2" role="alert">{actionError}</p>}
 
-            {mode === "view" && open.status !== "CANCELLED" && (
+            {mode === "view" && open.status === "NO_SHOW" && (
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {open.confirmTier === "MANUAL" && open.status === "CONFIRMED" && ["SCHEDULED", "AWAITING", "NO_RESPONSE"].includes(open.confirmationStatus ?? "") && (
-                  <button type="button" disabled={busy} className={actionBtn} style={{ background: "#0f766e" }} onClick={() => patch(open.id, { phoneConfirmed: true }, false)}>{tr("Confirmé par téléphone")}</button>
-                )}
-                {open.status === "PENDING" && (
-                  <button type="button" disabled={busy} className={actionBtn} style={{ background: "#2563eb" }} onClick={() => patch(open.id, { status: "CONFIRMED" }, false)}>{tr("Accepter")}</button>
-                )}
-                {(open.status === "PENDING" || open.status === "CONFIRMED") && (
-                  <>
-                    <button type="button" className={actionBtn} style={{ background: "#16a34a" }} onClick={() => { setNote(""); setMode("complete"); }}>{tr("Terminer")}</button>
-                    <button type="button" className={actionBtn} style={{ background: "#7c3aed" }} onClick={() => startEdit(open)}>{tr("Modifier")}</button>
-                    {new Date(`${open.date}T${open.startTime}:00`).getTime() + 15 * 60 * 1000 <= new Date().getTime() && (
-                      <button type="button" disabled={busy} className={actionBtn} style={{ background: "#b91c1c" }} onClick={() => patch(open.id, { status: "NO_SHOW" })}>{tr("Client absent")}</button>
-                    )}
-                    <button type="button" className={actionBtn} style={{ background: "#ef4444" }} onClick={() => setMode("cancel")}>{tr("Annuler")}</button>
-                  </>
-                )}
-                {open.status === "NO_SHOW" && (
-                  <button type="button" disabled={busy} className={actionBtn} style={{ background: "#64748b" }} onClick={() => patch(open.id, { status: "CONFIRMED" }, false)}>{tr("Annuler le statut « absent »")}</button>
-                )}
+                <button type="button" disabled={busy} className={actionBtn} style={{ background: "#64748b" }} onClick={() => patch(open.id, { status: "CONFIRMED" }, false)}>{tr("Annuler le statut « absent »")}</button>
               </div>
             )}
 
@@ -867,11 +913,8 @@ export default function GarageAgenda({
                   </div>
                   <div className="col-span-2">
                     <span className={label}>{tr("Véhicule (facultatif)")}</span>
-                    <div className="grid grid-cols-3 gap-1">
-                      <input aria-label={tr("Année")} inputMode="numeric" placeholder={tr("Année")} className={input} value={edit.vehicleYear} onChange={(e) => setEdit({ ...edit, vehicleYear: e.target.value.replace(/\D/g, "").slice(0, 4) })} />
-                      <input aria-label={tr("Marque")} placeholder={tr("Marque")} className={input} value={edit.vehicleMake} onChange={(e) => setEdit({ ...edit, vehicleMake: e.target.value })} />
-                      <input aria-label={tr("Modèle")} placeholder={tr("Modèle")} className={input} value={edit.vehicleModel} onChange={(e) => setEdit({ ...edit, vehicleModel: e.target.value })} />
-                    </div>
+                    <VehicleFields year={edit.vehicleYear} make={edit.vehicleMake} model={edit.vehicleModel} inputClass={input} labels={vehicleLabels}
+                      onChange={(v) => setEdit({ ...edit, ...v })} />
                   </div>
                   <div className="col-span-2">
                     <label className={label} htmlFor="ed-notes">{tr("Notes (visibles seulement par vous)")}</label>
@@ -894,10 +937,44 @@ export default function GarageAgenda({
                     </div>
                   )}
 
-                  <div className="col-span-2 flex gap-2 justify-end">
-                    <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
+                  <div className="col-span-2 flex gap-2 justify-between items-center pt-1">
+                    <button type="button" aria-expanded={moreOpen} onClick={() => setMoreOpen(!moreOpen)}
+                      className="px-3 py-2.5 min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-700 bg-white">
+                      {en ? "More actions" : "Plus d'actions"} {moreOpen ? "▴" : "▾"}
+                    </button>
                     <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#e0600c" }}>{busy ? "…" : tr("Enregistrer")}</button>
                   </div>
+                  {moreOpen && (() => {
+                    const startAt = new Date(`${open.date}T${open.startTime}:00`).getTime();
+                    const started = startAt <= Date.now();
+                    const absentOk = startAt + 15 * 60 * 1000 <= Date.now();
+                    const awaiting = open.confirmTier === "MANUAL" && open.status === "CONFIRMED" && ["SCHEDULED", "AWAITING", "NO_RESPONSE"].includes(open.confirmationStatus ?? "");
+                    const item = "w-full text-left px-3 py-2.5 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed";
+                    const hint = "block text-[11px] text-gray-500 font-normal mt-0.5";
+                    const startLabel = `${open.startTime} ${en ? "on" : "le"} ${shortDate(open.date, lang)}`;
+                    return (
+                      <div className="col-span-2 rounded-xl border border-gray-200 overflow-hidden" role="group" aria-label={en ? "More actions" : "Plus d'actions"}>
+                        {awaiting && (
+                          <button type="button" disabled={busy} className={item} onClick={() => patch(open.id, { phoneConfirmed: true }, false)}>
+                            <span className="block text-sm font-bold" style={{ color: "#0f766e" }}>{en ? "The customer confirmed by phone" : "Le client m'a confirmé au téléphone"}</span>
+                            <span className={hint}>{en ? "The appointment turns green and Garago stops sending reminders." : "Le rendez-vous passe au vert et Garago arrête de le relancer."}</span>
+                          </button>
+                        )}
+                        <button type="button" disabled={!started} className={item} onClick={() => { setNote(""); setMoreOpen(false); setMode("complete"); }}>
+                          <span className="block text-sm font-bold" style={{ color: "#15803d" }}>{en ? "The customer came, work done" : "Le client est venu, travail fait"}</span>
+                          <span className={hint}>{started ? (en ? "The appointment is marked as completed." : "Le rendez-vous est classé « terminé ».") : (en ? `Available from ${startLabel}.` : `Disponible à partir de ${startLabel}.`)}</span>
+                        </button>
+                        <button type="button" disabled={busy || !absentOk} className={item} onClick={() => patch(open.id, { status: "NO_SHOW" })}>
+                          <span className="block text-sm font-bold" style={{ color: "#b91c1c" }}>{en ? "The customer didn't show up" : "Le client n'est pas venu"}</span>
+                          <span className={hint}>{absentOk ? (en ? "Counted in your no-shows." : "Compté dans vos absences.") : (en ? "Available 15 minutes after the start time." : "Disponible 15 minutes après l'heure du rendez-vous.")}</span>
+                        </button>
+                        <button type="button" className={item} onClick={() => { setMoreOpen(false); setMode("cancel"); }}>
+                          <span className="block text-sm font-bold text-red-700">{en ? "Cancel the appointment" : "Annuler le rendez-vous"}</span>
+                          <span className={hint}>{en ? "The slot opens up in the calendar, and the customer is notified." : "Le créneau se libère dans l'agenda, et le client est prévenu."}</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </form>
               );
             })()}
@@ -907,8 +984,8 @@ export default function GarageAgenda({
                 <label className={label} htmlFor="done-note">{tr("Note pour le client (facultatif, envoyée par courriel)")}</label>
                 <textarea id="done-note" rows={3} className={input} value={note} onChange={(e) => setNote(e.target.value)} />
                 <div className="flex gap-2 justify-end">
-                  <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("view")}>{tr("Retour")}</button>
-                  <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#16a34a" }}>{busy ? "…" : tr("Terminer le rendez-vous")}</button>
+                  <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600" onClick={() => setMode("edit")}>{tr("Retour")}</button>
+                  <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#16a34a" }}>{busy ? "…" : (en ? "Mark as completed" : "Classer « terminé »")}</button>
                 </div>
               </form>
             )}
@@ -917,7 +994,7 @@ export default function GarageAgenda({
               <div className="rounded-lg p-3 space-y-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
                 <p className="text-sm font-bold text-red-800">{tr("Annuler ce rendez-vous ? Le client sera prévenu.")}</p>
                 <div className="flex gap-2 justify-end">
-                  <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 bg-white" onClick={() => setMode("view")}>{tr("Non, garder")}</button>
+                  <button type="button" className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 bg-white" onClick={() => setMode("edit")}>{tr("Non, garder")}</button>
                   <button type="button" disabled={busy} className={actionBtn} style={{ background: "#dc2626" }} onClick={() => patch(open.id, { status: "CANCELLED" })}>{busy ? "…" : tr("Oui, annuler")}</button>
                 </div>
               </div>

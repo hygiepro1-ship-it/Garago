@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import GarageAgenda, { type AgendaAppointment } from "@/components/GarageAgenda";
 import GarageCustomers from "@/components/GarageCustomers";
 import type { CustomerMatch, CustomerPage } from "@/lib/customers";
@@ -91,10 +92,23 @@ async function demoSave(edit: { id: string; name: string; phone: string; email: 
 
 export default function AgendaDemo() {
   const [posts, setPosts] = useState(8);
+  // ?capture=1&lang=en&portes=3 : image pour les guides (sans le bandeau d'explication ni le carnet).
+  const [capture, setCapture] = useState(false);
+  const { lang, setLang } = useLang();
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const n = parseInt(q.get("portes") ?? "", 10);
+    /* eslint-disable react-hooks/set-state-in-effect -- réglages lus une fois dans l'adresse de l'aperçu */
+    if (n >= 1 && n <= 50) setPosts(n);
+    if (q.get("capture") === "1") setCapture(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    if (q.get("lang") === "en" || q.get("lang") === "fr") setLang(q.get("lang") as "fr" | "en");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const appointments = useMemo(() => fakeAppointments(posts), [posts]);
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-4">
-      <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e3a8a" }}>
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-4" id="apercu">
+      {!capture && <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e3a8a" }}>
         <p className="font-bold">Aperçu avec des rendez-vous fictifs</p>
         <p>Rien n&apos;est enregistré ici : le bouton « Enregistrer » du formulaire ne fonctionne pas dans cet aperçu.</p>
         <label className="flex items-center gap-2 mt-2 font-semibold" htmlFor="demo-posts">
@@ -103,18 +117,18 @@ export default function AgendaDemo() {
             onChange={(e) => setPosts(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))}
             className="w-20 border border-blue-200 rounded-lg px-2 py-1 bg-white text-gray-900" />
         </label>
-      </div>
+      </div>}
       <GarageAgenda
         appointments={appointments}
         services={[]}
         availability={AVAILABILITY}
         capacity={posts}
         blocked={[]}
-        lang="fr"
+        lang={lang}
         onReload={() => {}}
       />
-      <hr className="border-gray-200" />
-      <GarageCustomers fetchPage={demoFetchPage} save={demoSave} />
+      {!capture && <hr className="border-gray-200" />}
+      {!capture && <GarageCustomers fetchPage={demoFetchPage} save={demoSave} />}
     </div>
   );
 }

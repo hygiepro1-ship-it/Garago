@@ -16,14 +16,18 @@ export interface Article {
   readTime: number;
   imageId: string; // Unsplash photo slug
   publishedAt: string;
+  /** Service proposé en bas de l'article (identifiant de SERVICE_CATEGORIES) ; sinon, déduit de la catégorie. */
+  service?: string;
   sections: ArticleSection[];
 }
 
-export const ARTICLES: Article[] = [
+import { ARTICLES_RECHERCHES } from "@/lib/articles-recherches";
+
+const ARTICLES_BASE: Article[] = [
   // ── 1 ─────────────────────────────────────────────────────────────────────
   {
     slug: "voiture-tremble-quand-je-freine",
-    title: "Pourquoi ma voiture tremble quand je freine ?",
+    title: "Voiture qui tremble au freinage : 3 causes et quoi faire",
     excerpt: "Des vibrations au freinage indiquent souvent des disques voilés ou des plaquettes usées. Apprenez à identifier la cause et à savoir quand c'est urgent.",
     category: "Freins",
     categoryColor: "#ef4444",
@@ -70,8 +74,8 @@ export const ARTICLES: Article[] = [
   // ── 2 ─────────────────────────────────────────────────────────────────────
   {
     slug: "quand-passer-pneus-hiver-quebec",
-    title: "Quand passer aux pneus d'hiver au Québec ?",
-    excerpt: "La loi impose les pneus d'hiver du 1er décembre au 15 mars — mais idéalement, il faut les installer dès que la température descend sous 7 °C.",
+    title: "Pneus d'hiver au Québec : dates obligatoires et quand les poser",
+    excerpt: "Obligatoires du 1er décembre au 15 mars, avec le pictogramme montagne et flocon : les règles, les pneus 4 saisons permis et le bon moment pour les poser (7 °C).",
     category: "Pneus",
     categoryColor: "#3b82f6",
     icon: "❄️",
@@ -82,7 +86,7 @@ export const ARTICLES: Article[] = [
       {
         heading: "Ce que dit la loi québécoise",
         content: "Au Québec, le Code de la sécurité routière oblige tous les véhicules de promenade à être équipés de pneus d'hiver du 1er décembre au 15 mars inclusivement. Le non-respect de cette règle peut entraîner une amende entre 200 $ et 300 $.",
-        note: "La règle s'applique à tous les véhicules de promenade, incluant les VUS et les camionnettes.",
+        note: "La règle s'applique à tous les véhicules de promenade immatriculés au Québec, incluant les VUS, les camionnettes et les véhicules de location. Les pneus à crampons sont permis du 15 octobre au 1er mai, et les pneus d'été peuvent être remis à partir du 16 mars.",
       },
       {
         heading: "La règle des 7 °C — plus importante que la date",
@@ -94,8 +98,8 @@ export const ARTICLES: Article[] = [
         ],
       },
       {
-        heading: "Pneus quatre saisons : sont-ils suffisants ?",
-        content: "Les pneus «toutes saisons» offrent un compromis, mais ne sont pas adaptés aux conditions hivernales québécoises. Ils peuvent manquer d'adhérence sur neige profonde, verglas et températures très froides. Pour la sécurité, un jeu de pneus d'hiver dédiés reste la meilleure option.",
+        heading: "Pneus 4 saisons : permis seulement avec le pictogramme",
+        content: "Pendant la période obligatoire, un pneu doit porter le pictogramme d'un flocon dans une montagne (ou avoir des crampons). Les pneus 4 saisons qui portent ce pictogramme sont donc permis ; les pneus « toutes saisons » marqués seulement M+S ne le sont pas. Sur glace et neige profonde, un pneu d'hiver dédié garde toutefois l'avantage.",
       },
       {
         heading: "Entreposage : comment conserver vos pneus d'été",
@@ -113,7 +117,7 @@ export const ARTICLES: Article[] = [
   // ── 3 ─────────────────────────────────────────────────────────────────────
   {
     slug: "voyants-tableau-de-bord",
-    title: "Voyants du tableau de bord : que signifient-ils ?",
+    title: "Voyants du tableau de bord : signification (voyant moteur orange, huile, batterie…)",
     excerpt: "Pression d'huile, moteur, batterie, TPMS… Chaque voyant a un niveau d'urgence différent. Ce guide vous explique lesquels ignorer et lesquels nécessitent d'arrêter immédiatement.",
     category: "Électronique",
     categoryColor: "#f59e0b",
@@ -160,8 +164,8 @@ export const ARTICLES: Article[] = [
   // ── 4 ─────────────────────────────────────────────────────────────────────
   {
     slug: "vidange-huile-frequence",
-    title: "Vidange d'huile : à quelle fréquence vraiment ?",
-    excerpt: "Les 3 000 km, c'est du passé. Les huiles synthétiques modernes permettent de rouler beaucoup plus longtemps. Voici la vraie réponse selon votre véhicule.",
+    title: "Changement d'huile : aux combien de km ? (huile synthétique ou non)",
+    excerpt: "Changement d'huile tous les combien de kilomètres ? Les 3 000 km, c'est du passé : la vraie fréquence selon l'huile (synthétique, semi-synthétique, minérale) et votre conduite.",
     category: "Entretien",
     categoryColor: "#8b5cf6",
     icon: "🛢️",
@@ -204,7 +208,7 @@ export const ARTICLES: Article[] = [
   // ── 5 ─────────────────────────────────────────────────────────────────────
   {
     slug: "batterie-voiture-duree-vie",
-    title: "Batterie de voiture : combien de temps dure-t-elle ?",
+    title: "Batterie de voiture : durée de vie, batterie à plat et quand la changer",
     excerpt: "Une batterie dure en moyenne 3 à 5 ans. Le froid québécois l'accélère. Voici comment savoir quand la remplacer et éviter la panne au pire moment.",
     category: "Électrique",
     categoryColor: "#f59e0b",
@@ -249,7 +253,7 @@ export const ARTICLES: Article[] = [
   // ── 6 ─────────────────────────────────────────────────────────────────────
   {
     slug: "moteur-surchauffe-que-faire",
-    title: "Mon moteur surchauffe : que faire et quoi éviter ?",
+    title: "Moteur qui surchauffe : causes et que faire tout de suite",
     excerpt: "Une aiguille de température dans le rouge est une urgence. Voici les bons réflexes à avoir et surtout les erreurs à ne pas commettre.",
     category: "Moteur",
     categoryColor: "#f97316",
@@ -296,7 +300,7 @@ export const ARTICLES: Article[] = [
   // ── 7 ─────────────────────────────────────────────────────────────────────
   {
     slug: "antirouille-quebec-necessaire",
-    title: "L'antirouille au Québec : vraiment indispensable ?",
+    title: "Antirouille au Québec : est-ce vraiment nécessaire ?",
     excerpt: "Le sel de déglaçage québécois est particulièrement agressif pour la carrosserie. Voici ce que vous devez savoir sur les traitements antirouille et leur efficacité réelle.",
     category: "Protection",
     categoryColor: "#6b7280",
@@ -338,7 +342,7 @@ export const ARTICLES: Article[] = [
   // ── 8 ─────────────────────────────────────────────────────────────────────
   {
     slug: "freins-qui-grincent",
-    title: "Freins qui grincent : dangereux ou juste gênant ?",
+    title: "Freins qui grincent : causes, danger et quoi faire",
     excerpt: "Pas tous les grincements de frein sont alarmants — mais certains le sont. Apprenez à distinguer un bruit normal d'un signal d'urgence.",
     category: "Freins",
     categoryColor: "#ef4444",
@@ -372,7 +376,7 @@ export const ARTICLES: Article[] = [
   // ── 9 ─────────────────────────────────────────────────────────────────────
   {
     slug: "climatisation-ne-refroidit-plus",
-    title: "La clim de ma voiture ne refroidit plus : causes et solutions",
+    title: "Climatisation de voiture qui ne refroidit plus : causes et solutions",
     excerpt: "Une climatisation qui souffle chaud en plein été est souvent causée par un manque de réfrigérant. Voici ce qu'il faut savoir avant d'aller chez un mécanicien.",
     category: "Climatisation",
     categoryColor: "#06b6d4",
@@ -411,7 +415,7 @@ export const ARTICLES: Article[] = [
   // ── 10 ────────────────────────────────────────────────────────────────────
   {
     slug: "consommation-essence-anormale",
-    title: "Consommation d'essence anormale : les vraies causes",
+    title: "Voiture qui consomme beaucoup d'essence : les vraies causes",
     excerpt: "Votre voiture consomme soudainement plus que d'habitude ? Plusieurs causes simples peuvent expliquer cette hausse — et la plupart sont facilement corrigibles.",
     category: "Moteur",
     categoryColor: "#f97316",
@@ -457,7 +461,7 @@ export const ARTICLES: Article[] = [
   // ── 11 ────────────────────────────────────────────────────────────────────
   {
     slug: "preparer-voiture-hiver-quebec",
-    title: "Préparer sa voiture pour l'hiver québécois",
+    title: "Préparer sa voiture pour l'hiver au Québec : la liste complète",
     excerpt: "Un hiver québécois met votre véhicule à rude épreuve. Cette checklist complète vous assure de rouler en toute sécurité de novembre à mars.",
     category: "Entretien",
     categoryColor: "#8b5cf6",
@@ -519,7 +523,7 @@ export const ARTICLES: Article[] = [
   // ── 12 ────────────────────────────────────────────────────────────────────
   {
     slug: "pression-pneus-comment-verifier",
-    title: "Pression des pneus : comment vérifier et quel gonflage ?",
+    title: "Pression des pneus de voiture : comment la vérifier et la bonne pression",
     excerpt: "Des pneus mal gonflés usent de manière irrégulière, augmentent la consommation et réduisent l'adhérence. La vérification prend 5 minutes — voici comment faire.",
     category: "Pneus",
     categoryColor: "#3b82f6",
@@ -557,6 +561,18 @@ export const ARTICLES: Article[] = [
     ],
   },
 ];
+
+/** Tous les articles : les premiers guides, puis ceux écrits à partir des recherches les plus fréquentes. */
+export const ARTICLES: Article[] = [...ARTICLES_BASE, ...ARTICLES_RECHERCHES];
+
+/** Service à proposer en bas d'un article (lien vers la recherche de garages). */
+const SERVICE_BY_CATEGORY: Record<string, string> = {
+  Freins: "brakes", Pneus: "tires", "Électronique": "diagnostic", Entretien: "oil",
+  "Électrique": "battery", Moteur: "engine", Protection: "rust", Climatisation: "ac",
+};
+export function articleService(a: Article): string {
+  return a.service ?? SERVICE_BY_CATEGORY[a.category] ?? "";
+}
 
 export function getArticle(slug: string): Article | undefined {
   return ARTICLES.find((a) => a.slug === slug);

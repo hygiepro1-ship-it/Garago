@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLang } from "@/contexts/LanguageContext";
+import { localHref } from "@/lib/alternates";
 import type { Lang } from "@/lib/i18n";
 import type { Session } from "next-auth";
 
@@ -201,15 +202,16 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const role    = getUserRole(session);
-  const isHome  = pathname === "/";
+  const isHome  = pathname === "/" || pathname === "/en";
 
   // « Pour les garages » passe en premier et attire l'œil (animation nav-attn,
   // voir globals.css) : c'est la porte d'entrée des garagistes vers l'abonnement.
   const NAV = [
     { label: t.nav.pricing,    href: "/garagistes", highlight: true },
+    { label: lang === "en" ? "Why Garago" : "Pourquoi Garago", href: "/pourquoi-garago" },
     { label: t.nav.catalog,    href: "/prestations" },
     { label: t.nav.tips,       href: "/conseils" },
-  ];
+  ].map((item) => ({ ...item, href: localHref(item.href, lang) }));
 
   return (
     <header className="sticky top-0 z-50"
@@ -218,7 +220,7 @@ export default function Header() {
         <div className="flex items-center gap-5 h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href={localHref("/", lang)} className="flex-shrink-0">
             <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-11 w-auto object-contain" />
           </Link>
 

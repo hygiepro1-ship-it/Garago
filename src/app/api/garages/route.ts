@@ -4,6 +4,7 @@ import { activeSubscriptionOr } from "@/lib/garage-access";
 import { garageDistance } from "@/lib/geo";
 import { toPublicGarage } from "@/lib/public-garage";
 import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
+import { serviceIdsFor } from "@/lib/services";
 
 export async function GET(req: NextRequest) {
   try {
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
     if (service) {
       where.services = {
         some: {
-          categoryId: service,
+          categoryId: { in: serviceIdsFor(service) },
           active: true,
         },
       };

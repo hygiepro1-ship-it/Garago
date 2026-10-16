@@ -21,7 +21,9 @@ export const CATEGORY_EN: Record<string, string> = {
   "Climatisation": "Air conditioning",
 };
 
-export const ARTICLES_EN: Record<string, ArticleEn> = {
+import { ARTICLES_RECHERCHES_EN } from "@/lib/articles-recherches-en";
+
+const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
   "voiture-tremble-quand-je-freine": {
     title: "Why does my car shake when I brake?",
     excerpt: "Vibrations under braking often point to warped rotors or worn pads. Learn how to identify the cause and when it is urgent.",
@@ -62,13 +64,13 @@ export const ARTICLES_EN: Record<string, ArticleEn> = {
   },
 
   "quand-passer-pneus-hiver-quebec": {
-    title: "When should you switch to winter tires in Quebec?",
+    title: "Winter tires in Quebec: mandatory dates and when to install them",
     excerpt: "The law requires winter tires from December 1 to March 15, but ideally you should install them as soon as the temperature drops below 7 °C.",
     sections: [
       {
         heading: "What Quebec law says",
         content: "In Quebec, the Highway Safety Code requires all passenger vehicles to be fitted with winter tires from December 1 to March 15 inclusive. Not following this rule can lead to a fine of $200 to $300.",
-        note: "The rule applies to all passenger vehicles, including SUVs and pickup trucks.",
+        note: "The rule applies to all passenger vehicles registered in Quebec, including SUVs, pickup trucks and rentals. Studded tires are allowed from October 15 to May 1, and summer tires can go back on from March 16.",
       },
       {
         heading: "The 7 °C rule matters more than the date",
@@ -80,8 +82,8 @@ export const ARTICLES_EN: Record<string, ArticleEn> = {
         ],
       },
       {
-        heading: "Are all-season tires enough?",
-        content: "All-season tires are a compromise, but they are not suited to Quebec winter conditions. They can lack grip on deep snow, black ice and in very cold temperatures. For safety, a dedicated set of winter tires remains the best option.",
+        heading: "Four-season tires: allowed only with the pictogram",
+        content: "During the mandatory period, a tire must bear the pictogram of a snowflake inside a mountain (or be studded). Four-season tires with this pictogram are therefore allowed; \"all-season\" tires marked only M+S are not. On ice and deep snow, a dedicated winter tire still has the edge.",
       },
       {
         heading: "Storage: how to keep your summer tires",
@@ -463,3 +465,6 @@ export const ARTICLES_EN: Record<string, ArticleEn> = {
     ],
   },
 };
+
+/** Tous les articles en anglais, y compris ceux écrits à partir des recherches. */
+export const ARTICLES_EN: Record<string, ArticleEn> = { ...ARTICLES_EN_BASE, ...ARTICLES_RECHERCHES_EN };

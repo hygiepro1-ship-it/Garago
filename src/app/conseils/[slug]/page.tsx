@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ARTICLES, getArticle, getRelatedArticles } from "@/lib/articles";
+import { ARTICLES, getArticle, getRelatedArticles, articleService } from "@/lib/articles";
 import { ArticleImage } from "./ArticleImage";
 import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
 import L, { LDate } from "@/components/L";
@@ -214,7 +214,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               <L fr="Un garage près de chez vous peut s'en occuper" en="A garage near you can take care of it" />
             </p>
             <h3 className="text-xl font-black text-white mb-4"><L fr="Obtenez un devis ou prenez rendez-vous en ligne" en="Get a quote or book an appointment online" /></h3>
-            <Link href={`/rechercher?service=${article.category.toLowerCase()}`}
+            <Link href={articleService(article) ? `/rechercher?service=${articleService(article)}` : "/rechercher"}
               className="inline-block px-6 py-3 rounded-xl text-sm font-black text-white"
               style={{ background: "#e0600c" }}>
               <L fr="Trouver un garage" en="Find a garage" />
