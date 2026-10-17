@@ -57,8 +57,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               url: "https://garagopro.ca",
               logo: "https://garagopro.ca/logo-garago-700.webp",
               email: "info@garagopro.ca",
-              areaServed: "CA",
-              sameAs: ["https://www.linkedin.com/company/garago-canada/", "https://www.instagram.com/garago.ca"],
+              areaServed: { "@type": "AdministrativeArea", name: "Québec", containedInPlace: { "@type": "Country", name: "Canada" } },
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer support",
+                email: "info@garagopro.ca",
+                areaServed: "CA-QC",
+                availableLanguage: ["French", "English"],
+              },
+              sameAs: [
+                // Fiche Google Business de Garago (même fiche que le lien d'avis g.page/r/Cf9X0C3Mdh_UEBM)
+                "https://maps.google.com/?cid=15285066279632787455",
+                "https://www.linkedin.com/company/garago-canada/",
+                "https://www.instagram.com/garago.ca",
+              ],
             },
             {
               "@type": "WebSite",

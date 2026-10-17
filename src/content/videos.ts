@@ -138,6 +138,6 @@ export function videoJsonLd(v: VideoPage, lang: PageLang, baseUrl: string) {
     duration: v.duration,
     inLanguage: lang === "en" ? "en-CA" : "fr-CA",
     transcript: v.transcript.join(" "),
-    publisher: { "@type": "Organization", name: "Garago", logo: { "@type": "ImageObject", url: `${baseUrl}/logo-garago-700${lang === "en" ? "-en" : ""}.webp` } },
+    publisher: { "@type": "Organization", "@id": "https://garagopro.ca/#organization", name: "Garago", logo: { "@type": "ImageObject", url: `${baseUrl}/logo-garago-700${lang === "en" ? "-en" : ""}.webp` } },
   };
 }

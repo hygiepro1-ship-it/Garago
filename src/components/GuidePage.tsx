@@ -106,7 +106,7 @@ export default function GuidePage({
             inLanguage: ui.inLanguage,
             mainEntityOfPage: url,
             author: { "@type": "Organization", name: "Garago" },
-            publisher: { "@type": "Organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700${lang === "en" ? "-en" : ""}.webp` } },
+            publisher: { "@type": "Organization", "@id": "https://garagopro.ca/#organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700${lang === "en" ? "-en" : ""}.webp` } },
           },
           {
             "@type": "FAQPage",
