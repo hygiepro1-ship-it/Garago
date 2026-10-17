@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
@@ -9,6 +8,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { localHref } from "@/lib/alternates";
 import type { Lang } from "@/lib/i18n";
 import type { Session } from "next-auth";
+import SiteLogo from "@/components/SiteLogo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -221,7 +221,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href={localHref("/", lang)} className="flex-shrink-0">
-            <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-11 w-auto object-contain" />
+            <SiteLogo className="h-11 w-auto object-contain" />
           </Link>
 
           {/* Search — hidden on homepage */}

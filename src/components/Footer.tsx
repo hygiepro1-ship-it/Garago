@@ -5,6 +5,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import L from "@/components/L";
 import { localHref } from "@/lib/alternates";
 import { GOOGLE_REVIEW_URL } from "@/lib/google-business";
+import SiteLogo from "@/components/SiteLogo";
 
 export default function Footer() {
   const { t, lang } = useLang();
@@ -48,7 +49,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2">
             <Link href={localHref("/", lang)} className="inline-flex mb-5">
-              <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-10 w-auto object-contain" />
+              <SiteLogo className="h-10 w-auto object-contain" />
             </Link>
             <p className="text-sm leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
               {f.tagline}
