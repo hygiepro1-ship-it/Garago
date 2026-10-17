@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
+import { GOOGLE_REVIEW_URL } from "@/lib/google-business";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -163,6 +164,25 @@ function noteBlock(content: string): string {
                 text-transform:uppercase;letter-spacing:0.05em">Note du garage</p>
       <p style="margin:0;font-size:14px;color:#166534;line-height:1.6">${esc(content)}</p>
     </div>`;
+}
+
+/**
+ * Demande d'avis sur la fiche Google de Garago. Envoyée à tous les clients, sans contrepartie
+ * (les règles de Google interdisent de récompenser un avis ou de ne le demander qu'aux clients satisfaits).
+ */
+function googleReviewBlock(): string {
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0"
+           style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin:24px 0;text-align:center">
+      <tr><td align="center">
+        <p style="margin:0 0 4px;font-size:20px;letter-spacing:2px;color:#f59e0b">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+        <p style="margin:0 0 6px;font-size:16px;font-weight:800;color:#0b1f3a">Garago vous a été utile ?</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#6b7280;line-height:1.5">
+          Un avis sur Google aide d'autres conducteurs à trouver un bon garage, sans passer des heures au téléphone. Ça prend une minute.
+        </p>
+        ${primaryBtn(GOOGLE_REVIEW_URL, "Laisser un avis sur Google")}
+      </td></tr>
+    </table>`;
 }
 
 /** Horizontal divider. */
@@ -395,10 +415,9 @@ export interface VehicleReadyParams {
   completionNote?: string | null;
 }
 
-export async function sendVehicleReady(params: VehicleReadyParams) {
-  if (!canSend()) return;
-
-  const body = `
+/** Contenu du courriel « Votre véhicule est prêt » (séparé de l'envoi pour pouvoir l'afficher en aperçu). */
+export function vehicleReadyBody(params: VehicleReadyParams): string {
+  return `
     ${iconBadge("check")}
     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre véhicule est prêt</h2>
     <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre véhicule est prêt à être récupéré.</p>
@@ -411,10 +430,20 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
       ${row("Téléphone", `<a href="${telHref(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
     `)}
 
+    ${googleReviewBlock()}
+
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance, à bientôt sur Garago !</p>
   `;
+}
 
-  await send(params.to, `Votre véhicule est prêt : ${params.garageName}`, body);
+export async function sendVehicleReady(params: VehicleReadyParams) {
+  if (!canSend()) return;
+  await send(params.to, `Votre véhicule est prêt : ${params.garageName}`, vehicleReadyBody(params));
+}
+
+/** Courriel complet (gabarit Garago compris), pour un aperçu local. */
+export function emailPreviewHtml(body: string): string {
+  return baseLayout(body);
 }
 
 // ─── Email: Rappel rendez-vous (24h avant) ────────────────────────────────────
