@@ -52,7 +52,8 @@ function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; 
   return d;
 }
 
-export default function GarageProfilePage() {
+/** Fiche publique d'un garage. Les données arrivent du serveur (page.tsx) : la fiche est dans le HTML dès le premier chargement. */
+export default function GarageProfileClient({ initialGarage }: { initialGarage: any }) {
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
   const router = useRouter();
@@ -61,8 +62,8 @@ export default function GarageProfilePage() {
   const { t, lang } = useLang();
   const g = t.garage;
 
-  const [garage, setGarage]         = useState<any>(null);
-  const [loading, setLoading]       = useState(true);
+  const [garage, setGarage]         = useState<any>(initialGarage);
+  const loading = false;
   const [coverError, setCoverError] = useState(false);
   const [logoError,  setLogoError]  = useState(false);
   const [isFav, setIsFav]           = useState(false);
@@ -75,23 +76,15 @@ export default function GarageProfilePage() {
   const [reviewService, setReviewService]   = useState("");
   const [submitting, setSubmitting]         = useState(false);
 
+  // Compte une vue (sauf celles du propriétaire), une fois la session connue.
+  const { status: sessionStatus } = useSession();
   useEffect(() => {
-    fetch(`/api/garages/${slug}`)
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) {
-          setGarage({ error: d.error ?? "Erreur serveur" });
-        } else {
-          setGarage(d);
-          const userId = (session?.user as any)?.id;
-          if (d.id && d.ownerId !== userId) {
-            fetch("/api/garage/view", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ garageId: d.id }) }).catch(() => {});
-          }
-        }
-        setLoading(false);
-      })
-      .catch(() => { setGarage({ error: "Erreur réseau" }); setLoading(false); });
-  }, [slug, session]);
+    if (sessionStatus === "loading" || !initialGarage?.id) return;
+    const userId = (session?.user as any)?.id;
+    if (initialGarage.ownerId !== userId) {
+      fetch("/api/garage/view", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ garageId: initialGarage.id }) }).catch(() => {});
+    }
+  }, [initialGarage?.id, initialGarage?.ownerId, session, sessionStatus]);
 
   const isOwner = !!(session?.user && garage?.ownerId && session.user.id === garage.ownerId);
 
