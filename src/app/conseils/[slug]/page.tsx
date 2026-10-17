@@ -99,7 +99,7 @@ function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
               style={{ filter: "brightness(0) invert(1)" }} />
           )}
         </div>
-        <ArticleImage src={`/conseils/${article.slug}.webp`} alt={article.title}
+        <ArticleImage src={`/conseils/${article.slug}-700.webp`} alt={article.title} width={700} height={350}
           loading="lazy" className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
         <div className="absolute top-2 left-2">
           <span className="text-xs font-black px-2 py-0.5 rounded-full"
@@ -140,7 +140,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               style={{ filter: "brightness(0) invert(1)" }} />
           )}
         </div>
-        <ArticleImage src={`/conseils/${article.slug}.webp`} alt={article.title}
+        {/* Photo d'en-tête : élément principal de la page, chargée en priorité ; 700 px sur téléphone */}
+        <ArticleImage src={`/conseils/${article.slug}.webp`} srcSet={`/conseils/${article.slug}-700.webp 700w, /conseils/${article.slug}.webp 1400w`} sizes="100vw"
+          alt={article.title} width={1400} height={700} fetchPriority="high"
           className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
         <div className="absolute inset-0"
           style={{ background: "linear-gradient(to top, rgba(11,31,58,0.85) 0%, rgba(11,31,58,0.3) 50%, rgba(11,31,58,0.5) 100%)" }} />

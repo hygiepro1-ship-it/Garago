@@ -45,7 +45,8 @@ function CategoryBadge({ category, categoryEn, dark }: { category: string; categ
 
 // Photo de l'article. Si son fichier manque (nouvel article sans photo), l'image se masque
 // et le fond bleu avec l'icône de la catégorie reste visible, comme avant les photos.
-function ArticlePhoto({ article, iconSize, lazy }: { article: Article; iconSize: number; lazy?: boolean }) {
+// Chaque photo existe en 1400 px (/conseils/<slug>.webp) et en 700 px (/conseils/<slug>-700.webp) pour les vignettes.
+function ArticlePhoto({ article, iconSize, lazy, sizes }: { article: Article; iconSize: number; lazy?: boolean; sizes: string }) {
   return (
     <div className="relative w-full h-full" style={{ aspectRatio: "2 / 1", background: "linear-gradient(135deg, #1e3a5f, #0b1f3a)" }}>
       {CAT_ICONS[article.category] && (
@@ -54,7 +55,8 @@ function ArticlePhoto({ article, iconSize, lazy }: { article: Article; iconSize:
             style={{ filter: "brightness(0) invert(1)" }} />
         </div>
       )}
-      <ArticleImage src={`/conseils/${article.slug}.webp`} alt="" loading={lazy ? "lazy" : undefined}
+      <ArticleImage src={`/conseils/${article.slug}-700.webp`} srcSet={`/conseils/${article.slug}-700.webp 700w, /conseils/${article.slug}.webp 1400w`} sizes={sizes}
+        alt="" width={1400} height={700} loading={lazy ? "lazy" : undefined} fetchPriority={lazy ? undefined : "high"}
         className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
     </div>
   );
@@ -78,7 +80,7 @@ function FeaturedArticle({ article }: { article: Article }) {
       style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
       <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block">
-        <ArticlePhoto article={article} iconSize={120} />
+        <ArticlePhoto article={article} iconSize={120} sizes="(min-width: 896px) 896px, 100vw" />
       </Link>
       <div className="p-5 pl-7 sm:p-8 sm:pl-10">
         <div className="flex flex-wrap items-center gap-2 mb-5">
@@ -116,7 +118,7 @@ function ArticleCard({ article }: { article: Article }) {
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
       <div className="sm:flex">
       <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block sm:w-60 sm:flex-shrink-0">
-        <ArticlePhoto article={article} iconSize={56} lazy />
+        <ArticlePhoto article={article} iconSize={56} lazy sizes="(min-width: 640px) 240px, 100vw" />
       </Link>
       <div className="p-4 pl-6 sm:p-7 sm:pl-7 min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2 mb-4">
