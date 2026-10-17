@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -16,8 +15,9 @@ import dynamic from "next/dynamic";
 // Le calendrier d'exemple dépend de l'heure du visiteur (jours passés, plages
 // libres) : rendu uniquement dans le navigateur, sinon la page préparée à
 // l'avance ne correspondrait pas à ce que le navigateur calcule.
-// Même raison pour le bloc de saison : son sujet change selon le mois en cours.
-const HomeLocalSeason = dynamic(() => import("@/components/HomeLocalSeason"), { ssr: false });
+// Le bloc de saison, lui, est rendu côté serveur : le mois vient de la page (régénérée chaque jour), donc
+// il est dans le HTML dès le départ et ne décale pas la page en apparaissant.
+import HomeLocalSeason from "@/components/HomeLocalSeason";
 const HomeAgendaDemo = dynamic(() => import("@/components/HomeAgendaDemo"), {
   ssr: false,
   loading: () => <div className="hidden sm:block" style={{ minHeight: 420 }} aria-hidden="true" />,
@@ -68,7 +68,7 @@ function StatsBar({ stats, labels }: {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function HomePage() {
+export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
   const router = useRouter();
   const { t, lang } = useLang();
   const h = t.home;
@@ -278,8 +278,14 @@ export default function HomePage() {
 
         {/* Photo détourée, posée sur le bas du bloc. Décorative : masquée sous 1024 px. */}
         <div className="hidden lg:block self-end" aria-hidden="true">
-          <img src="/accueil-garagiste-cliente.webp" width={1100} height={960} alt="" fetchPriority="high" decoding="async"
-            style={{ display: "block", width: "100%", maxWidth: 500, height: "auto", margin: "0 auto" }} />
+          {/* <picture> : la photo n'est téléchargée qu'à partir de 1024 px ; sur mobile, où elle est cachée, le
+              navigateur ne charge qu'une image vide d'un pixel au lieu des 110 Ko de la photo. */}
+          <picture>
+            <source media="(min-width: 1024px)" srcSet="/accueil-garagiste-cliente.webp" />
+            <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width={1100} height={960} alt=""
+              fetchPriority="high" decoding="async"
+              style={{ display: "block", width: "100%", maxWidth: 500, height: "auto", margin: "0 auto" }} />
+          </picture>
         </div>
         </div>
       </section>
@@ -329,7 +335,7 @@ export default function HomePage() {
       </section>
 
       {/* ── SAISON ET QUARTIERS ── */}
-      <HomeLocalSeason lang={lang} />
+      <HomeLocalSeason lang={lang} month={seasonMonth} />
 
       {/* ── CTA GARAGE ── */}
       <section className="py-10 sm:py-16 relative overflow-hidden hero-lines"

@@ -1,5 +1,9 @@
 import HomeContent from "@/components/HomeContent";
 import { pageMetadata } from "@/lib/alternates";
+import { quebecMonth } from "@/lib/season";
+
+// Régénérée chaque jour : le bloc de saison (pneus d'hiver, pneus d'été) suit le mois en cours.
+export const revalidate = 86400;
 
 export const metadata = pageMetadata({
   path: "/en",
@@ -11,5 +15,5 @@ export const metadata = pageMetadata({
 });
 
 export default function Page() {
-  return <HomeContent />;
+  return <HomeContent seasonMonth={quebecMonth()} />;
 }

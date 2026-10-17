@@ -19,9 +19,9 @@ interface Season { title: string; body: string; service: string; image?: { src: 
  * 1er décembre au 15 mars : on en parle à l'automne, et de la repose des pneus
  * d'été au printemps. Le reste de l'année, seuls les quartiers s'affichent.
  */
-function currentSeason(lang: string, now = new Date()): Season | null {
+function currentSeason(lang: string, m: number): Season | null {
   const fr = lang === "fr";
-  const m = now.getMonth(); // 0 = janvier
+  // m : mois en cours au Québec, 0 = janvier
   if (m >= 8 && m <= 10) {
     return {
       title: fr ? "Pneus d'hiver : date limite le 1er décembre" : "Winter tires: deadline December 1",
@@ -47,9 +47,9 @@ function currentSeason(lang: string, now = new Date()): Season | null {
 }
 
 /** Accueil : sujet de saison et accès direct par quartier de Montréal. */
-export default function HomeLocalSeason({ lang }: { lang: string }) {
+export default function HomeLocalSeason({ lang, month }: { lang: string; month: number }) {
   const fr = lang === "fr";
-  const season = currentSeason(lang);
+  const season = currentSeason(lang, month);
   return (
     <section className="bg-white py-10 sm:py-14" style={{ borderTop: "1px solid #e2e8f0" }} aria-labelledby="local-title">
       <div className={`max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 ${season?.image ? "grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-10 items-center" : ""}`}>
