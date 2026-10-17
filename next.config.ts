@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
   // la redirection permanente garde les anciens liens et le référencement.
   async redirects() {
     return [
+      // Une seule adresse pour le site : www.garagopro.ca renvoie vers garagopro.ca (même chemin).
+      { source: "/:path*", has: [{ type: "host", value: "www.garagopro.ca" }], destination: "https://garagopro.ca/:path*", permanent: true },
       { source: "/tarifs", destination: "/garagistes", permanent: true },
       // L'agenda est intégré au tableau de bord du garage (anciens liens des courriels, favoris).
       { source: "/tableau-de-bord/garage/agenda", destination: "/tableau-de-bord/garage", permanent: false },
