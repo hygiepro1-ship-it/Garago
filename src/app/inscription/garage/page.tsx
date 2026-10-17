@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -11,6 +10,7 @@ import { SERVICE_CATEGORIES } from "@/lib/services";
 import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import ServiceIcon from "@/components/ServiceIcon";
+import SiteLogo from "@/components/SiteLogo";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -394,7 +394,7 @@ export default function InscriptionGaragePage() {
       <div style={{ backgroundColor: "#0b1f3a" }} className="py-4 px-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="inline-flex">
-            <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-8 w-auto object-contain" />
+            <SiteLogo className="h-8 w-auto object-contain" />
           </Link>
           <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             {r.alreadyAccount} <Link href="/connexion" className="text-orange-400 font-semibold hover:underline">{r.signIn}</Link>

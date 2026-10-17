@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
+import SiteLogo from "@/components/SiteLogo";
 
 const TX = {
   fr: {
@@ -129,7 +129,7 @@ export default function MotDePasseOubliePage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex justify-center items-center px-4 py-2 rounded-2xl mb-6"
             style={{ background: "#0b1f3a" }}>
-            <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-9 w-auto object-contain" />
+            <SiteLogo className="h-9 w-auto object-contain" />
           </Link>
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0b1f3a" }}>
             {step === "done" ? tx.titleDone : tx.title}

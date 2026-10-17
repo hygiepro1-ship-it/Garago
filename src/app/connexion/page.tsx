@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -6,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
+import SiteLogo from "@/components/SiteLogo";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ function LeftPanel({ labels }: { labels: ReturnType<typeof useLang>["t"]["auth"]
 
       <div className="relative">
         <Link href="/" className="inline-flex mb-10">
-          <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-9 w-auto object-contain" />
+          <SiteLogo className="h-9 w-auto object-contain" />
         </Link>
 
         <h2 className="text-3xl font-black text-white leading-snug mb-4">
@@ -94,7 +94,7 @@ export default function ConnexionPage() {
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex justify-center items-center px-4 py-2 rounded-2xl"
               style={{ background: "#0b1f3a" }}>
-              <img src="/logo-garago-400.webp" width={400} height={124} alt="Garago" decoding="async" className="h-10 w-auto object-contain" />
+              <SiteLogo className="h-10 w-auto object-contain" />
             </Link>
           </div>
 
