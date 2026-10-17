@@ -28,7 +28,11 @@ async function load(slug: string) {
     },
     orderBy: { name: "asc" },
   });
-  return { info, garages, others: cities.filter((c) => c.slug !== slug && c.count >= MIN_GARAGES_FOR_INDEX).slice(0, 12) };
+  // Garages qui prennent les rendez-vous en ligne (fiche activée) d'abord, puis ceux qui ont des avis.
+  const bookable = (g: { claimStatus: string }) => g.claimStatus === "activee";
+  garages.sort((a, b) => Number(bookable(b)) - Number(bookable(a)) || b.reviews.length - a.reviews.length);
+  const bookableCount = garages.filter(bookable).length;
+  return { info, garages, bookableCount, others: cities.filter((c) => c.slug !== slug && c.count >= MIN_GARAGES_FOR_INDEX).slice(0, 12) };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ ville: string }> }): Promise<Metadata> {
@@ -36,8 +40,14 @@ export async function generateMetadata({ params }: { params: Promise<{ ville: st
   const data = await load(ville);
   if (!data) return { title: "Ville introuvable | Garago", robots: { index: false, follow: false } };
   const { city, count } = data.info;
-  const title = `Garages à ${city} : avis, services et rendez-vous en ligne | Garago`;
-  const description = `${count} garage${count > 1 ? "s" : ""} à ${city} (Québec) : adresses, avis de conducteurs et prise de rendez-vous en ligne pour vidange, pneus d'hiver, freins et mécanique générale.`;
+  const n = `${count} garage${count > 1 ? "s" : ""}`;
+  // La réservation en ligne n'est promise que si au moins un garage de la ville la propose.
+  const title = data.bookableCount > 0
+    ? `Garages à ${city} : avis et rendez-vous en ligne | Garago`
+    : `Garages à ${city} : adresses, téléphones et avis | Garago`;
+  const description = data.bookableCount > 0
+    ? `${n} à ${city} (Québec), dont ${data.bookableCount} qui prennent les rendez-vous en ligne : adresses, avis de conducteurs, vidange, pneus d'hiver, freins.`
+    : `${n} à ${city} (Québec) : adresses, téléphones et avis de conducteurs pour la vidange, les pneus d'hiver, les freins et la mécanique générale.`;
   return {
     title,
     description,
@@ -51,7 +61,7 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
   const { ville } = await params;
   const data = await load(ville);
   if (!data) notFound();
-  const { info, garages, others } = data;
+  const { info, garages, others, bookableCount } = data;
   const city = info.city;
   const rated = garages.map((g) => ({
     ...g,
@@ -65,7 +75,9 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
     },
     {
       q: `Puis-je prendre rendez-vous en ligne dans un garage de ${city} ?`,
-      a: `Oui, chez les garages de ${city} qui ont activé la réservation en ligne : vous choisissez le service, la date et l'heure parmi les disponibilités réelles du garage, sans appeler.`,
+      a: bookableCount > 0
+        ? `Oui, chez les garages de ${city} marqués « Réservation en ligne » : vous choisissez le service, la date et l'heure parmi les disponibilités réelles du garage, sans appeler.`
+        : `Pas encore à ${city} : aucun garage du secteur n'a activé la réservation en ligne sur Garago pour l'instant. Vous pouvez les appeler directement depuis leur fiche, ou chercher un garage réservable dans un secteur voisin.`,
     },
     {
       q: `Quand faire installer ses pneus d'hiver à ${city} ?`,
@@ -108,8 +120,10 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
           </nav>
           <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight">Garages à {city}</h1>
           <p className="mt-3 max-w-2xl text-base" style={{ color: "rgba(255,255,255,0.8)" }}>
-            {garages.length} garage{garages.length > 1 ? "s" : ""} à {city}, au Québec. Consultez les adresses et les avis de
-            conducteurs, puis réservez en ligne votre vidange, vos pneus d&apos;hiver, vos freins ou votre entretien.
+            {`${garages.length} garage${garages.length > 1 ? "s" : ""} à ${city}, au Québec.`}{" "}
+            {bookableCount > 0
+              ? `${bookableCount === 1 ? "Un garage prend" : `${bookableCount} garages prennent`} les rendez-vous en ligne : réservez votre vidange, vos pneus d'hiver, vos freins ou votre entretien sans appeler.`
+              : "Consultez les adresses, les téléphones et les avis de conducteurs."}
           </p>
           <Link href="/rechercher"
             className="inline-flex items-center mt-6 px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>
@@ -131,7 +145,12 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
                   {g.avg !== null
                     ? <span className="font-semibold">★ {g.avg.toFixed(1)} · {g.reviews.length} avis</span>
                     : <span>Aucun avis pour l&apos;instant</span>}
-                  {g.claimStatus === "activee" && <span className="font-semibold" style={{ color: "#c2410c" }}>Réservation en ligne</span>}
+                  {g.claimStatus === "activee" && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold" style={{ background: "#dcfce7", color: "#166534" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></svg>
+                      Réservation en ligne
+                    </span>
+                  )}
                 </span>
               </Link>
             </li>
