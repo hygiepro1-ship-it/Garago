@@ -3,13 +3,16 @@ import JsonLd from "@/components/JsonLd";
 import CoutAbsences from "@/components/CoutAbsences";
 import StickyCta from "@/components/StickyCta";
 import type { PageLang } from "@/lib/alternates";
+import { ARTICLES } from "@/lib/articles";
+import { ARTICLES_EN } from "@/lib/articles-en";
+import { VIDEOS } from "@/content/videos";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 interface Theme { href: string; title: string; text: string }
 // Chiffres : seulement des données sourcées, avec leur pays et leur nature (étude, estimation d'éditeur).
-// « apres » : nombre d'articles de la catégorie affichés avant ce chiffre (il s'intercale entre deux rangées).
-interface Fait { chiffre: string; texte: string; porte: string; source: string; href: string; apres: number }
+// « avant » : lien de l'article qui répond au problème chiffré ; le chiffre s'affiche juste au-dessus.
+interface Fait { chiffre: string; texte: string; porte: string; source: string; href: string; avant: string }
 
 const MARCHEX_2026 = "https://www.marchex.com/up-to-21-percent-of-automotive-service-customer-calls-go-unanswered-creating-significant-revenue-leakage/";
 const MARCHEX_2019 = "https://investors.marchex.com/news-releases/news-release-details/new-data-shows-auto-services-stores-fail-capture-millions-sales";
@@ -28,9 +31,9 @@ const CONTENT = {
     read: "Lire →", source: "Source :",
     garages: [
       { href: "/garagistes/prise-de-rendez-vous-en-ligne", title: "Prise de rendez-vous en ligne : le guide complet", text: "Services, durées, portes, confirmation et lien de réservation, étape par étape." },
+      { href: "/garagistes/agenda-en-ligne", title: "Choisir un agenda en ligne pour son garage", text: "Durée par service, nombre de portes, rendez-vous au téléphone : les critères à vérifier." },
       { href: "/garagistes/rendez-vous-manques", title: "Réduire les rendez-vous manqués", text: "Confirmation, rappel la veille, annulation facile : 7 moyens concrets de limiter les absences." },
       { href: "/garagistes/rappel-rendez-vous-sms", title: "Rappel de rendez-vous par texto", text: "Quand l'envoyer, quoi écrire, et ce que dit la Loi canadienne anti-pourriel." },
-      { href: "/garagistes/agenda-en-ligne", title: "Choisir un agenda en ligne pour son garage", text: "Durée par service, nombre de portes, rendez-vous au téléphone : les critères à vérifier." },
       { href: "/garagistes/logiciel-garage-automobile", title: "Logiciel de garage automobile au Québec", text: "Facturation TPS/TVQ, évaluation écrite exigée par la loi, rendez-vous : comment choisir." },
       { href: "/garagistes/modele-facture-garage", title: "Modèle de facture de garage gratuit", text: "Facture, évaluation écrite et bon de travail en Excel, avec TPS et TVQ calculées." },
       { href: "/garagistes/attirer-clients-garage", title: "Attirer plus de clients dans son garage", text: "Fiche Google, avis, réservation en ligne, fidélisation : 8 actions concrètes." },
@@ -40,21 +43,23 @@ const CONTENT = {
     ] as Theme[],
     drivers: [
       { href: "/conducteurs/reserver-garage-en-ligne", title: "Réserver son garage en ligne, sans appeler", text: "Choisir le service, la date et l'heure parmi les vraies disponibilités du garage." },
-      { href: "/conseils/quand-passer-pneus-hiver-quebec", title: "Quand passer aux pneus d'hiver au Québec", text: "La date limite, la bonne température et pourquoi prendre rendez-vous tôt." },
+      { href: VIDEOS.reserver.fr.path, title: "Vidéo : réserver son garage en ligne", text: "En moins d'une minute, comment trouver un garage disponible et réserver en quatre étapes." },
       { href: "/garages", title: "Trouver un garage par ville ou arrondissement", text: "Les garages de votre secteur, leurs avis et leurs coordonnées." },
-      { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, batterie, vidange : des guides pratiques pour le Québec." },
+      { href: "/rechercher", title: "Chercher un garage près de chez vous", text: "Entrez votre auto et votre position : les garages proches, disponibles bientôt, avec leurs avis." },
     ] as Theme[],
-    factsSub: "Les chiffres cités sur cette page indiquent d'où ils viennent. Quand elle n'est pas québécoise ou qu'il s'agit d'une estimation d'éditeur de logiciel, nous le disons.",
+    conseilsH3: "Conseils auto : les problèmes les plus recherchés",
+    allConseils: { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, pneus, batterie, vidange : tous les guides pratiques pour le Québec, par catégorie." } as Theme,
+    factsSub: "Les chiffres cités sur cette page indiquent d'où ils viennent. Quand un chiffre n'est pas québécois ou qu'il s'agit d'une estimation d'éditeur de logiciel, nous le disons.",
     factsGarages: [
-      { chiffre: "jusqu'à 21 %", texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.", porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)", source: "Marchex", href: MARCHEX_2026, apres: 2 },
-      { chiffre: "≈ 30 %", texte: "Des appels entrants aux centres de services automobiles représentent une occasion de revenu manquée. Une fois sur trois, le rendez-vous n'est pas pris, même quand le client voulait réserver.", porte: "États-Unis, 8,7 millions d'appels analysés (rapport 2019)", source: "Marchex (étude 2019)", href: MARCHEX_2019, apres: 8 },
-      { chiffre: "10 à 15 %", texte: "Des rendez-vous ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation. Une demande de confirmation et un rappel sont les moyens les plus simples de les réduire.", porte: "Estimation d'un éditeur de logiciel (France). Aucune statistique indépendante québécoise à notre connaissance.", source: "Car Spot", href: CAR_SPOT, apres: 4 },
-      { chiffre: "Plus de postes vacants que de travailleurs", texte: "C'est le constat du gouvernement fédéral pour les mécaniciens de véhicules automobiles de la région de Montréal en 2023-2025. Quand l'équipe est rare, chaque heure passée au téléphone est une heure de moins à l'atelier.", porte: "Région de Montréal, métier CNP 72410", source: "Guichet-emplois (Gouvernement du Canada)", href: "https://www.guichetemplois.gc.ca/rapportmarche/perspectives-profession/14857/geo25154", apres: 6 },
+      { chiffre: "jusqu'à 21 %", texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.", porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)", source: "Marchex", href: MARCHEX_2026, avant: "/garagistes/prise-de-rendez-vous-en-ligne" },
+      { chiffre: "≈ 30 %", texte: "Des appels entrants aux centres de services automobiles représentent une occasion de revenu manquée. Une fois sur trois, le rendez-vous n'est pas pris, même quand le client voulait réserver.", porte: "États-Unis, 8,7 millions d'appels analysés (rapport 2019)", source: "Marchex (étude 2019)", href: MARCHEX_2019, avant: "/garagistes/attirer-clients-garage" },
+      { chiffre: "10 à 15 %", texte: "Des rendez-vous ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation. Une demande de confirmation et un rappel sont les moyens les plus simples de les réduire.", porte: "Estimation d'un éditeur de logiciel (France). Aucune statistique indépendante québécoise à notre connaissance.", source: "Car Spot", href: CAR_SPOT, avant: "/garagistes/rendez-vous-manques" },
+      { chiffre: "Plus de postes vacants que de travailleurs", texte: "C'est le constat du gouvernement fédéral pour les mécaniciens de véhicules automobiles de la région de Montréal en 2023-2025. Quand l'équipe est rare, chaque heure passée au téléphone est une heure de moins à l'atelier.", porte: "Région de Montréal, métier CNP 72410", source: "Guichet-emplois (Gouvernement du Canada)", href: "https://www.guichetemplois.gc.ca/rapportmarche/perspectives-profession/14857/geo25154", avant: "/garagistes/logiciel-garage-automobile" },
     ] as Fait[],
     factsDrivers: [
-      { chiffre: "87 %", texte: "Des consommateurs lisent les avis en ligne avant de choisir une entreprise locale. Sur Garago, chaque avis vient d'un conducteur qui a réellement eu un rendez-vous dans le garage.", porte: "Sondage de consommateurs, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, apres: 4 },
-      { chiffre: "76 %", texte: "Des clients d'un service automobile qui ont réservé en ligne disent qu'ils le referaient. La réservation en ligne convainc ceux qui l'essaient.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, apres: 2 },
-      { chiffre: "45 %", texte: "Des clients qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un endroit où l'on voit d'un coup d'œil quels garages prennent les rendez-vous en ligne règle ce problème.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, apres: 2 },
+      { chiffre: "87 %", texte: "Des consommateurs lisent les avis en ligne avant de choisir une entreprise locale. Sur Garago, chaque avis vient d'un conducteur qui a réellement eu un rendez-vous dans le garage.", porte: "Sondage de consommateurs, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, avant: "/garages" },
+      { chiffre: "76 %", texte: "Des clients d'un service automobile qui ont réservé en ligne disent qu'ils le referaient. La réservation en ligne convainc ceux qui l'essaient.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, avant: "/conducteurs/reserver-garage-en-ligne" },
+      { chiffre: "45 %", texte: "Des clients qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un endroit où l'on voit d'un coup d'œil quels garages prennent les rendez-vous en ligne règle ce problème.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, avant: "/conducteurs/reserver-garage-en-ligne" },
     ] as Fait[],
     readyH2: "Prêt à essayer ?", readyText: "Garagistes : 30 jours gratuits, annulable en tout temps. Conducteurs : Garago est gratuit.",
     register: "Inscrire mon garage", find: "Trouver un garage",
@@ -70,9 +75,9 @@ const CONTENT = {
     read: "Read →", source: "Source:",
     garages: [
       { href: "/en/garage-owners/online-booking", title: "Online booking: the complete guide", text: "Services, times, bays, confirmation and booking link, step by step." },
+      { href: "/en/garage-owners/online-scheduling-calendar", title: "Choose an online calendar for your shop", text: "Time per service, number of bays, phone bookings: the criteria to check." },
       { href: "/en/garage-owners/missed-appointments", title: "Reduce missed appointments", text: "Confirmation, day-before reminder, easy cancellation: 7 practical ways to cut no-shows." },
       { href: "/en/garage-owners/sms-appointment-reminders", title: "SMS appointment reminders", text: "When to send them, what to write, and what Canada's anti-spam law says." },
-      { href: "/en/garage-owners/online-scheduling-calendar", title: "Choose an online calendar for your shop", text: "Time per service, number of bays, phone bookings: the criteria to check." },
       { href: "/en/garage-owners/auto-repair-shop-software", title: "Auto repair shop software in Quebec", text: "GST/QST invoicing, legally required written estimates, booking: how to choose." },
       { href: "/en/garage-owners/auto-repair-invoice-template", title: "Free auto repair invoice template", text: "Invoice, written estimate and work order in Excel, with GST and QST calculated." },
       { href: "/en/garage-owners/get-more-customers", title: "Get more customers for your shop", text: "Google profile, reviews, online booking, retention: 8 practical actions." },
@@ -82,20 +87,23 @@ const CONTENT = {
     ] as Theme[],
     drivers: [
       { href: "/en/drivers/book-garage-online", title: "Book your garage online, without calling", text: "Choose the service, date and time from the garage's real availability." },
+      { href: VIDEOS.reserver.en.path, title: "Video: book your garage online", text: "In under a minute, how to find an available garage and book in four steps." },
       { href: "/garages", title: "Find a garage by city or borough", text: "Garages in your area, their reviews and contact details." },
-      { href: "/conseils", title: "All car tips", text: "Warning lights, brakes, battery, oil changes: practical guides for Quebec." },
+      { href: "/rechercher", title: "Search for a garage near you", text: "Enter your car and location: nearby garages, available soon, with their reviews." },
     ] as Theme[],
+    conseilsH3: "Car tips: the most searched problems",
+    allConseils: { href: "/conseils", title: "All car tips", text: "Warning lights, brakes, tires, battery, oil changes: every practical guide for Quebec, by category." } as Theme,
     factsSub: "Every figure on this page says where it comes from. When it isn't from Quebec or is a software publisher's estimate, we say so.",
     factsGarages: [
-      { chiffre: "up to 21%", texte: "Of calls to automotive service departments go unanswered or fail. A healthy rate is 10% or less. Every missed call is a customer who calls the next shop.", porte: "North America, large shop networks (call data analysis, 2026)", source: "Marchex", href: MARCHEX_2026, apres: 2 },
-      { chiffre: "≈ 30%", texte: "Of inbound calls to auto service centers are a missed revenue opportunity. One time in three, no appointment is booked, even when the caller wanted to book.", porte: "United States, 8.7 million calls analyzed (2019 report)", source: "Marchex (2019 study)", href: MARCHEX_2019, apres: 8 },
-      { chiffre: "10 to 15%", texte: "Of appointments are missed at independent shops that send no reminder or confirmation. A confirmation request and a reminder are the simplest ways to reduce them.", porte: "Software publisher's estimate (France). No independent Quebec statistic to our knowledge.", source: "Car Spot", href: CAR_SPOT, apres: 4 },
-      { chiffre: "More job openings than workers", texte: "That's the federal government's finding for automotive service technicians in the Montreal region for 2023-2025. When staff is scarce, every hour on the phone is an hour less in the shop.", porte: "Montreal region, NOC 72410", source: "Job Bank (Government of Canada)", href: "https://www.jobbank.gc.ca/marketreport/outlook-occupation/14857/geo25154", apres: 6 },
+      { chiffre: "up to 21%", texte: "Of calls to automotive service departments go unanswered or fail. A healthy rate is 10% or less. Every missed call is a customer who calls the next shop.", porte: "North America, large shop networks (call data analysis, 2026)", source: "Marchex", href: MARCHEX_2026, avant: "/en/garage-owners/online-booking" },
+      { chiffre: "≈ 30%", texte: "Of inbound calls to auto service centers are a missed revenue opportunity. One time in three, no appointment is booked, even when the caller wanted to book.", porte: "United States, 8.7 million calls analyzed (2019 report)", source: "Marchex (2019 study)", href: MARCHEX_2019, avant: "/en/garage-owners/get-more-customers" },
+      { chiffre: "10 to 15%", texte: "Of appointments are missed at independent shops that send no reminder or confirmation. A confirmation request and a reminder are the simplest ways to reduce them.", porte: "Software publisher's estimate (France). No independent Quebec statistic to our knowledge.", source: "Car Spot", href: CAR_SPOT, avant: "/en/garage-owners/missed-appointments" },
+      { chiffre: "More job openings than workers", texte: "That's the federal government's finding for automotive service technicians in the Montreal region for 2023-2025. When staff is scarce, every hour on the phone is an hour less in the shop.", porte: "Montreal region, NOC 72410", source: "Job Bank (Government of Canada)", href: "https://www.jobbank.gc.ca/marketreport/outlook-occupation/14857/geo25154", avant: "/en/garage-owners/auto-repair-shop-software" },
     ] as Fait[],
     factsDrivers: [
-      { chiffre: "87%", texte: "Of consumers read online reviews before choosing a local business. On Garago, every review comes from a driver who actually had an appointment at the garage.", porte: "Consumer survey, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, apres: 2 },
-      { chiffre: "76%", texte: "Of automotive service customers who booked online say they would do it again. Online booking wins over those who try it.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, apres: 3 },
-      { chiffre: "45%", texte: "Of customers who hadn't booked online didn't know the option existed. A place where you can see at a glance which garages take online bookings solves that.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, apres: 3 },
+      { chiffre: "87%", texte: "Of consumers read online reviews before choosing a local business. On Garago, every review comes from a driver who actually had an appointment at the garage.", porte: "Consumer survey, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, avant: "/garages" },
+      { chiffre: "76%", texte: "Of automotive service customers who booked online say they would do it again. Online booking wins over those who try it.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, avant: "/en/drivers/book-garage-online" },
+      { chiffre: "45%", texte: "Of customers who hadn't booked online didn't know the option existed. A place where you can see at a glance which garages take online bookings solves that.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, avant: "/en/drivers/book-garage-online" },
     ] as Fait[],
     readyH2: "Ready to try?", readyText: "Garages: 30 days free, cancel anytime. Drivers: Garago is free.",
     register: "Register my garage", find: "Find a garage",
@@ -121,33 +129,6 @@ function FaitCard({ f, source, seul }: { f: Fait; source: string; seul: boolean 
   );
 }
 
-/** Articles d'une catégorie, avec ses chiffres intercalés entre les rangées (chacun près des articles sur le même sujet). */
-function ArticlesEtChiffres({ themes, faits, read, source }: { themes: Theme[]; faits: Fait[]; read: string; source: string }) {
-  const coupures = Array.from(new Set([0, ...faits.map((f) => f.apres), themes.length])).sort((a, b) => a - b);
-  return (
-    <div className="mt-5 space-y-4">
-      {coupures.slice(0, -1).map((debut, i) => {
-        const fin = coupures[i + 1];
-        const ici = faits.filter((f) => f.apres === fin);
-        return (
-          <div key={debut} className="space-y-4">
-            {fin > debut && (
-              <ul className="grid gap-4 sm:grid-cols-2">
-                {themes.slice(debut, fin).map((t) => <ThemeCard key={t.href} t={t} read={read} />)}
-              </ul>
-            )}
-            {ici.length > 0 && (
-              <ul className={`grid gap-4 ${ici.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                {ici.map((f) => <FaitCard key={f.chiffre + f.source} f={f} source={source} seul={ici.length === 1} />)}
-              </ul>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function ThemeCard({ t, read }: { t: Theme; read: string }) {
   return (
     <li>
@@ -161,9 +142,48 @@ function ThemeCard({ t, read }: { t: Theme; read: string }) {
   );
 }
 
+/** Articles d'une catégorie ; chaque chiffre s'affiche juste au-dessus de l'article qui répond au problème qu'il mesure. */
+function ArticlesEtChiffres({ themes, faits, read, source }: { themes: Theme[]; faits: Fait[]; read: string; source: string }) {
+  // Découpe la liste aux articles précédés d'un chiffre.
+  const groupes: { faits: Fait[]; themes: Theme[] }[] = [];
+  for (const t of themes) {
+    const ici = faits.filter((f) => f.avant === t.href);
+    if (ici.length > 0 || groupes.length === 0) groupes.push({ faits: ici, themes: [] });
+    groupes[groupes.length - 1].themes.push(t);
+  }
+  return (
+    <div className="mt-5 space-y-4">
+      {groupes.map((g) => (
+        <div key={g.themes[0].href} className="space-y-4">
+          {g.faits.length > 0 && (
+            <ul className={`grid gap-4 ${g.faits.length > 1 ? "sm:grid-cols-2" : ""}`}>
+              {g.faits.map((f) => <FaitCard key={f.chiffre + f.source} f={f} source={source} seul={g.faits.length === 1} />)}
+            </ul>
+          )}
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {g.themes.map((t) => <ThemeCard key={t.href} t={t} read={read} />)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Tous les articles de conseils publiés, dans la langue de la page. */
+function conseilsThemes(lang: PageLang): Theme[] {
+  const now = new Date();
+  return ARTICLES
+    .filter((a) => new Date(a.publishedAt) <= now)
+    .map((a) => {
+      const en = lang === "en" ? ARTICLES_EN[a.slug] : undefined;
+      return { href: `/conseils/${a.slug}`, title: en?.title ?? a.title, text: en?.excerpt ?? a.excerpt };
+    });
+}
+
 /** Page « Pourquoi Garago » : guides pour garagistes et conducteurs, calculateur et chiffres sourcés. */
 export default function WhyGarago({ lang }: { lang: PageLang }) {
   const c = CONTENT[lang];
+  const conseils = conseilsThemes(lang);
   return (
     <>
       <JsonLd data={{
@@ -172,7 +192,7 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
         name: c.name,
         url: `${BASE_URL}${c.path}`,
         inLanguage: lang === "en" ? "en-CA" : "fr-CA",
-        hasPart: [...c.garages, ...c.drivers].map((t) => ({ "@type": "WebPage", name: t.title, url: `${BASE_URL}${t.href}` })),
+        hasPart: [...c.garages, ...c.drivers, ...conseils, c.allConseils].map((t) => ({ "@type": "WebPage", name: t.title, url: `${BASE_URL}${t.href}` })),
       }} />
 
       <section style={{ background: "linear-gradient(135deg,#071428 0%,#0b1f3a 60%,#1a3a6b 100%)" }}>
@@ -199,6 +219,10 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
           <h2 id="h-conducteurs" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{c.driversH2}</h2>
           <p className="mt-1 text-gray-600">{c.driversSub}</p>
           <ArticlesEtChiffres themes={c.drivers} faits={c.factsDrivers} read={c.read} source={c.source} />
+          <h3 className="mt-10 text-lg font-black" style={{ color: "#0b1f3a" }}>{c.conseilsH3}</h3>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+            {[...conseils, c.allConseils].map((t) => <ThemeCard key={t.href} t={t} read={c.read} />)}
+          </ul>
         </section>
 
         <section className="rounded-2xl p-6 sm:p-8" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
