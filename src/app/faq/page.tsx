@@ -15,6 +15,7 @@ function AccordionItem({ q, a, open, onToggle }: {
     >
       <button
         onClick={onToggle}
+        aria-expanded={open}
         className="w-full flex items-center justify-between gap-4 py-5 text-left group"
       >
         <span
@@ -36,14 +37,14 @@ function AccordionItem({ q, a, open, onToggle }: {
           </svg>
         </span>
       </button>
-      {open && (
-        <div
-          className="pb-5 text-sm leading-relaxed"
-          style={{ color: "#475569" }}
-        >
-          {a}
-        </div>
-      )}
+      {/* Réponse toujours présente dans la page (lisible par Google et les moteurs d'IA), masquée tant que la question est fermée. */}
+      <div
+        hidden={!open}
+        className="pb-5 text-sm leading-relaxed"
+        style={{ color: "#475569" }}
+      >
+        {a}
+      </div>
     </div>
   );
 }
@@ -63,7 +64,6 @@ export default function FAQPage() {
   const [error, setError]   = useState("");
   const MAX = 2000;
 
-  const faqList = tab === "driver" ? f.driverFaq : f.garageFaq;
 
   function switchTab(key: "driver" | "garage") {
     setTab(key);
@@ -141,21 +141,25 @@ export default function FAQPage() {
           })}
         </div>
 
-        {/* Accordion */}
-        <div
-          className="rounded-2xl shadow-sm mb-10 px-6 sm:px-8"
-          style={{ background: "#fff", border: "1px solid rgba(11,31,58,0.08)" }}
-        >
-          {faqList.map((item, i) => (
-            <AccordionItem
-              key={i}
-              q={item.q}
-              a={item.a}
-              open={openIndex === i}
-              onToggle={() => setOpenIndex(openIndex === i ? null : i)}
-            />
-          ))}
-        </div>
+        {/* Accordéons des deux onglets : les deux sont dans la page, seul l'onglet choisi est affiché. */}
+        {(["driver", "garage"] as const).map((key) => (
+          <div
+            key={key}
+            hidden={tab !== key}
+            className="rounded-2xl shadow-sm mb-10 px-6 sm:px-8"
+            style={{ background: "#fff", border: "1px solid rgba(11,31,58,0.08)" }}
+          >
+            {(key === "driver" ? f.driverFaq : f.garageFaq).map((item, i) => (
+              <AccordionItem
+                key={i}
+                q={item.q}
+                a={item.a}
+                open={tab === key && openIndex === i}
+                onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+              />
+            ))}
+          </div>
+        ))}
 
         {/* ── Contact form ── */}
         <div
