@@ -279,7 +279,7 @@ export default function Header() {
           {/* Hamburger */}
           <button className="lg:hidden p-2 rounded-xl" style={{ color: "rgba(255,255,255,0.7)" }}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-label={lang === "en" ? (menuOpen ? "Close menu" : "Open menu") : (menuOpen ? "Fermer le menu" : "Ouvrir le menu")}
             aria-expanded={menuOpen}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

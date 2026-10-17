@@ -5,6 +5,7 @@ import ClientLayout from "@/components/ClientLayout";
 import VisitorTracker from "@/components/VisitorTracker";
 import LabelLinker from "@/components/LabelLinker";
 import JsonLd from "@/components/JsonLd";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
@@ -18,11 +19,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className="h-full">
+    <html lang="fr" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        {/* Langue de la page dès le premier affichage : les pages /en sont en anglais (le HTML commun dit « fr »).
+            Exécuté avant le rendu du corps, pour les lecteurs d'écran, la traduction automatique et les robots qui exécutent le JS. */}
+        <Script id="langue-page" strategy="beforeInteractive">
+          {"var p=location.pathname;if(p==='/en'||p.indexOf('/en/')===0)document.documentElement.lang='en-CA'"}
+        </Script>
         {/* Viewport mobile — viewport-fit=cover pour les encoches iOS/Android */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* PWA / Add to Home Screen */}
@@ -45,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           "@graph": [
             {
               "@type": "Organization",
+              "@id": "https://garagopro.ca/#organization",
               name: "Garago",
               legalName: "Garago Technologies Inc.",
               url: "https://garagopro.ca",
@@ -53,7 +60,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               areaServed: "CA",
               sameAs: ["https://www.linkedin.com/company/garago-canada/", "https://www.instagram.com/garago.ca"],
             },
-            { "@type": "WebSite", name: "Garago", url: "https://garagopro.ca", inLanguage: "fr-CA" },
+            {
+              "@type": "WebSite",
+              "@id": "https://garagopro.ca/#website",
+              name: "Garago",
+              url: "https://garagopro.ca",
+              // Site bilingue : français (/) et anglais (/en)
+              inLanguage: ["fr-CA", "en-CA"],
+              publisher: { "@id": "https://garagopro.ca/#organization" },
+            },
           ],
         }} />
         <Providers>
