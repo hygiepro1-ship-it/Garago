@@ -38,7 +38,7 @@ export default async function Layout({ children, params }: { children: React.Rea
               mainEntityOfPage: url,
               image: { "@type": "ImageObject", url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700 },
               author: { "@type": "Organization", name: "Garago" },
-              publisher: { "@type": "Organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700.webp` } },
+              publisher: { "@type": "Organization", "@id": "https://garagopro.ca/#organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700.webp` } },
             },
             {
               "@type": "BreadcrumbList",
