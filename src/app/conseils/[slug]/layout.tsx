@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description: article.excerpt,
     alternates: { canonical: `${BASE_URL}/conseils/${slug}` },
-    openGraph: { title, description: article.excerpt, url: `${BASE_URL}/conseils/${slug}`, siteName: "Garago", locale: "fr_CA", type: "article", publishedTime: article.publishedAt },
+    openGraph: { title, description: article.excerpt, url: `${BASE_URL}/conseils/${slug}`, siteName: "Garago", locale: "fr_CA", type: "article", publishedTime: article.publishedAt, images: [{ url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700, alt: article.title }] },
   };
 }
 
@@ -36,6 +36,7 @@ export default async function Layout({ children, params }: { children: React.Rea
               dateModified: article.publishedAt,
               inLanguage: "fr-CA",
               mainEntityOfPage: url,
+              image: { "@type": "ImageObject", url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700 },
               author: { "@type": "Organization", name: "Garago" },
               publisher: { "@type": "Organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700.webp` } },
             },

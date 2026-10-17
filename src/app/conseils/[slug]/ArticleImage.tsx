@@ -17,6 +17,8 @@ export function ArticleImage({ src, alt, className, style, loading }: ArticleIma
       loading={loading}
       className={className}
       style={{ ...style, opacity: 0, transition: "opacity 0.5s" }}
+      // Image déjà chargée avant l'hydratation : onLoad ne se déclenchera plus, on l'affiche tout de suite.
+      ref={(el) => { if (el?.complete && el.naturalWidth > 0) el.style.opacity = "1"; }}
       onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
     />
