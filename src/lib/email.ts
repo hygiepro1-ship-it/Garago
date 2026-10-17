@@ -190,10 +190,10 @@ function googleReviewBlock(lang: "fr" | "en" = "fr"): string {
 /** Horizontal divider. */
 const HR = `<hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0">`;
 
-/** Builds the full email HTML from a body string. */
-function baseLayout(body: string): string {
+/** Builds the full email HTML from a body string. Les courriels en anglais ont le logo au slogan anglais. */
+function baseLayout(body: string, lang: "fr" | "en" = "fr"): string {
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -207,7 +207,7 @@ function baseLayout(body: string): string {
 
         <!-- Header -->
         <tr><td style="background:#0b1f3a;border-radius:6px 6px 0 0;padding:20px 32px;text-align:center">
-          <img src="${BASE_URL}/email/logo.png" alt="Garago" height="72"
+          <img src="${BASE_URL}/email/${lang === "en" ? "logo-en.png" : "logo.png"}" alt="Garago" height="72"
                style="display:block;margin:0 auto;max-height:72px;border:0" />
         </td></tr>
 
@@ -243,10 +243,10 @@ function appointmentCard(appt: AppointmentDetails): string {
 }
 
 /** `fromName` : nom affiché comme expéditeur (ex. le garage), l'adresse d'envoi restant celle de Garago. */
-async function send(to: string | string[], subject: string, body: string, fromName?: string) {
+async function send(to: string | string[], subject: string, body: string, fromName?: string, lang: "fr" | "en" = "fr") {
   const address = FROM.match(/<([^>]+)>/)?.[1] ?? FROM;
   const from = fromName ? `${fromName.replace(/[<>"\r\n]/g, " ").trim()} <${address}>` : FROM;
-  await getResend().emails.send({ from, to, subject, html: baseLayout(body) });
+  await getResend().emails.send({ from, to, subject, html: baseLayout(body, lang) });
 }
 
 // ─── Email: Vérification de compte ───────────────────────────────────────────
@@ -460,12 +460,12 @@ export function vehicleReadyBody(params: VehicleReadyParams): string {
 export async function sendVehicleReady(params: VehicleReadyParams) {
   if (!canSend()) return;
   const subject = params.lang === "en" ? `Your vehicle is ready: ${params.garageName}` : `Votre véhicule est prêt : ${params.garageName}`;
-  await send(params.to, subject, vehicleReadyBody(params));
+  await send(params.to, subject, vehicleReadyBody(params), undefined, params.lang === "en" ? "en" : "fr");
 }
 
 /** Courriel complet (gabarit Garago compris), pour un aperçu local. */
-export function emailPreviewHtml(body: string): string {
-  return baseLayout(body);
+export function emailPreviewHtml(body: string, lang: "fr" | "en" = "fr"): string {
+  return baseLayout(body, lang);
 }
 
 // ─── Email: Rappel rendez-vous (24h avant) ────────────────────────────────────
@@ -1330,6 +1330,7 @@ export async function sendManualConfirmationRequest(params: ManualConfirmationRe
       : `Confirmez votre rendez-vous : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
     body,
     params.garageName,
+    params.lang,
   );
 }
 
