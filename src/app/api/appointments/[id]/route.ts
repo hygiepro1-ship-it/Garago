@@ -352,6 +352,7 @@ export async function PATCH(
           garageAddress,
           garagePhone:   garagePhone2,
           completionNote: note,
+          lang:          updated.language === "en" ? "en" : "fr",
         }).catch(e => console.error("[VEHICLE READY EMAIL]", e))
       );
     }
