@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ARTICLES } from "@/lib/articles";
 import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
 import L, { LDate } from "@/components/L";
+import { ArticleImage } from "./[slug]/ArticleImage";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,23 @@ function CategoryBadge({ category, dark }: { category: string; dark?: boolean })
   );
 }
 
+// Photo de l'article. Si son fichier manque (nouvel article sans photo), l'image se masque
+// et le fond bleu avec l'icône de la catégorie reste visible, comme avant les photos.
+function ArticlePhoto({ article, iconSize, lazy }: { article: Article; iconSize: number; lazy?: boolean }) {
+  return (
+    <div className="relative w-full h-full" style={{ aspectRatio: "2 / 1", background: "linear-gradient(135deg, #1e3a5f, #0b1f3a)" }}>
+      {CAT_ICONS[article.category] && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.15 }}>
+          <img src={CAT_ICONS[article.category]} alt="" width={iconSize} height={iconSize}
+            style={{ filter: "brightness(0) invert(1)" }} />
+        </div>
+      )}
+      <ArticleImage src={`/conseils/${article.slug}.webp`} alt="" loading={lazy ? "lazy" : undefined}
+        className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
+    </div>
+  );
+}
+
 function ClockIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -53,8 +71,7 @@ function FeaturedArticle({ article }: { article: Article }) {
       style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
       <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block">
-        <img src={`/conseils/${article.slug}.webp`} alt="" width={1400} height={700} decoding="async"
-          className="w-full h-auto block" style={{ aspectRatio: "2 / 1", objectFit: "cover" }} />
+        <ArticlePhoto article={article} iconSize={120} />
       </Link>
       <div className="p-5 pl-7 sm:p-8 sm:pl-10">
         <div className="flex flex-wrap items-center gap-2 mb-5">
@@ -92,8 +109,7 @@ function ArticleCard({ article }: { article: Article }) {
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
       <div className="sm:flex">
       <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block sm:w-60 sm:flex-shrink-0">
-        <img src={`/conseils/${article.slug}.webp`} alt="" width={700} height={350} loading="lazy" decoding="async"
-          className="w-full h-full block" style={{ aspectRatio: "2 / 1", objectFit: "cover" }} />
+        <ArticlePhoto article={article} iconSize={56} lazy />
       </Link>
       <div className="p-4 pl-6 sm:p-7 sm:pl-7 min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2 mb-4">
