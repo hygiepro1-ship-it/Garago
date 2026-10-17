@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import JsonLd from "@/components/JsonLd";
+import { isTestGarage } from "@/lib/test-garages";
+import { slugify } from "@/lib/utils";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -22,11 +24,14 @@ export async function generateMetadata(
   }
 
   const title = `${garage.name}, ${garage.city}, ${garage.province} | Garago`;
+  // Garage de test : fiche utilisable par lien direct, mais jamais indexée.
+  const testRobots = isTestGarage(slug) ? { robots: { index: false, follow: false } } : {};
   const description =
     garage.description?.trim()
       || `Consultez les avis, services et disponibilités de ${garage.name} à ${garage.city}. Réservez en ligne sur Garago.`;
 
   return {
+    ...testRobots,
     title,
     description,
     alternates: { canonical: `${BASE_URL}/garage/${slug}` },
@@ -63,6 +68,7 @@ export default async function GarageLayout({ children, params }: { children: Rea
   const ld: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "AutoRepair",
+    "@id": `${BASE_URL}/garage/${slug}#garage`,
     name: g.name,
     url: `${BASE_URL}/garage/${slug}`,
     address: {
@@ -99,9 +105,24 @@ export default async function GarageLayout({ children, params }: { children: Rea
     };
   }
 
+  // Fil d'Ariane : Accueil › Garages › ville › garage
+  const villeSlug = g.city ? slugify(g.city) : "";
+  const crumbs = [
+    { name: "Accueil", item: BASE_URL },
+    { name: "Garages", item: `${BASE_URL}/garages` },
+    ...(villeSlug ? [{ name: g.city, item: `${BASE_URL}/garages/${villeSlug}` }] : []),
+    { name: g.name, item: `${BASE_URL}/garage/${slug}` },
+  ];
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.item })),
+  };
+
   return (
     <>
       <JsonLd data={ld} />
+      <JsonLd data={breadcrumb} />
       {children}
     </>
   );

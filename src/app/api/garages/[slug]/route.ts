@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-import { toPublicGarage } from "@/lib/public-garage";
+import { getGarageProfile } from "@/lib/garage-profile";
 
 export async function GET(
   _req: NextRequest,
@@ -10,64 +9,14 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const garage = await prisma.garage.findUnique({
-      where: { slug },
-      include: {
-        services: {
-          include: { category: true },
-          where: { active: true },
-        },
-        brands: { orderBy: { brand: "asc" } },
-        availability: { orderBy: { dayOfWeek: "asc" } },
-        photos: { orderBy: { sortOrder: "asc" } },
-        reviews: {
-          include: { user: { select: { name: true, image: true } } },
-          where: { isHidden: false },
-          orderBy: { createdAt: "desc" as const },
-          take: 20,
-        },
-        owner: { select: { name: true, email: true } },
-        _count: { select: { reviews: true } },
-      },
+    const garage = await getGarageProfile(slug, async () => {
+      const session = await getServerSession(authOptions);
+      return session?.user ? { id: session.user.id, role: (session.user as any).role } : null;
     });
-
     if (!garage) {
       return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
     }
-
-    // Fiche non activée masquée suite à une demande de retrait — en attente
-    // de traitement par un admin (voir POST .../report).
-    if (garage.hiddenByReport) {
-      return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
-    }
-
-    // Un garage non vérifié (NEQ en attente/refusé) n'est visible que pour son
-    // propriétaire (aperçu) ou un admin — pas au public, même par lien direct.
-    if (garage.verificationStatus !== "APPROVED") {
-      const session = await getServerSession(authOptions);
-      const isOwner = session?.user?.id === garage.ownerId;
-      const isAdmin = (session?.user as any)?.role === "ADMIN";
-      if (!isOwner && !isAdmin) {
-        return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });
-      }
-    }
-
-    const avgRating =
-      garage.reviews.length > 0
-        ? garage.reviews.reduce((s, r) => s + r.rating, 0) / garage.reviews.length
-        : 0;
-
-    // Sort services by category sortOrder in JS (avoids relation-level orderBy issues)
-    const services = [...garage.services].sort(
-      (a, b) => (a.category?.sortOrder ?? 0) - (b.category?.sortOrder ?? 0)
-    );
-
-    return NextResponse.json({
-      ...toPublicGarage(garage),
-      services,
-      avgRating: Math.round(avgRating * 10) / 10,
-      reviewCount: garage._count.reviews,
-    });
+    return NextResponse.json(garage);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
