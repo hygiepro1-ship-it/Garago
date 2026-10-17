@@ -5,6 +5,7 @@ import { garageDistance } from "@/lib/geo";
 import { toPublicGarage } from "@/lib/public-garage";
 import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
 import { serviceIdsFor } from "@/lib/services";
+import { notTestGarage } from "@/lib/test-garages";
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,6 +37,8 @@ export async function GET(req: NextRequest) {
       AND: [
         // Fiche masquée (demande de retrait, ou garage activé hors vitrine comme un projet pilote).
         { hiddenByReport: false },
+        // Garages de test : jamais dans la recherche publique.
+        notTestGarage(),
         {
           OR: [
             { parentId: null, verificationStatus: "APPROVED", OR: subOr },

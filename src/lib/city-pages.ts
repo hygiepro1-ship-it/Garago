@@ -1,12 +1,14 @@
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { slugify } from "@/lib/utils";
+import { notTestGarage } from "@/lib/test-garages";
 
 /** Garages visibles du public : mêmes règles que le plan du site. */
 export function publicGarageWhere() {
   const subOr = activeSubscriptionOr();
   return {
     hiddenByReport: false,
+    ...notTestGarage(),
     OR: [
       { parentId: null, verificationStatus: "APPROVED", OR: subOr },
       { parent: { verificationStatus: "APPROVED", OR: subOr } },
