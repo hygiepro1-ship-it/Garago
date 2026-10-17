@@ -51,7 +51,11 @@ function FeaturedArticle({ article }: { article: Article }) {
   return (
     <article className="rounded-2xl overflow-hidden mb-5 relative"
       style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
-      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
+      <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block">
+        <img src={`/conseils/${article.slug}.webp`} alt="" width={1400} height={700} decoding="async"
+          className="w-full h-auto block" style={{ aspectRatio: "2 / 1", objectFit: "cover" }} />
+      </Link>
       <div className="p-5 pl-7 sm:p-8 sm:pl-10">
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <CategoryBadge category={article.category} dark />
@@ -85,8 +89,13 @@ function ArticleCard({ article }: { article: Article }) {
   return (
     <article className="bg-white rounded-2xl relative overflow-hidden transition-all hover:shadow-md"
       style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 10px rgba(11,31,58,0.05)" }}>
-      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: article.categoryColor }} />
-      <div className="p-4 pl-6 sm:p-7 sm:pl-9">
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
+      <div className="sm:flex">
+      <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block sm:w-60 sm:flex-shrink-0">
+        <img src={`/conseils/${article.slug}.webp`} alt="" width={700} height={350} loading="lazy" decoding="async"
+          className="w-full h-full block" style={{ aspectRatio: "2 / 1", objectFit: "cover" }} />
+      </Link>
+      <div className="p-4 pl-6 sm:p-7 sm:pl-7 min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <CategoryBadge category={article.category} />
           <span className="text-xs font-semibold ml-auto" style={{ color: "#64748b" }}>
@@ -106,6 +115,7 @@ function ArticleCard({ article }: { article: Article }) {
             <L fr="Lire l'article" en="Read the article" />
           </Link>
         </div>
+      </div>
       </div>
     </article>
   );

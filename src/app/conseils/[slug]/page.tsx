@@ -99,7 +99,7 @@ function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
               style={{ filter: "brightness(0) invert(1)" }} />
           )}
         </div>
-        <ArticleImage src={`https://source.unsplash.com/${article.imageId}/600x300`} alt={article.title}
+        <ArticleImage src={`/conseils/${article.slug}.webp`} alt={article.title}
           loading="lazy" className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
         <div className="absolute top-2 left-2">
           <span className="text-xs font-black px-2 py-0.5 rounded-full"
@@ -140,7 +140,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               style={{ filter: "brightness(0) invert(1)" }} />
           )}
         </div>
-        <ArticleImage src={`https://source.unsplash.com/${article.imageId}/1400x700`} alt={article.title}
+        <ArticleImage src={`/conseils/${article.slug}.webp`} alt={article.title}
           className="absolute inset-0 w-full h-full" style={{ objectFit: "cover" }} />
         <div className="absolute inset-0"
           style={{ background: "linear-gradient(to top, rgba(11,31,58,0.85) 0%, rgba(11,31,58,0.3) 50%, rgba(11,31,58,0.5) 100%)" }} />
