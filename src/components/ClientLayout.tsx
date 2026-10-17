@@ -4,11 +4,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLang } from "@/contexts/LanguageContext";
 
 const AUTH_PATHS = ["/connexion", "/inscription", "/maintenance"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const skipEn = useLang().lang === "en";
 
   // Le proxy réécrit la page vers /maintenance en gardant l'URL du navigateur
   // inchangée (un rewrite est transparent) — usePathname() ne peut donc jamais
@@ -29,7 +31,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <a href="#contenu"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-bold focus:text-white"
         style={{ background: "#0b1f3a" }}>
-        Aller au contenu principal
+        {skipEn ? "Skip to main content" : "Aller au contenu principal"}
       </a>
       {!isAuth && <Header />}
       <main id="contenu" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
