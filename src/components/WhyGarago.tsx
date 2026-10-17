@@ -8,7 +8,8 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
 interface Theme { href: string; title: string; text: string }
 // Chiffres : seulement des données sourcées, avec leur pays et leur nature (étude, estimation d'éditeur).
-interface Fait { chiffre: string; texte: string; porte: string; source: string; href: string }
+// « apres » : nombre d'articles de la catégorie affichés avant ce chiffre (il s'intercale entre deux rangées).
+interface Fait { chiffre: string; texte: string; porte: string; source: string; href: string; apres: number }
 
 const MARCHEX_2026 = "https://www.marchex.com/up-to-21-percent-of-automotive-service-customer-calls-go-unanswered-creating-significant-revenue-leakage/";
 const MARCHEX_2019 = "https://investors.marchex.com/news-releases/news-release-details/new-data-shows-auto-services-stores-fail-capture-millions-sales";
@@ -43,18 +44,17 @@ const CONTENT = {
       { href: "/garages", title: "Trouver un garage par ville ou arrondissement", text: "Les garages de votre secteur, leurs avis et leurs coordonnées." },
       { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, batterie, vidange : des guides pratiques pour le Québec." },
     ] as Theme[],
-    factsH2: "Les chiffres, avec leurs sources",
-    factsSub: "Chaque donnée indique d'où elle vient. Quand elle n'est pas québécoise ou qu'il s'agit d'une estimation d'éditeur de logiciel, nous le disons.",
+    factsSub: "Les chiffres cités sur cette page indiquent d'où ils viennent. Quand elle n'est pas québécoise ou qu'il s'agit d'une estimation d'éditeur de logiciel, nous le disons.",
     factsGarages: [
-      { chiffre: "jusqu'à 21 %", texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.", porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)", source: "Marchex", href: MARCHEX_2026 },
-      { chiffre: "≈ 30 %", texte: "Des appels entrants aux centres de services automobiles représentent une occasion de revenu manquée. Une fois sur trois, le rendez-vous n'est pas pris, même quand le client voulait réserver.", porte: "États-Unis, 8,7 millions d'appels analysés (rapport 2019)", source: "Marchex (étude 2019)", href: MARCHEX_2019 },
-      { chiffre: "10 à 15 %", texte: "Des rendez-vous ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation. Une demande de confirmation et un rappel sont les moyens les plus simples de les réduire.", porte: "Estimation d'un éditeur de logiciel (France). Aucune statistique indépendante québécoise à notre connaissance.", source: "Car Spot", href: CAR_SPOT },
-      { chiffre: "Plus de postes vacants que de travailleurs", texte: "C'est le constat du gouvernement fédéral pour les mécaniciens de véhicules automobiles de la région de Montréal en 2023-2025. Quand l'équipe est rare, chaque heure passée au téléphone est une heure de moins à l'atelier.", porte: "Région de Montréal, métier CNP 72410", source: "Guichet-emplois (Gouvernement du Canada)", href: "https://www.guichetemplois.gc.ca/rapportmarche/perspectives-profession/14857/geo25154" },
+      { chiffre: "jusqu'à 21 %", texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.", porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)", source: "Marchex", href: MARCHEX_2026, apres: 2 },
+      { chiffre: "≈ 30 %", texte: "Des appels entrants aux centres de services automobiles représentent une occasion de revenu manquée. Une fois sur trois, le rendez-vous n'est pas pris, même quand le client voulait réserver.", porte: "États-Unis, 8,7 millions d'appels analysés (rapport 2019)", source: "Marchex (étude 2019)", href: MARCHEX_2019, apres: 8 },
+      { chiffre: "10 à 15 %", texte: "Des rendez-vous ne sont pas honorés dans les garages indépendants qui n'envoient ni rappel ni confirmation. Une demande de confirmation et un rappel sont les moyens les plus simples de les réduire.", porte: "Estimation d'un éditeur de logiciel (France). Aucune statistique indépendante québécoise à notre connaissance.", source: "Car Spot", href: CAR_SPOT, apres: 4 },
+      { chiffre: "Plus de postes vacants que de travailleurs", texte: "C'est le constat du gouvernement fédéral pour les mécaniciens de véhicules automobiles de la région de Montréal en 2023-2025. Quand l'équipe est rare, chaque heure passée au téléphone est une heure de moins à l'atelier.", porte: "Région de Montréal, métier CNP 72410", source: "Guichet-emplois (Gouvernement du Canada)", href: "https://www.guichetemplois.gc.ca/rapportmarche/perspectives-profession/14857/geo25154", apres: 6 },
     ] as Fait[],
     factsDrivers: [
-      { chiffre: "87 %", texte: "Des consommateurs lisent les avis en ligne avant de choisir une entreprise locale. Sur Garago, chaque avis vient d'un conducteur qui a réellement eu un rendez-vous dans le garage.", porte: "Sondage de consommateurs, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL },
-      { chiffre: "76 %", texte: "Des clients d'un service automobile qui ont réservé en ligne disent qu'ils le referaient. La réservation en ligne convainc ceux qui l'essaient.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX },
-      { chiffre: "45 %", texte: "Des clients qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un endroit où l'on voit d'un coup d'œil quels garages prennent les rendez-vous en ligne règle ce problème.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX },
+      { chiffre: "87 %", texte: "Des consommateurs lisent les avis en ligne avant de choisir une entreprise locale. Sur Garago, chaque avis vient d'un conducteur qui a réellement eu un rendez-vous dans le garage.", porte: "Sondage de consommateurs, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, apres: 4 },
+      { chiffre: "76 %", texte: "Des clients d'un service automobile qui ont réservé en ligne disent qu'ils le referaient. La réservation en ligne convainc ceux qui l'essaient.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, apres: 2 },
+      { chiffre: "45 %", texte: "Des clients qui n'avaient pas réservé en ligne ignoraient que l'option existait. Un endroit où l'on voit d'un coup d'œil quels garages prennent les rendez-vous en ligne règle ce problème.", porte: "États-Unis, clients de services de concessionnaires (2017)", source: "Cox Automotive", href: COX, apres: 2 },
     ] as Fait[],
     readyH2: "Prêt à essayer ?", readyText: "Garagistes : 30 jours gratuits, annulable en tout temps. Conducteurs : Garago est gratuit.",
     register: "Inscrire mon garage", find: "Trouver un garage",
@@ -85,18 +85,17 @@ const CONTENT = {
       { href: "/garages", title: "Find a garage by city or borough", text: "Garages in your area, their reviews and contact details." },
       { href: "/conseils", title: "All car tips", text: "Warning lights, brakes, battery, oil changes: practical guides for Quebec." },
     ] as Theme[],
-    factsH2: "The numbers, with their sources",
-    factsSub: "Every figure says where it comes from. When it isn't from Quebec or is a software publisher's estimate, we say so.",
+    factsSub: "Every figure on this page says where it comes from. When it isn't from Quebec or is a software publisher's estimate, we say so.",
     factsGarages: [
-      { chiffre: "up to 21%", texte: "Of calls to automotive service departments go unanswered or fail. A healthy rate is 10% or less. Every missed call is a customer who calls the next shop.", porte: "North America, large shop networks (call data analysis, 2026)", source: "Marchex", href: MARCHEX_2026 },
-      { chiffre: "≈ 30%", texte: "Of inbound calls to auto service centers are a missed revenue opportunity. One time in three, no appointment is booked, even when the caller wanted to book.", porte: "United States, 8.7 million calls analyzed (2019 report)", source: "Marchex (2019 study)", href: MARCHEX_2019 },
-      { chiffre: "10 to 15%", texte: "Of appointments are missed at independent shops that send no reminder or confirmation. A confirmation request and a reminder are the simplest ways to reduce them.", porte: "Software publisher's estimate (France). No independent Quebec statistic to our knowledge.", source: "Car Spot", href: CAR_SPOT },
-      { chiffre: "More job openings than workers", texte: "That's the federal government's finding for automotive service technicians in the Montreal region for 2023-2025. When staff is scarce, every hour on the phone is an hour less in the shop.", porte: "Montreal region, NOC 72410", source: "Job Bank (Government of Canada)", href: "https://www.jobbank.gc.ca/marketreport/outlook-occupation/14857/geo25154" },
+      { chiffre: "up to 21%", texte: "Of calls to automotive service departments go unanswered or fail. A healthy rate is 10% or less. Every missed call is a customer who calls the next shop.", porte: "North America, large shop networks (call data analysis, 2026)", source: "Marchex", href: MARCHEX_2026, apres: 2 },
+      { chiffre: "≈ 30%", texte: "Of inbound calls to auto service centers are a missed revenue opportunity. One time in three, no appointment is booked, even when the caller wanted to book.", porte: "United States, 8.7 million calls analyzed (2019 report)", source: "Marchex (2019 study)", href: MARCHEX_2019, apres: 8 },
+      { chiffre: "10 to 15%", texte: "Of appointments are missed at independent shops that send no reminder or confirmation. A confirmation request and a reminder are the simplest ways to reduce them.", porte: "Software publisher's estimate (France). No independent Quebec statistic to our knowledge.", source: "Car Spot", href: CAR_SPOT, apres: 4 },
+      { chiffre: "More job openings than workers", texte: "That's the federal government's finding for automotive service technicians in the Montreal region for 2023-2025. When staff is scarce, every hour on the phone is an hour less in the shop.", porte: "Montreal region, NOC 72410", source: "Job Bank (Government of Canada)", href: "https://www.jobbank.gc.ca/marketreport/outlook-occupation/14857/geo25154", apres: 6 },
     ] as Fait[],
     factsDrivers: [
-      { chiffre: "87%", texte: "Of consumers read online reviews before choosing a local business. On Garago, every review comes from a driver who actually had an appointment at the garage.", porte: "Consumer survey, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL },
-      { chiffre: "76%", texte: "Of automotive service customers who booked online say they would do it again. Online booking wins over those who try it.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX },
-      { chiffre: "45%", texte: "Of customers who hadn't booked online didn't know the option existed. A place where you can see at a glance which garages take online bookings solves that.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX },
+      { chiffre: "87%", texte: "Of consumers read online reviews before choosing a local business. On Garago, every review comes from a driver who actually had an appointment at the garage.", porte: "Consumer survey, 2020", source: "BrightLocal, Local Consumer Review Survey", href: BRIGHTLOCAL, apres: 2 },
+      { chiffre: "76%", texte: "Of automotive service customers who booked online say they would do it again. Online booking wins over those who try it.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, apres: 3 },
+      { chiffre: "45%", texte: "Of customers who hadn't booked online didn't know the option existed. A place where you can see at a glance which garages take online bookings solves that.", porte: "United States, dealership service customers (2017)", source: "Cox Automotive", href: COX, apres: 3 },
     ] as Fait[],
     readyH2: "Ready to try?", readyText: "Garages: 30 days free, cancel anytime. Drivers: Garago is free.",
     register: "Register my garage", find: "Find a garage",
@@ -104,17 +103,48 @@ const CONTENT = {
   },
 };
 
-function FaitCard({ f, source }: { f: Fait; source: string }) {
+function FaitCard({ f, source, seul }: { f: Fait; source: string; seul: boolean }) {
   return (
-    <li className="rounded-2xl border border-gray-200 bg-white p-5">
-      <span className="block text-2xl sm:text-3xl font-black leading-tight" style={{ color: "#c2410c" }}>{f.chiffre}</span>
-      <span className="block mt-2 text-sm leading-relaxed text-gray-700">{f.texte}</span>
-      <span className="block mt-2 text-xs text-gray-500">{f.porte}</span>
-      <a href={f.href} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center min-h-[44px] sm:min-h-0 mt-1 text-xs font-semibold underline text-gray-600">
-        {source} {f.source}
-      </a>
+    <li className={`rounded-2xl p-5 sm:p-6 ${seul ? "sm:flex sm:items-start sm:gap-6" : ""}`}
+      style={{ background: "#0b1f3a", boxShadow: "0 8px 30px rgba(11,31,58,0.18)" }}>
+      <span className={`block text-3xl sm:text-4xl font-black leading-tight ${seul ? "sm:w-56 sm:flex-shrink-0" : ""}`}
+        style={{ color: "#fb923c", textWrap: "balance" }}>{f.chiffre}</span>
+      <span className="block min-w-0">
+        <span className={`block text-sm sm:text-base leading-relaxed ${seul ? "mt-2 sm:mt-0" : "mt-2"}`} style={{ color: "rgba(255,255,255,0.9)" }}>{f.texte}</span>
+        <span className="block mt-2 text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{f.porte}</span>
+        <a href={f.href} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center min-h-[44px] sm:min-h-0 mt-1 text-xs font-semibold underline" style={{ color: "rgba(255,255,255,0.75)" }}>
+          {source} {f.source}
+        </a>
+      </span>
     </li>
+  );
+}
+
+/** Articles d'une catégorie, avec ses chiffres intercalés entre les rangées (chacun près des articles sur le même sujet). */
+function ArticlesEtChiffres({ themes, faits, read, source }: { themes: Theme[]; faits: Fait[]; read: string; source: string }) {
+  const coupures = Array.from(new Set([0, ...faits.map((f) => f.apres), themes.length])).sort((a, b) => a - b);
+  return (
+    <div className="mt-5 space-y-4">
+      {coupures.slice(0, -1).map((debut, i) => {
+        const fin = coupures[i + 1];
+        const ici = faits.filter((f) => f.apres === fin);
+        return (
+          <div key={debut} className="space-y-4">
+            {fin > debut && (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {themes.slice(debut, fin).map((t) => <ThemeCard key={t.href} t={t} read={read} />)}
+              </ul>
+            )}
+            {ici.length > 0 && (
+              <ul className={`grid gap-4 ${ici.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                {ici.map((f) => <FaitCard key={f.chiffre + f.source} f={f} source={source} seul={ici.length === 1} />)}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -149,6 +179,7 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
         <div className="max-w-5xl mx-auto px-4 py-14 sm:py-20">
           <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight" style={{ textWrap: "balance" }}>{c.h1}</h1>
           <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{c.intro}</p>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>{c.factsSub}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a href={`#${c.garagesId}`} className="inline-flex items-center min-h-[44px] px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "#e0600c" }}>{c.imGarage}</a>
             <a href={`#${c.driversId}`} className="inline-flex items-center min-h-[44px] px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/40">{c.imDriver}</a>
@@ -160,31 +191,14 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
         <section id={c.garagesId} aria-labelledby="h-garagistes">
           <h2 id="h-garagistes" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{c.garagesH2}</h2>
           <p className="mt-1 text-gray-600">{c.garagesSub}</p>
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2">
-            {c.garages.map((t) => <ThemeCard key={t.href} t={t} read={c.read} />)}
-          </ul>
+          <ArticlesEtChiffres themes={c.garages} faits={c.factsGarages} read={c.read} source={c.source} />
           <div className="mt-6"><CoutAbsences lang={lang} /></div>
         </section>
 
         <section id={c.driversId} aria-labelledby="h-conducteurs">
           <h2 id="h-conducteurs" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{c.driversH2}</h2>
           <p className="mt-1 text-gray-600">{c.driversSub}</p>
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2">
-            {c.drivers.map((t) => <ThemeCard key={t.href} t={t} read={c.read} />)}
-          </ul>
-        </section>
-
-        <section aria-labelledby="h-chiffres">
-          <h2 id="h-chiffres" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{c.factsH2}</h2>
-          <p className="mt-1 text-gray-600">{c.factsSub}</p>
-          <h3 className="mt-6 text-lg font-black" style={{ color: "#0b1f3a" }}>{c.garagesH2}</h3>
-          <ul className="mt-3 grid gap-4 sm:grid-cols-2">
-            {c.factsGarages.map((f) => <FaitCard key={f.chiffre} f={f} source={c.source} />)}
-          </ul>
-          <h3 className="mt-8 text-lg font-black" style={{ color: "#0b1f3a" }}>{c.driversH2}</h3>
-          <ul className="mt-3 grid gap-4 sm:grid-cols-2">
-            {c.factsDrivers.map((f) => <FaitCard key={f.chiffre + f.source} f={f} source={c.source} />)}
-          </ul>
+          <ArticlesEtChiffres themes={c.drivers} faits={c.factsDrivers} read={c.read} source={c.source} />
         </section>
 
         <section className="rounded-2xl p-6 sm:p-8" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
