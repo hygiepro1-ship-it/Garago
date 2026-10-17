@@ -26,9 +26,14 @@ export async function generateMetadata(
   const title = `${garage.name}, ${garage.city}, ${garage.province} | Garago`;
   // Garage de test : fiche utilisable par lien direct, mais jamais indexée.
   const testRobots = isTestGarage(slug) ? { robots: { index: false, follow: false } } : {};
+  // Sans description du garage : ne décrire que ce que la fiche montre vraiment. Une fiche non réclamée n'a
+  // ni avis, ni services, ni réservation en ligne, seulement l'adresse et le téléphone.
+  const unclaimed = garage.claimStatus === "non_reclamee" || garage.claimStatus === "en_attente";
   const description =
     garage.description?.trim()
-      || `Consultez les avis, services et disponibilités de ${garage.name} à ${garage.city}. Réservez en ligne sur Garago.`;
+      || (unclaimed
+        ? `${garage.name}, garage automobile à ${garage.city} : adresse, téléphone et itinéraire. Vous êtes le propriétaire ? Réclamez gratuitement cette fiche sur Garago.`
+        : `${garage.name}, garage automobile à ${garage.city} : services, heures d'ouverture et avis. Prenez rendez-vous en ligne sur Garago.`);
 
   return {
     ...testRobots,
