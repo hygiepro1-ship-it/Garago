@@ -76,8 +76,8 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
         heading: "The 7 °C rule matters more than the date",
         content: "Winter tires are made of a special rubber that stays flexible below 7 °C. Under that threshold, an all-season or summer tire hardens and loses up to 50% of its grip. Do not wait for the first snowfall: icy roads in the fall and morning frost are just as dangerous.",
         tips: [
-          "Install your winter tires when the overnight temperature regularly drops below 7 °C",
-          "In Quebec, that is generally between October 15 and 31",
+          "Install your winter tires once the temperature hovers around 7 °C for several days in a row (CAA-Québec's advice)",
+          "Depending on the region, that is often between late October and mid-November: a little earlier in colder regions, a little later in Montréal",
           "Do not wait until November, to avoid the waiting lists at garages",
         ],
       },
@@ -128,7 +128,7 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
       {
         heading: "The Check Engine light: don't panic",
         content: "This is the most common and most misunderstood light. It can signal something as trivial as a loose fuel cap, or something more serious like a failing sensor or a clogged catalytic converter. The only way to know is an OBD-II scan at a mechanic or an auto parts store.",
-        note: "If the Check Engine light is flashing (instead of steady), it is more urgent: it often means a misfire that can damage the catalytic converter.",
+        note: "If the Check Engine light is flashing (instead of steady), it is more urgent: it often means a misfire that can damage the catalytic converter. CAA-Québec then recommends stopping the car somewhere safe and having it towed to a garage.",
       },
       {
         heading: "TPMS: how to inflate your tires correctly",
@@ -179,7 +179,7 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
     sections: [
       {
         heading: "The real lifespan of a battery",
-        content: "On average, a car battery lasts between 3 and 5 years. Some reach 7 years in good conditions, others give out at 2 years under heavy use. Intense cold, a fact of life in Quebec, can cut a battery's capacity by 30 to 50% at -30 °C.",
+        content: "On average, a car battery lasts between 3 and 5 years. Some reach 7 years in good conditions, others give out at 2 years under heavy use. In extreme cold, a fact of life in Quebec, a battery has only about 25% of its starting power left at -30 °C, according to CAA-Québec.",
       },
       {
         heading: "Warning signs of a battery on its way out",
@@ -352,7 +352,7 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
         heading: "Mechanical causes to check first",
         content: "Several mechanical problems directly increase consumption:",
         tips: [
-          "Under-inflated tires: every 7 kPa missing means about 1% more fuel",
+          "Under-inflated tires: 56 kPa (8 psi) too low means nearly 4% more fuel (Natural Resources Canada)",
           "Clogged air filter: reduces combustion efficiency",
           "Worn spark plugs: incomplete combustion means more fuel for the same power",
           "Faulty O2 sensor: the engine injects too much or too little fuel",
@@ -389,7 +389,7 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
           "Install winter tires as soon as the temperature drops below 7 °C",
           "Check the tread depth (legal minimum: 1.6 mm, recommended: 4 mm or more)",
           "Have the brakes and rotors inspected before the season",
-          "Check tire pressure after each cold snap (pressure drops about 1 PSI for every 6 °C)",
+          "Check tire pressure after each cold snap (it drops about 7 kPa or 1 PSI for every 5 °C)",
         ],
       },
       {
@@ -455,7 +455,7 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
       },
       {
         heading: "How Quebec's cold affects pressure",
-        content: "Tire pressure drops by about 1 PSI (7 kPa) for every 6 °C drop in temperature. Between summer (+30 °C) and a winter morning (-25 °C), you can lose 9 PSI, which is 20 to 25% of the recommended pressure for most vehicles. That is why the TPMS light often comes on in the fall even though there is no leak.",
+        content: "According to Transport Canada, tire pressure drops by about 1 PSI (7 kPa) for every 5 °C drop in temperature. Between summer (+30 °C) and a winter morning (-25 °C), you can lose about 11 PSI, close to a third of the recommended pressure for most vehicles. That is why the TPMS light often comes on in the fall even though there is no leak.",
         tips: [
           "Check the pressure at the start of the cold season and after each severe cold snap",
           "Ideal frequency: once a month",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ARTICLES, getArticle, getRelatedArticles, articleService } from "@/lib/articles";
 import { ArticleImage } from "./ArticleImage";
 import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
+import { ARTICLE_EXTRAS } from "@/lib/articles-extras";
 import L, { LDate } from "@/components/L";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -128,6 +129,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   const related = getRelatedArticles(article, 3);
   const en = ARTICLES_EN[article.slug];
+  const extra = ARTICLE_EXTRAS[article.slug];
   const title = <L fr={article.title} en={en?.title ?? article.title} />;
 
   return (
@@ -184,6 +186,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
             <LDate iso={article.publishedAt} />
           </span>
+          {extra?.updatedAt && extra.updatedAt !== article.publishedAt && (
+            <>
+              <span>·</span>
+              <span><L fr="Mis à jour le" en="Updated" /> <LDate iso={extra.updatedAt} /></span>
+            </>
+          )}
           <span>·</span>
           <span className="flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -204,11 +212,39 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <L fr={article.excerpt} en={en?.excerpt ?? article.excerpt} />
           </p>
 
+          {/* L'essentiel : la réponse courte, en tête (celle que les moteurs de recherche et d'IA citent) */}
+          {extra && (
+            <aside className="mb-10 rounded-2xl p-5 sm:p-6" style={{ background: "#fff", border: "1px solid #e2e8f0", borderLeft: `4px solid ${article.categoryColor}` }}>
+              <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: "#0b1f3a" }}>
+                <L fr="L'essentiel" en="The short answer" />
+              </p>
+              <p className="text-base leading-relaxed" style={{ color: "#334155" }}>
+                <L fr={extra.essentiel.fr} en={extra.essentiel.en} />
+              </p>
+            </aside>
+          )}
+
           <div className="space-y-10">
             {article.sections.map((section, i) => (
               <ArticleSectionBlock key={i} section={section} en={en?.sections[i] ?? section} categoryColor={article.categoryColor} />
             ))}
           </div>
+
+          {/* ── Sources ── */}
+          {extra && extra.sources.length > 0 && (
+            <section className="mt-12 pt-6" style={{ borderTop: "1px solid #e2e8f0" }}>
+              <h2 className="text-base font-black mb-3" style={{ color: "#0b1f3a" }}><L fr="Sources" en="Sources" /></h2>
+              <ul className="space-y-1.5 text-sm" style={{ color: "#475569" }}>
+                {extra.sources.map((s) => (
+                  <li key={s.href}>
+                    <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center min-h-[44px] sm:min-h-0 underline hover:text-orange-700">
+                      <L fr={s.label} en={s.labelEn ?? s.label} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* ── CTA ── */}
           <div className="mt-12 p-6 rounded-2xl text-center" style={{ background: "#0b1f3a" }}>

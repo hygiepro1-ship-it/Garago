@@ -92,8 +92,8 @@ const ARTICLES_BASE: Article[] = [
         heading: "La règle des 7 °C — plus importante que la date",
         content: "Les pneus d'hiver sont faits d'un caoutchouc spécial qui reste souple en dessous de 7 °C. En dessous de ce seuil, un pneu quatre saisons ou été devient dur et perd jusqu'à 50 % de son adhérence. Ne pas attendre les premières neiges : la route verglacée à l'automne ou le frimas matinal sont tout aussi dangereux.",
         tips: [
-          "Installez vos pneus d'hiver quand la température nocturne passe régulièrement sous 7 °C",
-          "Au Québec, c'est généralement entre le 15 et le 31 octobre",
+          "Installez vos pneus d'hiver dès que la température tourne autour de 7 °C plusieurs jours de suite (recommandation de CAA-Québec)",
+          "Selon la région, c'est souvent entre la fin octobre et la mi-novembre : un peu plus tôt dans les régions froides, un peu plus tard à Montréal",
           "Ne pas attendre novembre pour éviter les listes d'attente dans les garages",
         ],
       },
@@ -152,7 +152,7 @@ const ARTICLES_BASE: Article[] = [
       {
         heading: "Le voyant moteur (Check Engine) : ne pas paniquer",
         content: "C'est le voyant le plus fréquent et le plus mal compris. Il peut signaler quelque chose d'aussi banal qu'un bouchon de carburant mal fermé, ou quelque chose de plus sérieux comme un capteur défaillant ou un catalyseur encrassé. La seule façon de savoir : un diagnostic OBD-II chez un mécanicien ou dans un magasin de pièces auto.",
-        note: "Si le voyant moteur clignote (au lieu d'être fixe), c'est plus urgent — cela indique souvent un raté d'allumage qui peut endommager le catalyseur.",
+        note: "Si le voyant moteur clignote (au lieu d'être fixe), c'est plus urgent — cela indique souvent un raté d'allumage qui peut endommager le catalyseur. CAA-Québec recommande alors d'immobiliser la voiture en lieu sûr et de la faire remorquer jusqu'au garage.",
       },
       {
         heading: "Le TPMS : comment gonfler vos pneus correctement",
@@ -219,7 +219,7 @@ const ARTICLES_BASE: Article[] = [
     sections: [
       {
         heading: "La durée de vie réelle d'une batterie",
-        content: "En moyenne, une batterie automobile dure entre 3 et 5 ans. Certaines atteignent 7 ans dans de bonnes conditions, d'autres lâchent à 2 ans en cas d'utilisation intensive. Le froid intense — une réalité québécoise — peut réduire la capacité d'une batterie de 30 à 50 % à -30 °C.",
+        content: "En moyenne, une batterie automobile dure entre 3 et 5 ans. Certaines atteignent 7 ans dans de bonnes conditions, d'autres lâchent à 2 ans en cas d'utilisation intensive. Par grand froid — une réalité québécoise — une batterie ne dispose plus que d'environ 25 % de sa puissance de démarrage à -30 °C, selon CAA-Québec.",
       },
       {
         heading: "Les signes avant-coureurs d'une batterie à bout",
@@ -432,7 +432,7 @@ const ARTICLES_BASE: Article[] = [
         heading: "Causes mécaniques à vérifier en premier",
         content: "Plusieurs problèmes mécaniques augmentent directement la consommation :",
         tips: [
-          "Pneus sous-gonflés : chaque 7 kPa de manque = +1 % de consommation",
+          "Pneus sous-gonflés : 56 kPa (8 psi) de moins = près de 4 % de consommation en plus (Ressources naturelles Canada)",
           "Filtre à air encrassé : réduit l'efficacité de la combustion",
           "Bougies usées : combustion incomplète = plus d'essence pour la même puissance",
           "Capteur O2 défaillant : le moteur injecte trop ou pas assez d'essence",
@@ -477,7 +477,7 @@ const ARTICLES_BASE: Article[] = [
           "Installer les pneus d'hiver dès que la température passe sous 7 °C",
           "Vérifier la profondeur des sculptures (minimum légal : 1,6 mm, recommandé : 4 mm+)",
           "Faire inspecter freins et disques avant la saison",
-          "Vérifier la pression des pneus après chaque vague de froid (la pression baisse de ~1 PSI par 6 °C)",
+          "Vérifier la pression des pneus après chaque vague de froid (elle baisse d'environ 7 kPa ou 1 PSI par tranche de 5 °C)",
         ],
       },
       {
@@ -551,7 +551,7 @@ const ARTICLES_BASE: Article[] = [
       },
       {
         heading: "L'effet du froid québécois sur la pression",
-        content: "La pression d'un pneu baisse d'environ 1 PSI (7 kPa) tous les 6 °C de baisse de température. Entre l'été (+30 °C) et un matin d'hiver (-25 °C), vous pouvez perdre 9 PSI — soit 20 à 25 % de la pression recommandée pour la plupart des véhicules. C'est pourquoi le voyant TPMS s'allume souvent en automne sans qu'il y ait de fuite.",
+        content: "Selon Transports Canada, la pression d'un pneu baisse d'environ 1 PSI (7 kPa) chaque fois que la température diminue de 5 °C. Entre l'été (+30 °C) et un matin d'hiver (-25 °C), vous pouvez perdre environ 11 PSI, soit près du tiers de la pression recommandée pour la plupart des véhicules. C'est pourquoi le voyant TPMS s'allume souvent en automne sans qu'il y ait de fuite.",
         tips: [
           "Vérifiez la pression en début de saison froide et après chaque vague de froid intense",
           "Fréquence idéale : une fois par mois",

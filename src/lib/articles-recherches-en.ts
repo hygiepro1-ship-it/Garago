@@ -13,7 +13,7 @@ export const ARTICLES_RECHERCHES_EN: Record<string, ArticleEn> = {
         heading: "Steady or flashing: the big difference", content: "The colour and behaviour of the light tell you how urgent it is.",
         tips: [
           "Steady orange light: a problem to have checked in the next few days, not an emergency if the car drives normally",
-          "Flashing light: often a serious misfire; slow down and have it checked the same day",
+          "Flashing light: often a serious misfire; stop somewhere safe and have the car towed to a garage (CAA-Québec's advice)",
           "Light with loss of power, smoke or an unusual noise: stop in a safe place",
         ],
         warning: "Don't ignore a flashing light: driving on can damage the catalytic converter, an expensive repair.",
