@@ -28,7 +28,7 @@ export const ARTICLES_RECHERCHES: Article[] = [
         content: "La couleur et le comportement du voyant indiquent l'urgence.",
         tips: [
           "Voyant orange fixe : un problème à faire vérifier dans les prochains jours, sans urgence immédiate si la voiture roule normalement",
-          "Voyant qui clignote : souvent un raté d'allumage important ; réduisez la vitesse et faites vérifier le jour même",
+          "Voyant qui clignote : souvent un raté d'allumage important ; immobilisez la voiture en lieu sûr et faites-la remorquer jusqu'au garage (recommandation de CAA-Québec)",
           "Voyant accompagné d'une perte de puissance, d'une fumée ou d'un bruit anormal : arrêtez-vous en lieu sûr",
         ],
         warning: "Un voyant qui clignote ne doit pas être ignoré : continuer à rouler peut endommager le catalyseur, une réparation coûteuse.",

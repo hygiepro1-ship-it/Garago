@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getArticle } from "@/lib/articles";
 import JsonLd from "@/components/JsonLd";
+import { ARTICLE_EXTRAS } from "@/lib/articles-extras";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -33,9 +34,10 @@ export default async function Layout({ children, params }: { children: React.Rea
               headline: article.title,
               description: article.excerpt,
               datePublished: article.publishedAt,
-              dateModified: article.publishedAt,
+              dateModified: ARTICLE_EXTRAS[slug]?.updatedAt ?? article.publishedAt,
               inLanguage: "fr-CA",
               mainEntityOfPage: url,
+              ...(ARTICLE_EXTRAS[slug] ? { citation: ARTICLE_EXTRAS[slug].sources.map((c) => ({ "@type": "CreativeWork", name: c.label, url: c.href })) } : {}),
               image: { "@type": "ImageObject", url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700 },
               author: { "@type": "Organization", name: "Garago" },
               publisher: { "@type": "Organization", "@id": "https://garagopro.ca/#organization", name: "Garago", logo: { "@type": "ImageObject", url: `${BASE_URL}/logo-garago-700.webp` } },
