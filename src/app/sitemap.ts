@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { notTestGarage } from "@/lib/test-garages";
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { getCities, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
@@ -65,6 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const garages = await prisma.garage.findMany({
     where: {
       hiddenByReport: false,
+      ...notTestGarage(),
       OR: [
         { parentId: null, verificationStatus: "APPROVED", OR: subOr },
         { parent: { verificationStatus: "APPROVED", OR: subOr } },
