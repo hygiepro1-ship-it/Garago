@@ -3,8 +3,6 @@ import JsonLd from "@/components/JsonLd";
 import CoutAbsences from "@/components/CoutAbsences";
 import StickyCta from "@/components/StickyCta";
 import type { PageLang } from "@/lib/alternates";
-import { ARTICLES } from "@/lib/articles";
-import { ARTICLES_EN } from "@/lib/articles-en";
 import { VIDEOS } from "@/content/videos";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -46,9 +44,8 @@ const CONTENT = {
       { href: VIDEOS.reserver.fr.path, title: "Vidéo : réserver son garage en ligne", text: "En moins d'une minute, comment trouver un garage disponible et réserver en quatre étapes." },
       { href: "/garages", title: "Trouver un garage par ville ou arrondissement", text: "Les garages de votre secteur, leurs avis et leurs coordonnées." },
       { href: "/rechercher", title: "Chercher un garage près de chez vous", text: "Entrez votre auto et votre position : les garages proches, disponibles bientôt, avec leurs avis." },
+      { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, pneus, batterie, vidange : tous les guides pratiques pour le Québec, par catégorie." },
     ] as Theme[],
-    conseilsH3: "Conseils auto : les problèmes les plus recherchés",
-    allConseils: { href: "/conseils", title: "Tous les conseils auto", text: "Voyants, freins, pneus, batterie, vidange : tous les guides pratiques pour le Québec, par catégorie." } as Theme,
     factsSub: "Les chiffres cités sur cette page indiquent d'où ils viennent. Quand un chiffre n'est pas québécois ou qu'il s'agit d'une estimation d'éditeur de logiciel, nous le disons.",
     factsGarages: [
       { chiffre: "jusqu'à 21 %", texte: "Des appels reçus par les services automobiles restent sans réponse ou échouent. Un taux sain se situe à 10 % ou moins. Chaque appel manqué est un client qui appelle le garage suivant.", porte: "Amérique du Nord, grands réseaux d'ateliers (analyse de données d'appels, 2026)", source: "Marchex", href: MARCHEX_2026, avant: "/garagistes/prise-de-rendez-vous-en-ligne" },
@@ -90,9 +87,8 @@ const CONTENT = {
       { href: VIDEOS.reserver.en.path, title: "Video: book your garage online", text: "In under a minute, how to find an available garage and book in four steps." },
       { href: "/garages", title: "Find a garage by city or borough", text: "Garages in your area, their reviews and contact details." },
       { href: "/rechercher", title: "Search for a garage near you", text: "Enter your car and location: nearby garages, available soon, with their reviews." },
+      { href: "/conseils", title: "All car tips", text: "Warning lights, brakes, tires, battery, oil changes: every practical guide for Quebec, by category." },
     ] as Theme[],
-    conseilsH3: "Car tips: the most searched problems",
-    allConseils: { href: "/conseils", title: "All car tips", text: "Warning lights, brakes, tires, battery, oil changes: every practical guide for Quebec, by category." } as Theme,
     factsSub: "Every figure on this page says where it comes from. When it isn't from Quebec or is a software publisher's estimate, we say so.",
     factsGarages: [
       { chiffre: "up to 21%", texte: "Of calls to automotive service departments go unanswered or fail. A healthy rate is 10% or less. Every missed call is a customer who calls the next shop.", porte: "North America, large shop networks (call data analysis, 2026)", source: "Marchex", href: MARCHEX_2026, avant: "/en/garage-owners/online-booking" },
@@ -169,21 +165,9 @@ function ArticlesEtChiffres({ themes, faits, read, source }: { themes: Theme[]; 
   );
 }
 
-/** Tous les articles de conseils publiés, dans la langue de la page. */
-function conseilsThemes(lang: PageLang): Theme[] {
-  const now = new Date();
-  return ARTICLES
-    .filter((a) => new Date(a.publishedAt) <= now)
-    .map((a) => {
-      const en = lang === "en" ? ARTICLES_EN[a.slug] : undefined;
-      return { href: `/conseils/${a.slug}`, title: en?.title ?? a.title, text: en?.excerpt ?? a.excerpt };
-    });
-}
-
 /** Page « Pourquoi Garago » : guides pour garagistes et conducteurs, calculateur et chiffres sourcés. */
 export default function WhyGarago({ lang }: { lang: PageLang }) {
   const c = CONTENT[lang];
-  const conseils = conseilsThemes(lang);
   return (
     <>
       <JsonLd data={{
@@ -192,7 +176,7 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
         name: c.name,
         url: `${BASE_URL}${c.path}`,
         inLanguage: lang === "en" ? "en-CA" : "fr-CA",
-        hasPart: [...c.garages, ...c.drivers, ...conseils, c.allConseils].map((t) => ({ "@type": "WebPage", name: t.title, url: `${BASE_URL}${t.href}` })),
+        hasPart: [...c.garages, ...c.drivers].map((t) => ({ "@type": "WebPage", name: t.title, url: `${BASE_URL}${t.href}` })),
       }} />
 
       <section style={{ background: "linear-gradient(135deg,#071428 0%,#0b1f3a 60%,#1a3a6b 100%)" }}>
@@ -219,10 +203,6 @@ export default function WhyGarago({ lang }: { lang: PageLang }) {
           <h2 id="h-conducteurs" className="text-2xl font-black" style={{ color: "#0b1f3a" }}>{c.driversH2}</h2>
           <p className="mt-1 text-gray-600">{c.driversSub}</p>
           <ArticlesEtChiffres themes={c.drivers} faits={c.factsDrivers} read={c.read} source={c.source} />
-          <h3 className="mt-10 text-lg font-black" style={{ color: "#0b1f3a" }}>{c.conseilsH3}</h3>
-          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-            {[...conseils, c.allConseils].map((t) => <ThemeCard key={t.href} t={t} read={c.read} />)}
-          </ul>
         </section>
 
         <section className="rounded-2xl p-6 sm:p-8" style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}>
