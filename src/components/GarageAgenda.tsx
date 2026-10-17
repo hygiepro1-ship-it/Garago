@@ -153,7 +153,7 @@ const EMPTY_FORM = {
   vehicleYear: "", vehicleMake: "", vehicleModel: "",
   categoryId: "", serviceName: "", date: "", startTime: "09:00", durationMin: 60,
   bay: "", // "" = automatique
-  contactChannel: "SMS", language: "fr", notes: "",
+  contactChannel: "EMAIL", language: "fr", notes: "", // courriel par défaut : il ne coûte rien, contrairement au texto
 };
 
 export default function GarageAgenda({
@@ -742,8 +742,8 @@ export default function GarageAgenda({
               </svg>
               <p className="text-xs leading-snug" style={{ color: "#9a3412" }}>
                 {en
-                  ? <><strong>Ask the customer:</strong> &laquo;&nbsp;Would you rather get your confirmation by email or by text?&nbsp;&raquo; Email is free; each text has a cost.</>
-                  : <><strong>Demandez au client :</strong> «&nbsp;Préférez-vous recevoir la confirmation par courriel ou par texto&nbsp;?&nbsp;» Le courriel est gratuit ; chaque texto a un coût.</>}
+                  ? <><strong>Ask the customer:</strong> &laquo;&nbsp;Would you rather get your confirmation by email or by text?&nbsp;&raquo;</>
+                  : <><strong>Demandez au client :</strong> «&nbsp;Préférez-vous recevoir la confirmation par courriel ou par texto&nbsp;?&nbsp;»</>}
               </p>
             </div>
 
