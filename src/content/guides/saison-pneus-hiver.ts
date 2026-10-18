@@ -2,9 +2,9 @@ import type { Guide } from "@/components/GuidePage";
 
 export const fr: Guide = {
   path: "/garagistes/saison-pneus-hiver",
-  title: "Saison des pneus d'hiver : comment un garage gère la ruée au Québec | Garago",
+  title: "Saison des pneus d'hiver au garage : gérer la ruée | Garago",
   description:
-    "Du premier gel au 1er décembre, le téléphone ne dérougit pas. Comment un garage québécois planifie la saison des pneus d'hiver : réservation en ligne, confirmation, capacité de l'atelier.",
+    "Du premier gel au 1er décembre, le téléphone sonne sans arrêt. Comment un garage québécois planifie la saison des pneus : réservation, portes, rappels.",
   ogDescription: "Planifier la capacité, prendre les rendez-vous en ligne et limiter les absences pendant la saison la plus chargée.",
   datePublished: "2026-10-14",
   h1: "Saison des pneus d'hiver : comment un garage gère la ruée",
@@ -56,9 +56,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/winter-tire-season",
-  title: "Winter tire season: how a Quebec auto repair shop handles the rush | Garago",
+  title: "Winter tire season: handling the rush | Garago",
   description:
-    "From the first frost to December 1, the phone never stops. How a Quebec auto repair shop plans winter tire season: online booking, confirmations and shop capacity.",
+    "From the first frost to December 1, the phone never stops. How a Quebec auto repair shop plans winter tire season: online booking, bays and reminders.",
   ogDescription: "Plan capacity, take bookings online and cut no-shows during the busiest season of the year.",
   datePublished: "2026-10-15",
   h1: "Winter tire season: how an auto repair shop handles the rush",

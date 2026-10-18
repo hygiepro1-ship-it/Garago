@@ -2,9 +2,9 @@ import type { Guide } from "@/components/GuidePage";
 
 export const fr: Guide = {
   path: "/conducteurs/reserver-garage-en-ligne",
-  title: "Réserver son garage en ligne au Québec : rendez-vous sans appeler | Garago",
+  title: "Réserver son garage en ligne, sans appeler | Garago",
   description:
-    "Prendre rendez-vous dans un garage en ligne, sans attendre au téléphone : choisissez le service, la date et l'heure parmi les disponibilités réelles. Gratuit pour les conducteurs.",
+    "Prendre rendez-vous dans un garage en ligne, sans attendre au téléphone : choisissez le service, la date et l'heure parmi les vraies disponibilités.",
   ogDescription: "Choisir un garage, un service et une heure en quelques minutes, sans passer par le téléphone.",
   datePublished: "2026-10-14",
   audience: "drivers",
@@ -53,7 +53,7 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/drivers/book-garage-online",
-  title: "Book an auto repair shop online in Quebec, without calling | Garago",
+  title: "Book a garage online in Quebec, no calls | Garago",
   description:
     "Book a garage appointment online, without waiting on the phone: choose the service, date and time from real availability. Free for drivers.",
   ogDescription: "Pick a garage, a service and a time in a few minutes, without picking up the phone.",

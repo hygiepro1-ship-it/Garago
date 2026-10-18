@@ -9,9 +9,9 @@ const GUICHET = "https://www.guichetemplois.gc.ca/rapportmarche/prerequis/14857/
 
 export const fr: Guide = {
   path: "/garagistes/ouvrir-un-garage-quebec",
-  title: "Ouvrir un garage automobile au Québec : les étapes et obligations (2026) | Garago",
+  title: "Ouvrir un garage automobile au Québec (2026) | Garago",
   description:
-    "Ouvrir un garage mécanique au Québec : immatriculation et NEQ, TPS et TVQ, zonage, Loi sur la protection du consommateur, huiles et pneus usagés, climatisation, comité paritaire, assurances et premiers clients.",
+    "Ouvrir un garage au Québec : immatriculation et NEQ, TPS et TVQ, zonage, protection du consommateur, huiles usées et assurances, étape par étape.",
   ogDescription: "NEQ, taxes, zonage, protection du consommateur, environnement et premiers clients : les étapes pour ouvrir un garage au Québec.",
   datePublished: "2026-10-15",
   h1: "Ouvrir un garage automobile au Québec : les étapes",
@@ -123,9 +123,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/open-auto-repair-shop-quebec",
-  title: "How to open an auto repair shop in Quebec: steps and obligations (2026) | Garago",
+  title: "How to open an auto repair shop in Quebec (2026) | Garago",
   description:
-    "Opening an auto repair shop in Quebec: registration and NEQ, GST and QST, zoning, the Consumer Protection Act, used oil and tires, air conditioning, joint committees, insurance and your first customers.",
+    "Opening an auto repair shop in Quebec: registration and NEQ, GST and QST, zoning, consumer protection, used oil and insurance, step by step.",
   ogDescription: "NEQ, taxes, zoning, consumer protection, environment and first customers: the steps to open an auto repair shop in Quebec.",
   datePublished: "2026-10-15",
   h1: "How to open an auto repair shop in Quebec",

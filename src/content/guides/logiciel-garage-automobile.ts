@@ -2,9 +2,9 @@ import type { Guide } from "@/components/GuidePage";
 
 export const fr: Guide = {
   path: "/garagistes/logiciel-garage-automobile",
-  title: "Logiciel de garage automobile au Québec : comment choisir (2026) | Garago",
+  title: "Logiciel de garage automobile au Québec (2026) | Garago",
   description:
-    "Logiciel de gestion de garage ou logiciel de rendez-vous ? Les deux familles d'outils pour un garage automobile au Québec, ce que fait chacune, et où se place Garago.",
+    "Logiciel de gestion ou logiciel de rendez-vous ? Les deux familles d'outils pour un garage automobile au Québec, ce que chacun fait et comment choisir.",
   ogDescription: "Gestion de l'atelier ou gestion des rendez-vous : les deux familles de logiciels de garage, et ce que fait Garago.",
   datePublished: "2026-10-15",
   h1: "Logiciel de garage automobile au Québec : comment choisir",
@@ -55,7 +55,7 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/auto-repair-shop-software",
-  title: "Auto repair shop software in Quebec: how to choose (2026) | Garago",
+  title: "Auto repair shop software in Quebec (2026) | Garago",
   description:
     "Shop management software or appointment software? The two kinds of tools for a Quebec auto repair shop, what each one does, and where Garago fits.",
   ogDescription: "Shop management or appointment management: the two kinds of auto repair shop software, and what Garago does.",

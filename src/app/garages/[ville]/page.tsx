@@ -44,10 +44,10 @@ export async function generateMetadata({ params }: { params: Promise<{ ville: st
   // La réservation en ligne n'est promise que si au moins un garage de la ville la propose.
   const title = data.bookableCount > 0
     ? `Garages à ${city} : avis et rendez-vous en ligne | Garago`
-    : `Garages à ${city} : adresses, téléphones et avis | Garago`;
+    : `Garages à ${city} : adresses et avis | Garago`;
   const description = data.bookableCount > 0
-    ? `${n} à ${city} (Québec), dont ${data.bookableCount} qui prennent les rendez-vous en ligne : adresses, avis de conducteurs, vidange, pneus d'hiver, freins.`
-    : `${n} à ${city} (Québec) : adresses, téléphones et avis de conducteurs pour la vidange, les pneus d'hiver, les freins et la mécanique générale.`;
+    ? `${n} à ${city} (Québec), dont ${data.bookableCount} réservables en ligne : adresses, avis de conducteurs, vidange, pneus d'hiver, freins.`
+    : `${n} à ${city} (Québec) : adresses, téléphones et avis de conducteurs pour la vidange, les pneus d'hiver et les freins.`;
   return {
     title,
     description,

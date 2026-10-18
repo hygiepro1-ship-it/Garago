@@ -6,9 +6,9 @@ const COX = "https://www.coxautoinc.com/?p=2809";
 
 export const fr: Guide = {
   path: "/garagistes/prise-de-rendez-vous-en-ligne",
-  title: "Prise de rendez-vous en ligne pour garage : le guide complet (Québec) | Garago",
+  title: "Prise de rendez-vous en ligne : le guide du garage | Garago",
   description:
-    "Mettre en place la prise de rendez-vous en ligne dans un garage au Québec : services et durées, nombre de portes, heures, confirmation, lien sur votre site et votre fiche Google. Étapes, erreurs à éviter et chiffres sourcés.",
+    "Mettre en place la prise de rendez-vous en ligne dans un garage au Québec : services et durées, portes, heures, confirmation et lien de réservation.",
   ogDescription: "Services, durées, portes, confirmation et lien de réservation : mettre en place la prise de rendez-vous en ligne dans un garage.",
   datePublished: "2026-10-15",
   h1: "Prise de rendez-vous en ligne pour garage : le guide complet",
@@ -103,9 +103,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/online-booking",
-  title: "Online booking for auto repair shops: the complete guide (Quebec) | Garago",
+  title: "Online booking for repair shops: complete guide | Garago",
   description:
-    "Set up online booking in a Quebec auto repair shop: services and times, number of bays, hours, confirmation, booking link on your website and Google Business Profile. Steps, mistakes to avoid and sourced figures.",
+    "Set up online booking in a Quebec auto repair shop: services and times, bays, hours, confirmation, and a booking link on your website and Google profile.",
   ogDescription: "Services, times, bays, confirmations and booking links: set up online booking in an auto repair shop.",
   datePublished: "2026-10-15",
   h1: "Online booking for auto repair shops: the complete guide",

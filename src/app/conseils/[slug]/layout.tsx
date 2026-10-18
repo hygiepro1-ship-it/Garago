@@ -9,12 +9,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return { title: "Article introuvable | Garago", robots: { index: false } };
-  const title = `${article.title} | Garago`;
+  const extra = ARTICLE_EXTRAS[slug];
+  const title = `${extra?.metaTitle ?? article.title} | Garago`;
+  const description = extra?.metaDescription ?? article.excerpt;
   return {
     title,
-    description: article.excerpt,
+    description,
     alternates: { canonical: `${BASE_URL}/conseils/${slug}` },
-    openGraph: { title, description: article.excerpt, url: `${BASE_URL}/conseils/${slug}`, siteName: "Garago", locale: "fr_CA", type: "article", publishedTime: article.publishedAt, images: [{ url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700, alt: article.title }] },
+    openGraph: { title, description, url: `${BASE_URL}/conseils/${slug}`, siteName: "Garago", locale: "fr_CA", type: "article", publishedTime: article.publishedAt, images: [{ url: `${BASE_URL}/conseils/${slug}.webp`, width: 1400, height: 700, alt: article.title }] },
   };
 }
 

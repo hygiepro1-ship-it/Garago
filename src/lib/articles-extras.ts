@@ -5,6 +5,10 @@
 
 export interface ArticleSource { label: string; labelEn?: string; href: string }
 export interface ArticleExtra {
+  /** Titre pour Google (sans « | Garago », 51 caractères au plus) quand le titre de l'article est trop long. */
+  metaTitle?: string;
+  /** Description pour Google (155 caractères au plus) quand le chapeau de l'article est trop long. */
+  metaDescription?: string;
   essentiel: { fr: string; en: string };
   sources: ArticleSource[];
   updatedAt: string;
@@ -39,6 +43,7 @@ const MAJ = "2026-10-17";
 
 export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
   "voiture-tremble-quand-je-freine": {
+    metaTitle: "Voiture qui tremble au freinage : 3 causes",
     essentiel: {
       fr: "Une voiture qui tremble au freinage a le plus souvent des disques de frein voilés, parfois des plaquettes usées ou cristallisées, plus rarement un problème de suspension ou de roulement. Faites inspecter les freins rapidement ; si la vibration est forte ou si la voiture freine moins bien, évitez l'autoroute d'ici la réparation.",
       en: "A car that shakes when braking most often has warped brake rotors, sometimes worn or glazed pads, and less often a suspension or wheel bearing problem. Have the brakes inspected soon; if the vibration is strong or braking feels weaker, stay off the highway until it is fixed.",
@@ -47,6 +52,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "quand-passer-pneus-hiver-quebec": {
+    metaTitle: "Pneus d'hiver au Québec : dates et quand les poser",
+    metaDescription: "Obligatoires du 1er décembre au 15 mars, avec le pictogramme montagne et flocon : les règles, les pneus 4 saisons permis et le bon moment pour les poser.",
     essentiel: {
       fr: "Au Québec, les pneus d'hiver sont obligatoires du 1er décembre au 15 mars pour les véhicules de promenade immatriculés au Québec (amende de 200 $ à 300 $). CAA-Québec conseille de les poser dès que la température tourne autour de 7 °C plusieurs jours de suite, souvent fin octobre ou début novembre selon la région.",
       en: "In Québec, winter tires are mandatory from December 1 to March 15 for passenger vehicles registered in Québec ($200 to $300 fine). CAA-Québec advises installing them once the temperature hovers around 7 °C for several days in a row, often in late October or early November depending on the region.",
@@ -55,6 +62,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "voyants-tableau-de-bord": {
+    metaTitle: "Voyants du tableau de bord : signification",
+    metaDescription: "Pression d'huile, voyant moteur, batterie, pneus : chaque voyant a son niveau d'urgence. Lesquels exigent un arrêt immédiat, et lesquels peuvent attendre.",
     essentiel: {
       fr: "Un voyant rouge (pression d'huile, température, freins) demande de s'arrêter dès que c'est sûr ; un voyant orange signale un problème à faire vérifier dans les jours qui suivent. Le voyant moteur fixe peut venir d'un simple bouchon d'essence mal fermé ; s'il clignote, immobilisez la voiture en lieu sûr.",
       en: "A red light (oil pressure, temperature, brakes) means stop as soon as it is safe; an orange light flags a problem to have checked in the next few days. A steady engine light can come from a loose gas cap; if it flashes, stop the car somewhere safe.",
@@ -63,6 +72,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "vidange-huile-frequence": {
+    metaTitle: "Changement d'huile : aux combien de km ?",
+    metaDescription: "Les 3 000 km, c'est du passé : la vraie fréquence du changement d'huile selon l'huile (synthétique, semi-synthétique ou minérale) et votre conduite.",
     essentiel: {
       fr: "La vidange tous les 3 000 km est dépassée : comptez environ 5 000 à 7 500 km avec une huile conventionnelle et 10 000 à 15 000 km avec une huile synthétique. Réduisez l'intervalle en conduite sévère (trajets courts, grand froid, remorquage) et suivez toujours le manuel du propriétaire, qui fait foi.",
       en: "The 3,000 km oil change is outdated: count roughly 5,000 to 7,500 km with conventional oil and 10,000 to 15,000 km with synthetic oil. Shorten the interval under severe driving (short trips, extreme cold, towing) and always follow the owner's manual, which has the final word.",
@@ -71,6 +82,7 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "batterie-voiture-duree-vie": {
+    metaTitle: "Batterie d'auto : durée de vie, quand la changer",
     essentiel: {
       fr: "Une batterie d'auto dure en moyenne de 4 à 5 ans selon CAA-Québec. Par grand froid (-30 °C), elle ne dispose plus que d'environ 25 % de sa puissance de démarrage. Démarrage lent, phares qui faiblissent ou batterie de plus de 4 ans : faites-la tester avant l'hiver.",
       en: "A car battery lasts about 4 to 5 years on average, according to CAA-Québec. In extreme cold (-30 °C), it has only about 25% of its starting power left. Slow starts, dimming lights or a battery older than 4 years: have it tested before winter.",
@@ -79,6 +91,7 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "moteur-surchauffe-que-faire": {
+    metaTitle: "Moteur qui surchauffe : causes et que faire",
     essentiel: {
       fr: "Si l'aiguille de température monte vers le rouge : coupez la climatisation, mettez le chauffage au maximum, puis arrêtez-vous dès que c'est sûr et coupez le moteur. N'ouvrez jamais le bouchon du radiateur moteur chaud. Une fuite de liquide, un thermostat bloqué ou un ventilateur en panne sont les causes les plus courantes.",
       en: "If the temperature needle climbs toward red: turn off the A/C, turn the heat to maximum, then stop as soon as it is safe and turn off the engine. Never open the radiator cap on a hot engine. A coolant leak, a stuck thermostat or a failed fan are the most common causes.",
@@ -87,6 +100,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "antirouille-quebec-necessaire": {
+    metaTitle: "Antirouille au Québec : est-ce nécessaire ?",
+    metaDescription: "Le sel de déglaçage attaque la carrosserie et le dessous de caisse. Quel traitement antirouille choisir au Québec, quand l'appliquer et à quelle fréquence.",
     essentiel: {
       fr: "Avec le sel de déglaçage et le gel-dégel, un traitement antirouille est utile au Québec, surtout dans les premières années du véhicule. CAA-Québec recommande de l'appliquer entre août et octobre, avant le retour du sel ; l'efficacité des modules électroniques n'est pas démontrée. Lavez aussi le dessous de caisse durant l'hiver.",
       en: "With road salt and freeze-thaw cycles, rustproofing is worthwhile in Québec, especially in a vehicle's first years. CAA-Québec recommends applying it between August and October, before salt is back on the roads; electronic modules have not been shown to work. Also wash the underbody during the winter.",
@@ -103,6 +118,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "climatisation-ne-refroidit-plus": {
+    metaTitle: "Climatisation d'auto qui ne refroidit plus",
+    metaDescription: "Une climatisation qui souffle chaud manque souvent de réfrigérant à cause d'une fuite. Les causes, la recharge et le bon entretien de la clim.",
     essentiel: {
       fr: "Une climatisation qui ne refroidit plus manque le plus souvent de réfrigérant, à cause d'une fuite lente ; un condenseur bouché ou un compresseur défaillant sont d'autres causes. Une recharge sans réparer la fuite ne dure pas, et au Québec le réfrigérant doit être récupéré par un technicien équipé.",
       en: "An A/C that no longer cools is most often low on refrigerant because of a slow leak; a clogged condenser or a failing compressor are other causes. A recharge without fixing the leak won't last, and in Québec the refrigerant must be recovered by an equipped technician.",
@@ -111,6 +128,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "consommation-essence-anormale": {
+    metaTitle: "Voiture qui consomme trop d'essence : causes",
+    metaDescription: "Votre voiture consomme plus que d'habitude ? Pneus, filtre à air, bougies, conduite : les causes les plus fréquentes, souvent simples et peu coûteuses.",
     essentiel: {
       fr: "Commencez par mesurer votre vraie consommation. Des pneus sous-gonflés de 56 kPa (8 psi) l'augmentent de près de 4 %, et la climatisation jusqu'à 20 %, selon Ressources naturelles Canada. Filtre à air encrassé, bougies usées ou sonde d'oxygène défaillante sont les causes mécaniques fréquentes ; au-delà de 15 % de hausse, faites un diagnostic.",
       en: "Start by measuring your real fuel consumption. Tires under-inflated by 56 kPa (8 psi) raise it by nearly 4%, and air conditioning by up to 20%, according to Natural Resources Canada. A clogged air filter, worn spark plugs or a faulty oxygen sensor are common mechanical causes; past a 15% increase, get a diagnosis.",
@@ -119,6 +138,7 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "preparer-voiture-hiver-quebec": {
+    metaTitle: "Préparer sa voiture pour l'hiver au Québec",
     essentiel: {
       fr: "Avant l'hiver : pneus d'hiver posés avant le 1er décembre (obligatoires jusqu'au 15 mars), freins inspectés, batterie testée, antigel et lave-glace d'hiver, essuie-glaces neufs et une trousse d'urgence dans le coffre. Vérifiez la pression des pneus après chaque vague de froid : elle baisse d'environ 7 kPa par tranche de 5 °C.",
       en: "Before winter: winter tires on before December 1 (mandatory until March 15), brakes inspected, battery tested, antifreeze and winter washer fluid, new wiper blades and an emergency kit in the trunk. Check tire pressure after every cold snap: it drops about 7 kPa for every 5 °C.",
@@ -127,6 +147,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "pression-pneus-comment-verifier": {
+    metaTitle: "Pression des pneus : comment la vérifier",
+    metaDescription: "Où trouver la bonne pression, comment la mesurer à froid et pourquoi elle baisse avec le froid : le guide pour bien gonfler vos pneus au Québec.",
     essentiel: {
       fr: "La bonne pression est inscrite sur l'étiquette de la portière du conducteur, pas sur le flanc du pneu, qui indique la pression maximale. Mesurez à froid, au moins une fois par mois, roue de secours comprise. Selon Transports Canada, la pression baisse d'environ 7 kPa (1 psi) chaque fois que la température diminue de 5 °C.",
       en: "The right pressure is on the label in the driver's door, not on the tire sidewall, which shows the maximum pressure. Measure when the tires are cold, at least once a month, spare included. According to Transport Canada, pressure drops about 7 kPa (1 psi) for every 5 °C drop in temperature.",
@@ -135,6 +157,7 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "voyant-check-engine-allume": {
+    metaTitle: "Voyant check engine allumé : que faire ?",
     essentiel: {
       fr: "Voyant check engine fixe : resserrez le bouchon d'essence, puis faites lire le code d'erreur si le voyant reste allumé. Voyant qui clignote : CAA-Québec recommande d'immobiliser la voiture en lieu sûr et de la faire remorquer jusqu'au garage, car continuer peut endommager le moteur et le catalyseur.",
       en: "Steady check engine light: tighten the gas cap, then have the error code read if the light stays on. Flashing light: CAA-Québec recommends stopping the car somewhere safe and having it towed to a garage, since driving on can damage the engine and the catalytic converter.",
@@ -143,6 +166,7 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "voiture-ne-demarre-pas": {
+    metaTitle: "Voiture qui ne démarre pas : causes et solutions",
     essentiel: {
       fr: "Écoutez le bruit au démarrage : un clic-clic rapide indique une batterie faible, un seul clic un démarreur ou une cosse en cause, aucun bruit une batterie à plat ou débranchée. Si le moteur tourne sans partir, pensez à l'essence, à l'allumage ou à l'antidémarrage. Un survoltage dépanne, mais faites ensuite tester batterie et alternateur.",
       en: "Listen when you turn the key: rapid clicking points to a weak battery, a single click to the starter or a loose terminal, silence to a dead or disconnected battery. If the engine cranks but won't start, think fuel, ignition or immobilizer. A boost gets you going, but then have the battery and alternator tested.",
@@ -151,6 +175,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "inspection-pre-achat-voiture-usagee": {
+    metaTitle: "Inspection pré-achat d'une voiture usagée",
+    metaDescription: "Avant d'acheter une voiture d'occasion au Québec : ce que vérifie une inspection pré-achat, les documents à demander et les pièges à éviter.",
     essentiel: {
       fr: "Avant d'acheter une voiture usagée, faites-la inspecter par un garage sans lien avec le vendeur (une heure à une heure et demie) : rouille, freins, fuites, codes d'erreur et essai routier. Vérifiez aussi au RDPRM qu'aucun prêt n'est rattaché au véhicule et consultez les rappels de Transports Canada.",
       en: "Before buying a used car, have it inspected by a garage with no ties to the seller (one to one and a half hours): rust, brakes, leaks, error codes and a road test. Also check the RDPRM register for any loan attached to the vehicle and look up Transport Canada recalls.",
@@ -159,6 +185,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "pneus-4-saisons-legal-quebec": {
+    metaTitle: "Pneus 4 saisons : légaux l'hiver au Québec ?",
+    metaDescription: "Du 1er décembre au 15 mars, les pneus doivent porter le pictogramme montagne et flocon. Les pneus 4 saisons qui l'ont sont permis, pas les autres.",
     essentiel: {
       fr: "Oui, à une condition : du 1er décembre au 15 mars, un pneu 4 saisons est permis au Québec s'il porte le pictogramme d'un flocon dans une montagne. Un pneu « toutes saisons » marqué seulement M+S n'est pas conforme et expose à une amende de 200 $ à 300 $.",
       en: "Yes, on one condition: from December 1 to March 15, an all-weather tire is allowed in Québec if it bears the mountain and snowflake symbol. An \"all-season\" tire marked only M+S does not comply and can bring a $200 to $300 fine.",
@@ -175,6 +203,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "verification-mecanique-saaq": {
+    metaTitle: "Vérification mécanique SAAQ : cas obligatoires",
+    metaDescription: "Véhicule d'une autre province, reconstruit ou remisé plus de 12 mois : les cas où la SAAQ exige une vérification mécanique, et comment s'y préparer.",
     essentiel: {
       fr: "Une voiture de promenade utilisée normalement n'a pas de vérification mécanique périodique au Québec. La SAAQ l'exige notamment pour un véhicule usagé venant d'une autre province, un véhicule gravement accidenté reconstruit ou un véhicule remisé plus de 12 mois, chez un mandataire reconnu.",
       en: "A passenger car in normal use has no periodic mechanical inspection in Québec. The SAAQ requires one notably for a used vehicle from another province, a rebuilt seriously damaged vehicle or a vehicle stored for more than 12 months, done by an authorized agent.",
@@ -183,6 +213,8 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "garantie-reparation-automobile-quebec": {
+    metaTitle: "Garantie sur une réparation auto au Québec",
+    metaDescription: "Évaluation écrite au-delà de 100 $, garantie de 3 mois ou 5 000 km, prix plafonné : vos droits lors d'une réparation automobile au Québec.",
     essentiel: {
       fr: "Au Québec, une réparation de plus de 50 $ est garantie 3 mois ou 5 000 km, selon la première limite atteinte. Au-delà de 100 $, le garage doit vous remettre une évaluation écrite avant les travaux et ne peut pas facturer plus que ce total sans votre accord, selon l'Office de la protection du consommateur.",
       en: "In Québec, a repair over $50 is guaranteed for 3 months or 5,000 km, whichever comes first. Above $100, the garage must give you a written estimate before the work and cannot bill more than that total without your consent, according to the Office de la protection du consommateur.",
