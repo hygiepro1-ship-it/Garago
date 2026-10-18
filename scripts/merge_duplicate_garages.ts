@@ -12,6 +12,7 @@ const APPLY = process.argv.includes("--apply");
 
 // [fiche gardée, doublon]
 const PAIRS: [string, string][] = [
+  // Fusionnés le 2026-10-16 (le script les ignore : doublons déjà supprimés)
   ["chirwan-inc", "chirwan-inc-1"],
   ["garage-deguire", "garage-deguire-1"],
   ["garage-martin-jacques", "garage-martin-jacques-1"],
@@ -24,6 +25,17 @@ const PAIRS: [string, string][] = [
   ["pneus-mecanique-verdun", "pneus-mecanique-verdun-1"],
   ["solution-auto-mecanique", "solution-auto-mecanique-1"],
   ["sp-mecanique", "sp-mecanique-1"],
+  // Audit SEO du 2026-10-17 : même adresse et même téléphone (ou même nom), écrits autrement
+  ["auto-de-l-eglise-inc", "de-l-eglise-auto-inc"],
+  ["autocare-montreal", "autocare-montreal-rdp"],
+  ["garage-les-galeries-d-anjou", "autopro-garage"],
+  ["optimax-plus-inc", "garage-optimax-plus-inc"],
+  ["garage-rapide", "garage-rapide-beaumont"],
+  ["garage-yves-malo-et-fils-inc", "garage-yves-malo-fils-inc"],
+  ["gmf-auto-garage-pointe-aux-trembles", "gmf-auto-mecanicien-garage-pointe-aux-trembles"],
+  ["napa-autopro-mecanique-excellence-pierrefonds-goodyear", "goodyear-auto-service-mecanique"],
+  ["station-service-r-et-r", "r-r-station-service-inc"],
+  ["garage-auto-fera", "garage-auto-fera-enrg"],
 ];
 
 (async () => {
