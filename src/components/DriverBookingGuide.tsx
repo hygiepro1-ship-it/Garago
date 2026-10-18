@@ -21,7 +21,7 @@ export default function DriverBookingGuide({ lang }: { lang: PageLang }) {
         ...VIDEO[lang],
         thumbnailUrl: `${BASE_URL}/videos/garago-reserver-${lang}.jpg`,
         contentUrl: `${BASE_URL}/videos/garago-reserver-${lang}.mp4`,
-        uploadDate: "2026-10-14",
+        uploadDate: "2026-10-14T09:00:00-04:00",
         duration: "PT54S",
         inLanguage: lang === "en" ? "en-CA" : "fr-CA",
       }} />
