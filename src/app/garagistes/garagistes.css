@@ -201,3 +201,12 @@
   .gp .step .need { grid-column: 2; margin-top: 12px; }
   .gp .steps-cta { padding-left: 68px; }
 }
+
+/* Ligne de mots-clés au-dessus du titre, et section « en images » */
+.gp .hero .kicker {color: var(--orange); font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 14px;}
+.gp .shots-sec {background: var(--g-50, #f8fafc);}
+.gp .shots {display: grid; gap: 24px; grid-template-columns: 1fr;}
+@media (min-width: 900px) {.gp .shots {grid-template-columns: 1.25fr 1fr; align-items: start;}}
+.gp .shots figure {margin: 0;}
+.gp .shots img {display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--g-200); box-shadow: 0 10px 30px rgba(11,31,58,.10);}
+.gp .shots figcaption {margin-top: 10px; font-size: 14px; color: #64748b;}

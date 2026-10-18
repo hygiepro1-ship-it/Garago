@@ -1,6 +1,7 @@
 import { pageMetadata } from "@/lib/alternates";
 import JsonLd from "@/components/JsonLd";
 import { VIDEOS, videoJsonLd } from "@/content/videos";
+import { softwareJsonLd } from "@/lib/software-jsonld";
 import GaragistesContent from "./GaragistesContent";
 import "./garagistes.css";
 
@@ -18,6 +19,7 @@ export default function GaragistesPage() {
     <>
       {/* La vidéo de présentation, décrite pour Google ; sa page de lecture est /videos/prise-de-rendez-vous-en-ligne-garage */}
       <JsonLd data={videoJsonLd(VIDEOS.garagistes.fr, "fr", process.env.NEXTAUTH_URL ?? "https://garagopro.ca")} />
+      <JsonLd data={softwareJsonLd("fr")} />
       <GaragistesContent />
     </>
   );
