@@ -52,14 +52,14 @@ export const ARTICLE_EXTRAS: Record<string, ArticleExtra> = {
     updatedAt: MAJ,
   },
   "quand-passer-pneus-hiver-quebec": {
-    metaTitle: "Pneus d'hiver au Québec : dates et quand les poser",
-    metaDescription: "Obligatoires du 1er décembre au 15 mars, avec le pictogramme montagne et flocon : les règles, les pneus 4 saisons permis et le bon moment pour les poser.",
+    metaTitle: "Pneus d'hiver 2026 au Québec : dates et clous",
+    metaDescription: "Obligatoires du 1er décembre au 15 mars, pneus à clous permis du 15 octobre au 1er mai : les règles, les pneus 4 saisons et quand les poser.",
     essentiel: {
-      fr: "Au Québec, les pneus d'hiver sont obligatoires du 1er décembre au 15 mars pour les véhicules de promenade immatriculés au Québec (amende de 200 $ à 300 $). CAA-Québec conseille de les poser dès que la température tourne autour de 7 °C plusieurs jours de suite, souvent fin octobre ou début novembre selon la région.",
-      en: "In Québec, winter tires are mandatory from December 1 to March 15 for passenger vehicles registered in Québec ($200 to $300 fine). CAA-Québec advises installing them once the temperature hovers around 7 °C for several days in a row, often in late October or early November depending on the region.",
+      fr: "Au Québec, les pneus d'hiver sont obligatoires du 1er décembre au 15 mars pour les véhicules de promenade immatriculés au Québec (amende de 200 $ à 300 $). Les pneus à clous sont permis du 15 octobre au 1er mai. CAA-Québec conseille de les poser dès que la température tourne autour de 7 °C plusieurs jours de suite, souvent fin octobre ou début novembre selon la région.",
+      en: "In Québec, winter tires are mandatory from December 1 to March 15 for passenger vehicles registered in Québec ($200 to $300 fine). Studded tires are allowed from October 15 to May 1. CAA-Québec advises installing them once the temperature hovers around 7 °C for several days in a row, often in late October or early November depending on the region.",
     },
     sources: [S.quebecPneus, S.caaPneus, S.caaHiver],
-    updatedAt: MAJ,
+    updatedAt: "2026-10-18",
   },
   "voyants-tableau-de-bord": {
     metaTitle: "Voyants du tableau de bord : signification",

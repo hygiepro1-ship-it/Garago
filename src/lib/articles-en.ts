@@ -64,13 +64,22 @@ const ARTICLES_EN_BASE: Record<string, ArticleEn> = {
   },
 
   "quand-passer-pneus-hiver-quebec": {
-    title: "Winter tires in Quebec: mandatory dates and when to install them",
+    title: "Winter tires 2026 in Quebec: mandatory dates and when to install them",
     excerpt: "The law requires winter tires from December 1 to March 15, but ideally you should install them as soon as the temperature drops below 7 °C.",
     sections: [
       {
         heading: "What Quebec law says",
         content: "In Quebec, the Highway Safety Code requires all passenger vehicles to be fitted with winter tires from December 1 to March 15 inclusive. Not following this rule can lead to a fine of $200 to $300.",
-        note: "The rule applies to all passenger vehicles registered in Quebec, including SUVs, pickup trucks and rentals. Studded tires are allowed from October 15 to May 1, and summer tires can go back on from March 16.",
+        note: "The rule applies to all passenger vehicles registered in Quebec, including SUVs, pickup trucks and rentals.",
+      },
+      {
+        heading: "Key dates for winter 2026-2027",
+        content: "Three dates frame the season in Quebec:",
+        tips: [
+          "Studded tires: allowed from October 15, 2026 to May 1, 2027",
+          "Winter tires mandatory: December 1, 2026 to March 15, 2027 inclusive",
+          "Summer tires: allowed again from March 16, 2027",
+        ],
       },
       {
         heading: "The 7 °C rule matters more than the date",
