@@ -6,9 +6,9 @@ const REG_CTI = "https://laws-lois.justice.gc.ca/eng/regulations/SOR-91-45/secti
 
 export const fr: Guide = {
   path: "/garagistes/modele-facture-garage",
-  title: "Modèle de facture de garage gratuit (Excel, TPS et TVQ) | Garago",
+  title: "Modèle de facture de garage gratuit (Excel) | Garago",
   description:
-    "Téléchargez gratuitement un modèle de facture de garage automobile pour le Québec : facture, évaluation écrite et bon de travail en Excel, avec TPS et TVQ calculées et les mentions exigées.",
+    "Modèle de facture de garage gratuit pour le Québec : facture, évaluation écrite et bon de travail en Excel, avec TPS et TVQ calculées.",
   ogDescription: "Facture, évaluation écrite et bon de travail pour garage, avec TPS et TVQ calculées. Gratuit, en Excel.",
   datePublished: "2026-10-15",
   h1: "Modèle de facture de garage gratuit, avec TPS et TVQ",
@@ -91,9 +91,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/auto-repair-invoice-template",
-  title: "Free auto repair invoice template (Excel, GST and QST) | Garago",
+  title: "Free auto repair invoice template (Excel) | Garago",
   description:
-    "Download a free auto repair invoice template for Quebec: invoice, written estimate and work order in Excel, with GST and QST calculated and the required information.",
+    "Free auto repair invoice template for Quebec: invoice, written estimate and work order in Excel, with GST and QST calculated automatically.",
   ogDescription: "Auto repair invoice, written estimate and work order with GST and QST calculated. Free, in Excel.",
   datePublished: "2026-10-15",
   h1: "Free auto repair invoice template, with GST and QST",

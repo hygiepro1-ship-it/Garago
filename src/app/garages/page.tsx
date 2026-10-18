@@ -7,8 +7,8 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Garages par ville au Québec : trouver un garage près de chez vous | Garago",
-  description: "Parcourez les garages par ville et arrondissement au Québec : adresses, avis de conducteurs et rendez-vous en ligne pour pneus d'hiver, vidange, freins et mécanique.",
+  title: "Garages par ville au Québec : trouver un garage | Garago",
+  description: "Les garages par ville et arrondissement au Québec : adresses, téléphones et avis de conducteurs pour la vidange, les pneus d'hiver et les freins.",
   alternates: { canonical: `${BASE_URL}/garages` },
 };
 

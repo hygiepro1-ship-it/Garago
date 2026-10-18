@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Conditions d'utilisation | Garago",
+  description: "Conditions d'utilisation de Garago, plateforme de rendez-vous entre conducteurs et garages du Québec : comptes, réservations, avis et responsabilités.",
+  alternates: { canonical: `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/conditions` },
 };
 
 export default function ConditionsPage() {

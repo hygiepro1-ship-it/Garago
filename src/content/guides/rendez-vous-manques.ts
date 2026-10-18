@@ -2,9 +2,9 @@ import type { Guide } from "@/components/GuidePage";
 
 export const fr: Guide = {
   path: "/garagistes/rendez-vous-manques",
-  title: "Rendez-vous manqués au garage : 7 moyens de réduire les absences | Garago",
+  title: "Rendez-vous manqués au garage : 7 solutions | Garago",
   description:
-    "Clients qui ne se présentent pas, créneaux perdus : 7 moyens concrets pour réduire les rendez-vous manqués dans un garage au Québec (confirmation, rappel, annulation facile, agenda).",
+    "Clients absents, créneaux perdus : 7 moyens concrets de réduire les rendez-vous manqués dans un garage au Québec (confirmation, rappel, annulation facile).",
   ogDescription: "Confirmation, rappel, annulation facile et agenda en ligne : comment limiter les absences dans un garage.",
   datePublished: "2026-10-14",
   h1: "Rendez-vous manqués au garage : 7 moyens de réduire les absences",
@@ -52,9 +52,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/missed-appointments",
-  title: "Auto repair shop no-shows: 7 ways to reduce missed appointments | Garago",
+  title: "Auto repair shop no-shows: 7 ways to cut them | Garago",
   description:
-    "Customers who don't show up, wasted bays: 7 practical ways for a Quebec auto repair shop to reduce missed appointments (confirmation, reminders, easy cancellation, online calendar).",
+    "Customers who don't show up, wasted bays: 7 practical ways for a Quebec auto repair shop to cut missed appointments (confirmation, reminders, cancelling).",
   ogDescription: "Confirmation, reminders, easy cancellation and an online calendar: how to cut no-shows in an auto repair shop.",
   datePublished: "2026-10-15",
   h1: "Auto repair shop no-shows: 7 ways to reduce missed appointments",

@@ -5,9 +5,9 @@ const LCAP_EN = "https://laws-lois.justice.gc.ca/eng/acts/E-1.6/section-6.html";
 
 export const fr: Guide = {
   path: "/garagistes/rappel-rendez-vous-sms",
-  title: "Rappel de rendez-vous par texto (SMS) pour garage : moins d'absences | Garago",
+  title: "Rappel de rendez-vous par texto pour garage | Garago",
   description:
-    "Pourquoi confirmer les rendez-vous de votre garage par texto : moins d'absences, moins d'appels, des créneaux récupérés à temps. Et comment Garago envoie les confirmations pour vous, au nom de votre garage.",
+    "Pourquoi confirmer les rendez-vous de votre garage par texto : moins d'absences, moins d'appels, des créneaux récupérés, et la loi anti-pourriel.",
   ogDescription: "Moins d'absences et moins d'appels : les confirmations de rendez-vous par texto, envoyées pour vous par Garago.",
   datePublished: "2026-10-15",
   h1: "Rappel de rendez-vous par texto : moins d'absences, moins d'appels",
@@ -66,9 +66,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/sms-appointment-reminders",
-  title: "SMS appointment reminders for auto repair shops: fewer no-shows | Garago",
+  title: "SMS appointment reminders for repair shops | Garago",
   description:
-    "Why confirm your shop's appointments by text: fewer no-shows, fewer calls, slots recovered in time. And how Garago sends confirmations for you, in your shop's name.",
+    "Why confirm your shop's appointments by text: fewer no-shows, fewer calls, slots recovered in time, and what Canada's anti-spam law says.",
   ogDescription: "Fewer no-shows and fewer calls: appointment confirmations by text, sent for you by Garago.",
   datePublished: "2026-10-15",
   h1: "SMS appointment reminders: fewer no-shows, fewer calls",

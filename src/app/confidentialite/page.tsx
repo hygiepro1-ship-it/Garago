@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité | Garago",
+  description: "Comment Garago recueille, utilise et protège vos renseignements personnels selon la Loi 25 du Québec : données collectées, conservation et vos droits.",
+  alternates: { canonical: `${process.env.NEXTAUTH_URL ?? "https://garagopro.ca"}/confidentialite` },
 };
 
 export default function ConfidentialitePage() {

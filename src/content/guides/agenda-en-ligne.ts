@@ -2,9 +2,9 @@ import type { Guide } from "@/components/GuidePage";
 
 export const fr: Guide = {
   path: "/garagistes/agenda-en-ligne",
-  title: "Agenda et rendez-vous en ligne pour garage : comment choisir | Garago",
+  title: "Agenda en ligne pour garage : comment choisir | Garago",
   description:
-    "Ce qu'un garage doit exiger d'un agenda de prise de rendez-vous en ligne : durée par service, nombre de portes, heures d'ouverture, rendez-vous au téléphone, mobile. Guide pour garagistes du Québec.",
+    "Ce qu'un garage doit exiger d'un agenda en ligne : durée par service, nombre de portes, heures d'ouverture, rendez-vous au téléphone, mobile.",
   ogDescription: "Les critères à vérifier avant de choisir un agenda en ligne pour votre garage.",
   datePublished: "2026-10-14",
   h1: "Agenda et prise de rendez-vous en ligne pour garage : comment choisir",
@@ -78,9 +78,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/online-scheduling-calendar",
-  title: "Online scheduling calendar for auto repair shops: how to choose | Garago",
+  title: "Auto repair shop calendar: how to choose | Garago",
   description:
-    "What an auto repair shop should expect from an online booking calendar: time per service, number of bays, opening hours, phone bookings, mobile use. A guide for Quebec garage owners.",
+    "What an auto repair shop should expect from an online calendar: time per service, number of bays, opening hours, phone bookings and mobile use.",
   ogDescription: "The criteria to check before choosing an online calendar for your auto repair shop.",
   datePublished: "2026-10-15",
   h1: "Online scheduling calendar for auto repair shops: how to choose",

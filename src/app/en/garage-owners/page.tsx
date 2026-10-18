@@ -8,9 +8,9 @@ export const metadata = pageMetadata({
   path: "/en/garage-owners",
   lang: "en",
   type: "website",
-  title: "Online booking for auto repair shops in Quebec | Fewer no-shows | Garago",
+  title: "Online booking for auto repair shops in Quebec | Garago",
   description:
-    "Online calendar and booking for auto repair shops: customers book 24/7, get a confirmation and reminder, and you cut missed appointments. 30-day free trial.",
+    "Online booking for auto repair shops: customers book 24/7, get a confirmation and a reminder, and missed appointments drop. 30-day free trial.",
 });
 
 export default function GarageOwnersPage() {

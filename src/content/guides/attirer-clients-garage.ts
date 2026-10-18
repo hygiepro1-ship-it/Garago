@@ -5,9 +5,9 @@ const COX = "https://www.coxautoinc.com/?p=2809";
 
 export const fr: Guide = {
   path: "/garagistes/attirer-clients-garage",
-  title: "Attirer plus de clients dans son garage au Québec : 8 actions concrètes | Garago",
+  title: "Attirer plus de clients dans son garage : 8 actions | Garago",
   description:
-    "Marketing de garage automobile au Québec : fiche Google, avis, site web, réservation en ligne, saison des pneus, fidélisation et partenariats. 8 actions concrètes pour remplir l'atelier.",
+    "Marketing de garage au Québec : fiche Google, avis, site web, réservation en ligne, saison des pneus et fidélisation, en 8 actions concrètes.",
   ogDescription: "Fiche Google, avis, réservation en ligne et fidélisation : 8 actions pour attirer plus de clients dans un garage.",
   datePublished: "2026-10-15",
   h1: "Attirer plus de clients dans son garage : 8 actions concrètes",
@@ -86,9 +86,9 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/get-more-customers",
-  title: "How to get more customers for your auto repair shop in Quebec: 8 actions | Garago",
+  title: "Get more customers for your repair shop: 8 actions | Garago",
   description:
-    "Auto repair shop marketing in Quebec: Google Business Profile, reviews, website, online booking, tire season, customer retention and partnerships. 8 practical actions to fill the shop.",
+    "Auto repair shop marketing in Quebec: Google Business Profile, reviews, website, online booking, tire season and customer retention, in 8 actions.",
   ogDescription: "Google Business Profile, reviews, online booking and retention: 8 actions to bring more customers to your auto repair shop.",
   datePublished: "2026-10-15",
   h1: "How to get more customers for your auto repair shop: 8 actions",
