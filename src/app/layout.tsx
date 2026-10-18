@@ -6,6 +6,12 @@ import VisitorTracker from "@/components/VisitorTracker";
 import LabelLinker from "@/components/LabelLinker";
 import JsonLd from "@/components/JsonLd";
 import Script from "next/script";
+import { Public_Sans } from "next/font/google";
+
+// Police Public Sans servie par le site lui-même (next/font) : plus de feuille de style Google Fonts qui bloque
+// l'affichage, et une police de secours aux mêmes dimensions pour que le texte ne bouge pas à son arrivée.
+// Police variable : un seul fichier couvre toutes les graisses utilisées (400 à 800).
+const publicSans = Public_Sans({ subsets: ["latin"], display: "swap", variable: "--font-public-sans" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "https://garagopro.ca"),
@@ -28,11 +34,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className="h-full" suppressHydrationWarning>
+    <html lang="fr" className={`h-full ${publicSans.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         {/* Langue de la page dès le premier affichage : les pages /en sont en anglais (le HTML commun dit « fr »).
             Exécuté avant le rendu du corps, pour les lecteurs d'écran, la traduction automatique et les robots qui exécutent le JS. */}
         <Script id="langue-page" strategy="beforeInteractive">
@@ -48,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className="min-h-full flex flex-col antialiased"
         style={{
           fontFamily:
-            "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            "var(--font-public-sans), 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
           backgroundColor: "#f8fafc",
         }}
       >
