@@ -30,6 +30,7 @@ interface AdminStats {
   garages: {
     total: number; new30d: number;
     unclaimedFiches: number; pendingClaims: number;
+    claimFunnel30d: { views: number; clicks: number; requests: number };
     byStatus: Record<string, number>; byVerification: Record<string, number>;
     noServices: number; noReviews: number;
     byCity: { city: string; count: number }[];
@@ -669,6 +670,31 @@ export default function AdminDashboard() {
             </div>
             {stats.traffic.visitors30d === 0 && (
               <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d'être activé. Ces chiffres se rempliront au fil des prochains jours.</p>
+            )}
+          </div>
+
+          {/* Entonnoir de réclamation des fiches */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h2 className="font-bold text-gray-900 mb-1">Réclamation des fiches (30 derniers jours)</h2>
+            <p className="text-xs text-gray-400 mb-4">Vues des fiches non actives, clics sur « Activez votre page », puis demandes envoyées.</p>
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6">
+              <div>
+                <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.garages.claimFunnel30d.views}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Vues de fiches</p>
+              </div>
+              <div className="hidden sm:block text-gray-300 text-2xl" aria-hidden="true">›</div>
+              <div>
+                <p className="text-2xl sm:text-3xl font-black text-gray-900">{stats.garages.claimFunnel30d.clicks}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Clics « Activez »</p>
+              </div>
+              <div className="hidden sm:block text-gray-300 text-2xl" aria-hidden="true">›</div>
+              <div>
+                <p className="text-2xl sm:text-3xl font-black" style={{ color: "#f97316" }}>{stats.garages.claimFunnel30d.requests}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wide font-semibold">Demandes envoyées</p>
+              </div>
+            </div>
+            {stats.garages.claimFunnel30d.clicks === 0 && (
+              <p className="text-xs text-gray-400 mt-3">Le suivi des clics vient d'être activé le 18 octobre 2026.</p>
             )}
           </div>
 

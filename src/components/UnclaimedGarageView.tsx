@@ -69,7 +69,10 @@ export default function UnclaimedGarageView({ garage }: Props) {
             Appeler · {garage.phone}
           </a>
           {garage.claimStatus === "non_reclamee" && (
-            <button onClick={() => setShowClaim(true)}
+            <button onClick={() => {
+                setShowClaim(true);
+                fetch(`/api/garages/${garage.slug}/claim-click`, { method: "POST" }).catch(() => {});
+              }}
               className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border"
               style={{ borderColor: "#f97316", color: "#f97316" }}>
               {en ? "Are you the owner? Activate your page" : "Vous êtes le propriétaire ? Activez votre page"}

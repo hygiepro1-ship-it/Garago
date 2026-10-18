@@ -152,6 +152,7 @@ model Garage {
   alerts       GarageAlert[]
   profileViews GarageProfileView[]
   claimRequests ClaimRequest[]
+  claimClicks   ClaimCtaClick[]
   reports       GarageReport[]
 
   @@index([ownerId])
@@ -179,6 +180,20 @@ model ClaimRequest {
 
   @@index([garageId])
   @@index([status])
+}
+
+// Clic sur « Vous êtes le propriétaire ? Activez votre page » d'une fiche non
+// réclamée : l'étape entre la vue de la fiche (GarageProfileView) et la demande
+// envoyée (ClaimRequest). Aucune donnée personnelle.
+model ClaimCtaClick {
+  id        String   @id @default(cuid())
+  garageId  String
+  createdAt DateTime @default(now())
+
+  garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  @@index([garageId, createdAt])
+  @@index([createdAt])
 }
 
 model GarageReport {
