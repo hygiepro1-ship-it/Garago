@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import ClientLayout from "@/components/ClientLayout";
@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   keywords: ["garage Québec", "garage Montréal", "rendez-vous garage en ligne", "pneus d'hiver", "changement de pneus", "vidange d'huile", "mécanicien", "réparation auto", "freins", "garage près de moi"],
 };
 
+// Viewport mobile (viewport-fit=cover pour les encoches iOS/Android) : déclaré ici pour que Next.js n'émette
+// qu'une seule balise viewport, au lieu de la sienne plus une écrite à la main.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b1f3a",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className="h-full" suppressHydrationWarning>
@@ -29,14 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="langue-page" strategy="beforeInteractive">
           {"var p=location.pathname;if(p==='/en'||p.indexOf('/en/')===0)document.documentElement.lang='en-CA'"}
         </Script>
-        {/* Viewport mobile — viewport-fit=cover pour les encoches iOS/Android */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* PWA / Add to Home Screen */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Garago" />
-        <meta name="theme-color" content="#0b1f3a" />
       </head>
       <body
         className="min-h-full flex flex-col antialiased"
