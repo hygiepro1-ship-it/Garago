@@ -6,12 +6,12 @@ const COX = "https://www.coxautoinc.com/?p=2809";
 
 export const fr: Guide = {
   path: "/garagistes/prise-de-rendez-vous-en-ligne",
-  title: "Prise de rendez-vous en ligne : le guide du garage | Garago",
+  title: "Mettre en place les rendez-vous en ligne au garage | Garago",
   description:
     "Mettre en place la prise de rendez-vous en ligne dans un garage au Québec : services et durées, portes, heures, confirmation et lien de réservation.",
   ogDescription: "Services, durées, portes, confirmation et lien de réservation : mettre en place la prise de rendez-vous en ligne dans un garage.",
   datePublished: "2026-10-15",
-  h1: "Prise de rendez-vous en ligne pour garage : le guide complet",
+  h1: "Mettre en place la prise de rendez-vous en ligne dans un garage : le guide",
   intro: "Vos clients cherchent un garage le soir, sur leur téléphone, quand l'atelier est fermé. La prise de rendez-vous en ligne leur permet de réserver à ce moment-là, sans appel. Voici comment la mettre en place correctement dans un garage, étape par étape.",
   sections: [
     {
@@ -103,12 +103,12 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/online-booking",
-  title: "Online booking for repair shops: complete guide | Garago",
+  title: "How to set up online booking in a repair shop | Garago",
   description:
     "Set up online booking in a Quebec auto repair shop: services and times, bays, hours, confirmation, and a booking link on your website and Google profile.",
   ogDescription: "Services, times, bays, confirmations and booking links: set up online booking in an auto repair shop.",
   datePublished: "2026-10-15",
-  h1: "Online booking for auto repair shops: the complete guide",
+  h1: "How to set up online booking in an auto repair shop: the guide",
   intro: "Your customers look for a garage in the evening, on their phone, when the shop is closed. Online booking lets them book right then, without a call. Here is how to set it up properly in an auto repair shop, step by step.",
   sections: [
     {

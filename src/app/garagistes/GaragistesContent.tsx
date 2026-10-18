@@ -9,11 +9,19 @@ const SIGNUP = "/inscription/garage";
 // En haut, la vidéo de présentation dans la langue de la page.
 const COPY = {
   fr: {
+    kicker: "Prise de rendez-vous en ligne pour garage",
     h1a: "Fini les rendez-vous",
     h1b: "pris au téléphone.",
     lead: "Vos clients réservent eux-mêmes en ligne, selon vos heures d'ouverture et la durée de chaque service. Chaque rendez-vous arrive dans votre tableau de bord.",
     cta: "Essayer 30 jours gratuitement",
     seeSteps: "Voir les étapes",
+    shots: {
+      title: "Garago en images",
+      list: [
+        { src: "/images/guides/agenda-garago-fr.webp", w: 2240, h: 1220, alt: "Agenda de la semaine dans Garago pour un garage à deux portes : rendez-vous confirmés en vert, à confirmer en orange, à appeler en rouge", cap: "Votre agenda : chaque rendez-vous réservé en ligne y arrive, avec son état de confirmation." },
+        { src: "/images/guides/texto-confirmation-fr.webp", w: 1800, h: 1240, alt: "Texto de Garago au nom du Garage Lavoie : rendez-vous le vendredi 16 octobre à 9 h, avec un lien pour confirmer ou annuler", cap: "La demande de confirmation envoyée au client à votre nom, deux jours avant." },
+      ],
+    },
     fine: "Carte requise · aucun prélèvement avant 30 jours",
     steps: {
       title: "De l'inscription à votre premier rendez-vous",
@@ -59,11 +67,19 @@ const COPY = {
     ],
   },
   en: {
+    kicker: "Online booking for auto repair shops",
     h1a: "No more booking",
     h1b: "appointments by phone.",
     lead: "Your customers book online themselves, within your opening hours and the real length of each service. Every appointment lands in your dashboard.",
     cta: "Try it free for 30 days",
     seeSteps: "See the steps",
+    shots: {
+      title: "Garago in pictures",
+      list: [
+        { src: "/images/guides/agenda-garago-en.webp", w: 2240, h: 1220, alt: "Weekly calendar in Garago for a two-bay shop: confirmed appointments in green, to confirm in orange, to call in red", cap: "Your calendar: every online booking lands here, with its confirmation status." },
+        { src: "/images/guides/texto-confirmation-en.webp", w: 1800, h: 1240, alt: "Garago text message in Lavoie Garage's name: appointment Friday, October 16 at 9 AM, with a link to confirm or cancel", cap: "The confirmation request sent to the customer in your name, two days ahead." },
+      ],
+    },
     fine: "Card required · no charge for 30 days",
     steps: {
       title: "From sign-up to your first appointment",
@@ -120,6 +136,8 @@ export default function GaragistesContent() {
       <div className="hero">
         <div className="wrap">
           <div style={{ maxWidth: 640 }}>
+            {/* Ligne de mots-clés : cette page est la page de référence pour « prise de rendez-vous en ligne garage » */}
+            <p className="kicker">{c.kicker}</p>
             <h1>{c.h1a}<br /><em>{c.h1b}</em></h1>
             <p className="lead">{c.lead}</p>
             <Link className="btn btn-primary" href={SIGNUP}>{c.cta}</Link>
@@ -158,6 +176,22 @@ export default function GaragistesContent() {
           <div className="steps-cta">
             <Link className="btn btn-primary" href={SIGNUP}>{c.steps.cta}</Link>
             <p className="fine">{c.steps.fine}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═════ EN IMAGES ═════ */}
+      <section className="shots-sec">
+        <div className="wrap">
+          <h2 className="sec-title">{c.shots.title}</h2>
+          <div className="shots">
+            {c.shots.list.map((s) => (
+              <figure key={s.src}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- capture statique déjà optimisée (webp) */}
+                <img src={s.src} alt={s.alt} width={s.w} height={s.h} loading="lazy" decoding="async" />
+                <figcaption>{s.cap}</figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>
