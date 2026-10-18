@@ -9,7 +9,7 @@ import ServiceIcon from "@/components/ServiceIcon";
 import { VEHICLE_MAKES, getModelsForMake, getYears } from "@/lib/vehicleData";
 import { SERVICE_CATEGORIES, QUEBEC_CITIES, serviceLabel, normalizeServiceId } from "@/lib/services";
 import { formatDistance } from "@/lib/geo";
-import { getBestPosition } from "@/lib/geolocate";
+import { getBestPosition, geolocationGranted } from "@/lib/geolocate";
 import LocationPicker from "@/components/LocationPicker";
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
@@ -158,14 +158,15 @@ function SearchContent() {
     if (!loadingMore && hasMore) fetchGarages(page + 1);
   }
 
-  // Demande automatique de position au chargement — pour tous les visiteurs
+  // Position automatique au chargement, seulement si le visiteur a déjà autorisé la localisation (pas de demande
+  // d'autorisation dès l'arrivée). Sinon, le bouton de localisation ou l'adresse saisie prennent le relais.
   useEffect(() => {
     if (!navigator.geolocation) return;
     // Même si l'URL contient déjà une position (lien, retour arrière, accueil),
     // on la rafraîchit : elle peut dater d'avant un déplacement.
-    getBestPosition()
+    geolocationGranted().then((ok) => { if (ok) getBestPosition()
       .then((fix) => { setUserPos({ lat: fix.lat, lng: fix.lng }); setAccuracy(fix.accuracy); setGeoStatus("ok"); setSortByDist(true); if (fix.accuracy > 500) setShowAddress(true); })
-      .catch((err) => { if (!hasInitPos) setGeoStatus(err.code === 1 ? "denied" : "error"); });
+      .catch((err) => { if (!hasInitPos) setGeoStatus(err.code === 1 ? "denied" : "error"); }); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

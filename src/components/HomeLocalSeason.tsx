@@ -56,6 +56,8 @@ export default function HomeLocalSeason({ lang, month }: { lang: string; month: 
         {season?.image && (
           <figure className="md:col-span-2 m-0">
             <img src={season.image.src} alt={season.image.alt} width={1200} height={800} loading="lazy" decoding="async"
+              srcSet={`${season.image.src.replace(".webp", "-700.webp")} 700w, ${season.image.src} 1200w`}
+              sizes="(min-width: 768px) 400px, calc(100vw - 32px)"
               className="w-full h-auto rounded-xl" style={{ aspectRatio: "3 / 2", objectFit: "cover" }} />
           </figure>
         )}

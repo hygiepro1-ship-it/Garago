@@ -6,7 +6,7 @@ import Link from "next/link";
 import { BRANDS } from "@/lib/vehicleBrands";
 import { getModelsForMake, getYears } from "@/lib/vehicleData";
 import BrandLogo from "@/components/BrandLogo";
-import { getBestPosition } from "@/lib/geolocate";
+import { getBestPosition, geolocationGranted } from "@/lib/geolocate";
 import { useLang } from "@/contexts/LanguageContext";
 import { localHref } from "@/lib/alternates";
 import HomeNearbyGarages from "@/components/HomeNearbyGarages";
@@ -108,10 +108,11 @@ export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
       .catch(() => {});
   }, []);
 
-  // Auto-géolocalisation à l'arrivée sur le site
+  // Géolocalisation automatique à l'arrivée, seulement si le visiteur l'a déjà autorisée : pas de demande
+  // d'autorisation dès le chargement. Sinon, les boutons « Me localiser » s'en chargent sur demande.
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation) return;
-    getBestPosition()
+    geolocationGranted().then((ok) => { if (ok) getBestPosition()
       .then(async (fix) => {
         setNearPos({ lat: fix.lat, lng: fix.lng });
         try {
@@ -127,7 +128,7 @@ export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
           }
         } catch { /* silently fail */ }
       })
-      .catch(() => {});
+      .catch(() => {}); });
   }, []);
 
   const VEHICLE_MAKES = BRANDS.map(b => b.name);

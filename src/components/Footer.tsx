@@ -92,7 +92,7 @@ export default function Footer() {
 
           {/* Conducteurs */}
           <div>
-            <h4 className="font-black text-white text-sm mb-4">{f.drivers}</h4>
+            <h2 className="font-black text-white text-sm mb-4">{f.drivers}</h2>
             <ul className="space-y-0 sm:space-y-2.5 text-sm">
               {DRIVER_LINKS.map((l) => (
                 <li key={l.href}>
@@ -104,7 +104,7 @@ export default function Footer() {
 
           {/* Garages */}
           <div>
-            <h4 className="font-black text-white text-sm mb-4">{f.garages}</h4>
+            <h2 className="font-black text-white text-sm mb-4">{f.garages}</h2>
             <ul className="space-y-0 sm:space-y-2.5 text-sm">
               {GARAGE_LINKS.map((l) => (
                 <li key={l.href}>
@@ -116,13 +116,14 @@ export default function Footer() {
 
           {/* Services : sur deux colonnes sous les deux autres listes, sur téléphone */}
           <div className="col-span-2 md:col-span-1">
-            <h4 className="font-black text-white text-sm mb-4">{f.popularServices}</h4>
+            <h2 className="font-black text-white text-sm mb-4">{f.popularServices}</h2>
             <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-6 gap-y-0 md:gap-y-2.5 text-sm">
               {SERVICE_LINKS.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="flex items-center gap-2 py-2.5 md:py-0 transition-colors hover:text-white">
+                    {/* Version 32 px de l'icône (affichée en 16 px, nette sur écran haute densité) */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={l.icon} alt="" width={16} height={16} style={{ filter: "brightness(0) invert(1)", opacity: 0.5, flexShrink: 0 }} />
+                    <img src={l.icon.replace("/icons/", "/icons/32/")} alt="" width={16} height={16} style={{ filter: "brightness(0) invert(1)", opacity: 0.5, flexShrink: 0 }} />
                     {l.label}
                   </Link>
                 </li>
