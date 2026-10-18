@@ -44,9 +44,10 @@ export interface Guide {
 
 const UI = {
   fr: {
-    home: { label: "Accueil", href: "/" }, hub: { label: "Pourquoi Garago", href: "/pourquoi-garago" },
+    home: { label: "Accueil", href: "/" },
     breadcrumb: "Fil d'Ariane", faq: "Questions fréquentes", related: "À lire aussi", relatedAria: "Guides liés", sources: "Sources",
-    crumb: { label: "Guides pour les garages", href: "/pourquoi-garago#garagistes" },
+    // Page parente réelle des guides /garagistes/… : le lien ramène à la page d'où l'on vient.
+    crumb: { label: "Pour les garages", href: "/garagistes" },
     cta: { label: "Commencer l'essai gratuit", href: "/inscription/garage", secondary: { label: "Voir les tarifs", href: "/garagistes" } },
     heroCta: { label: "Essayer Garago 30 jours gratuitement", href: "/inscription/garage" },
     sticky: {
@@ -56,9 +57,9 @@ const UI = {
     inLanguage: "fr-CA",
   },
   en: {
-    home: { label: "Home", href: "/en" }, hub: { label: "Why Garago", href: "/en/why-garago" },
+    home: { label: "Home", href: "/en" },
     breadcrumb: "Breadcrumb", faq: "Frequently asked questions", related: "Related guides", relatedAria: "Related guides", sources: "Sources",
-    crumb: { label: "Guides for garages", href: "/en/why-garago#garages" },
+    crumb: { label: "For garages", href: "/en/garage-owners" },
     cta: { label: "Start the free trial", href: "/inscription/garage", secondary: { label: "See pricing", href: "/en/garage-owners" } },
     heroCta: { label: "Try Garago free for 30 days", href: "/inscription/garage" },
     sticky: {
@@ -120,7 +121,7 @@ export default function GuidePage({
       <section style={{ background: "linear-gradient(135deg,#071428 0%,#0b1f3a 60%,#1a3a6b 100%)" }}>
         <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
           <nav aria-label={ui.breadcrumb} className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.7)" }}>
-            <Link href={ui.home.href} className="hover:underline">{ui.home.label}</Link> › <Link href={ui.hub.href} className="hover:underline">{ui.hub.label}</Link> › <Link href={c.href} className="hover:underline">{c.label}</Link>
+            <Link href={ui.home.href} className="hover:underline">{ui.home.label}</Link> › <Link href={c.href} className="hover:underline">{c.label}</Link> › <span aria-current="page">{h1}</span>
           </nav>
           <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight" style={{ textWrap: "balance" }}>{h1}</h1>
           <p className="mt-4 text-base sm:text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>{intro}</p>
