@@ -11,6 +11,7 @@ export interface VideoPage {
   file: string;       // /videos/xxx.mp4
   poster: string;     // /videos/xxx.jpg
   duration: string;   // ISO 8601
+  /** Date et heure de mise en ligne, avec le fuseau horaire (exigé par Google) : 2026-10-14T09:00:00-04:00 */
   uploadDate: string;
   transcript: string[];
   cta: { label: string; href: string };
@@ -27,7 +28,7 @@ export const VIDEOS: Record<"reserver" | "garagistes", Record<PageLang, VideoPag
       file: "/videos/garago-reserver-fr.mp4",
       poster: "/videos/garago-reserver-fr.jpg",
       duration: "PT54S",
-      uploadDate: "2026-10-14",
+      uploadDate: "2026-10-14T09:00:00-04:00",
       transcript: [
         "Trouver un garage… un vrai casse-tête.",
         "Vous appelez. Vous attendez. Et personne ne répond.",
@@ -53,7 +54,7 @@ export const VIDEOS: Record<"reserver" | "garagistes", Record<PageLang, VideoPag
       file: "/videos/garago-reserver-en.mp4",
       poster: "/videos/garago-reserver-en.jpg",
       duration: "PT54S",
-      uploadDate: "2026-10-14",
+      uploadDate: "2026-10-14T09:00:00-04:00",
       transcript: [
         "Finding a garage? A real headache.",
         "You call. You wait. And nobody picks up.",
@@ -81,7 +82,7 @@ export const VIDEOS: Record<"reserver" | "garagistes", Record<PageLang, VideoPag
       file: "/videos/garago-reservation-fr.mp4",
       poster: "/videos/garago-reservation-fr.jpg",
       duration: "PT51S",
-      uploadDate: "2026-10-14",
+      uploadDate: "2026-10-14T09:00:00-04:00",
       transcript: [
         "Fini les rendez-vous pris au téléphone.",
         "Lundi soir, votre garage est fermé. Paul ouvre votre fiche et choisit son service.",
@@ -105,7 +106,7 @@ export const VIDEOS: Record<"reserver" | "garagistes", Record<PageLang, VideoPag
       file: "/videos/garago-reservation-en.mp4",
       poster: "/videos/garago-reservation-en.jpg",
       duration: "PT51S",
-      uploadDate: "2026-10-14",
+      uploadDate: "2026-10-14T09:00:00-04:00",
       transcript: [
         "No more appointments booked over the phone.",
         "Monday night, your garage is closed. Paul opens your page and picks his service.",
