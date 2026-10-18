@@ -24,7 +24,7 @@ const TX = {
     lead: "Durées basées sur les estimations réelles de nos garagistes partenaires.",
     count: (n: number) => `${n} prestation${n > 1 ? "s" : ""}`, total: " au total",
     ready: "Prêt à réserver ?", cta1: "Comparez les garages,", cta2: "réservez en ligne.",
-    ctaSub: "Avis vérifiés · Garages qualifiés · Prise de rendez-vous instantanée",
+    ctaSub: "Garages près de chez vous · Recherche par véhicule · Réservation en ligne",
     near: "Trouver un garage près de moi", register: "Inscrire mon garage",
   },
   en: {
@@ -33,7 +33,7 @@ const TX = {
     lead: "Times based on real estimates from our partner garages.",
     count: (n: number) => `${n} service${n > 1 ? "s" : ""}`, total: " in total",
     ready: "Ready to book?", cta1: "Compare garages,", cta2: "book online.",
-    ctaSub: "Verified reviews · Qualified garages · Instant booking",
+    ctaSub: "Garages near you · Search by vehicle · Online booking",
     near: "Find a garage near me", register: "List my garage",
   },
 };

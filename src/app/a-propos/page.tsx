@@ -53,8 +53,8 @@ export default function AProposPage() {
         <h2 className={h2} style={{ color: "#0b1f3a" }}><L fr="Les avis" en="Reviews" /></h2>
         <p className={p}>
           <L
-            fr="Chaque avis est lié à un compte inscrit. Les garages peuvent y répondre et signaler un avis qui leur semble abusif. Garago ne rédige pas d'avis et n'en vend pas."
-            en="Every review is tied to a registered account. Garages can reply to reviews and report one they consider abusive. Garago does not write reviews and does not sell them."
+            fr="Seul un conducteur qui a réellement eu un rendez-vous dans un garage peut l'évaluer, et chaque avis est lié à son compte. Les garages peuvent y répondre et signaler un avis qui leur semble abusif. Garago ne rédige pas d'avis et n'en vend pas."
+            en="Only a driver who actually had an appointment at a garage can review it, and every review is tied to their account. Garages can reply to reviews and report one they consider abusive. Garago does not write reviews and does not sell them."
           />
         </p>
 

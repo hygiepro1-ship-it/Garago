@@ -26,7 +26,7 @@ export const translations = {
 
     // ── Pied de page ──────────────────────────────────────────────────────
     footer: {
-      tagline:       "La plateforme canadienne qui connecte les conducteurs avec les meilleurs garages de leur région. Avis vérifiés, recherche par véhicule exact.",
+      tagline:       "La plateforme québécoise qui relie les conducteurs aux garages de leur secteur : recherche par véhicule, avis de clients et réservation en ligne.",
       drivers:       "Conducteurs",
       garages:       "Garages",
       popularServices:"Services populaires",
@@ -561,7 +561,7 @@ export const translations = {
 
     // ── Pied de page ──────────────────────────────────────────────────────
     footer: {
-      tagline:       "The Canadian platform connecting drivers with the best garages in their area. Verified reviews, search by exact vehicle.",
+      tagline:       "The Quebec platform connecting drivers with garages in their area: search by vehicle, customer reviews and online booking.",
       drivers:       "Drivers",
       garages:       "Garages",
       popularServices:"Popular Services",
