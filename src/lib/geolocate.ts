@@ -41,3 +41,18 @@ export function getBestPosition(): Promise<Fix> {
     timer = setTimeout(() => finish(), MAX_WAIT_MS);
   });
 }
+
+/**
+ * Vrai si le visiteur a déjà autorisé la localisation pour ce site. Permet de le localiser automatiquement
+ * sans afficher de demande d'autorisation dès l'arrivée sur la page (mal vue des visiteurs et de Google) :
+ * sinon, on attend qu'il clique sur « Me localiser ».
+ */
+export async function geolocationGranted(): Promise<boolean> {
+  try {
+    if (typeof navigator === "undefined" || !navigator.permissions) return false;
+    const status = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+    return status.state === "granted";
+  } catch {
+    return false;
+  }
+}

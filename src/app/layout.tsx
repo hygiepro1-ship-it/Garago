@@ -5,7 +5,6 @@ import ClientLayout from "@/components/ClientLayout";
 import VisitorTracker from "@/components/VisitorTracker";
 import LabelLinker from "@/components/LabelLinker";
 import JsonLd from "@/components/JsonLd";
-import Script from "next/script";
 import { Public_Sans } from "next/font/google";
 
 // Police Public Sans servie par le site lui-même (next/font) : plus de feuille de style Google Fonts qui bloque
@@ -36,11 +35,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`h-full ${publicSans.variable}`} suppressHydrationWarning>
       <head>
-        {/* Langue de la page dès le premier affichage : les pages /en sont en anglais (le HTML commun dit « fr »).
-            Exécuté avant le rendu du corps, pour les lecteurs d'écran, la traduction automatique et les robots qui exécutent le JS. */}
-        <Script id="langue-page" strategy="beforeInteractive">
-          {"var p=location.pathname;if(p==='/en'||p.indexOf('/en/')===0)document.documentElement.lang='en-CA'"}
-        </Script>
         {/* PWA / Add to Home Screen */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
