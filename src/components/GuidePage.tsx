@@ -13,6 +13,8 @@ export interface GuideSection {
   bullets?: string[];
   /** Image affichée sous le titre de la section (capture de Garago). */
   image?: { src: string; alt: string; width: number; height: number; caption?: string };
+  /** Tableau comparatif (en-têtes, lignes, note de source sous le tableau). */
+  table?: { headers: string[]; rows: string[][]; note?: string };
   /** Fichiers à télécharger (modèles), affichés en boutons. */
   downloads?: (GuideLink & { note?: string })[];
 }
@@ -157,6 +159,27 @@ export default function GuidePage({
               <ul className="list-disc pl-5 space-y-2 text-base leading-relaxed text-gray-700">
                 {s.bullets.map((b) => <li key={b}>{b}</li>)}
               </ul>
+            )}
+            {s.table && (
+              <div className="mt-2 mb-3">
+                <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                  <table className="w-full text-sm text-left" style={{ minWidth: 560 }}>
+                    <thead style={{ background: "#f8fafc" }}>
+                      <tr>{s.table.headers.map((h) => <th key={h} scope="col" className="px-3 py-2.5 font-black" style={{ color: "#0b1f3a" }}>{h}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {s.table.rows.map((r) => (
+                        <tr key={r[0]} className="border-t border-gray-100 align-top">
+                          {r.map((c, i) => i === 0
+                            ? <th key={i} scope="row" className="px-3 py-2.5 font-bold text-gray-900">{c}</th>
+                            : <td key={i} className="px-3 py-2.5 text-gray-700">{c}</td>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {s.table.note && <p className="mt-2 text-xs text-gray-500">{s.table.note}</p>}
+              </div>
             )}
             {s.downloads && (
               <ul className="mt-4 grid gap-3 sm:grid-cols-2">

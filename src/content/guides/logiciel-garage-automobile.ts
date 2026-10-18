@@ -18,6 +18,23 @@ export const fr: Guide = {
       ],
     },
     {
+      h2: "Comparatif : quelques logiciels utilisés par les garages au Québec",
+      paragraphs: [
+        "Voici des outils que l'on rencontre souvent dans les garages québécois, classés selon la famille à laquelle ils appartiennent. Les logiciels de gestion d'atelier font la facturation ; Garago, lui, s'occupe des rendez-vous et fonctionne à côté de l'un d'eux.",
+      ],
+      table: {
+        headers: ["Outil", "Famille", "Ce qu'il couvre", "Origine"],
+        rows: [
+          ["GEM-CAR", "Gestion d'atelier", "Devis et facturation, bons de travail, inspection numérique, inventaire, agenda", "Montréal (Québec)"],
+          ["Mechmate", "Gestion d'atelier", "Bons de travail, facturation avec paiement en ligne, réservation en ligne, inventaire ; en français", "Québec"],
+          ["Protractor", "Gestion d'atelier", "Bons de travail, devis, facturation, inventaire, réservation en ligne", "Toronto (Ontario)"],
+          ["Modèle Excel Garago", "Modèle gratuit", "Évaluation écrite, bon de travail et facture avec TPS et TVQ calculées", "Garago"],
+          ["Garago", "Rendez-vous", "Réservation en ligne, agenda, confirmations par texto ou courriel, fiche publique ; pas de facturation", "Québec"],
+        ],
+        note: "D'après les sites des éditeurs, consultés en octobre 2026. Les fonctions et les prix changent : vérifiez-les auprès de chaque éditeur avant de choisir.",
+      },
+    },
+    {
       h2: "Pas encore de logiciel de facturation ?",
       paragraphs: [
         "Pour démarrer, un bon modèle suffit. Nous offrons gratuitement un modèle Excel avec l'évaluation écrite, le bon de travail et la facture, où la TPS et la TVQ se calculent seules.",
@@ -69,6 +86,23 @@ export const en: Guide = {
         "Shop management software handles the shop's paperwork: written estimates, work orders, invoices with GST and QST, parts and inventory, and each vehicle's history.",
         "Appointment management software fills the shop and gets customers in on time: online booking, calendar, confirmations and reminders, visibility with drivers. That's what Garago does. Many shops keep their invoicing software and add a dedicated booking tool.",
       ],
+    },
+    {
+      h2: "Comparison: some software used by repair shops in Quebec",
+      paragraphs: [
+        "Here are tools you often see in Quebec repair shops, sorted by family. Shop management software handles invoicing; Garago handles appointments and works alongside one of them.",
+      ],
+      table: {
+        headers: ["Tool", "Family", "What it covers", "Based in"],
+        rows: [
+          ["GEM-CAR", "Shop management", "Estimates and invoicing, work orders, digital inspection, inventory, scheduling", "Montréal (Quebec)"],
+          ["Mechmate", "Shop management", "Work orders, invoicing with online payment, online booking, inventory; in French", "Quebec"],
+          ["Protractor", "Shop management", "Work orders, estimates, invoicing, inventory, online booking", "Toronto (Ontario)"],
+          ["Garago Excel template", "Free template", "Written estimate, work order and invoice with GST and QST calculated", "Garago"],
+          ["Garago", "Appointments", "Online booking, calendar, text or email confirmations, public profile; no invoicing", "Quebec"],
+        ],
+        note: "Based on the vendors' websites, checked in October 2026. Features and prices change: check with each vendor before choosing.",
+      },
     },
     {
       h2: "No invoicing software yet?",
