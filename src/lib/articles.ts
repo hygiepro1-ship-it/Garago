@@ -74,8 +74,8 @@ const ARTICLES_BASE: Article[] = [
   // ── 2 ─────────────────────────────────────────────────────────────────────
   {
     slug: "quand-passer-pneus-hiver-quebec",
-    title: "Pneus d'hiver au Québec : dates obligatoires et quand les poser",
-    excerpt: "Obligatoires du 1er décembre au 15 mars, avec le pictogramme montagne et flocon : les règles, les pneus 4 saisons permis et le bon moment pour les poser (7 °C).",
+    title: "Pneus d'hiver 2026 au Québec : dates obligatoires et quand les poser",
+    excerpt: "Obligatoires du 1er décembre au 15 mars, pneus à clous permis du 15 octobre au 1er mai : les règles, les pneus 4 saisons permis et le bon moment pour les poser (7 °C).",
     category: "Pneus",
     categoryColor: "#3b82f6",
     icon: "❄️",
@@ -86,7 +86,16 @@ const ARTICLES_BASE: Article[] = [
       {
         heading: "Ce que dit la loi québécoise",
         content: "Au Québec, le Code de la sécurité routière oblige tous les véhicules de promenade à être équipés de pneus d'hiver du 1er décembre au 15 mars inclusivement. Le non-respect de cette règle peut entraîner une amende entre 200 $ et 300 $.",
-        note: "La règle s'applique à tous les véhicules de promenade immatriculés au Québec, incluant les VUS, les camionnettes et les véhicules de location. Les pneus à crampons sont permis du 15 octobre au 1er mai, et les pneus d'été peuvent être remis à partir du 16 mars.",
+        note: "La règle s'applique à tous les véhicules de promenade immatriculés au Québec, incluant les VUS, les camionnettes et les véhicules de location.",
+      },
+      {
+        heading: "Les dates à retenir pour l'hiver 2026-2027",
+        content: "Trois dates encadrent la saison au Québec :",
+        tips: [
+          "Pneus à clous (à crampons) : permis du 15 octobre 2026 au 1er mai 2027",
+          "Pneus d'hiver obligatoires : du 1er décembre 2026 au 15 mars 2027 inclusivement",
+          "Pneus d'été : permis de nouveau à partir du 16 mars 2027",
+        ],
       },
       {
         heading: "La règle des 7 °C — plus importante que la date",
