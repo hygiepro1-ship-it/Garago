@@ -59,6 +59,12 @@ const nextConfig: NextConfig = {
           ["kamille-automobiles-1", "kamille-automobiles"], ["r-r-services-1", "r-r-services"],
           ["garage-auto-frah-mecanique-generale-1", "garage-auto-frah-mecanique-generale"], ["mcc-auto-enr-1", "mcc-auto-enr"], ["mecanique-pro-expert-1", "mecanique-pro-expert"], ["napa-autopro-garage-poirier-et-poirier-inc-1", "napa-autopro-garage-poirier-et-poirier-inc"], ["pneus-mecanique-verdun-1", "pneus-mecanique-verdun"], ["solution-auto-mecanique-1", "solution-auto-mecanique"], ["sp-mecanique-1", "sp-mecanique"]]
         .map(([from, to]) => ({ source: `/garage/${from}`, destination: `/garage/${to}`, permanent: true })),
+      // Doublons fusionnés le 2026-10-18 (audit SEO : même adresse et même téléphone, ou même nom)
+      ...[["de-l-eglise-auto-inc", "auto-de-l-eglise-inc"], ["autocare-montreal-rdp", "autocare-montreal"], ["autopro-garage", "garage-les-galeries-d-anjou"],
+          ["garage-optimax-plus-inc", "optimax-plus-inc"], ["garage-rapide-beaumont", "garage-rapide"], ["garage-yves-malo-fils-inc", "garage-yves-malo-et-fils-inc"],
+          ["gmf-auto-mecanicien-garage-pointe-aux-trembles", "gmf-auto-garage-pointe-aux-trembles"], ["goodyear-auto-service-mecanique", "napa-autopro-mecanique-excellence-pierrefonds-goodyear"],
+          ["r-r-station-service-inc", "station-service-r-et-r"], ["garage-auto-fera-enrg", "garage-auto-fera"]]
+        .map(([from, to]) => ({ source: `/garage/${from}`, destination: `/garage/${to}`, permanent: true })),
     ];
   },
 };
