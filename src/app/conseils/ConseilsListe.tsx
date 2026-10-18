@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import LocalLink from "@/components/LocalLink";
 import L, { LDate } from "@/components/L";
 import { ArticleImage } from "./[slug]/ArticleImage";
 
@@ -79,9 +79,9 @@ function FeaturedArticle({ article }: { article: Article }) {
     <article className="rounded-2xl overflow-hidden mb-5 relative"
       style={{ background: "linear-gradient(160deg, #0f2744, #0b1f3a)", boxShadow: "0 8px 40px rgba(11,31,58,0.25)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
-      <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block">
+      <LocalLink href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block">
         <ArticlePhoto article={article} iconSize={120} sizes="(min-width: 896px) 896px, 100vw" />
-      </Link>
+      </LocalLink>
       <div className="p-5 pl-7 sm:p-8 sm:pl-10">
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <CategoryBadge category={article.category} categoryEn={article.categoryEn} dark />
@@ -100,11 +100,11 @@ function FeaturedArticle({ article }: { article: Article }) {
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
             <ClockIcon />{article.readTime} <L fr="min de lecture" en="min read" />
           </span>
-          <Link href={`/conseils/${article.slug}`}
+          <LocalLink href={`/conseils/${article.slug}`}
             className="text-sm font-black text-white px-5 py-2.5 rounded-xl transition-opacity hover:opacity-90"
             style={{ background: "#e0600c" }}>
             <L fr="Lire l'article" en="Read the article" />
-          </Link>
+          </LocalLink>
         </div>
       </div>
     </article>
@@ -117,9 +117,9 @@ function ArticleCard({ article }: { article: Article }) {
       style={{ border: "1px solid #e2e8f0", boxShadow: "0 2px 10px rgba(11,31,58,0.05)" }}>
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-10" style={{ background: article.categoryColor }} />
       <div className="sm:flex">
-      <Link href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block sm:w-60 sm:flex-shrink-0">
+      <LocalLink href={`/conseils/${article.slug}`} tabIndex={-1} aria-hidden="true" className="block sm:w-60 sm:flex-shrink-0">
         <ArticlePhoto article={article} iconSize={56} lazy sizes="(min-width: 640px) 240px, 100vw" />
-      </Link>
+      </LocalLink>
       <div className="p-4 pl-6 sm:p-7 sm:pl-7 min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <CategoryBadge category={article.category} categoryEn={article.categoryEn} />
@@ -135,10 +135,10 @@ function ArticleCard({ article }: { article: Article }) {
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#64748b" }}>
             <ClockIcon />{article.readTime} <L fr="min de lecture" en="min read" />
           </span>
-          <Link href={`/conseils/${article.slug}`}
+          <LocalLink href={`/conseils/${article.slug}`}
             className="text-sm font-bold transition-all hover:gap-2 inline-flex items-center min-h-[44px]" style={{ color: "#c2410c" }}>
             <L fr="Lire l'article" en="Read the article" />
-          </Link>
+          </LocalLink>
         </div>
       </div>
       </div>

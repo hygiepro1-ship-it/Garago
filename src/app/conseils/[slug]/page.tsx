@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import LocalLink from "@/components/LocalLink";
 import { ARTICLES, getArticle, getRelatedArticles, articleService } from "@/lib/articles";
 import { ArticleImage } from "./ArticleImage";
 import { ARTICLES_EN, CATEGORY_EN } from "@/lib/articles-en";
@@ -89,7 +90,7 @@ function ArticleSectionBlock({ section, en, categoryColor }: { section: ArticleS
 
 function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
   return (
-    <Link href={`/conseils/${article.slug}`}
+    <LocalLink href={`/conseils/${article.slug}`}
       className="group bg-white rounded-2xl overflow-hidden flex flex-col hover:-translate-y-0.5 transition-transform"
       style={{ boxShadow: "0 2px 10px rgba(11,31,58,0.06)", border: "1px solid #e2e8f0" }}>
       <div className="relative flex-shrink-0"
@@ -116,7 +117,7 @@ function RelatedArticleCard({ article }: { article: NonNullable<Article> }) {
         </p>
         <p className="text-xs mt-1" style={{ color: "#64748b" }}>{article.readTime} min</p>
       </div>
-    </Link>
+    </LocalLink>
   );
 }
 
@@ -153,9 +154,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="absolute top-6 left-0 right-0 px-4">
           <div className="max-w-3xl mx-auto">
             <nav className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              <Link href="/" className="hover:text-white transition-colors"><L fr="Accueil" en="Home" /></Link>
+              <LocalLink href="/" className="hover:text-white transition-colors"><L fr="Accueil" en="Home" /></LocalLink>
               <span>/</span>
-              <Link href="/conseils" className="hover:text-white transition-colors"><L fr="Conseils auto" en="Car tips" /></Link>
+              <LocalLink href="/conseils" className="hover:text-white transition-colors"><L fr="Conseils auto" en="Car tips" /></LocalLink>
               <span>/</span>
               <span style={{ color: "rgba(255,255,255,0.35)" }} className="truncate max-w-xs">{title}</span>
             </nav>
@@ -200,7 +201,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             {article.readTime} <L fr="min de lecture" en="min read" />
           </span>
           <span>·</span>
-          <Link href="/conseils" className="hover:text-orange-400 transition-colors"><L fr="Tous les conseils" en="All tips" /></Link>
+          <LocalLink href="/conseils" className="hover:text-orange-400 transition-colors"><L fr="Tous les conseils" en="All tips" /></LocalLink>
         </div>
       </div>
 
