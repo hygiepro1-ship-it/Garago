@@ -239,7 +239,8 @@ export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
                     value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
                     disabled={(f as any).disabled}>
-                    <option value="">{(f as any).disabled ? "—" : ""}</option>
+                    {/* Liste non remplie : « Choisir » plutôt qu'une case vide (le modèle reste « — » tant que la marque manque) */}
+                    <option value="">{(f as any).disabled ? "—" : (lang === "fr" ? "Choisir" : "Select")}</option>
                     {f.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>
