@@ -14,13 +14,17 @@ export function videoMetadata(v: VideoPage, lang: PageLang) {
 export default function VideoWatchPage({ video, lang, audience }: { video: VideoPage; lang: PageLang; audience: "garages" | "drivers" }) {
   const en = lang === "en";
   const home = en ? { label: "Home", href: "/en" } : { label: "Accueil", href: "/" };
+  // Il n'y a pas de page « Vidéos » : le fil ramène à la page qui présente la vidéo.
+  const parent = audience === "drivers"
+    ? (en ? { label: "Guides for drivers", href: "/en/why-garago#drivers" } : { label: "Guides pour les conducteurs", href: "/pourquoi-garago#conducteurs" })
+    : (en ? { label: "For garages", href: "/en/garage-owners" } : { label: "Pour les garages", href: "/garagistes" });
   return (
     <>
       <JsonLd data={videoJsonLd(video, lang, BASE_URL)} />
       <section style={{ background: "linear-gradient(135deg,#071428 0%,#0b1f3a 60%,#1a3a6b 100%)" }}>
         <div className="max-w-4xl mx-auto px-4 py-10 sm:py-14">
           <nav aria-label={en ? "Breadcrumb" : "Fil d'Ariane"} className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.7)" }}>
-            <Link href={home.href} className="hover:underline">{home.label}</Link> › <span>{en ? "Videos" : "Vidéos"}</span>
+            <Link href={home.href} className="hover:underline">{home.label}</Link> › <Link href={parent.href} className="hover:underline">{parent.label}</Link> › <span aria-current="page">{video.h1}</span>
           </nav>
           <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight" style={{ textWrap: "balance" }}>{video.h1}</h1>
           <div className="mt-6 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16 / 9", boxShadow: "0 24px 60px rgba(0,0,0,.45)" }}>

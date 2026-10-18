@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import JsonLd from "@/components/JsonLd";
 import { getCities, publicGarageWhere, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
-import { cityInsights, garageType } from "@/lib/city-insights";
+import { garageType } from "@/lib/city-insights";
 import CityGarageList from "./CityGarageList";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
@@ -65,7 +65,6 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
   if (!data) notFound();
   const { info, garages, others, bookableCount } = data;
   const city = info.city;
-  const insights = cityInsights(garages);
   const rated = garages.map((g) => ({
     ...g,
     avg: g.reviews.length ? g.reviews.reduce((s, r) => s + r.rating, 0) / g.reviews.length : null,
@@ -136,31 +135,6 @@ export default async function CityPage({ params }: { params: Promise<{ ville: st
       </section>
 
       <div className="max-w-5xl mx-auto px-4 py-10">
-        {/* En bref : calculé à partir des garages de la ville (rues, codes postaux, types) */}
-        {(insights.streets.length > 0 || insights.postalPrefixes.length > 0) && (
-          <section className="mb-10 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <h2 className="text-lg font-black mb-2" style={{ color: "#0b1f3a" }}>Les garages de {city} en bref</h2>
-            {insights.streets.length > 0 && (
-              <p className="text-sm leading-relaxed text-gray-700">
-                {`Les garages de ${city} se regroupent surtout ${insights.streets.length === 1 ? "sur la" : "sur les artères suivantes :"} `}
-                {insights.streets.map((st, i) => (
-                  <span key={st.name}>{i > 0 ? (i === insights.streets.length - 1 ? " et " : ", ") : ""}<strong>{st.name}</strong> ({st.count})</span>
-                ))}.
-              </p>
-            )}
-            {insights.postalPrefixes.length > 0 && (
-              <p className="mt-2 text-sm leading-relaxed text-gray-700">
-                {`Codes postaux couverts : ${insights.postalPrefixes.join(", ")}.`}
-              </p>
-            )}
-            {insights.types.length > 1 && (
-              <p className="mt-2 text-sm leading-relaxed text-gray-700">
-                {"Selon leur nom : "}{insights.types.map((t) => `${t.label.toLowerCase()} (${t.count})`).join(", ")}.
-              </p>
-            )}
-          </section>
-        )}
-
         <h2 className="text-xl font-black mb-4" style={{ color: "#0b1f3a" }}>Tous les garages de {city}</h2>
         <CityGarageList city={city} garages={rated.map((g) => ({
           slug: g.slug, name: g.name, address: g.address, postalCode: g.postalCode,
