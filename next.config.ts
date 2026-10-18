@@ -35,7 +35,15 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Images et icônes statiques : gardées une semaine par le navigateur (un jour de plus pendant la revalidation).
+    // Une image remplacée sous le même nom peut donc rester visible jusqu'à une semaine chez un visiteur déjà venu.
+    const cacheStatique = [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/icons/:path*", headers: cacheStatique },
+      { source: "/brands/:path*", headers: cacheStatique },
+      { source: "/:file(.*\\.(?:webp|png|svg|jpg))", headers: cacheStatique },
+    ];
   },
   // L'ancienne page de tarifs est remplacée par la page « Pour les garages » —
   // la redirection permanente garde les anciens liens et le référencement.
