@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import L from "@/components/L";
+import { pageMetadata } from "@/lib/alternates";
 
-const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
-
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/a-propos",
+  lang: "fr",
+  type: "website",
   title: "À propos | Garago",
-  description: "Ce qu'est Garago, comment les fiches de garages et les avis fonctionnent, et comment nous joindre.",
-  alternates: { canonical: `${BASE_URL}/a-propos` },
-};
+  description: "Ce qu'est Garago, qui l'exploite, la région couverte, comment les fiches de garages et les avis fonctionnent, et comment nous joindre.",
+});
 
 export default function AProposPage() {
   const h2 = "text-lg sm:text-xl font-black mt-10 mb-3";
@@ -55,6 +55,14 @@ export default function AProposPage() {
           <L
             fr="Seul un conducteur qui a réellement eu un rendez-vous dans un garage peut l'évaluer, et chaque avis est lié à son compte. Les garages peuvent y répondre et signaler un avis qui leur semble abusif. Garago ne rédige pas d'avis et n'en vend pas."
             en="Only a driver who actually had an appointment at a garage can review it, and every review is tied to their account. Garages can reply to reviews and report one they consider abusive. Garago does not write reviews and does not sell them."
+          />
+        </p>
+
+        <h2 className={h2} style={{ color: "#0b1f3a" }}><L fr="Qui exploite Garago" en="Who runs Garago" /></h2>
+        <p className={p}>
+          <L
+            fr="Garago est exploité par Garago Technologies Inc. Le service couvre pour l'instant Montréal et ses environs ; d'autres villes du Québec s'ajouteront à mesure que des garages s'y inscrivent."
+            en="Garago is run by Garago Technologies Inc. The service currently covers Montréal and its surroundings; other Quebec cities will be added as garages sign up there."
           />
         </p>
 

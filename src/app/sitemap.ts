@@ -30,10 +30,6 @@ const VIDEO_BY_PATH = new Map(Object.values(VIDEOS).flatMap((byLang) => Object.v
 const STATIC_ROUTES = [
   "/rechercher",
   "/prestations",
-  "/conseils",
-  "/garages",
-  "/faq",
-  "/a-propos",
   "/inscription/conducteur",
   "/inscription/garage",
   "/conditions",
@@ -55,10 +51,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Articles de conseils pour les conducteurs
-  const articleEntries: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
-    url: `${BASE_URL}/conseils/${a.slug}`,
+  // Chaque article en français (/conseils/…) et en anglais (/en/tips/…), avec ses deux versions annoncées.
+  const articleEntries: MetadataRoute.Sitemap = ARTICLES.flatMap((a) => [`/conseils/${a.slug}`, `/en/tips/${a.slug}`].map((path) => ({
+    url: `${BASE_URL}${path}`,
     lastModified: ARTICLE_EXTRAS[a.slug]?.updatedAt ?? a.publishedAt,
-  }));
+    alternates: { languages: languagesFor(path) },
+  })));
 
   const subOr = activeSubscriptionOr();
   const garages = await prisma.garage.findMany({
