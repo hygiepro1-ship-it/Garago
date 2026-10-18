@@ -39,6 +39,7 @@ export async function GET(_req: NextRequest) {
     garagesByCity,
     topByAppointments,
     leastActiveGarages,
+    unclaimedViews30d, claimClicks30d, claimRequests30d,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "DRIVER" } }),
     prisma.user.count({ where: { role: "DRIVER", createdAt: { gte: d30 } } }),
@@ -108,6 +109,11 @@ export async function GET(_req: NextRequest) {
       orderBy: { appointments: { _count: "asc" } },
       take: 5,
     }),
+
+    // Entonnoir des fiches non actives : vue → clic « Activez votre page » → demande envoyée.
+    prisma.garageProfileView.count({ where: { createdAt: { gte: d30 }, garage: { claimStatus: { in: ["non_reclamee", "en_attente"] } } } }),
+    prisma.claimCtaClick.count({ where: { createdAt: { gte: d30 } } }),
+    prisma.claimRequest.count({ where: { createdAt: { gte: d30 } } }),
   ]);
 
   const groupToMap = (rows: any[], key: string) =>
@@ -130,6 +136,7 @@ export async function GET(_req: NextRequest) {
       new30d: newRegisteredGarages30d,
       unclaimedFiches,
       pendingClaims,
+      claimFunnel30d: { views: unclaimedViews30d, clicks: claimClicks30d, requests: claimRequests30d },
       byStatus: groupToMap(garagesByStatus, "subscriptionStatus"),
       byVerification: groupToMap(garagesByVerification, "verificationStatus"),
       noServices: garagesNoServices,
