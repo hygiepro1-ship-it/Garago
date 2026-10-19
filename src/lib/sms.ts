@@ -128,13 +128,40 @@ interface RdvSmsParams {
 
 // ── Textes — c'est ici qu'on façonne les messages envoyés aux clients ─────────
 
-/** Demande de confirmation (48 h avant) : un lien pour confirmer ou annuler. */
+/**
+ * Demande de confirmation (48 h avant). Beaucoup de clients répondent « oui » par texto
+ * au lieu d'ouvrir le lien : la réponse OUI / NON est donc la consigne principale
+ * (traitée par /api/webhooks/twilio-sms), le lien reste proposé en second.
+ * En anglais, jamais « CANCEL » ni « STOP » : ce sont des mots de désabonnement chez Twilio.
+ */
 export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
   const msg = params.lang === "en"
-    ? `${smsName(params.garageName)}: appointment ${when}. Confirm or cancel: ${params.url}`
-    : `${smsName(params.garageName)}: RDV ${when}. Confirmez ou annulez: ${params.url}`;
+    ? `${smsName(params.garageName)}: appointment ${when}. Reply YES to confirm or NO to cancel. Or tap: ${params.url}`
+    : `${smsName(params.garageName)}: RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Ou touchez: ${params.url}`;
   await sendSMS(params.to, msg);
+}
+
+/** Réponses envoyées quand le client répond directement au texto de confirmation. */
+export function smsReplyText(
+  kind: "confirmed" | "cancelled" | "help",
+  params: { lang: SmsLang; garageName: string; garagePhone: string; date: string; startTime: string },
+): string {
+  const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
+  const name = smsName(params.garageName);
+  const en = params.lang === "en";
+  const text = {
+    confirmed: en
+      ? `${name}: thank you, your appointment ${when} is confirmed. Questions: ${params.garagePhone}`
+      : `${name}: merci, votre RDV du ${when} est confirmé. Questions: ${params.garagePhone}`,
+    cancelled: en
+      ? `${name}: your appointment ${when} is cancelled. To rebook: ${params.garagePhone}`
+      : `${name}: votre RDV du ${when} est annulé. Pour en reprendre un: ${params.garagePhone}`,
+    help: en
+      ? `${name}: reply YES to confirm your appointment ${when} or NO to cancel it. Questions: ${params.garagePhone}`
+      : `${name}: répondez OUI pour confirmer votre RDV du ${when} ou NON pour l'annuler. Questions: ${params.garagePhone}`,
+  }[kind];
+  return gsmSafe(text);
 }
 
 /** Le garage a déplacé le rendez-vous. */
@@ -163,4 +190,32 @@ export async function sendCancelledByGarageSMS(params: RdvSmsParams & { garagePh
     ? `${smsName(params.garageName)}: your appointment on ${when} has been cancelled. To rebook: ${params.garagePhone}`
     : `${smsName(params.garageName)}: votre RDV du ${when} est annulé. Pour le reprendre: ${params.garagePhone}`;
   await sendSMS(params.to, msg);
+}
+
+// ── Réponses reçues ───────────────────────────────────────────────────────────
+
+const YES_WORDS = new Set(["oui", "ouais", "ouaip", "yes", "yeah", "yep", "ok", "okay", "confirme", "confirmer", "confirmee", "confirm", "confirmed", "parfait", "dacc", "daccord"]);
+const NO_WORDS = new Set(["non", "no", "nope", "annule", "annuler", "annulee", "annulation"]);
+// Mots de désabonnement gérés par Twilio lui-même : on ne les interprète jamais comme une réponse.
+const OPT_OUT_WORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit", "arret", "arreter"]);
+
+/**
+ * Interprète la réponse d'un client au texto de confirmation : « Oui ! », « oui je serai là »,
+ * « 👍 », « Non désolé »… Retourne null si la réponse est ambiguë ou ne parle pas du rendez-vous.
+ */
+export function parseSmsReply(body: string): "yes" | "no" | null {
+  if (/^\s*(👍|✅|👌)/u.test(body)) return "yes";
+  // Réaction iPhone à un texto (« A aimé “…” », « Liked “…” ») : le pouce levé vaut un oui.
+  if (/^\s*(liked|loved|a aimé|a adoré|aime|adore)\s*[“"«]/iu.test(body)) return "yes";
+  if (/^\s*\S.{0,25}[“"«]/u.test(body) && /[”"»]\s*$/u.test(body)) return null;
+  const words = body.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[’']/g, "").split(/[^a-z0-9]+/).filter(Boolean);
+  if (words.length === 0 || words.some((w) => OPT_OUT_WORDS.has(w))) return null;
+  // Une lettre seule ne compte que si c'est toute la réponse (« n » de « je n'y serai pas » n'est pas un non).
+  if (words.length === 1) {
+    if (words[0] === "o" || words[0] === "y" || words[0] === "1") return "yes";
+    if (words[0] === "n" || words[0] === "2") return "no";
+  }
+  const yes = words.some((w) => YES_WORDS.has(w));
+  const no = words.some((w) => NO_WORDS.has(w));
+  return yes === no ? null : yes ? "yes" : "no";
 }

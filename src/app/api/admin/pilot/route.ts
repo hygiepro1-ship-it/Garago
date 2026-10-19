@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     const answered  = settled.filter((a) => !a.noResponseAt);
     const undelivered = withMessage.filter((a) => a.noResponseAt && !a.confirmRequestedAt);
 
-    const clientConfirmed = sent.filter((a) => a.confirmedVia === "LINK" && a.cancelledBy !== "CLIENT");
+    const clientConfirmed = sent.filter((a) => (a.confirmedVia === "LINK" || a.confirmedVia === "SMS") && a.cancelledBy !== "CLIENT");
     const clientCancelled = list.filter((a) => a.cancelledBy === "CLIENT");
     const noticeHours = clientCancelled
       .filter((a) => a.cancelledAt)
@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
       answered: answered.length,
       noReply: noReply.length,
       noReplyPhoneConfirmed: noReply.filter((a) => a.confirmedVia === "PHONE").length,
-      noReplyLateAnswer: noReply.filter((a) => a.confirmedVia === "LINK" || a.cancelledBy === "CLIENT").length,
+      noReplyLateAnswer: noReply.filter((a) => a.confirmedVia === "LINK" || a.confirmedVia === "SMS" || a.cancelledBy === "CLIENT").length,
       garageCancelled: list.filter((a) => a.cancelledBy === "GARAGE").length,
       medianResponseMinutes: median(responseMinutes),
       past: past.length,

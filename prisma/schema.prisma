@@ -549,7 +549,7 @@ model Appointment {
   // messages, et suivi des réponses (statistiques du projet pilote).
   contactChannel     String? // SMS | EMAIL | null = aucun message
   language           String    @default("fr") // fr | en
-  confirmedVia       String? // LINK (le client a cliqué) | PHONE (le garage a appelé)
+  confirmedVia       String? // LINK (le client a cliqué) | SMS (le client a répondu OUI par texto) | PHONE (le garage a appelé)
   confirmRespondedAt DateTime? // première réponse du client (confirmation ou annulation)
   noResponseAt       DateTime? // sans réponse à l'échéance : le garage a été prévenu
   cancelledBy        String? // CLIENT | GARAGE | SYSTEM
