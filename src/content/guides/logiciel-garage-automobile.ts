@@ -18,7 +18,7 @@ export const fr: Guide = {
       ],
     },
     {
-      h2: "Comparatif : quelques logiciels utilisés par les garages au Québec",
+      h2: "Quel logiciel pour un garage automobile ? Comparatif",
       paragraphs: [
         "Voici des outils que l'on rencontre souvent dans les garages québécois, classés selon la famille à laquelle ils appartiennent. Les logiciels de gestion d'atelier font la facturation ; Garago, lui, s'occupe des rendez-vous et fonctionne à côté de l'un d'eux.",
       ],
@@ -35,9 +35,11 @@ export const fr: Guide = {
       },
     },
     {
-      h2: "Pas encore de logiciel de facturation ?",
+      h2: "Existe-t-il un logiciel de garage gratuit ?",
       paragraphs: [
-        "Pour démarrer, un bon modèle suffit. Nous offrons gratuitement un modèle Excel avec l'évaluation écrite, le bon de travail et la facture, où la TPS et la TVQ se calculent seules.",
+        "Oui, avec des limites. Certains logiciels de gestion d'atelier offrent une formule gratuite réduite : Mechmate annonce par exemple un forfait à partir de 0 $ (site de l'éditeur, octobre 2026). Les fonctions avancées, comme l'inventaire ou plusieurs utilisateurs, sont en général payantes.",
+        "Pour la facturation seule, un bon modèle suffit au départ. Nous offrons gratuitement un modèle Excel avec l'évaluation écrite, le bon de travail et la facture, où la TPS et la TVQ se calculent seules.",
+        "Garago n'est pas gratuit, mais l'essai de 30 jours permet de tester la prise de rendez-vous en ligne sans frais.",
       ],
       downloads: [
         { label: "Modèle de facture de garage gratuit (Excel)", href: "/modeles/modele-facture-garage-quebec.xlsx", note: "Évaluation écrite, bon de travail et facture, avec TPS et TVQ calculées." },
@@ -58,6 +60,7 @@ export const fr: Guide = {
   faq: [
     { q: "Garago fait-il la facturation ?", a: "Non. Garago gère les rendez-vous : réservation en ligne, agenda, confirmations, fiche publique et avis. Il fonctionne à côté de votre logiciel de facturation, ou de notre modèle Excel gratuit." },
     { q: "Ai-je besoin des deux types de logiciels ?", a: "Pas forcément. Un petit garage peut facturer avec un modèle Excel et gérer ses rendez-vous avec Garago. Un logiciel de gestion devient utile quand la ressaisie et l'inventaire prennent trop de temps." },
+    { q: "Existe-t-il un logiciel de garage gratuit ?", a: "Quelques logiciels de gestion d'atelier ont une formule gratuite limitée. Pour facturer, notre modèle Excel est gratuit. Garago, lui, est payant, avec 30 jours d'essai gratuit." },
     { q: "Existe-t-il un modèle de facture gratuit ?", a: "Oui : notre modèle Excel contient l'évaluation écrite, le bon de travail et la facture, avec la TPS et la TVQ calculées automatiquement." },
     { q: "Combien coûte Garago ?", a: "109,99 $ par mois sans engagement, ou 88 $ par mois à l'année. L'essai gratuit dure 30 jours." },
   ],
@@ -72,25 +75,25 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/auto-repair-shop-software",
-  title: "Auto repair shop software in Quebec (2026) | Garago",
+  title: "Auto repair shop software in Canada (2026) | Garago",
   description:
-    "Shop management software or appointment software? The two kinds of tools for a Quebec auto repair shop, what each one does, and where Garago fits.",
+    "Shop management or appointment software? The two kinds of auto repair shop software in Canada, the free options, and where Garago fits.",
   ogDescription: "Shop management or appointment management: the two kinds of auto repair shop software, and what Garago does.",
   datePublished: "2026-10-15",
-  h1: "Auto repair shop software in Quebec: how to choose",
+  h1: "Auto repair shop software in Canada: how to choose",
   intro: "Search for auto repair shop software and you'll find tools that do completely different things. There are two kinds: knowing which one you're missing is already half the choice.",
   sections: [
     {
       h2: "Two kinds of tools, two needs",
       paragraphs: [
-        "Shop management software handles the shop's paperwork: written estimates, work orders, invoices with GST and QST, parts and inventory, and each vehicle's history.",
+        "Shop management software handles the shop's paperwork: written estimates, work orders, invoices with sales taxes, parts and inventory, and each vehicle's history.",
         "Appointment management software fills the shop and gets customers in on time: online booking, calendar, confirmations and reminders, visibility with drivers. That's what Garago does. Many shops keep their invoicing software and add a dedicated booking tool.",
       ],
     },
     {
-      h2: "Comparison: some software used by repair shops in Quebec",
+      h2: "Comparison: auto shop management software used in Canada",
       paragraphs: [
-        "Here are tools you often see in Quebec repair shops, sorted by family. Shop management software handles invoicing; Garago handles appointments and works alongside one of them.",
+        "Here are tools you often see in Canadian repair shops, sorted by family. Shop management software handles invoicing; Garago handles appointments and works alongside one of them.",
       ],
       table: {
         headers: ["Tool", "Family", "What it covers", "Based in"],
@@ -98,16 +101,19 @@ export const en: Guide = {
           ["GEM-CAR", "Shop management", "Estimates and invoicing, work orders, digital inspection, inventory, scheduling", "Montréal (Quebec)"],
           ["Mechmate", "Shop management", "Work orders, invoicing with online payment, online booking, inventory; in French", "Quebec"],
           ["Protractor", "Shop management", "Work orders, estimates, invoicing, inventory, online booking", "Toronto (Ontario)"],
+          ["Shopmonkey", "Shop management", "Jobs and estimates, purchase orders, VIN lookup, parts ordering", "United States"],
           ["Garago Excel template", "Free template", "Written estimate, work order and invoice with GST and QST calculated", "Garago"],
-          ["Garago", "Appointments", "Online booking, calendar, text or email confirmations, public profile; no invoicing", "Quebec"],
+          ["Garago", "Appointments", "Online booking, calendar, text or email confirmations, public profile; no invoicing", "Quebec, available across Canada"],
         ],
         note: "Based on the vendors' websites, checked in October 2026. Features and prices change: check with each vendor before choosing.",
       },
     },
     {
-      h2: "No invoicing software yet?",
+      h2: "Is there free auto repair shop software?",
       paragraphs: [
-        "To get started, a good template is enough. We offer a free Excel template with the written estimate, the work order and the invoice, where GST and QST calculate themselves.",
+        "Yes, with limits. Some shop management tools offer a reduced free plan: Mechmate, for example, advertises plans starting at $0, and Hibbitts Auto Pro advertises free auto repair shop software (vendors' websites, October 2026). Advanced features such as inventory or several users are usually paid.",
+        "For invoicing alone, a good template is enough to start. We offer a free Excel template with the written estimate, the work order and the invoice. It is set up for Quebec's GST and QST; outside Quebec, replace them with your province's HST or GST and PST.",
+        "Garago isn't free, but the 30-day trial lets you try online booking at no cost.",
       ],
       downloads: [
         { label: "Free auto repair invoice template (Excel)", href: "/modeles/auto-repair-invoice-template-quebec.xlsx", note: "Written estimate, work order and invoice, with GST and QST calculated." },
@@ -121,6 +127,7 @@ export const en: Guide = {
         "Confirmation requests by text or email, in your shop's name.",
         "A public page where drivers find you by service, make and city.",
         "Export your appointments to Excel, alongside your invoicing software.",
+        "Available to repair shops across Canada, in English and French.",
         "$109.99 per month with no commitment, or $88 per month on an annual plan, with a 30-day free trial.",
       ],
     },
@@ -128,6 +135,8 @@ export const en: Guide = {
   faq: [
     { q: "Does Garago do invoicing?", a: "No. Garago handles appointments: online booking, calendar, confirmations, a public page and reviews. It works alongside your invoicing software, or our free Excel template." },
     { q: "Do I need both kinds of software?", a: "Not necessarily. A small shop can invoice with an Excel template and manage appointments with Garago. Shop management software becomes useful when re-entering data and tracking inventory take too much time." },
+    { q: "Does Garago work outside Quebec?", a: "Yes. Garago is available to auto repair shops across Canada, in English and French." },
+    { q: "Is there free auto repair shop software?", a: "A few shop management tools have a limited free plan. For invoicing, our Excel template is free. Garago is paid, with a 30-day free trial." },
     { q: "Is there a free invoice template?", a: "Yes: our Excel template includes the written estimate, the work order and the invoice, with GST and QST calculated automatically." },
     { q: "How much does Garago cost?", a: "$109.99 per month with no commitment, or $88 per month on an annual plan. The free trial lasts 30 days." },
   ],
