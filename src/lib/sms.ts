@@ -132,12 +132,12 @@ interface RdvSmsParams {
  * Demande de confirmation (48 h avant). Beaucoup de clients répondent « oui » par texto
  * au lieu d'ouvrir le lien : la réponse OUI / NON est donc la consigne principale
  * (traitée par /api/webhooks/twilio-sms), le lien reste proposé en second.
- * En anglais, jamais « CANCEL » ni « STOP » : ce sont des mots de désabonnement chez Twilio.
+ * En anglais, ni « YES » ni « CANCEL » : ce sont des mots-clés réservés par Twilio (réabonnement, désabonnement).
  */
 export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
   const msg = params.lang === "en"
-    ? `${smsName(params.garageName)}: appointment ${when}. Reply YES to confirm or NO to cancel. Or tap: ${params.url}`
+    ? `${smsName(params.garageName)}: appointment ${when}. Reply OK to confirm or NO to cancel. Or tap: ${params.url}`
     : `${smsName(params.garageName)}: RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Ou touchez: ${params.url}`;
   await sendSMS(params.to, msg);
 }
@@ -158,7 +158,7 @@ export function smsReplyText(
       ? `${name}: your appointment ${when} is cancelled. To rebook: ${params.garagePhone}`
       : `${name}: votre RDV du ${when} est annulé. Pour en reprendre un: ${params.garagePhone}`,
     help: en
-      ? `${name}: reply YES to confirm your appointment ${when} or NO to cancel it. Questions: ${params.garagePhone}`
+      ? `${name}: reply OK to confirm your appointment ${when} or NO to cancel it. Questions: ${params.garagePhone}`
       : `${name}: répondez OUI pour confirmer votre RDV du ${when} ou NON pour l'annuler. Questions: ${params.garagePhone}`,
   }[kind];
   return gsmSafe(text);
