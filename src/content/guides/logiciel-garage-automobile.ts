@@ -20,24 +20,22 @@ export const fr: Guide = {
     {
       h2: "Quel logiciel pour un garage automobile ? Comparatif",
       paragraphs: [
-        "Voici des outils que l'on rencontre souvent dans les garages québécois, classés selon la famille à laquelle ils appartiennent. Les logiciels de gestion d'atelier font la facturation ; Garago, lui, s'occupe des rendez-vous et fonctionne à côté de l'un d'eux.",
+        "Le bon choix dépend de ce qui vous fait perdre le plus de temps : la paperasse de l'atelier ou les rendez-vous. Les logiciels de gestion d'atelier font la facturation ; Garago, lui, s'occupe des rendez-vous et fonctionne à côté.",
       ],
       table: {
-        headers: ["Outil", "Famille", "Ce qu'il couvre", "Origine"],
+        headers: ["Type d'outil", "Ce qu'il couvre", "Pour quel garage"],
         rows: [
-          ["GEM-CAR", "Gestion d'atelier", "Devis et facturation, bons de travail, inspection numérique, inventaire, agenda", "Montréal (Québec)"],
-          ["Mechmate", "Gestion d'atelier", "Bons de travail, facturation avec paiement en ligne, réservation en ligne, inventaire ; en français", "Québec"],
-          ["Protractor", "Gestion d'atelier", "Bons de travail, devis, facturation, inventaire, réservation en ligne", "Toronto (Ontario)"],
-          ["Modèle Excel Garago", "Modèle gratuit", "Évaluation écrite, bon de travail et facture avec TPS et TVQ calculées", "Garago"],
-          ["Garago", "Rendez-vous", "Réservation en ligne, agenda, confirmations par texto ou courriel, fiche publique ; pas de facturation", "Québec"],
+          ["Logiciel de gestion d'atelier", "Évaluations écrites, bons de travail, facturation, inventaire, historique des véhicules", "Le garage qui veut gérer toute sa paperasse dans un seul outil"],
+          ["Modèle Excel Garago (gratuit)", "Évaluation écrite, bon de travail et facture avec TPS et TVQ calculées", "Le petit garage qui démarre"],
+          ["Garago", "Réservation en ligne, agenda, confirmations par texto ou courriel, fiche publique ; pas de facturation", "Le garage qui veut remplir son agenda et réduire les rendez-vous manqués"],
         ],
-        note: "D'après les sites des éditeurs, consultés en octobre 2026. Les fonctions et les prix changent : vérifiez-les auprès de chaque éditeur avant de choisir.",
+        note: "Les fonctions et les prix varient d'un logiciel de gestion à l'autre : comparez-les avant de choisir.",
       },
     },
     {
       h2: "Existe-t-il un logiciel de garage gratuit ?",
       paragraphs: [
-        "Oui, avec des limites. Certains logiciels de gestion d'atelier offrent une formule gratuite réduite : Mechmate annonce par exemple un forfait à partir de 0 $ (site de l'éditeur, octobre 2026). Les fonctions avancées, comme l'inventaire ou plusieurs utilisateurs, sont en général payantes.",
+        "Oui, avec des limites. Certains logiciels de gestion d'atelier offrent une formule gratuite réduite ; les fonctions avancées, comme l'inventaire ou plusieurs utilisateurs, sont en général payantes.",
         "Pour la facturation seule, un bon modèle suffit au départ. Nous offrons gratuitement un modèle Excel avec l'évaluation écrite, le bon de travail et la facture, où la TPS et la TVQ se calculent seules.",
         "Garago n'est pas gratuit, mais l'essai de 30 jours permet de tester la prise de rendez-vous en ligne sans frais.",
       ],
@@ -91,27 +89,24 @@ export const en: Guide = {
       ],
     },
     {
-      h2: "Comparison: auto shop management software used in Canada",
+      h2: "Auto shop management software or appointment software: which one?",
       paragraphs: [
-        "Here are tools you often see in Canadian repair shops, sorted by family. Shop management software handles invoicing; Garago handles appointments and works alongside one of them.",
+        "The right choice depends on what costs you the most time: the shop's paperwork or the appointments. Shop management software handles invoicing; Garago handles appointments and works alongside it.",
       ],
       table: {
-        headers: ["Tool", "Family", "What it covers", "Based in"],
+        headers: ["Kind of tool", "What it covers", "Best for"],
         rows: [
-          ["GEM-CAR", "Shop management", "Estimates and invoicing, work orders, digital inspection, inventory, scheduling", "Montréal (Quebec)"],
-          ["Mechmate", "Shop management", "Work orders, invoicing with online payment, online booking, inventory; in French", "Quebec"],
-          ["Protractor", "Shop management", "Work orders, estimates, invoicing, inventory, online booking", "Toronto (Ontario)"],
-          ["Shopmonkey", "Shop management", "Jobs and estimates, purchase orders, VIN lookup, parts ordering", "United States"],
-          ["Garago Excel template", "Free template", "Written estimate, work order and invoice with GST and QST calculated", "Garago"],
-          ["Garago", "Appointments", "Online booking, calendar, text or email confirmations, public profile; no invoicing", "Quebec, available across Canada"],
+          ["Shop management software", "Written estimates, work orders, invoicing, inventory, vehicle history", "Shops that want all their paperwork in one tool"],
+          ["Garago Excel template (free)", "Written estimate, work order and invoice with GST and QST calculated", "Small shops getting started"],
+          ["Garago", "Online booking, calendar, text or email confirmations, public profile; no invoicing", "Shops that want a full calendar and fewer missed appointments, across Canada"],
         ],
-        note: "Based on the vendors' websites, checked in October 2026. Features and prices change: check with each vendor before choosing.",
+        note: "Features and prices vary from one shop management tool to another: compare them before choosing.",
       },
     },
     {
       h2: "Is there free auto repair shop software?",
       paragraphs: [
-        "Yes, with limits. Some shop management tools offer a reduced free plan: Mechmate, for example, advertises plans starting at $0, and Hibbitts Auto Pro advertises free auto repair shop software (vendors' websites, October 2026). Advanced features such as inventory or several users are usually paid.",
+        "Yes, with limits. Some shop management tools offer a reduced free plan; advanced features such as inventory or several users are usually paid.",
         "For invoicing alone, a good template is enough to start. We offer a free Excel template with the written estimate, the work order and the invoice. It is set up for Quebec's GST and QST; outside Quebec, replace them with your province's HST or GST and PST.",
         "Garago isn't free, but the 30-day trial lets you try online booking at no cost.",
       ],
