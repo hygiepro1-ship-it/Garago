@@ -36,6 +36,7 @@ const UPCOMING_WINDOW_MIN = 3 * 60;
 /**
  * « Prochains rendez-vous » : seulement ceux d'aujourd'hui en cours ou qui commencent dans les 3 prochaines heures.
  * Le reste se lit dans l'agenda, juste au-dessus : la liste reste courte même un jour chargé.
+ * S'il n'y en a aucun, la liste montre les 3 prochains rendez-vous à venir (voir isUpcomingLater).
  */
 function isUpcomingSoon(a: { date: string; startTime: string; endTime: string; status: string }): boolean {
   if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW" || a.date !== quebecTodayStr()) return false;
@@ -43,6 +44,15 @@ function isUpcomingSoon(a: { date: string; startTime: string; endTime: string; s
   const now = quebecNowMin();
   return toMin(a.endTime) > now && toMin(a.startTime) < now + UPCOMING_WINDOW_MIN;
 }
+/** Rendez-vous encore à venir (plus tard aujourd'hui ou un jour suivant) : affichés quand rien ne tombe dans les 3 prochaines heures. */
+function isUpcomingLater(a: { date: string; startTime: string; status: string }): boolean {
+  if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW") return false;
+  const today = quebecTodayStr();
+  if (a.date !== today) return a.date > today;
+  const [h, m] = a.startTime.split(":").map(Number);
+  return h * 60 + m >= quebecNowMin();
+}
+const UPCOMING_FALLBACK_COUNT = 3;
 function selectedGarageId(): string | null {
   if (typeof window === "undefined") return null;
   return new URLSearchParams(window.location.search).get("g");
@@ -1996,22 +2006,29 @@ export default function DashboardGaragePage() {
           />
 
           {/* Upcoming appointments list */}
+          {(() => {
+          const byTime = (a: any, b: any) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime);
+          const soon = appointments.filter(isUpcomingSoon).sort(byTime);
+          // Rien dans les 3 prochaines heures : on montre les prochains rendez-vous plutôt qu'une liste vide.
+          const fallback = soon.length === 0;
+          const upcoming = fallback ? appointments.filter(isUpcomingLater).sort(byTime).slice(0, UPCOMING_FALLBACK_COUNT) : soon;
+          return (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <div>
                 <h3 className="font-bold text-gray-900">{tr("Prochains rendez-vous")}</h3>
-                <p className="text-xs text-gray-500">{tr.en ? "Today, in progress or starting in the next 3 hours" : "Aujourd'hui, en cours ou dans les 3 prochaines heures"}</p>
+                <p className="text-xs text-gray-500">{fallback
+                  ? (tr.en ? "Nothing in the next 3 hours: here are the next ones" : "Rien dans les 3 prochaines heures : voici les suivants")
+                  : (tr.en ? "Today, in progress or starting in the next 3 hours" : "Aujourd'hui, en cours ou dans les 3 prochaines heures")}</p>
               </div>
             </div>
             {!rdvLoaded ? (
               <div className="text-gray-400 text-sm text-center py-8">{tr("Chargement…")}</div>
-            ) : appointments.filter(isUpcomingSoon).length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">{tr.en ? "No appointments in the next 3 hours." : "Aucun rendez-vous dans les 3 prochaines heures."}</p>
+            ) : upcoming.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">{tr.en ? "No upcoming appointments." : "Aucun rendez-vous à venir."}</p>
             ) : (
               <div className="space-y-2">
-                {appointments
-                  .filter(isUpcomingSoon)
-                  .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+                {upcoming
                   .map(a => {
                     const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
                     const dateObj = new Date(a.date + "T12:00:00");
@@ -2053,6 +2070,8 @@ export default function DashboardGaragePage() {
               </div>
             )}
           </div>
+          );
+          })()}
 
           {/* Stats grid */}
           {(() => {
