@@ -129,7 +129,11 @@ export interface CustomerMatch {
   email: string | null;
   language: string;
   contactChannel: string | null;
+  /** Rendez-vous non annulés (venus, à venir ou absents). */
   visits: number;
+  /** Annulations faites par le client lui-même (lien, texto, ou sans confirmation). */
+  cancellations: number;
+  noShows: number;
   lastDate: string | null;
   lastService: string | null;
   /** Véhicules déjà vus au garage, du plus récent au plus ancien. */
@@ -138,7 +142,7 @@ export interface CustomerMatch {
 
 // Ce qu'on lit d'un client pour l'afficher : ses derniers rendez-vous donnent ses véhicules et sa dernière visite.
 const MATCH_INCLUDE = {
-  _count: { select: { appointments: true } },
+  _count: { select: { appointments: { where: { status: { not: "CANCELLED" } } } } },
   appointments: {
     where: { status: { not: "CANCELLED" } },
     orderBy: [{ date: "desc" as const }, { startTime: "desc" as const }],
@@ -165,10 +169,36 @@ function toMatch(c: {
     id: c.id, name: c.name, phone: c.phone, email: c.email,
     language: c.language, contactChannel: c.contactChannel,
     visits: c._count.appointments,
+    cancellations: 0,
+    noShows: 0,
     lastDate: c.appointments[0]?.date ?? null,
     lastService: c.appointments[0]?.serviceName ?? null,
     vehicles,
   };
+}
+
+/**
+ * Annulations et absences de chaque client : un garage repère ainsi d'un coup d'œil
+ * les clients qui annulent souvent. Les annulations du garage ne comptent pas.
+ */
+async function withHistory(garageId: string, matches: CustomerMatch[]): Promise<CustomerMatch[]> {
+  if (matches.length === 0) return matches;
+  const rows = await prisma.appointment.groupBy({
+    by: ["customerId", "status"],
+    where: {
+      garageId,
+      customerId: { in: matches.map((m) => m.id) },
+      OR: [{ status: "NO_SHOW" }, { status: "CANCELLED", cancelledBy: { in: ["CLIENT", "SYSTEM"] } }],
+    },
+    _count: { _all: true },
+  });
+  for (const r of rows) {
+    const m = matches.find((x) => x.id === r.customerId);
+    if (!m) continue;
+    if (r.status === "NO_SHOW") m.noShows = r._count._all;
+    else m.cancellations = r._count._all;
+  }
+  return matches;
 }
 
 /** Clients du garage dont le nom (ou le téléphone) contient ce que le garage est en train de taper. */
@@ -189,10 +219,10 @@ export async function searchCustomers(garageId: string, query: string, limit = 6
 
   // Les noms qui commencent par ce qui est tapé (le prénom) passent devant.
   const rank = (key: string) => (key.startsWith(nk) ? 0 : key.includes(` ${nk}`) ? 1 : 2);
-  return customers
+  return withHistory(garageId, customers
     .sort((a, b) => rank(a.nameKey) - rank(b.nameKey))
     .slice(0, limit)
-    .map(toMatch);
+    .map(toMatch));
 }
 
 export interface CustomerPage { customers: CustomerMatch[]; total: number; page: number; pageSize: number }
@@ -220,7 +250,7 @@ export async function listCustomers(garageId: string, query: string, page: numbe
     take: pageSize,
     include: MATCH_INCLUDE,
   });
-  return { customers: customers.map(toMatch), total, page: current, pageSize };
+  return { customers: await withHistory(garageId, customers.map(toMatch)), total, page: current, pageSize };
 }
 
 export interface CustomerEdit { name: string; phone: string; email: string | null; language: string; contactChannel: "SMS" | "EMAIL" | "NONE" }

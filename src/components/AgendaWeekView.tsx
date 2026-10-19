@@ -22,6 +22,8 @@ export interface WeekAppointment {
   confirmationStatus?: string;
   /** Poste de travail attribué (1..capacité), s'il y en a un. */
   bay?: number | null;
+  /** CLIENT | GARAGE | SYSTEM (créneau libéré faute de confirmation) */
+  cancelledBy?: string | null;
 }
 
 export interface WeekAvailability { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }
@@ -40,6 +42,31 @@ export const PAST_HATCH ="repeating-linear-gradient(135deg, #ffffff 0 6px, #e8ed
  * Les clics passent au travers : un rendez-vous passé s'ouvre toujours.
  */
 export const PAST_OVERLAY = "repeating-linear-gradient(135deg, rgba(255,255,255,0.5) 0 6px, rgba(71,85,105,0.38) 6px 7.5px)";
+
+/**
+ * Rendez-vous annulé : gardé en mémoire et affiché sur demande (« Afficher les annulés »),
+ * en gris hachuré et barré. Il ne bloque jamais le créneau : un autre client peut le reprendre.
+ */
+export const CANCELLED_STYLE = {
+  bg: "repeating-linear-gradient(135deg, #f8fafc 0 5px, #e2e8f0 5px 6px)",
+  border: "#94a3b8",
+  text: "#64748b",
+};
+/** Largeur de la bande d'un annulé quand un autre rendez-vous occupe le même créneau. */
+export const CANCELLED_STRIP = 14;
+
+export function cancelledByLabel(a: { cancelledBy?: string | null }, lang: string): string {
+  const en = lang === "en";
+  return a.cancelledBy === "CLIENT" ? (en ? "Cancelled by the customer" : "Annulé par le client")
+    : a.cancelledBy === "GARAGE" ? (en ? "Cancelled by the garage" : "Annulé par le garage")
+    : a.cancelledBy === "SYSTEM" ? (en ? "Released: not confirmed" : "Libéré : non confirmé")
+    : (en ? "Cancelled" : "Annulé");
+}
+
+/** « 1 annulé » / « 2 annulés » */
+export function cancelledCount(n: number, lang: string): string {
+  return lang === "en" ? `${n} cancelled` : `${n} annulé${n > 1 ? "s" : ""}`;
+}
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
@@ -77,8 +104,10 @@ function layout(appts: WeekAppointment[]): { appt: WeekAppointment; lane: number
 }
 
 export default function AgendaWeekView({
-  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay, onPickBusySlot,
+  days, appointments, availability, capacity, selectedDate, lang, onPickSlot, onPickAppointment, blocked = [], rowHeight = 30, byLoad = false, onPickDay, onPickBusySlot, showCancelled = false,
 }: {
+  /** Afficher les rendez-vous annulés (gris hachuré, barrés) au lieu de les masquer. */
+  showCancelled?: boolean;
   /** Clic sur une demi-heure où des rendez-vous sont déjà pris (affichage par portes) : montrer ces rendez-vous. */
   onPickBusySlot?: (date: string, time: string) => void;
   /**
@@ -102,6 +131,7 @@ export default function AgendaWeekView({
 }) {
   const ROW_H = rowHeight;
   const active = appointments.filter((a) => a.status !== "CANCELLED");
+  const cancelled = appointments.filter((a) => a.status === "CANCELLED");
   const hoursOf = (date: string) => {
     const dow = new Date(date + "T12:00:00").getDay();
     const h = availability.find((a) => a.dayOfWeek === dow);
@@ -172,6 +202,8 @@ export default function AgendaWeekView({
           const dt = new Date(d + "T12:00:00");
           const closed = !hoursOf(d);
           const list = active.filter((a) => a.date === d).sort((x, y) => x.startTime.localeCompare(y.startTime));
+          const dayCancelled = cancelled.filter((a) => a.date === d);
+          const shownList = showCancelled ? [...list, ...dayCancelled].sort((x, y) => x.startTime.localeCompare(y.startTime)) : list;
           const past = d < todayStr;
           const shown = isShown(d);
           const toCall = list.filter((a) => a.confirmationStatus === "NO_RESPONSE" && a.status === "CONFIRMED").length;
@@ -180,9 +212,9 @@ export default function AgendaWeekView({
               className="relative" style={{ background: d === selectedDate ? "#f8fafc" : undefined }}>
               {past && <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none" style={{ background: PAST_OVERLAY }} />}
               <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: d === todayStr ? "#fff7ed" : "#f8fafc" }}>
-                <button type="button" onClick={() => setShownDays({ ...shownDays, [d]: !shown })} aria-expanded={shown} disabled={list.length === 0}
+                <button type="button" onClick={() => setShownDays({ ...shownDays, [d]: !shown })} aria-expanded={shown} disabled={shownList.length === 0}
                   className="min-w-0 flex-1 flex items-center gap-2 text-left min-h-[44px]" style={{ touchAction: "manipulation" }}>
-                  {list.length > 0 && <span aria-hidden="true" className="text-gray-500 text-xs w-3 shrink-0">{shown ? "▾" : "▸"}</span>}
+                  {shownList.length > 0 && <span aria-hidden="true" className="text-gray-500 text-xs w-3 shrink-0">{shown ? "▾" : "▸"}</span>}
                   <span className="min-w-0">
                     <span className="block text-sm font-black capitalize" style={{ color: closed ? "#94a3b8" : "#0b1f3a" }}>
                       {dt.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "short" })}
@@ -191,6 +223,7 @@ export default function AgendaWeekView({
                     <span className="block text-xs text-gray-500">
                       {closed && list.length === 0 ? tr("Fermé", "Closed") : list.length === 0 ? tr("Aucun rendez-vous", "No appointments") : tr(`${list.length} rendez-vous`, `${list.length} appointment${list.length > 1 ? "s" : ""}`)}
                       {toCall > 0 && <span className="font-bold" style={{ color: "#b91c1c" }}> · {toCall} {tr("à appeler", "to call")}</span>}
+                      {dayCancelled.length > 0 && <span> · {cancelledCount(dayCancelled.length, lang)}</span>}
                     </span>
                   </span>
                 </button>
@@ -202,16 +235,17 @@ export default function AgendaWeekView({
                   </button>
                 )}
               </div>
-              {shown && list.map((a) => {
-                const c = apptColors(a);
+              {shown && shownList.map((a) => {
+                const isCancelled = a.status === "CANCELLED";
+                const c = isCancelled ? CANCELLED_STYLE : apptColors(a);
                 return (
                   <button key={a.id} type="button" onClick={() => onPickAppointment(a)}
                     className="w-full text-left flex items-center gap-3 px-3 min-h-[56px] py-2"
                     style={{ borderLeft: `4px solid ${c.border}`, background: c.bg, color: c.text, touchAction: "manipulation" }}>
-                    <span className="text-sm font-black tabular-nums shrink-0">{a.startTime}</span>
+                    <span className={`text-sm font-black tabular-nums shrink-0${isCancelled ? " line-through" : ""}`}>{a.startTime}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold truncate">{a.customerName}</span>
-                      <span className="block text-xs truncate">{a.serviceName ? `${translateServiceName(a.serviceName, lang)} · ` : ""}{stateLabel(a)}</span>
+                      <span className={`block text-sm font-semibold truncate${isCancelled ? " line-through" : ""}`}>{a.customerName}</span>
+                      <span className="block text-xs truncate">{a.serviceName ? `${translateServiceName(a.serviceName, lang)} · ` : ""}{isCancelled ? cancelledByLabel(a, lang) : stateLabel(a)}</span>
                     </span>
                     <span aria-hidden="true" className="text-lg">›</span>
                   </button>
@@ -231,12 +265,14 @@ export default function AgendaWeekView({
           {days.map((d) => {
             const dt = new Date(d + "T12:00:00");
             const closed = !hoursOf(d);
+            const nCancelled = cancelled.filter((a) => a.date === d).length;
             const style = { background: d === selectedDate ? "#0b1f3a" : d === todayStr ? "#fff7ed" : undefined, color: d === selectedDate ? "#fff" : closed ? "#94a3b8" : "#0b1f3a" };
             const content = (
               <>
                 <span className="block text-[11px] font-bold uppercase opacity-70">{dt.toLocaleDateString(locale, { weekday: "short" }).replace(".", "")}</span>
                 <span className="block text-sm font-black leading-tight">{dt.getDate()}</span>
                 {closed && <span className="block text-[10px] font-semibold">{tr("Fermé", "Closed")}</span>}
+                {nCancelled > 0 && <span className="block text-[10px] font-semibold opacity-75">{cancelledCount(nCancelled, lang)}</span>}
               </>
             );
             return onPickDay ? (
@@ -328,17 +364,38 @@ export default function AgendaWeekView({
                   );
                 })}
 
+                {!byLoad && showCancelled && cancelled.filter((a) => a.date === d).map((appt) => {
+                  // Créneau repris par un autre client : l'annulé devient une fine bande à droite.
+                  const strip = dayAppts.some((a) => toMin(a.startTime) < toMin(appt.endTime) && toMin(a.endTime) > toMin(appt.startTime));
+                  const top = ((toMin(appt.startTime) - from) / STEP) * ROW_H;
+                  const height = Math.max(((toMin(appt.endTime) - toMin(appt.startTime)) / STEP) * ROW_H - 2, 16);
+                  return (
+                    <button key={appt.id} type="button" onClick={() => onPickAppointment(appt)}
+                      title={`${cancelledByLabel(appt, lang)} · ${appt.startTime}–${appt.endTime} · ${appt.customerName}`}
+                      aria-label={`${cancelledByLabel(appt, lang)} : ${appt.customerName}, ${appt.startTime}`}
+                      className="absolute text-left rounded-md px-1 py-0.5 overflow-hidden"
+                      style={{
+                        top: top + 1, height, right: 2, ...(strip ? { width: CANCELLED_STRIP } : { left: 2 }),
+                        background: CANCELLED_STYLE.bg, border: `1px dashed ${CANCELLED_STYLE.border}`, color: CANCELLED_STYLE.text, touchAction: "manipulation",
+                      }}>
+                      {!strip && <span className="block text-[11px] font-semibold leading-tight truncate line-through"><span className="tabular-nums">{appt.startTime}</span> {appt.customerName}</span>}
+                    </button>
+                  );
+                })}
+
                 {!byLoad && layout(dayAppts).map(({ appt, lane, lanes }) => {
                   const c = apptColors(appt);
                   const top = ((toMin(appt.startTime) - from) / STEP) * ROW_H;
                   const height = Math.max(((toMin(appt.endTime) - toMin(appt.startTime)) / STEP) * ROW_H - 2, 16);
                   const oneLine = height < 30;
+                  // Laisse voir la bande d'un annulé sur le même créneau (dernière colonne seulement).
+                  const room = showCancelled && lane === lanes - 1 && cancelled.some((x) => x.date === d && toMin(x.startTime) < toMin(appt.endTime) && toMin(x.endTime) > toMin(appt.startTime)) ? CANCELLED_STRIP + 2 : 0;
                   return (
                     <button key={appt.id} type="button" onClick={() => onPickAppointment(appt)}
                       title={`${appt.startTime}–${appt.endTime} · ${appt.customerName}${appt.serviceName ? ` · ${appt.serviceName}` : ""}`}
                       className="absolute text-left rounded-md px-1 py-0.5 overflow-hidden"
                       style={{
-                        top: top + 1, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - 4px)`,
+                        top: top + 1, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - ${4 + room}px)`,
                         background: c.bg, borderLeft: `3px solid ${c.border}`, color: c.text, touchAction: "manipulation",
                       }}>
                       {oneLine ? (
@@ -375,6 +432,7 @@ export default function AgendaWeekView({
             <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff7ed", borderLeft: "3px solid #fb923c" }} />{tr("À confirmer", "To confirm")}</span>
             <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#ecfdf5", borderLeft: "3px solid #34d399" }} />{tr("Confirmé", "Confirmed")}</span>
             <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: "#fff1f2", borderLeft: "3px solid #f87171" }} />{tr("À appeler", "To call")}</span>
+            {showCancelled && <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: CANCELLED_STYLE.bg, border: `1px dashed ${CANCELLED_STYLE.border}` }} />{tr("Annulé", "Cancelled")}</span>}
           </>
         )}
         <span className="flex items-center gap-1.5"><i className="inline-block w-3 h-3 rounded-sm" style={{ background: `${PAST_OVERLAY}, #ecfdf5`, border: "1px solid #e2e8f0" }} />{tr("Journée passée", "Past day")}</span>

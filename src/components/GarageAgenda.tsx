@@ -8,8 +8,8 @@
  * l'annuler.
  */
 
-import { useEffect, useState, type ReactNode } from "react";
-import AgendaWeekView, { type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import AgendaWeekView, { cancelledByLabel, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
 import AgendaDayView, { assignPosts } from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
 import { findNextFreeStart } from "@/lib/availability";
@@ -41,6 +41,8 @@ export interface AgendaAppointment {
   confirmedVia?: string | null;
   /** Poste de travail attribué (1..capacité), s'il y en a un. */
   bay?: number | null;
+  cancelledBy?: string | null;
+  cancelledAt?: string | null;
 }
 
 interface AgendaService { categoryId: string; categoryName?: string; name?: string; category?: { name?: string }; durationMin?: number | null }
@@ -87,6 +89,19 @@ export function confirmationLabel(a: Pick<AgendaAppointment, "contactChannel" | 
     default: return null;
   }
 }
+
+/** « 2 annulations · 1 absence », ou null si le client n'en a aucune. */
+export function historyLabel(c: { cancellations: number; noShows: number }, en: boolean): string | null {
+  const parts = [
+    c.cancellations > 0 ? (en ? `${c.cancellations} cancellation${c.cancellations > 1 ? "s" : ""}` : `${c.cancellations} annulation${c.cancellations > 1 ? "s" : ""}`) : "",
+    c.noShows > 0 ? (en ? `${c.noShows} no-show${c.noShows > 1 ? "s" : ""}` : `${c.noShows} absence${c.noShows > 1 ? "s" : ""}`) : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
+const SHOW_CANCELLED_KEY = "agenda-show-cancelled";
+const subscribeStorage = (cb: () => void) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); };
+const readShowCancelled = () => { try { return localStorage.getItem(SHOW_CANCELLED_KEY) === "1"; } catch { return false; } };
 
 const input = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-orange-400";
 const label = "block text-[11px] font-semibold text-gray-500 mb-0.5";
@@ -178,6 +193,15 @@ export default function GarageAgenda({
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   // Vue « jour » (une colonne par poste), « semaine » (demi-heure par demi-heure) ou « mois » (charge de chaque jour).
   const [view, setView] = useState<"day" | "week" | "month">("week");
+  // Rendez-vous annulés : masqués par défaut (la grille reste lisible), affichables d'un clic. Choix gardé sur cet appareil.
+  const storedShowCancelled = useSyncExternalStore(subscribeStorage, readShowCancelled, () => false);
+  const [showCancelledChoice, setShowCancelledChoice] = useState<boolean | null>(null);
+  const showCancelled = showCancelledChoice ?? storedShowCancelled;
+  function toggleCancelled() {
+    const next = !showCancelled;
+    setShowCancelledChoice(next);
+    try { localStorage.setItem(SHOW_CANCELLED_KEY, next ? "1" : "0"); } catch {}
+  }
   const [dayRef, setDayRef] = useState(today);
   // À partir de trois postes, des rendez-vous côte à côte dans une colonne de la semaine
   // deviennent illisibles : la semaine montre alors les postes pris, et le détail se lit au jour.
@@ -505,6 +529,10 @@ export default function GarageAgenda({
     }
   }
 
+  const monthPrefix = `${monthRef.year}-${String(monthRef.month + 1).padStart(2, "0")}`;
+  const visibleCancelled = appointments.filter((a) => a.status === "CANCELLED" && (
+    view === "day" ? a.date === dayRef : view === "week" ? a.date >= days[0] && a.date <= days[6] : a.date.startsWith(monthPrefix)
+  )).length;
   const monthLabel = new Date(monthRef.year, monthRef.month, 1).toLocaleDateString(locale, { month: "long", year: "numeric" });
   const weekLabel = `${new Date(days[0] + "T12:00:00").toLocaleDateString(locale, { day: "numeric", month: "short" })} – ${new Date(days[6] + "T12:00:00").toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}`;
   const navBtn = "w-11 h-11 sm:w-8 sm:h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 font-bold";
@@ -542,6 +570,12 @@ export default function GarageAgenda({
               {en ? "Updated at" : "Mis à jour à"} {updatedAt.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
             </span>
           )}
+          <button type="button" onClick={toggleCancelled} aria-pressed={showCancelled}
+            title={tr("Les rendez-vous annulés sont gardés : affichez-les pour voir qui a annulé et quand")}
+            className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg border font-semibold"
+            style={{ background: showCancelled ? "#0b1f3a" : "#fff", color: showCancelled ? "#fff" : "#475569", borderColor: showCancelled ? "#0b1f3a" : "#e2e8f0" }}>
+            {showCancelled ? tr("Masquer les annulés") : tr("Afficher les annulés")}{visibleCancelled > 0 ? ` (${visibleCancelled})` : ""}
+          </button>
           <a href={exportHref} className="text-xs font-semibold underline text-gray-600 inline-flex items-center min-h-[44px] sm:min-h-0" title={tr("Télécharger tous vos rendez-vous dans un fichier Excel")}>{tr("Exporter (Excel)")}</a>
           <button type="button" onClick={() => openFormAtNextFree(view === "day" ? dayRef : view === "month" || (today >= days[0] && today <= days[6]) ? today : days[0])}
             className="text-white px-4 min-h-[44px] sm:min-h-0 sm:px-3 sm:py-1.5 rounded-lg text-sm font-semibold" style={{ background: "#e0600c" }}>
@@ -574,6 +608,7 @@ export default function GarageAgenda({
           lang={lang}
           onPickSlot={openForm}
           onPickAppointment={(a) => openAppointment(a.id)}
+          showCancelled={showCancelled}
         />
       ) : view === "week" ? (
         <AgendaWeekView
@@ -589,6 +624,7 @@ export default function GarageAgenda({
           onPickSlot={openForm}
           onPickBusySlot={(date, time) => setSlotPick({ date, time })}
           onPickAppointment={(a) => openAppointment(a.id)}
+          showCancelled={showCancelled}
         />
       ) : (
         <AgendaMonthView
@@ -601,6 +637,7 @@ export default function GarageAgenda({
           lang={lang}
           onPickDay={showWeekOf}
           onPickAppointment={(a) => openAppointment(a.id)}
+          showCancelled={showCancelled}
         />
       )}
 
@@ -704,6 +741,11 @@ export default function GarageAgenda({
               {known && (
                 <p className="text-[11px] font-semibold mt-0.5" style={{ color: "#15803d" }}>
                   Déjà client{known.lastDate ? ` · ${en ? "last appointment on" : "dernier rendez-vous le"} ${shortDate(known.lastDate, lang)}` : ""}
+                </p>
+              )}
+              {known && historyLabel(known, en) && (
+                <p className="text-[11px] font-semibold" style={{ color: known.noShows > 0 || known.cancellations >= 2 ? "#b91c1c" : "#b45309" }}>
+                  {historyLabel(known, en)}
                 </p>
               )}
             </div>
@@ -856,10 +898,17 @@ export default function GarageAgenda({
           <div className="space-y-2.5 text-sm">
             <div className="flex flex-wrap gap-1.5">
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-100 text-gray-700">{tr(STATUS_LABEL[open.status] ?? open.status)}</span>
-              {(() => { const c = confirmationLabel(open, tr, lang === "en"); return c && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: c.bg, color: c.color }}>{c.label}</span>; })()}
+              {open.status !== "CANCELLED" && (() => { const c = confirmationLabel(open, tr, lang === "en"); return c && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: c.bg, color: c.color }}>{c.label}</span>; })()}
               {open.source === "ONLINE" && <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">{tr("Réservé en ligne")}</span>}
               {capacity > 1 && open.bay && <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#e0e7ff", color: "#1e3a8a" }}>{en ? `Bay ${open.bay}` : `Porte ${open.bay}`}</span>}
             </div>
+            {open.status === "CANCELLED" && (
+              <p className="text-xs rounded-lg px-2.5 py-2" style={{ background: "#f8fafc", border: "1px dashed #94a3b8", color: "#475569" }}>
+                <b>{cancelledByLabel(open, lang)}</b>
+                {open.cancelledAt && <> {en ? "on" : "le"} {new Date(open.cancelledAt).toLocaleString(locale, { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</>}
+                . {en ? "The slot is free for another customer; this record is kept for the history." : "Le créneau est libre pour un autre client ; cette fiche est gardée pour l'historique."}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               <a href={`tel:${open.customerPhone}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d" }}>{open.customerPhone}</a>
               {open.customerEmail && <a href={`mailto:${open.customerEmail}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm truncate max-w-full" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8" }}>{open.customerEmail}</a>}

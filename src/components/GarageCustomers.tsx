@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Dialog, Segmented, gfetch } from "@/components/GarageAgenda";
+import { Dialog, Segmented, gfetch, historyLabel } from "@/components/GarageAgenda";
 import type { CustomerMatch, CustomerPage } from "@/lib/customers";
 import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
@@ -146,6 +146,11 @@ export default function GarageCustomers({
                       {c.lastDate ? ` · ${en ? "last on" : "dernier le"} ${shortDate(c.lastDate, en)}` : ""}
                       {c.language === "en" ? (en ? " · English" : " · anglais") : ""}
                     </p>
+                    {historyLabel(c, en) && (
+                      <p className="text-[11px] font-semibold truncate" style={{ color: c.noShows > 0 || c.cancellations >= 2 ? "#b91c1c" : "#b45309" }}>
+                        {historyLabel(c, en)}
+                      </p>
+                    )}
                   </div>
                   <a href={`tel:${c.phone}`} className="order-3 sm:order-none col-span-2 sm:col-span-1 inline-flex items-center min-h-[44px] sm:min-h-0 text-sm font-semibold tabular-nums whitespace-nowrap" style={{ color: "#15803d" }}>{c.phone}</a>
                   <p className="order-3 sm:order-none col-span-2 sm:col-span-1 text-sm text-gray-700 truncate min-w-0">
