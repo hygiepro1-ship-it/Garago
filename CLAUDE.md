@@ -16,3 +16,10 @@ Skills are located in the `skills-src/` directory — each contains a `SKILL.md`
 
 To use a skill, read the `SKILL.md` file in the corresponding `skills-src/<name>/` directory.
 For a comprehensive design review, start with `webdesign-review` which orchestrates all domain skills.
+
+## Publication des changements
+
+- Faire les modifications en local, sans rien publier.
+- Expliquer ce qui change et **demander l'accord explicite** avant toute publication.
+- Avec cet accord : pousser **directement sur `main`** (pas de branche ni de pull request). Vercel déploie automatiquement `main` en production.
+- Sans accord explicite, rien n'est poussé sur `main`.
