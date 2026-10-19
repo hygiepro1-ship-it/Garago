@@ -14,7 +14,7 @@ import BrandLogo from "@/components/BrandLogo";
 import { GARAGE_LANGUAGES, parseLanguages } from "@/lib/languages";
 import ServiceIcon from "@/components/ServiceIcon";
 import { useLang } from "@/contexts/LanguageContext";
-import GarageAgenda from "@/components/GarageAgenda";
+import GarageAgenda, { confirmationLabel } from "@/components/GarageAgenda";
 import GoogleReviewCta from "@/components/GoogleReviewCta";
 import GarageCustomers from "@/components/GarageCustomers";
 import { useTr } from "@/lib/dashboard-en";
@@ -467,11 +467,21 @@ function DescriptionSection({
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
   PENDING:   { bg: "#fef3c7", color: "#92400e", label: "En attente" },
-  CONFIRMED: { bg: "#d1fae5", color: "#065f46", label: "Confirmé"   },
+  // Statut « à l'agenda » : ne dit rien de la réponse du client (voir confirmationLabel).
+  CONFIRMED: { bg: "#f1f5f9", color: "#475569", label: "Prévu"      },
   COMPLETED: { bg: "#ede9fe", color: "#5b21b6", label: "Terminé"    },
   CANCELLED: { bg: "#fee2e2", color: "#991b1b", label: "Annulé"     },
   NO_SHOW:   { bg: "#fee2e2", color: "#991b1b", label: "Absent"     },
 };
+
+/** Badge d'un rendez-vous : la réponse du client quand une confirmation est en jeu, sinon le statut à l'agenda. */
+function statusBadge(a: any, tr: ((fr: string) => string) & { en?: boolean }): { bg: string; color: string; label: string } {
+  if (a.status === "PENDING" || a.status === "CONFIRMED") {
+    const c = confirmationLabel(a, tr, !!tr.en);
+    if (c) return { bg: c.bg, color: c.color, label: c.label };
+  }
+  return STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+}
 
 // ─── Ambassador overview card ─────────────────────────────────────────────────
 
@@ -547,7 +557,7 @@ function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlo
             {multiAppts
               .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
               .map(a => {
-                const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                const sc = statusBadge(a, tr);
                 const dFr = new Date(a.date + "T12:00:00").toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
                 return (
                   <div key={a.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -2030,7 +2040,7 @@ export default function DashboardGaragePage() {
               <div className="space-y-2">
                 {upcoming
                   .map(a => {
-                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                    const sc = statusBadge(a, tr);
                     const dateObj = new Date(a.date + "T12:00:00");
                     const dateFr = dateObj.toLocaleDateString(tr.locale, { weekday: "short", day: "numeric", month: "short" });
                     return (
@@ -2819,7 +2829,7 @@ export default function DashboardGaragePage() {
                 <div className="space-y-3 mb-4">
                   <p className="text-sm font-semibold text-gray-700">Rendez-vous ({selectedDayAppts.length})</p>
                   {selectedDayAppts.map(a => {
-                    const sc = STATUS_COLORS[a.status] ?? STATUS_COLORS.PENDING;
+                    const sc = statusBadge(a, tr);
                     return (
                       <div key={a.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                         <div className="text-center min-w-[50px]">

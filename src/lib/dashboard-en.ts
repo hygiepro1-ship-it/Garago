@@ -136,6 +136,7 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Confirmé": "Confirmed",
   "Confirmé par le client": "Confirmed by the customer",
   "Confirmé par téléphone": "Confirmed by phone",
+  "Confirmé par texto": "Confirmed by text",
   "Congé, formation, fermeture exceptionnelle…": "Day off, training, exceptional closure…",
   "Copier": "Copy",
   "Copier le code": "Copy the code",

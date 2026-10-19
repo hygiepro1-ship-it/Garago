@@ -77,13 +77,13 @@ const longDate = (date: string, lang = "fr") => new Date(date + "T12:00:00").toL
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "En attente", CONFIRMED: "Prévu", COMPLETED: "Terminé", CANCELLED: "Annulé", NO_SHOW: "Client absent" };
 
-function confirmationLabel(a: AgendaAppointment, tr: (fr: string) => string, en: boolean): { label: string; color: string; bg: string } | null {
+export function confirmationLabel(a: Pick<AgendaAppointment, "contactChannel" | "confirmationStatus" | "confirmTier" | "confirmedVia">, tr: (fr: string) => string, en: boolean): { label: string; color: string; bg: string } | null {
   const via = a.contactChannel === "SMS" ? (en ? "text" : "texto") : (en ? "email" : "courriel");
   switch (a.confirmationStatus) {
     case "NO_RESPONSE": return { label: tr("À appeler : sans réponse"), color: "#b91c1c", bg: "#fef2f2" };
     case "AWAITING":    return { label: en ? `Waiting for a reply (${via})` : `En attente de réponse (${via})`, color: "#b45309", bg: "#fffbeb" };
     case "SCHEDULED":   return { label: a.confirmTier === "MANUAL" ? (en ? `Confirmation by ${via} 48 h before` : `Confirmation par ${via} 48 h avant`) : tr("Confirmation demandée 48 h avant"), color: "#475569", bg: "#f1f5f9" };
-    case "CONFIRMED":   return { label: a.confirmedVia === "PHONE" ? tr("Confirmé par téléphone") : tr("Confirmé par le client"), color: "#15803d", bg: "#f0fdf4" };
+    case "CONFIRMED":   return { label: a.confirmedVia === "PHONE" ? tr("Confirmé par téléphone") : a.confirmedVia === "SMS" ? tr("Confirmé par texto") : tr("Confirmé par le client"), color: "#15803d", bg: "#f0fdf4" };
     default: return null;
   }
 }
