@@ -12,7 +12,7 @@ export const fr: Guide = {
   ogDescription: "Services, durées, portes, confirmation et lien de réservation : mettre en place la prise de rendez-vous en ligne dans un garage.",
   datePublished: "2026-10-15",
   h1: "Mettre en place la prise de rendez-vous en ligne dans un garage : le guide",
-  intro: "Vos clients cherchent un garage le soir, sur leur téléphone, quand l'atelier est fermé. La prise de rendez-vous en ligne leur permet de réserver à ce moment-là, sans appel. Voici comment la mettre en place correctement dans un garage, étape par étape.",
+  intro: "Vos clients cherchent un garage le soir, sur leur téléphone, quand l'atelier est fermé. La prise de rendez-vous en ligne leur permet de réserver à ce moment-là, sans appel. Voici comment la mettre en place correctement dans un garage, étape par étape, et quoi vérifier avant de choisir un logiciel de prise de rendez-vous.",
   sections: [
     {
       h2: "Pourquoi Garago est devenu indispensable",

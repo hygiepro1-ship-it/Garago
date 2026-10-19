@@ -6,12 +6,12 @@ const REG_CTI = "https://laws-lois.justice.gc.ca/eng/regulations/SOR-91-45/secti
 
 export const fr: Guide = {
   path: "/garagistes/modele-facture-garage",
-  title: "Modèle de facture de garage gratuit (Excel) | Garago",
+  title: "Facture et bon de travail de garage (Excel gratuit) | Garago",
   description:
     "Modèle de facture de garage gratuit pour le Québec : facture, évaluation écrite et bon de travail en Excel, avec TPS et TVQ calculées.",
   ogDescription: "Facture, évaluation écrite et bon de travail pour garage, avec TPS et TVQ calculées. Gratuit, en Excel.",
   datePublished: "2026-10-15",
-  h1: "Modèle de facture de garage gratuit, avec TPS et TVQ",
+  h1: "Modèle de facture et de bon de travail de garage gratuit, avec TPS et TVQ",
   intro: "Un modèle prêt à remplir pour les garages du Québec : facture, évaluation écrite et bon de travail dans un même fichier Excel. Les taxes se calculent seules, et les cases suivent ce qu'exigent Revenu Québec et la Loi sur la protection du consommateur.",
   heroCta: { label: "Télécharger le modèle gratuit", href: "/modeles/modele-facture-garage-quebec.xlsx" },
   sections: [

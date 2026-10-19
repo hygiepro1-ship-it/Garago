@@ -86,12 +86,12 @@ export const fr: Guide = {
 
 export const en: Guide = {
   path: "/en/garage-owners/get-more-customers",
-  title: "Get more customers for your repair shop: 8 actions | Garago",
+  title: "Auto repair shop marketing: 8 ways to get customers | Garago",
   description:
-    "Auto repair shop marketing in Quebec: Google Business Profile, reviews, website, online booking, tire season and customer retention, in 8 actions.",
+    "Auto repair shop marketing in Canada: Google Business Profile, reviews, website, online booking, tire season and customer retention, in 8 actions.",
   ogDescription: "Google Business Profile, reviews, online booking and retention: 8 actions to bring more customers to your auto repair shop.",
   datePublished: "2026-10-15",
-  h1: "How to get more customers for your auto repair shop: 8 actions",
+  h1: "Auto repair shop marketing: 8 ways to get more customers",
   intro: "Most drivers choose a garage by searching on their phone, often \"mechanic near me\", then reading reviews. Here are eight practical actions, from the most profitable to the longest-term, so they find you and book with you.",
   sections: [
     { h2: "1. Polish your Google Business Profile", paragraphs: ["It's often a customer's first contact with your shop. Check the primary category (auto repair shop), exact hours including extended seasonal hours, address, phone, recent photos of the shop and team, your list of services and an appointment link."] },
