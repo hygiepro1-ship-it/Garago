@@ -24,6 +24,14 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 | 6 | Limites | Fermée, sauf anti-robot | Inscription : 5 par IP / 15 min et courriel vérifié avant création du compte. Connexion : 8 échecs par courriel et 30 par IP / 15 min (`src/lib/auth.ts`). Courriels de code : limités par IP et par adresse. SMS : 6 par numéro, 100 par garage et 1000 pour le site, par jour (`src/lib/sms.ts`). | `porte6-*.test.ts` |
 | 7 | Webhook de paiement (Stripe) | Fermée | Signature vérifiée avec `STRIPE_WEBHOOK_SECRET` ; événements de plus de 5 minutes refusés (règle Stripe) ; doublons sans effet (abonnement relu chez Stripe, drapeau `referralRewardGranted`). | Vérification manuelle (voir plus bas) |
 
+## Hors des 7 portes
+
+| Point | État | Ce qui le ferme | Test |
+|---|---|---|---|
+| Injection de script (XSS) par le JSON-LD | Fermé | `src/components/JsonLd.tsx` échappe `<`, `>` et `&` (séquence `"\\u003c"`, pas `"<"` qui n'échappe rien). C'est le seul HTML brut du site. | `xss-json-ld.test.ts` |
+| Failles connues des dépendances | Fermé (9 novembre 2026) | Next.js 16.4.5 (failles critiques jusqu'à 16.4.0), Prisma 7.10.1 ; `npm audit --omit=dev` : 0 faille. | `dependances.test.ts` + `npm audit --omit=dev` |
+| Identifiant du propriétaire dans l'API publique | Accepté | `ownerId` sert à la fiche pour reconnaître son propriétaire ; seul, il ne donne accès à rien (toutes les routes vérifient la session). | — |
+
 ## À faire de votre côté
 
 - **Anti-robot Cloudflare Turnstile — désactivé en ligne.** Créer un widget sur dash.cloudflare.com → Turnstile
@@ -35,6 +43,9 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 - **Clé Google Maps** (si vous en ajoutez une) : la limiter au domaine `garagopro.ca` dans Google Cloud.
 
 ## Vérifications manuelles avant une mise en ligne
+
+0. **Dépendances :** `npm audit --omit=dev` doit afficher `found 0 vulnerabilities`. Sinon, mettre à jour
+   le paquet concerné, puis ajuster la version minimale dans `tests/security/dependances.test.ts`.
 
 1. **Navigateur :** sur garagopro.ca, outils du navigateur → Réseau. Aucun `sk_`, `whsec_`, `re_`, `AC…`
    (Twilio), `postgresql://` ni `neon.tech` dans les fichiers `.js`.
