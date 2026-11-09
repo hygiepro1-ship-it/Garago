@@ -115,6 +115,52 @@ function SearchContent() {
   const [mapOnline, setMapOnline] = useState(false);
   const [mapWalkIn, setMapWalkIn] = useState(false);
 
+  // Filtres communs à la liste et à la carte (mêmes garages des deux côtés).
+  const filterParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    if (make)      params.set("make",       make);
+    if (model)     params.set("model",      model);
+    if (service)   params.set("service",    service);
+    if (city)      params.set("city",       city);
+    if (walkInOnly) params.set("walkInOnly", "1");
+    if (sortByDist && userPos) {
+      params.set("lat", String(userPos.lat));
+      params.set("lng", String(userPos.lng));
+    }
+    return params;
+  }, [q, make, model, service, city, walkInOnly, sortByDist, userPos]);
+
+  // Repères de la carte : tous les garages du rayon (pas seulement la page de la liste), chargés à part.
+  const [mapPoints, setMapPoints] = useState<{ slug: string; name: string; latitude: number; longitude: number; claimStatus?: string; acceptsWalkIn: boolean }[] | null>(null);
+  useEffect(() => {
+    if (view !== "map") return;
+    let cancelled = false;
+    const params = filterParams();
+    params.set("map", "1");
+    if (sortByDist && userPos) params.set("radiusKm", String(radiusKm));
+    fetch(`/api/garages?${params}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setMapPoints(d.garages ?? []); })
+      .catch(() => { if (!cancelled) setMapPoints(null); });
+    return () => { cancelled = true; };
+  }, [view, filterParams, radiusKm, sortByDist, userPos]);
+
+  // Fiche touchée sur la carte mais absente de la page de liste chargée : on la demande seule.
+  const [pickedExtra, setPickedExtra] = useState<SearchGarage | null>(null);
+  useEffect(() => {
+    if (!selectedSlug || garages.some((g) => g.slug === selectedSlug)) { setPickedExtra(null); return; }
+    let cancelled = false;
+    const params = filterParams();
+    params.set("slug", selectedSlug);
+    params.set("limit", "1");
+    fetch(`/api/garages?${params}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setPickedExtra(d.garages?.[0] ?? null); })
+      .catch(() => { if (!cancelled) setPickedExtra(null); });
+    return () => { cancelled = true; };
+  }, [selectedSlug, garages, filterParams]);
+
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
     if (targetPage === 1) setLoading(true); else setLoadingMore(true);
@@ -509,13 +555,17 @@ function SearchContent() {
             ) : (
               <div className={view === "map" ? "grid gap-4 lg:grid-cols-5 lg:items-start" : ""}>
               {view === "map" && (() => {
-                const inRadius = userPos ? displayGarages.filter((g) => g.distanceKm == null || g.distanceKm <= radiusKm) : displayGarages;
-                const isOnline = (g: SearchGarage) => g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente";
-                const mapGarages = inRadius
-                  .filter((g) => !(mapOnline || mapWalkIn) || (mapOnline && isOnline(g)) || (mapWalkIn && g.acceptsWalkIn))
+                const isOnline = (g: { claimStatus?: string }) => g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente";
+                // Tous les garages du rayon (mapPoints) ; en attendant leur chargement, ceux de la liste.
+                const points = mapPoints ?? displayGarages
+                  .filter((g) => !userPos || g.distanceKm == null || g.distanceKm <= radiusKm)
                   .filter((g) => g.latitude != null && g.longitude != null)
-                  .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, online: g.claimStatus !== "non_reclamee" && g.claimStatus !== "en_attente" }));
-                const picked = inRadius.find((g) => g.slug === selectedSlug && mapGarages.some((m) => m.slug === g.slug));
+                  .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude as number, longitude: g.longitude as number, claimStatus: g.claimStatus, acceptsWalkIn: g.acceptsWalkIn }));
+                const mapGarages = points
+                  .filter((g) => !(mapOnline || mapWalkIn) || (mapOnline && isOnline(g)) || (mapWalkIn && g.acceptsWalkIn))
+                  .map((g) => ({ slug: g.slug, name: g.name, latitude: g.latitude, longitude: g.longitude, online: isOnline(g) }));
+                const pickedBase = displayGarages.find((g) => g.slug === selectedSlug) ?? (pickedExtra?.slug === selectedSlug ? pickedExtra : undefined);
+                const picked = pickedBase && mapGarages.some((m) => m.slug === pickedBase.slug) ? pickedBase : undefined;
                 return (
                   <>
                     <div className="lg:col-span-5 space-y-3">
