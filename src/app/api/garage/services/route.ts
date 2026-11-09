@@ -6,6 +6,7 @@ import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { toMinutes } from "@/lib/availability";
 import { SERVICE_CATEGORIES, normalizeServiceId } from "@/lib/services";
 import { cleanText } from "@/lib/abuse";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 const KNOWN_CATEGORIES = new Map(SERVICE_CATEGORIES.map((c) => [c.id, c]));
 
@@ -142,5 +143,6 @@ export async function PUT(req: NextRequest) {
     where: { garageId: garage.id },
     include: { category: true },
   });
+  await revalidateGarage({ slug: garage.slug });
   return NextResponse.json(updated);
 }

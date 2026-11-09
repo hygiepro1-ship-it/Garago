@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PAST_DUE_GRACE_DAYS } from "@/lib/garage-access";
+import { revalidateAllGarages } from "@/lib/revalidate-garage";
 
 export const dynamic = "force-dynamic";
 
@@ -53,5 +54,6 @@ export async function GET(req: NextRequest) {
     data: { subscriptionStatus: "EXPIRED", pastDueSince: null },
   });
 
+  if (trials.count + cancelledTrials.count + pastDue.count > 0) revalidateAllGarages();
   return NextResponse.json({ ok: true, trialsExpired: trials.count + cancelledTrials.count, pastDueExpired: pastDue.count });
 }

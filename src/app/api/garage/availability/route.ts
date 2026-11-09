@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -40,5 +41,6 @@ export async function PUT(req: NextRequest) {
     )
   );
 
+  await revalidateGarage({ id: garage.id });
   return NextResponse.json({ success: true });
 }

@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncSubscriptionToGarage } from "@/lib/stripe-sync";
+import { revalidateAllGarages } from "@/lib/revalidate-garage";
 
 // Force la route en dynamique — empêche Next.js d'évaluer ce module au build
 export const dynamic = "force-dynamic";
@@ -203,6 +204,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
   }
 
+  // L'abonnement d'un garage a pu changer (réservation en ligne affichée ou non sur sa fiche).
+  revalidateAllGarages();
   return NextResponse.json({ received: true });
 }
 

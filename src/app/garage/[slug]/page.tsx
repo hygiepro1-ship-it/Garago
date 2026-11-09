@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getGarageProfile } from "@/lib/garage-profile";
 import { slugify } from "@/lib/utils";
 import L from "@/components/L";
 import GarageProfileClient from "./GarageProfileClient";
 
+// Fiche mise en cache (ISR) : avant, chaque visite (robots compris) relançait un rendu serveur complet avec
+// la base de données, ce qui épuisait le temps de calcul Vercel. La fiche est régénérée au plus une fois par
+// heure, et tout de suite après une modification par le garage ou un admin (revalidateGarage).
+export const revalidate = 3600;
+// Aucune fiche générée au build : chacune est rendue à sa première visite, puis servie depuis le cache.
+export function generateStaticParams() {
+  return [];
+}
+
 export default async function GarageProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const garage = await getGarageProfile(slug, async () => {
-    const session = await getServerSession(authOptions);
-    return session?.user ? { id: session.user.id, role: (session.user as any).role } : null;
-  });
+  // Pas de session lue ici (elle rendrait la page dynamique) : une fiche non vérifiée renvoie un 404 public,
+  // et son propriétaire ou un admin la voit quand même grâce à not-found.tsx, qui passe par l'API avec sa session.
+  const garage = await getGarageProfile(slug, async () => null);
   // Garage inexistant, masqué ou non vérifié : vraie page 404 (pas une page « introuvable » en 200).
   if (!garage) notFound();
 

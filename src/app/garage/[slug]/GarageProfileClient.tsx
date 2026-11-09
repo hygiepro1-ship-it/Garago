@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
@@ -57,8 +57,12 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const fromDashboard = searchParams.get("from") === "dashboard";
+  // Lu après le chargement (pas useSearchParams) : la fiche est mise en cache côté serveur (ISR), et
+  // useSearchParams forcerait le rendu de toute la fiche dans le navigateur, hors du HTML vu par Google.
+  const [fromDashboard, setFromDashboard] = useState(false);
+  useEffect(() => {
+    setFromDashboard(new URLSearchParams(window.location.search).get("from") === "dashboard");
+  }, []);
   const { t, lang } = useLang();
   const g = t.garage;
 

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { cleanText } from "@/lib/abuse";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -52,5 +53,6 @@ export async function PUT(req: NextRequest) {
   });
 
   const updated = await prisma.garageBrand.findMany({ where: { garageId: garage.id } });
+  await revalidateGarage({ slug: garage.slug });
   return NextResponse.json(updated);
 }
