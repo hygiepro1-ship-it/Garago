@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendGarageVerificationDecision } from "@/lib/email";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -50,5 +51,6 @@ export async function POST(
     }).catch(e => console.error("[GARAGE VERIFICATION DECISION EMAIL]", e));
   }
 
+  await revalidateGarage({ id });
   return NextResponse.json({ ok: true });
 }

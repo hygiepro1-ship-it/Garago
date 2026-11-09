@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { sendAdminBadReviewAlert } from "@/lib/email";
 import { cleanText, isRateLimited } from "@/lib/abuse";
 import { quebecToday } from "@/lib/availability";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 const OFFENSIVE_WORDS = [
   "merde", "putain", "connard", "connasse", "salaud", "salope",
@@ -186,6 +187,7 @@ export async function POST(req: NextRequest) {
       ).catch(err => console.error("[Review alert check]", err));
     }
 
+    await revalidateGarage({ slug: review.garage.slug });
     return NextResponse.json(review);
   } catch (err) {
     console.error(err);

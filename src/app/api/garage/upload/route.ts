@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { put, del } from "@vercel/blob";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
       del(previousUrl).catch((e) => console.error("[garage/upload] Échec suppression ancien blob :", e));
     }
 
+    await revalidateGarage({ slug: garage.slug });
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error(err);

@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { revalidateAllGarages } from "@/lib/revalidate-garage";
 
 /**
  * Applique l'état d'un abonnement Stripe au garage correspondant. Utilisé à la
@@ -39,4 +40,6 @@ export async function syncSubscriptionToGarage(sub: import("stripe").Stripe.Subs
       ...(isActive || isTrialing ? { pastDueSince: null } : {}),
     },
   });
+  // Fiches en cache : la réservation en ligne affichée dépend de l'abonnement.
+  revalidateAllGarages();
 }

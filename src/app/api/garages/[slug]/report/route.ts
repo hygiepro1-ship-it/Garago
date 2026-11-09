@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { clientIp, isRateLimited } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 const VALID_REASONS = ["usurpation", "erreur", "retrait", "autre"];
 
@@ -64,5 +65,6 @@ export async function POST(
     },
   });
 
+  if (hidden) await revalidateGarage({ slug });
   return NextResponse.json({ ok: true, hidden });
 }

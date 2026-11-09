@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sendClaimRequestNotification } from "@/lib/email";
 import { clientIp, isRateLimited, cleanText } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 // POST /api/garages/[slug]/claim — "Vous êtes le propriétaire ? Activez votre page"
 // Section 3 de la stratégie fiches pré-créées : aucune connexion requise ici, la
@@ -94,5 +95,6 @@ export async function POST(
     neq,
   }).catch((e) => console.error("[CLAIM REQUEST EMAIL]", e));
 
+  await revalidateGarage({ slug });
   return NextResponse.json({ ok: true });
 }

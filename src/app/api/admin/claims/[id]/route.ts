@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { sendClaimDecision } from "@/lib/email";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -127,5 +128,6 @@ export async function POST(
     }).catch((e) => console.error("[CLAIM DECISION EMAIL]", e));
   }
 
+  await revalidateGarage({ id: claim.garage.id });
   return NextResponse.json({ ok: true });
 }

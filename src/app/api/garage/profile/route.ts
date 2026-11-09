@@ -6,6 +6,7 @@ import { sendDescriptionReviewEmail, sendAdminGarageRenamed } from "@/lib/email"
 import { geocodeAddress } from "@/lib/geocode";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { cleanText, isValidEmail } from "@/lib/abuse";
+import { revalidateGarage } from "@/lib/revalidate-garage";
 
 const DESCRIPTION_MAX_PER_YEAR = 4;
 
@@ -171,5 +172,6 @@ export async function PUT(req: NextRequest) {
     },
   });
 
+  await revalidateGarage({ slug: garage.slug });
   return NextResponse.json(garage);
 }
