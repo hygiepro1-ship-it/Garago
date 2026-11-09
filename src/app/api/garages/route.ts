@@ -96,6 +96,25 @@ export async function GET(req: NextRequest) {
       };
     }
 
+    // Un seul garage (fiche touchée sur la carte quand elle n'est pas dans la page de résultats affichée).
+    const slug = searchParams.get("slug");
+    if (slug) where.slug = slug;
+
+    // Mode carte : TOUS les garages correspondants (dans le rayon si la position est connue), mais seulement
+    // ce qu'il faut pour placer les repères. Avant, la carte ne montrait que la page de la liste (20 garages).
+    if (searchParams.get("map") === "1") {
+      const rows = await prisma.garage.findMany({
+        where: { ...where, latitude: { not: null }, longitude: { not: null } },
+        select: { slug: true, name: true, latitude: true, longitude: true, claimStatus: true, acceptsWalkIn: true },
+        take: 3000,
+      });
+      const radiusKm = Math.min(Math.max(parseFloat(searchParams.get("radiusKm") ?? "") || 0, 0), 100);
+      const garages = rows
+        .map((g) => ({ ...g, distanceKm: hasPos ? garageDistance(g, { lat, lng }) : null }))
+        .filter((g) => !hasPos || !radiusKm || (g.distanceKm != null && g.distanceKm <= radiusKm));
+      return NextResponse.json({ garages });
+    }
+
     const sort = searchParams.get("sort");
     const orderBy: any =
       sort === "popular"
