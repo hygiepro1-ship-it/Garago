@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
+import { verifyIcsToken } from "@/lib/ics-token";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +15,23 @@ function escape(s: string) {
   return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Lien signé (courriel, écran de fin de réservation) ou, à défaut, client ou garage du rendez-vous connecté.
+  const signed = verifyIcsToken(id, req.nextUrl.searchParams.get("t"));
+  const userId = signed ? null : (await getServerSession(authOptions))?.user?.id ?? null;
+  if (!signed && !userId) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+
   const appt = await prisma.appointment.findUnique({
     where: { id },
     include: { garage: true },
   });
 
-  if (!appt) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  // Même réponse que pour un rendez-vous inexistant : rien n'indique qu'il existe.
+  if (!appt || (!signed && appt.userId !== userId && appt.garage.ownerId !== userId)) {
+    return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  }
 
   const dtStart = toIcsDate(appt.date, appt.startTime);
   const dtEnd   = toIcsDate(appt.date, appt.endTime);

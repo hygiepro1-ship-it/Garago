@@ -15,6 +15,18 @@ export type SmsLang = "fr" | "en";
 // avec la variable d'environnement SMS_DAILY_LIMIT.
 const SMS_PER_NUMBER_DAILY = 6;
 const SMS_ALL_DAILY = 1000;
+// Un garage très occupé envoie quelques dizaines de textos par jour (confirmations, déplacements) :
+// 100 laisse de la marge, et un compte de garage piraté ne peut plus vider à lui seul le quota du site.
+export const SMS_PER_GARAGE_DAILY = 100;
+
+/** Plafonds quotidiens qu'un texto doit respecter : par numéro, par garage (si connu) et pour le site entier. */
+export function smsQuotas(e164: string, garageId?: string): { key: string; max: number; label: string }[] {
+  return [
+    { key: `smsto:${e164}`, max: SMS_PER_NUMBER_DAILY, label: "ce numéro" },
+    ...(garageId ? [{ key: `smsgarage:${garageId}`, max: SMS_PER_GARAGE_DAILY, label: "ce garage" }] : []),
+    { key: "smsall", max: Number(process.env.SMS_DAILY_LIMIT) || SMS_ALL_DAILY, label: "l'ensemble du site (SMS_DAILY_LIMIT)" },
+  ];
+}
 
 export function smsConfigured(): boolean {
   return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER);
@@ -62,7 +74,7 @@ export function gsmSafe(text: string): string {
  * est invalide ou si Twilio refuse le message : l'appelant décide quoi faire
  * (ne jamais considérer qu'un client a été prévenu quand rien n'est parti).
  */
-export async function sendSMS(to: string, body: string): Promise<void> {
+export async function sendSMS(to: string, body: string, garageId?: string): Promise<void> {
   if (!smsConfigured()) throw new Error("SMS non configuré (variables TWILIO_* absentes)");
   const e164 = toE164(to);
   if (!e164) throw new Error(`Numéro de téléphone invalide : ${to}`);
@@ -71,11 +83,10 @@ export async function sendSMS(to: string, body: string): Promise<void> {
   // tâche planifiée) : chaque texto est facturé à Garago, et un compte de garage piraté ne doit
   // pouvoir ni harceler un numéro en déplaçant un rendez-vous en boucle, ni vider le budget.
   const DAY = 24 * 60 * 60 * 1000;
-  if (await isRateLimited(`smsto:${e164}`, SMS_PER_NUMBER_DAILY, DAY)) {
-    throw new Error("Plafond quotidien de textos atteint pour ce numéro");
-  }
-  if (await isRateLimited("smsall", Number(process.env.SMS_DAILY_LIMIT) || SMS_ALL_DAILY, DAY)) {
-    throw new Error("Plafond quotidien de textos atteint pour l'ensemble du site (SMS_DAILY_LIMIT)");
+  for (const q of smsQuotas(e164, garageId)) {
+    if (await isRateLimited(q.key, q.max, DAY)) {
+      throw new Error(`Plafond quotidien de textos atteint pour ${q.label}`);
+    }
   }
 
   const sid = process.env.TWILIO_ACCOUNT_SID as string;
@@ -120,6 +131,8 @@ function smsName(name: string): string {
 
 interface RdvSmsParams {
   to:         string;
+  garageId:   string; // compté dans le plafond quotidien de ce garage
+
   lang:       SmsLang;
   garageName: string;
   date:       string;
@@ -134,7 +147,7 @@ export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: s
   const msg = params.lang === "en"
     ? `${smsName(params.garageName)}: appointment ${when}. Confirm or cancel: ${params.url}`
     : `${smsName(params.garageName)}: RDV ${when}. Confirmez ou annulez: ${params.url}`;
-  await sendSMS(params.to, msg);
+  await sendSMS(params.to, msg, params.garageId);
 }
 
 /** Le garage a déplacé le rendez-vous. */
@@ -143,7 +156,7 @@ export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: st
   const msg = params.lang === "en"
     ? `${smsName(params.garageName)}: your appointment has been moved to ${when}. Questions: ${params.garagePhone}`
     : `${smsName(params.garageName)}: votre RDV est déplacé au ${when}. Questions: ${params.garagePhone}`;
-  await sendSMS(params.to, msg);
+  await sendSMS(params.to, msg, params.garageId);
 }
 
 /** Le garage a changé le service du rendez-vous (la date et l'heure ne bougent pas). */
@@ -153,7 +166,7 @@ export async function sendServiceChangedSMS(params: RdvSmsParams & { garagePhone
   const msg = params.lang === "en"
     ? `${smsName(params.garageName)}: your appointment ${when} was updated${service ? ` (service: ${service})` : ""}. Questions: ${params.garagePhone}`
     : `${smsName(params.garageName)}: votre RDV du ${when} a été modifié${service ? ` (service : ${service})` : ""}. Questions: ${params.garagePhone}`;
-  await sendSMS(params.to, msg);
+  await sendSMS(params.to, msg, params.garageId);
 }
 
 /** Le garage a annulé le rendez-vous. */
@@ -162,5 +175,5 @@ export async function sendCancelledByGarageSMS(params: RdvSmsParams & { garagePh
   const msg = params.lang === "en"
     ? `${smsName(params.garageName)}: your appointment on ${when} has been cancelled. To rebook: ${params.garagePhone}`
     : `${smsName(params.garageName)}: votre RDV du ${when} est annulé. Pour le reprendre: ${params.garagePhone}`;
-  await sendSMS(params.to, msg);
+  await sendSMS(params.to, msg, params.garageId);
 }

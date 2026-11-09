@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { createHash } from "crypto";
 import prisma from "@/lib/prisma";
+import { isOverLimit, recordAttempt } from "@/lib/abuse";
 
 // Empreinte courte du mot de passe haché : portée par le jeton de session. Quand le mot de passe change, l'empreinte
 // ne correspond plus et toutes les autres sessions ouvertes (appareil volé, poste partagé) sont fermées.
@@ -12,6 +13,18 @@ const pwFingerprint = (hash: string | null | undefined) => createHash("sha256").
 
 const MAX_LOGIN_ATTEMPTS = 8;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+// Échecs tolérés depuis une même adresse IP, tous courriels confondus : sans cela, un robot essaie depuis
+// une seule adresse des milliers de couples courriel / mot de passe volés ailleurs (8 essais par courriel).
+// 30 laisse de la marge à un garage dont plusieurs employés partagent la connexion internet.
+export const MAX_LOGIN_FAILURES_PER_IP = 30;
+export const loginIpKey = (ip: string) => `li:${ip}`;
+/** IP du client depuis les en-têtes passés par NextAuth (Vercel met l'IP réelle en premier dans x-forwarded-for). */
+export function loginIpFromHeaders(headers: Record<string, unknown> | undefined): string {
+  const fwd = headers?.["x-forwarded-for"];
+  const first = typeof fwd === "string" ? fwd.split(",")[0]?.trim() : "";
+  const real = headers?.["x-real-ip"];
+  return first || (typeof real === "string" && real) || "unknown";
+}
 // Délai entre deux relectures du compte (rôle, mot de passe) ; réglable pour les tests automatisés.
 const ROLE_REFRESH_MS = Number(process.env.AUTH_ROLE_REFRESH_MS) || 5 * 60 * 1000;
 // Empreinte factice (coût 12, comme les vrais mots de passe) ; elle ne correspond à aucun mot de passe réel.
@@ -50,8 +63,13 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Courriel", type: "email" },
         password: { label: "Mot de passe", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const ipKey = loginIpKey(loginIpFromHeaders(req?.headers as Record<string, unknown> | undefined));
+        if (await isOverLimit(ipKey, MAX_LOGIN_FAILURES_PER_IP, LOGIN_WINDOW_MS)) {
+          throw new Error("Trop de tentatives. Réessayez dans 15 minutes.");
+        }
 
         // Courriel normalisé : sans cela, varier la casse (A@x.com / a@x.com) contournerait le compteur d'échecs.
         const email = credentials.email.trim().toLowerCase();
@@ -75,12 +93,14 @@ export const authOptions: NextAuthOptions = {
           // qu'aucun compte n'existe pour ce courriel (énumération des comptes par le temps de réponse).
           await bcrypt.compare(credentials.password, DUMMY_HASH);
           await prisma.loginAttempt.create({ data: { email } });
+          await recordAttempt(ipKey);
           return null;
         }
 
         const passwordValid = await bcrypt.compare(credentials.password, user.password);
         if (!passwordValid) {
           await prisma.loginAttempt.create({ data: { email } });
+          await recordAttempt(ipKey);
           return null;
         }
 

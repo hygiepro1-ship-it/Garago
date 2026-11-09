@@ -274,7 +274,7 @@ export async function PATCH(
       const to = updated.customerEmail || acct?.email || null;
       if (updated.contactChannel === "SMS") {
         jobs.push(sendCancelledByGarageSMS({
-          to: updated.customerPhone, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
+          to: updated.customerPhone, garageId: updated.garageId, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
           garagePhone: updated.garage.phone ?? "", date: updated.date, startTime: updated.startTime,
         }).catch((e) => console.error("[CANCELLED BY GARAGE SMS]", e)));
       } else if (to) {
@@ -308,7 +308,7 @@ export async function PATCH(
     const recipientEmail = a.customerEmail || userRecord?.email || null;
     const lang = a.language === "en" ? "en" : "fr";
     if (a.contactChannel === "SMS") {
-      const sms = { to: a.customerPhone, lang, garageName: a.garage.name, garagePhone, date: a.date, startTime: a.startTime } as const;
+      const sms = { to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, garagePhone, date: a.date, startTime: a.startTime } as const;
       await (what === "time" ? sendRescheduleSMS(sms) : sendServiceChangedSMS({ ...sms, serviceName: a.serviceName }))
         .catch((e) => console.error("[CHANGE SMS]", e));
     } else if (recipientEmail) {

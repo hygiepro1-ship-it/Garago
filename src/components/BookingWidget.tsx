@@ -102,6 +102,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState("");
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [icsToken, setIcsToken] = useState<string | null>(null);
 
   // Correct calMonth on client after SSR (avoid hydration mismatch)
   useEffect(() => {
@@ -198,6 +199,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     if (res.ok) {
       const data = await res.json();
       setAppointmentId(data.id ?? null);
+      setIcsToken(data.icsToken ?? null);
       setStep("done");
     } else {
       const d = await res.json();
@@ -229,7 +231,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
       `&enddt=${gcalDate}T${String(Math.floor(endMin / 60)).padStart(2, "0")}${String(endMin % 60).padStart(2, "0")}00` +
       `&location=${encodeURIComponent(location)}`;
 
-    const icsUrl = appointmentId ? `/api/appointments/${appointmentId}/ics` : null;
+    const icsUrl = appointmentId && icsToken ? `/api/appointments/${appointmentId}/ics?t=${icsToken}` : null;
 
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>

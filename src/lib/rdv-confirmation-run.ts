@@ -83,7 +83,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
           try {
             const lang = a.language === "en" ? "en" : "fr";
             if (a.contactChannel === "SMS") {
-              await sendConfirmationRequestSMS({ to: a.customerPhone, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime, url: shortConfirmUrl(token) });
+              await sendConfirmationRequestSMS({ to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime, url: shortConfirmUrl(token) });
             } else if (a.contactChannel === "EMAIL" && a.customerEmail) {
               await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token) });
             } else {

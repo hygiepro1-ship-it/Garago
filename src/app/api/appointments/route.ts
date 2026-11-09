@@ -8,6 +8,7 @@ import { loadBayRules } from "@/lib/bays";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
+import { icsToken } from "@/lib/ics-token";
 import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
@@ -274,5 +275,5 @@ export async function POST(req: NextRequest) {
 
   await Promise.all(notifPromises);
 
-  return NextResponse.json(appt, { status: 201 });
+  return NextResponse.json({ ...appt, icsToken: icsToken(appt.id) }, { status: 201 });
 }

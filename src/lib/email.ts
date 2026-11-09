@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { GOOGLE_REVIEW_URL } from "@/lib/google-business";
+import { icsToken } from "@/lib/ics-token";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ function calendarLinks(appt: AppointmentDetails & { appointmentId: string }): { 
     `&startdt=${start}&enddt=${end}` +
     `&location=${encodeURIComponent(appt.garageAddress)}`;
 
-  const ics = `${BASE_URL}/api/appointments/${appt.appointmentId}/ics`;
+  const ics = `${BASE_URL}/api/appointments/${appt.appointmentId}/ics?t=${icsToken(appt.appointmentId)}`;
 
   return { google, outlook, ics };
 }
