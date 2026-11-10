@@ -9,11 +9,11 @@ import type { NextConfig } from "next";
 // du site dans une autre page (frame-ancestors), les formulaires envoyés ailleurs (form-action) et les balises <base>.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://maps.googleapis.com https://challenges.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://maps.googleapis.com https://challenges.cloudflare.com https://www.clarity.ms https://*.clarity.ms https://c.bing.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // 'unsafe-inline' requis — le site utilise des style={{}} inline partout
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://tile.openstreetmap.org https://*.googleapis.com https://*.gstatic.com https://*.ggpht.com https://cdn.jsdelivr.net https://upload.wikimedia.org https://commons.wikimedia.org https://source.unsplash.com https://images.unsplash.com",
-  "connect-src 'self' data: blob: https://nominatim.openstreetmap.org https://*.googleapis.com https://*.gstatic.com https://challenges.cloudflare.com",
+  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://tile.openstreetmap.org https://*.googleapis.com https://*.gstatic.com https://*.ggpht.com https://cdn.jsdelivr.net https://upload.wikimedia.org https://commons.wikimedia.org https://source.unsplash.com https://images.unsplash.com https://*.clarity.ms https://c.bing.com",
+  "connect-src 'self' data: blob: https://nominatim.openstreetmap.org https://*.googleapis.com https://*.gstatic.com https://challenges.cloudflare.com https://*.clarity.ms https://c.bing.com",
   "frame-src https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'self'",

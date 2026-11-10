@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import ClientLayout from "@/components/ClientLayout";
 import VisitorTracker from "@/components/VisitorTracker";
+import Clarity from "@/components/Clarity";
 import LabelLinker from "@/components/LabelLinker";
 import JsonLd from "@/components/JsonLd";
 import { Public_Sans } from "next/font/google";
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }} />
         <Providers>
           <VisitorTracker />
+          <Clarity />
           <LabelLinker />
           <ClientLayout>{children}</ClientLayout>
         </Providers>

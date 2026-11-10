@@ -19,7 +19,7 @@ export default function ConfidentialitePage() {
       </Link>
 
       <h1 className="text-3xl font-black mb-2" style={{ color: "#0b1f3a" }}>Politique de confidentialité</h1>
-      <p className="text-sm mb-10" style={{ color: "#94a3b8" }}>Dernière mise à jour : septembre 2026</p>
+      <p className="text-sm mb-10" style={{ color: "#94a3b8" }}>Dernière mise à jour : novembre 2026</p>
 
       <div className="space-y-8" style={{ color: "#374151" }}>
 
@@ -68,8 +68,12 @@ export default function ConfidentialitePage() {
         <section>
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>5. Cookies</h2>
           <p className="text-sm leading-relaxed">
-            Nous utilisons uniquement des cookies essentiels, nécessaires pour maintenir votre session de connexion.
-            Nous n'utilisons actuellement aucun cookie de suivi ou d'analyse.
+            Nous utilisons des cookies essentiels, nécessaires pour maintenir votre session de connexion.
+            Sur les pages publiques du site, nous utilisons aussi Microsoft Clarity pour mesurer, de façon anonyme,
+            comment les visiteurs utilisent le site (clics, défilement) et l'améliorer. Clarity peut déposer des cookies
+            de mesure. Le texte saisi dans les formulaires est masqué, et rien n'est mesuré dans les espaces connectés
+            (tableaux de bord), ni sur les pages de connexion, d'inscription et de rendez-vous. Bloquer ces cookies
+            dans votre navigateur n'empêche pas d'utiliser Garago.
           </p>
         </section>
 
