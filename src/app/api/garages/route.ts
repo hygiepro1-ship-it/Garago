@@ -103,12 +103,21 @@ export async function GET(req: NextRequest) {
     // Mode carte : TOUS les garages correspondants (dans le rayon si la position est connue), mais seulement
     // ce qu'il faut pour placer les repères. Avant, la carte ne montrait que la page de la liste (20 garages).
     if (searchParams.get("map") === "1") {
+      const radiusKm = Math.min(Math.max(parseFloat(searchParams.get("radiusKm") ?? "") || 0, 0), 100);
+      // Préfiltre en base par un carré autour de la position (index latitude/longitude) : seuls les garages
+      // proches sortent de la base, même avec des milliers de garages au Canada. Le cercle exact est fait ensuite.
+      const box = hasPos && radiusKm
+        ? (() => {
+            const dLat = radiusKm / 111;
+            const dLng = radiusKm / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+            return { latitude: { gte: lat - dLat, lte: lat + dLat }, longitude: { gte: lng - dLng, lte: lng + dLng } };
+          })()
+        : { latitude: { not: null }, longitude: { not: null } };
       const rows = await prisma.garage.findMany({
-        where: { ...where, latitude: { not: null }, longitude: { not: null } },
+        where: { ...where, ...box },
         select: { slug: true, name: true, latitude: true, longitude: true, claimStatus: true, acceptsWalkIn: true },
         take: 3000,
       });
-      const radiusKm = Math.min(Math.max(parseFloat(searchParams.get("radiusKm") ?? "") || 0, 0), 100);
       const garages = rows
         .map((g) => ({ ...g, distanceKm: hasPos ? garageDistance(g, { lat, lng }) : null }))
         .filter((g) => !hasPos || !radiusKm || (g.distanceKm != null && g.distanceKm <= radiusKm));
@@ -136,20 +145,33 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    // Avec géolocalisation, on trie par proximité + disponibilité sur l'ensemble
-    // des garages correspondants : impossible de paginer au niveau de la base de
-    // données avant de connaître la distance de chacun. Le marché visé (garages
-    // du Québec) reste d'une taille où charger tous les résultats correspondants
-    // puis trier/paginer en mémoire est largement acceptable.
-    const [rawGarages, total] = await Promise.all([
-      prisma.garage.findMany({
+    // Avec géolocalisation : on classe TOUS les garages correspondants par distance à partir de leurs seules
+    // coordonnées (quelques octets par garage), puis on charge le détail complet (services, avis, horaires,
+    // disponibilités) uniquement pour la page demandée. Avant, les 800+ garages étaient chargés au complet
+    // avec leurs disponibilités à chaque recherche, ce qui ne tiendrait pas à 10 000 garages.
+    let rawGarages;
+    let total: number;
+    if (hasPos) {
+      const light = await prisma.garage.findMany({
         where,
-        ...(hasPos ? {} : { skip: (page - 1) * limit, take: limit }),
-        include,
-        orderBy,
-      }),
-      prisma.garage.count({ where }),
-    ]);
+        select: { id: true, latitude: true, longitude: true, city: true },
+      });
+      const ranked = light
+        .map((g) => ({ id: g.id, d: garageDistance(g, { lat, lng }) }))
+        .sort((a, b) => (a.d == null ? (b.d == null ? 0 : 1) : b.d == null ? -1 : a.d - b.d));
+      total = ranked.length;
+      const pageIds = ranked.slice((page - 1) * limit, page * limit).map((r) => r.id);
+      const rank = new Map(pageIds.map((id, i) => [id, i]));
+      rawGarages = (pageIds.length
+        ? await prisma.garage.findMany({ where: { id: { in: pageIds } }, include })
+        : []
+      ).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+    } else {
+      [rawGarages, total] = await Promise.all([
+        prisma.garage.findMany({ where, skip: (page - 1) * limit, take: limit, include, orderBy }),
+        prisma.garage.count({ where }),
+      ]);
+    }
 
     // ── Disponibilités réelles ───────────────────────────────────────────────
     // Une seule requête groupée par table plutôt qu'un aller-retour par garage :
@@ -238,10 +260,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const effectiveTotal = userPos ? garagesWithMeta.length : total;
-    const pageItems = userPos
-      ? garagesWithMeta.slice((page - 1) * limit, (page - 1) * limit + limit)
-      : garagesWithMeta;
+    // La page est déjà découpée (par la base, ou par le classement par distance ci-dessus).
+    const effectiveTotal = total;
+    const pageItems = garagesWithMeta;
 
     return NextResponse.json({
       garages: pageItems,

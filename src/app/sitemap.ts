@@ -10,8 +10,9 @@ import { VIDEOS } from "@/content/videos";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
-// Régénéré toutes les heures : les garages ajoutés, réclamés ou fusionnés y apparaissent sans attendre une publication.
-export const revalidate = 3600;
+// Régénéré une fois par jour (avant : toutes les heures, recalculé à chaque lecture par Google ou Bing) : les garages
+// ajoutés, réclamés ou fusionnés y apparaissent dans la journée sans attendre une publication.
+export const revalidate = 86400;
 
 const VIDEO_BY_PATH = new Map(Object.values(VIDEOS).flatMap((byLang) => Object.values(byLang)).map((v) => [v.path, {
   title: v.h1,

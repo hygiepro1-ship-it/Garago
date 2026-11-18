@@ -158,6 +158,7 @@ model Garage {
   @@index([ownerId])
   @@index([parentId])
   @@index([claimStatus])
+  @@index([latitude, longitude]) // recherche et carte par position (préfiltre en carré autour du conducteur)
 }
 
 // ── Fiches pré-créées ("Doctolib") ──────────────────────────────────────────
