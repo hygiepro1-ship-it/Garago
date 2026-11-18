@@ -6,9 +6,12 @@ import L from "@/components/L";
 import GarageProfileClient from "./GarageProfileClient";
 
 // Fiche mise en cache (ISR) : avant, chaque visite (robots compris) relançait un rendu serveur complet avec
-// la base de données, ce qui épuisait le temps de calcul Vercel. La fiche est régénérée au plus une fois par
-// heure, et tout de suite après une modification par le garage ou un admin (revalidateGarage).
-export const revalidate = 3600;
+// la base de données, ce qui épuisait le temps de calcul Vercel. La fiche est régénérée tout de suite après
+// une modification par le garage ou un admin (revalidateGarage), et sinon au plus une fois par semaine. Une
+// heure ne suffisait pas : les robots passent sur chaque fiche moins d'une fois par heure, la copie était donc
+// presque toujours périmée et refaite à chaque passage. Rien sur la fiche ne dépend de l'heure (les créneaux
+// de réservation sont demandés par le navigateur).
+export const revalidate = 604800;
 // Aucune fiche générée au build : chacune est rendue à sa première visite, puis servie depuis le cache.
 export function generateStaticParams() {
   return [];
