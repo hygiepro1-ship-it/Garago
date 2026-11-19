@@ -180,15 +180,15 @@ export async function POST(req: NextRequest) {
       .catch((e) => console.error("[SMS LIMIT]", e));
   }
 
-  // Confirmation tout de suite au client : courriel s'il a laissé son adresse, texto s'il a choisi le texto.
+  // Confirmation tout de suite au client, par le SEUL moyen qu'il a choisi (courriel ou texto, jamais les deux).
   // « Aucun » (contactChannel null) : rien ne part. À moins de 48 h, la demande de confirmation part
-  // déjà maintenant par ce moyen-là : on n'envoie pas deux messages à la suite par le même canal.
+  // déjà maintenant par ce moyen-là : on n'envoie pas deux messages à la suite.
   const requestNow = plan.confirmTier === "MANUAL" && start.getTime() - now.getTime() <= MANUAL_REQUEST_HOURS_BEFORE * 60 * 60 * 1000;
   const reminderPlanned = plan.confirmTier === "MANUAL" && !requestNow;
   if (contactChannel !== null) {
     const lang = language as "fr" | "en";
     const sends: Promise<unknown>[] = [];
-    if (appt.customerEmail && !(requestNow && contactChannel === "EMAIL")) {
+    if (contactChannel === "EMAIL" && appt.customerEmail && !requestNow) {
       sends.push(sendManualBookingConfirmation({
         to: appt.customerEmail, lang, customerName: appt.customerName,
         garageName: garage.name, garagePhone: garage.phone, garageAddress: [garage.address, garage.city].filter(Boolean).join(", "),
