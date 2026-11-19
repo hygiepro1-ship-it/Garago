@@ -491,11 +491,11 @@ model Suggestion {
   status      String   @default("PENDING") // PENDING | READ | DONE
   adminNote   String?
   createdAt   DateTime @default(now())
-  // Avis laissé depuis un rappel de rendez-vous (page /avis) : note de 1 à 5, et d'où il vient.
+  // Note de 1 à 5 et origine d'un avis (inutilisé depuis le passage aux avis Google ; colonnes gardées).
   rating        Int?
   source        String? // RAPPEL_SMS | RAPPEL_EMAIL | null = suggestion libre
   garageId      String?
-  appointmentId String? // un seul avis par rendez-vous (le suivant remplace le premier, voir /api/avis)
+  appointmentId String? // rendez-vous d'où vient l'avis
 
   @@index([appointmentId])
 }

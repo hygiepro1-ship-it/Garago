@@ -150,8 +150,8 @@ export function smsWhen(date: string, startTime: string, lang: SmsLang): string 
 export function confirmationRequestText(params: { lang: SmsLang; garageName: string; date: string; startTime: string; feedbackUrl: string }): string {
   const when = smsWhen(params.date, params.startTime, params.lang);
   return params.lang === "en"
-    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel. Your opinion of Garago: ${params.feedbackUrl}`
-    : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Votre avis sur Garago: ${params.feedbackUrl}`;
+    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel. Rate Garago: ${params.feedbackUrl}`
+    : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Notez Garago: ${params.feedbackUrl}`;
 }
 
 /** Rappel 48 h avant : le client confirme ou annule en répondant au texto. */

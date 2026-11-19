@@ -152,15 +152,8 @@ export function shortConfirmUrl(token: string): string {
   return `${base}/c/${token}`;
 }
 
-/**
- * Page d'avis sur Garago (les rappels, le fonctionnement). Dans un texto, l'adresse reste courte et
- * sans jeton ; dans un courriel, le jeton du rendez-vous dit de quel garage vient l'avis.
- */
-export function feedbackUrl(lang: "fr" | "en", token?: string | null): string {
-  const base = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
-  const q = [token ? `r=${token}` : "", lang === "en" ? "l=en" : ""].filter(Boolean).join("&");
-  return `${base}/avis${q ? `?${q}` : ""}`;
-}
+/** Avis Google sur la fiche Garago, laissé depuis les rappels de rendez-vous (texto et courriel). */
+export const GOOGLE_REVIEW_URL = "https://g.page/r/Cf9X0C3Mdh_UEBM/review";
 
 /** Même page, ouverte sur l'écran « Annuler ce rendez-vous ? » (bouton distinct dans les courriels). */
 export function cancelPageUrl(token: string): string {
