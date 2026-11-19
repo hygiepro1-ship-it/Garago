@@ -7,7 +7,9 @@ import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, t
 import { loadBayRules } from "@/lib/bays";
 import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
-import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS } from "@/lib/sms";
+import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS, sendVehicleReadySMS } from "@/lib/sms";
+import { reviewPageUrl } from "@/lib/review-checks";
+import { randomBytes } from "crypto";
 import { cleanText, isValidEmail } from "@/lib/abuse";
 import { formatPhone, isFormattedPhone, normalizePlate } from "@/lib/contact-format";
 
@@ -343,8 +345,22 @@ export async function PATCH(
     const garagePhone2    = updated.garage.phone ?? "";
 
     const completedPromises: Promise<void>[] = [];
+    // Lien unique pour noter le garage (page /avis/[jeton]) : le même si le garage renvoie le message.
+    let reviewToken = updated.reviewToken;
+    if (!reviewToken) {
+      reviewToken = randomBytes(24).toString("hex");
+      await prisma.appointment.update({ where: { id: updated.id }, data: { reviewToken } });
+    }
+    const reviewUrl = reviewPageUrl(reviewToken);
+    const lang2 = updated.language === "en" ? "en" : "fr";
 
-    if (recipientEmail2) {
+    // Un seul moyen : texto si le client l'a choisi, sinon courriel.
+    if (updated.contactChannel === "SMS") {
+      completedPromises.push(
+        sendVehicleReadySMS({ to: updated.customerPhone, garageId: updated.garageId, lang: lang2, garageName: updated.garage.name, reviewUrl })
+          .catch(e => console.error("[VEHICLE READY SMS]", e))
+      );
+    } else if (recipientEmail2) {
       completedPromises.push(
         sendVehicleReady({
           to:            recipientEmail2,
@@ -353,7 +369,8 @@ export async function PATCH(
           garageAddress,
           garagePhone:   garagePhone2,
           completionNote: note,
-          lang:          updated.language === "en" ? "en" : "fr",
+          lang:          lang2,
+          reviewUrl,
         }).catch(e => console.error("[VEHICLE READY EMAIL]", e))
       );
     }

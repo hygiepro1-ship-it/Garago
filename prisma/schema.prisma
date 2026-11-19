@@ -343,7 +343,9 @@ model GaragePhoto {
 model Review {
   id           String   @id @default(cuid())
   garageId     String
-  userId       String
+  userId       String? // null = client sans compte, noté depuis le lien du message « véhicule prêt »
+  authorName   String? // nom affiché quand l'avis n'a pas de compte (« Marc V. »)
+  appointmentId String? // rendez-vous terminé d'où vient l'avis (un seul avis par rendez-vous)
   rating       Int
   title        String?
   comment      String?
@@ -358,9 +360,10 @@ model Review {
   updatedAt    DateTime @updatedAt
 
   garage Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
 
   @@index([garageId])
+  @@index([appointmentId])
 }
 
 model BlockedSlot {
@@ -569,6 +572,7 @@ model Appointment {
   confirmRequestedAt DateTime?
   confirmNudgeAt     DateTime?
   arrivalReminderAt  DateTime?
+  reviewToken        String? // aléatoire (192 bits) — lien « notez le garage » envoyé quand le véhicule est prêt
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -588,6 +592,7 @@ model Appointment {
   @@index([confirmToken])
   @@index([customerId])
   @@index([garageId, licensePlate])
+  @@index([reviewToken])
 }
 
 // Carnet de clients d'un garage : chaque client pour qui le garage a pris un

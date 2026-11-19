@@ -5,7 +5,7 @@ import {
 } from "@/lib/email";
 import { sendConfirmationRequestSMS } from "@/lib/sms";
 import {
-  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, manualDeadline, confirmPageUrl, cancelPageUrl, GOOGLE_REVIEW_URL,
+  quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, manualDeadline, confirmPageUrl, cancelPageUrl,
   REQUEST_HOURS_BEFORE, NUDGE_HOURS_BEFORE, ARRIVAL_REMINDER_HOURS_BEFORE, MANUAL_REQUEST_HOURS_BEFORE,
 } from "@/lib/rdv-confirmation";
 
@@ -83,9 +83,9 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
           try {
             const lang = a.language === "en" ? "en" : "fr";
             if (a.contactChannel === "SMS") {
-              await sendConfirmationRequestSMS({ to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime, feedbackUrl: GOOGLE_REVIEW_URL });
+              await sendConfirmationRequestSMS({ to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime });
             } else if (a.contactChannel === "EMAIL" && a.customerEmail) {
-              await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), feedbackUrl: GOOGLE_REVIEW_URL });
+              await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token) });
             } else {
               throw new Error("Aucun moyen de contact utilisable");
             }

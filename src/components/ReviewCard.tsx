@@ -12,7 +12,8 @@ interface ReviewCardProps {
     vehicleYear?: number | null;
     ownerReply?: string | null;
     createdAt: string | Date;
-    user: { name?: string | null; image?: string | null };
+    user: { name?: string | null; image?: string | null } | null;
+    authorName?: string | null;
   };
 }
 
@@ -21,12 +22,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
     <div className="bg-white border border-gray-200 rounded-xl p-5">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ background: "#fff4ed", color: "#f97316" }}>
-          {review.user.name?.[0]?.toUpperCase() ?? "A"}
+          {(review.user?.name ?? review.authorName)?.[0]?.toUpperCase() ?? "A"}
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div>
-              <span className="font-semibold text-gray-900 text-sm">{review.user.name ?? "Anonyme"}</span>
+              <span className="font-semibold text-gray-900 text-sm">{review.user?.name ?? review.authorName ?? "Anonyme"}</span>
               {(review.vehicleMake || review.vehicleYear) && (
                 <span className="ml-2 text-xs text-gray-500">
                   {review.vehicleYear} {review.vehicleMake} {review.vehicleModel}

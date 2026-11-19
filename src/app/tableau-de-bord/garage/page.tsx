@@ -92,7 +92,8 @@ interface GarageReview {
   rating:      number;
   comment?:    string | null;
   ownerReply?: string | null;
-  user?:       { name?: string | null };
+  user?:       { name?: string | null } | null;
+  authorName?: string | null;
 }
 
 interface Garage {
@@ -2169,10 +2170,10 @@ export default function DashboardGaragePage() {
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                           style={{ background: "#fff4ed", color: "#f97316" }}>
-                          {(r.user?.name ?? "?")[0].toUpperCase()}
+                          {(r.user?.name ?? r.authorName ?? "?")[0].toUpperCase()}
                         </div>
                         <div>
-                          <span className="font-semibold text-sm text-gray-900">{r.user?.name ?? "Anonyme"}</span>
+                          <span className="font-semibold text-sm text-gray-900">{r.user?.name ?? r.authorName ?? "Anonyme"}</span>
                           <div className="flex items-center gap-1">
                             <span className="text-yellow-400 text-xs">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
                           </div>

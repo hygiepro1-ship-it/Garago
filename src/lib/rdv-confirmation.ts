@@ -152,8 +152,6 @@ export function shortConfirmUrl(token: string): string {
   return `${base}/c/${token}`;
 }
 
-/** Avis Google sur la fiche Garago, laissé depuis les rappels de rendez-vous (texto et courriel). */
-export const GOOGLE_REVIEW_URL = "https://g.page/r/Cf9X0C3Mdh_UEBM/review";
 
 /** Même page, ouverte sur l'écran « Annuler ce rendez-vous ? » (bouton distinct dans les courriels). */
 export function cancelPageUrl(token: string): string {

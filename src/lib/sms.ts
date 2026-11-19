@@ -147,15 +147,15 @@ export function smsWhen(date: string, startTime: string, lang: SmsLang): string 
 }
 
 /** Texte du rappel 48 h avant : le client répond OUI ou NON (voir /api/webhooks/twilio-sms). */
-export function confirmationRequestText(params: { lang: SmsLang; garageName: string; date: string; startTime: string; feedbackUrl: string }): string {
+export function confirmationRequestText(params: { lang: SmsLang; garageName: string; date: string; startTime: string }): string {
   const when = smsWhen(params.date, params.startTime, params.lang);
   return params.lang === "en"
-    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel. Rate Garago: ${params.feedbackUrl}`
-    : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Notez Garago: ${params.feedbackUrl}`;
+    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel.`
+    : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler.`;
 }
 
 /** Rappel 48 h avant : le client confirme ou annule en répondant au texto. */
-export async function sendConfirmationRequestSMS(params: RdvSmsParams & { feedbackUrl: string }) {
+export async function sendConfirmationRequestSMS(params: RdvSmsParams) {
   await sendSMS(params.to, confirmationRequestText(params), params.garageId);
 }
 
@@ -179,6 +179,17 @@ export async function sendBookingConfirmedSMS(params: RdvSmsParams & { garagePho
     ? `${smsName(params.garageName)}: your appointment is booked for ${when}.${params.reminderPlanned ? " Reminder 48 h before." : ""} Questions: ${params.garagePhone}`
     : `${smsName(params.garageName)}: votre RDV est enregistré le ${when}.${params.reminderPlanned ? " Rappel 48 h avant." : ""} Questions: ${params.garagePhone}`;
   await sendSMS(params.to, msg, params.garageId);
+}
+
+/** Véhicule prêt (le garage a marqué le rendez-vous « Terminé »), avec le lien pour noter le garage. */
+export function vehicleReadyText(params: { lang: SmsLang; garageName: string; reviewUrl: string }): string {
+  return params.lang === "en"
+    ? `${smsName(params.garageName)}: your vehicle is ready. Rate the garage: ${params.reviewUrl}`
+    : `${smsName(params.garageName)}: votre véhicule est prêt. Notez le garage: ${params.reviewUrl}`;
+}
+
+export async function sendVehicleReadySMS(params: { to: string; garageId: string; lang: SmsLang; garageName: string; reviewUrl: string }) {
+  await sendSMS(params.to, vehicleReadyText(params), params.garageId);
 }
 
 /** Le garage a déplacé le rendez-vous. */

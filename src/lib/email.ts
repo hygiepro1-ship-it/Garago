@@ -188,6 +188,23 @@ function googleReviewBlock(lang: "fr" | "en" = "fr"): string {
     </table>`;
 }
 
+/** Note du garage après la réparation : lien unique vers /avis/[jeton] (avis sur la fiche Garago du garage). */
+function garageReviewBlock(url: string, garageName: string, lang: "fr" | "en" = "fr"): string {
+  const t = lang === "en"
+    ? { title: `How was your visit to ${esc(garageName)}?`, text: "Rate the garage in 30 seconds. Your review appears on its Garago page and helps other drivers choose.", button: "Rate the garage" }
+    : { title: `Comment s'est passée votre visite chez ${esc(garageName)} ?`, text: "Notez le garage en 30 secondes. Votre avis paraît sur sa fiche Garago et aide d'autres conducteurs à choisir.", button: "Noter le garage" };
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0"
+           style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin:24px 0;text-align:center">
+      <tr><td align="center">
+        <p style="margin:0 0 4px;font-size:20px;letter-spacing:2px;color:#f59e0b">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+        <p style="margin:0 0 6px;font-size:16px;font-weight:800;color:#0b1f3a">${t.title}</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#6b7280;line-height:1.5">${t.text}</p>
+        ${primaryBtn(url, t.button)}
+      </td></tr>
+    </table>`;
+}
+
 /** Horizontal divider. */
 const HR = `<hr style="border:none;border-top:1px solid #f3f4f6;margin:24px 0">`;
 
@@ -418,6 +435,8 @@ export interface VehicleReadyParams {
   completionNote?: string | null;
   /** Langue choisie pour le client (français par défaut). */
   lang?: "fr" | "en";
+  /** Lien pour noter le garage (/avis/[jeton]). Sans lien : demande d'avis Google sur Garago. */
+  reviewUrl?: string | null;
 }
 
 /** Contenu du courriel « Votre véhicule est prêt » (séparé de l'envoi pour pouvoir l'afficher en aperçu). */
@@ -435,7 +454,7 @@ export function vehicleReadyBody(params: VehicleReadyParams): string {
       ${row("Phone", `<a href="${telHref(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true, true)}
     `)}
 
-    ${googleReviewBlock("en")}
+    ${params.reviewUrl ? garageReviewBlock(params.reviewUrl, params.garageName, "en") : googleReviewBlock("en")}
 
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Thank you for your trust. See you soon on Garago!</p>
   `;
@@ -452,7 +471,7 @@ export function vehicleReadyBody(params: VehicleReadyParams): string {
       ${row("Téléphone", `<a href="${telHref(params.garagePhone)}" style="color:#f97316">${esc(params.garagePhone)}</a>`, true)}
     `)}
 
-    ${googleReviewBlock()}
+    ${params.reviewUrl ? garageReviewBlock(params.reviewUrl, params.garageName) : googleReviewBlock()}
 
     <p style="margin:0;color:#6b7280;font-size:13px;text-align:center">Merci de votre confiance, à bientôt sur Garago !</p>
   `;
@@ -1288,8 +1307,6 @@ export interface ManualConfirmationRequestParams extends AppointmentDetails {
   garagePhone:  string;
   confirmUrl:   string;
   cancelUrl:    string;
-  /** Avis Google sur Garago (rappels, fonctionnement). */
-  feedbackUrl?: string;
 }
 
 /**
@@ -1324,13 +1341,6 @@ export async function sendManualConfirmationRequest(params: ManualConfirmationRe
 
     <p style="margin:0 0 12px;color:#374151;font-size:14px">${en ? "Need another time? Call the garage:" : "Besoin d'un autre moment ? Appelez le garage :"}</p>
     ${phoneBtn(params.garagePhone)}
-
-    ${params.feedbackUrl ? `${HR}
-    <p style="margin:0 0 6px;color:#111827;font-size:15px;font-weight:800">${en ? "What do you think of these reminders?" : "Que pensez-vous de ces rappels ?"}</p>
-    <p style="margin:0 0 14px;color:#6b7280;font-size:13px">${en
-      ? "Your garage uses Garago to manage its appointments. Leave us a Google review in 30 seconds: tell us what you like and what we could do better."
-      : "Votre garage utilise Garago pour gérer ses rendez-vous. Laissez-nous un avis Google en 30 secondes : dites-nous ce que vous aimez et ce qu'on pourrait faire mieux."}</p>
-    ${secondaryBtn(params.feedbackUrl, en ? "Leave a Google review" : "Laisser un avis Google")}` : ""}
   `;
 
   await send(
