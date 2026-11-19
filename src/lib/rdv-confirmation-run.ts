@@ -84,6 +84,11 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
             const lang = a.language === "en" ? "en" : "fr";
             if (a.contactChannel === "SMS") {
               await sendConfirmationRequestSMS({ to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, date: a.date, startTime: a.startTime, url: shortConfirmUrl(token) });
+              // Courriel laissé en plus du texto : le rappel part aussi par courriel (sans jamais bloquer le texto).
+              if (a.customerEmail) {
+                await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token) })
+                  .catch((e) => console.error(`[rdv] rappel par courriel non remis pour ${a.id}`, e));
+              }
             } else if (a.contactChannel === "EMAIL" && a.customerEmail) {
               await sendManualConfirmationRequest({ ...details, to: a.customerEmail, lang, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token) });
             } else {

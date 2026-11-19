@@ -36,10 +36,10 @@ const STEP = 30;     // minutes par ligne
 export const PAST_HATCH ="repeating-linear-gradient(135deg, #ffffff 0 6px, #e8edf3 6px 7px)";
 /**
  * Journée passée : hachures posées PAR-DESSUS tout le reste (plages, rendez-vous, compteurs),
- * quel que soit l'état des rendez-vous. Le voile blanc atténue les couleurs, qui restent lisibles.
+ * quel que soit l'état des rendez-vous. Hachures légères : les anciens rendez-vous restent bien lisibles.
  * Les clics passent au travers : un rendez-vous passé s'ouvre toujours.
  */
-export const PAST_OVERLAY = "repeating-linear-gradient(135deg, rgba(255,255,255,0.5) 0 6px, rgba(71,85,105,0.38) 6px 7.5px)";
+export const PAST_OVERLAY = "repeating-linear-gradient(135deg, rgba(255,255,255,0.12) 0 8px, rgba(71,85,105,0.14) 8px 9px)";
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 const toHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;

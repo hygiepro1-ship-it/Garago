@@ -1335,6 +1335,70 @@ export async function sendManualConfirmationRequest(params: ManualConfirmationRe
   );
 }
 
+export interface ManualBookingConfirmationParams extends AppointmentDetails {
+  to:            string;
+  lang:          "fr" | "en";
+  customerName:  string;
+  garagePhone:   string;
+  appointmentId: string;
+  /** Un rappel (avec demande de confirmation) partira 48 h avant. */
+  reminderPlanned: boolean;
+}
+
+/**
+ * Courriel envoyé dès que le garage enregistre un rendez-vous pris au téléphone :
+ * le client a tout de suite la date, l'heure et l'adresse, et de quoi l'ajouter à
+ * son calendrier. Il part au nom du garage.
+ */
+export async function sendManualBookingConfirmation(params: ManualBookingConfirmationParams) {
+  if (!canSend()) throw new Error("Courriel non configuré (RESEND_API_KEY absente)");
+  const en = params.lang === "en";
+  const cal = calendarLinks(params);
+
+  const card = infoCard(`
+    ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
+    ${row("Date", fmtDateLang(params.date, params.lang))}
+    ${row(en ? "Time" : "Heure", esc(params.startTime))}
+    ${row("Garage", esc(params.garageName))}
+    ${row(en ? "Address" : "Adresse", esc(params.garageAddress), true)}
+  `);
+
+  const body = `
+    ${iconBadge("check")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Your appointment is booked" : "Votre rendez-vous est enregistré"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, ${esc(params.garageName)} has booked your appointment.`
+      : `Bonjour ${esc(params.customerName)}, ${esc(params.garageName)} a bien enregistré votre rendez-vous.`}</p>
+
+    ${card}
+
+    ${params.reminderPlanned ? `<p style="margin:0 0 20px;color:#374151;font-size:14px">${en
+      ? "You will get a reminder 48 hours before your appointment."
+      : "Vous recevrez un rappel 48 heures avant votre rendez-vous."}</p>` : ""}
+
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">${en ? "Need another time? Call the garage:" : "Besoin d'un autre moment ? Appelez le garage :"}</p>
+    ${phoneBtn(params.garagePhone)}
+
+    ${HR}
+    <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">${en ? "Add to your calendar" : "Ajouter à votre calendrier"}</p>
+    <table cellpadding="0" cellspacing="0"><tr>
+      <td style="padding-right:8px;padding-bottom:8px">${secondaryBtn(cal.google, "Google Calendar")}</td>
+      <td style="padding-bottom:8px">${secondaryBtn(cal.outlook, "Outlook")}</td>
+    </tr></table>
+    ${secondaryBtn(cal.ics, en ? "Apple Calendar / other (.ics)" : "Apple Calendar / autre (.ics)")}
+  `;
+
+  await send(
+    params.to,
+    en
+      ? `Appointment booked: ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+      : `Rendez-vous enregistré : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
+    body,
+    params.garageName,
+    params.lang,
+  );
+}
+
 export interface GarageNoResponseParams {
   to:            string;
   customerName:  string;

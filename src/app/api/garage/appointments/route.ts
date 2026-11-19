@@ -8,9 +8,10 @@ import { loadBayRules } from "@/lib/bays";
 import { cleanText, isValidEmail, isOverLimit, recordAttempt } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
-import { toE164 } from "@/lib/sms";
+import { toE164, sendBookingConfirmedSMS } from "@/lib/sms";
+import { sendManualBookingConfirmation } from "@/lib/email";
 import { rememberCustomer } from "@/lib/customers";
-import { formatPhone, isFormattedPhone } from "@/lib/contact-format";
+import { formatPhone, isFormattedPhone, normalizePlate } from "@/lib/contact-format";
 
 // GET /api/garage/appointments — list all appointments for the logged garage
 export async function GET(req: NextRequest) {
@@ -157,6 +158,7 @@ export async function POST(req: NextRequest) {
       vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
       vehicleMake:  cleanText(vehicleMake, 60)  || null,
       vehicleModel: cleanText(vehicleModel, 60) || null,
+      licensePlate: normalizePlate(body.licensePlate) || null,
       serviceName:  cleanText(serviceName, 120) || null,
       date,
       startTime,
@@ -178,8 +180,32 @@ export async function POST(req: NextRequest) {
       .catch((e) => console.error("[SMS LIMIT]", e));
   }
 
+  // Confirmation tout de suite au client : courriel s'il a laissé son adresse, texto s'il a choisi le texto.
+  // « Aucun » (contactChannel null) : rien ne part. À moins de 48 h, la demande de confirmation part
+  // déjà maintenant par ce moyen-là : on n'envoie pas deux messages à la suite par le même canal.
+  const requestNow = plan.confirmTier === "MANUAL" && start.getTime() - now.getTime() <= MANUAL_REQUEST_HOURS_BEFORE * 60 * 60 * 1000;
+  const reminderPlanned = plan.confirmTier === "MANUAL" && !requestNow;
+  if (contactChannel !== null) {
+    const lang = language as "fr" | "en";
+    const sends: Promise<unknown>[] = [];
+    if (appt.customerEmail && !(requestNow && contactChannel === "EMAIL")) {
+      sends.push(sendManualBookingConfirmation({
+        to: appt.customerEmail, lang, customerName: appt.customerName,
+        garageName: garage.name, garagePhone: garage.phone, garageAddress: [garage.address, garage.city].filter(Boolean).join(", "),
+        date, startTime, endTime, serviceName: appt.serviceName, appointmentId: appt.id, reminderPlanned,
+      }).catch((e) => console.error("[BOOKING EMAIL]", e)));
+    }
+    if (contactChannel === "SMS" && !requestNow) {
+      sends.push(sendBookingConfirmedSMS({
+        to: phone, garageId: garage.id, lang, garageName: garage.name, garagePhone: garage.phone,
+        date, startTime, reminderPlanned,
+      }).catch((e) => console.error("[BOOKING SMS]", e)));
+    }
+    await Promise.all(sends);
+  }
+
   // À moins de 48 h, la demande de confirmation part tout de suite (sinon la tâche planifiée s'en charge).
-  if (plan.confirmTier === "MANUAL" && start.getTime() - now.getTime() <= MANUAL_REQUEST_HOURS_BEFORE * 60 * 60 * 1000) {
+  if (requestNow) {
     await processRdvConfirmations(now, appt.id).catch((e) => console.error("[MANUAL CONFIRMATION]", e));
     const fresh = await prisma.appointment.findUnique({ where: { id: appt.id } });
     return NextResponse.json(fresh ?? appt, { status: 201 });

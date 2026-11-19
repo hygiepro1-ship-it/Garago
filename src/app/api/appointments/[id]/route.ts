@@ -9,7 +9,7 @@ import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/r
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS } from "@/lib/sms";
 import { cleanText, isValidEmail } from "@/lib/abuse";
-import { formatPhone, isFormattedPhone } from "@/lib/contact-format";
+import { formatPhone, isFormattedPhone, normalizePlate } from "@/lib/contact-format";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -97,6 +97,7 @@ export async function PATCH(
     }
     if (body.vehicleMake !== undefined) details.vehicleMake = cleanText(body.vehicleMake, 60) || null;
     if (body.vehicleModel !== undefined) details.vehicleModel = cleanText(body.vehicleModel, 60) || null;
+    if (body.licensePlate !== undefined) details.licensePlate = normalizePlate(body.licensePlate) || null;
   }
 
   // « Confirmé par téléphone » : le garage a joint lui-même un client qui n'avait pas répondu.

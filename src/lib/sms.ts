@@ -150,6 +150,15 @@ export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: s
   await sendSMS(params.to, msg, params.garageId);
 }
 
+/** Rendez-vous enregistré par le garage : envoyé tout de suite après la saisie. */
+export async function sendBookingConfirmedSMS(params: RdvSmsParams & { garagePhone: string; reminderPlanned: boolean }) {
+  const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
+  const msg = params.lang === "en"
+    ? `${smsName(params.garageName)}: your appointment is booked for ${when}.${params.reminderPlanned ? " Reminder 48 h before." : ""} Questions: ${params.garagePhone}`
+    : `${smsName(params.garageName)}: votre RDV est enregistré le ${when}.${params.reminderPlanned ? " Rappel 48 h avant." : ""} Questions: ${params.garagePhone}`;
+  await sendSMS(params.to, msg, params.garageId);
+}
+
 /** Le garage a déplacé le rendez-vous. */
 export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;

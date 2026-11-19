@@ -522,6 +522,9 @@ model Appointment {
   vehicleVin   String?
   vehicleTireSize String?
   vehicleSpecs String? // JSON : engine, fuel, transmission, driveType, doors, bodyType, recalls[]
+  // Plaque d'immatriculation saisie par le garage : majuscules et chiffres seulement
+  // (« abc 123 » → « ABC123 »), pour retrouver un ancien rendez-vous par la plaque.
+  licensePlate String?
 
   // Service demandé
   serviceName String?
@@ -577,6 +580,7 @@ model Appointment {
   @@index([confirmationStatus, date])
   @@index([confirmToken])
   @@index([customerId])
+  @@index([garageId, licensePlate])
 }
 
 // Carnet de clients d'un garage : chaque client pour qui le garage a pris un

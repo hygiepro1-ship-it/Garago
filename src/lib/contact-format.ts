@@ -58,3 +58,11 @@ export function emailTypoFix(value: string): string | null {
   const close = EMAIL_DOMAINS.find((d) => distance(typed, d) <= 2 && Math.abs(typed.length - d.length) <= 2 && typed[0] === d[0]);
   return close ? `${local}@${close}` : null;
 }
+
+/**
+ * Plaque d'immatriculation telle qu'enregistrée et cherchée : lettres et chiffres
+ * en majuscules, sans espace ni tiret (« abc-123 » → « ABC123 »), 10 caractères au plus.
+ */
+export function normalizePlate(raw: unknown): string {
+  return String(raw ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+}

@@ -7,6 +7,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { cleanText } from "@/lib/abuse";
+import { normalizePlate } from "@/lib/contact-format";
 
 /** Nom en minuscules, sans accents ni espaces superflus — clé de recherche. */
 export function nameKey(raw: unknown): string {
@@ -133,7 +134,7 @@ export interface CustomerMatch {
   lastDate: string | null;
   lastService: string | null;
   /** Véhicules déjà vus au garage, du plus récent au plus ancien. */
-  vehicles: { year: number | null; make: string | null; model: string | null }[];
+  vehicles: { year: number | null; make: string | null; model: string | null; plate?: string | null }[];
 }
 
 // Ce qu'on lit d'un client pour l'afficher : ses derniers rendez-vous donnent ses véhicules et sa dernière visite.
@@ -143,23 +144,25 @@ const MATCH_INCLUDE = {
     where: { status: { not: "CANCELLED" } },
     orderBy: [{ date: "desc" as const }, { startTime: "desc" as const }],
     take: 12,
-    select: { date: true, serviceName: true, vehicleYear: true, vehicleMake: true, vehicleModel: true },
+    select: { date: true, serviceName: true, vehicleYear: true, vehicleMake: true, vehicleModel: true, licensePlate: true },
   },
 };
 
 function toMatch(c: {
   id: string; name: string; phone: string; email: string | null; language: string; contactChannel: string | null;
   _count: { appointments: number };
-  appointments: { date: string; serviceName: string | null; vehicleYear: number | null; vehicleMake: string | null; vehicleModel: string | null }[];
+  appointments: { date: string; serviceName: string | null; vehicleYear: number | null; vehicleMake: string | null; vehicleModel: string | null; licensePlate: string | null }[];
 }): CustomerMatch {
   const seen = new Set<string>();
   const vehicles: CustomerMatch["vehicles"] = [];
   for (const a of c.appointments) {
-    if (!a.vehicleMake && !a.vehicleModel) continue;
+    if (!a.vehicleMake && !a.vehicleModel && !a.licensePlate) continue;
     const key = `${a.vehicleYear ?? ""}|${a.vehicleMake ?? ""}|${a.vehicleModel ?? ""}`.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    vehicles.push({ year: a.vehicleYear, make: a.vehicleMake, model: a.vehicleModel });
+    // La plaque la plus récente de ce véhicule (un ancien rendez-vous peut l'avoir, pas le dernier).
+    const plate = a.licensePlate ?? c.appointments.find((x) => `${x.vehicleYear ?? ""}|${x.vehicleMake ?? ""}|${x.vehicleModel ?? ""}`.toLowerCase() === key && x.licensePlate)?.licensePlate ?? null;
+    vehicles.push({ year: a.vehicleYear, make: a.vehicleMake, model: a.vehicleModel, plate });
   }
   return {
     id: c.id, name: c.name, phone: c.phone, email: c.email,
@@ -171,6 +174,12 @@ function toMatch(c: {
   };
 }
 
+/** Filtre « un de ses rendez-vous porte cette plaque » (3 caractères au moins). */
+function byPlate(query: string) {
+  const plate = normalizePlate(query);
+  return plate.length >= 3 ? [{ appointments: { some: { licensePlate: { contains: plate } } } }] : [];
+}
+
 /** Clients du garage dont le nom (ou le téléphone) contient ce que le garage est en train de taper. */
 export async function searchCustomers(garageId: string, query: string, limit = 6): Promise<CustomerMatch[]> {
   const nk = nameKey(query);
@@ -180,7 +189,11 @@ export async function searchCustomers(garageId: string, query: string, limit = 6
   const customers = await prisma.customer.findMany({
     where: {
       garageId,
-      OR: [{ nameKey: { contains: nk } }, ...(digits.length >= 3 ? [{ phoneKey: { contains: digits } }] : [])],
+      OR: [
+        { nameKey: { contains: nk } },
+        ...(digits.length >= 3 ? [{ phoneKey: { contains: digits } }] : []),
+        ...byPlate(query),
+      ],
     },
     orderBy: { updatedAt: "desc" },
     take: 30,
@@ -208,6 +221,7 @@ export async function listCustomers(garageId: string, query: string, page: numbe
         { nameKey: { contains: nk } },
         { email: { contains: query.trim().toLowerCase() } },
         ...(digits.length >= 3 ? [{ phoneKey: { contains: digits } }] : []),
+        ...byPlate(query),
       ],
     } : {}),
   };

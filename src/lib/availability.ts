@@ -23,6 +23,24 @@ function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number): b
   return aStart < bEnd && aEnd > bStart;
 }
 
+/**
+ * Nombre maximal de rendez-vous en cours EN MÊME TEMPS sur [start, end). Deux rendez-vous
+ * qui se suivent sur la même porte (12:30–13:30 puis 14:00–15:00) n'occupent qu'une porte
+ * à la fois : les additionner refuserait à tort un long rendez-vous sur une autre porte.
+ */
+function peakConcurrent(start: number, end: number, rows: BookedRow[]): number {
+  const ivs = rows
+    .map((a) => ({ s: toMinutes(a.startTime), e: toMinutes(a.endTime) }))
+    .filter((a) => overlaps(start, end, a.s, a.e));
+  let peak = 0;
+  // Le maximum est atteint au début de la plage ou au début d'un des rendez-vous.
+  for (const p of [start, ...ivs.map((a) => a.s).filter((s) => s > start && s < end)]) {
+    const n = ivs.filter((a) => a.s <= p && a.e > p).length;
+    if (n > peak) peak = n;
+  }
+  return peak;
+}
+
 export const DEFAULT_DURATION_MIN = 60;
 
 // Le serveur tourne en UTC alors que les garages et les rendez-vous sont en heure du
@@ -148,10 +166,11 @@ export function pickBay(
   const start = toMinutes(startTime);
   const end = start + durationMin;
   const over = existing.filter((a) => overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime)));
-  if (over.length >= cap) return null;
+  if (peakConcurrent(start, end, over) >= cap) return null;
   const taken = new Set(over.map((a) => a.bay).filter((b) => validBay(b, cap)));
-  // Les rendez-vous sans poste attribué occuperont chacun un des postes encore libres.
-  const floating = over.filter((a) => !validBay(a.bay, cap)).length;
+  // Les rendez-vous sans poste attribué occuperont chacun un des postes encore libres
+  // (seulement ceux qui se chevauchent entre eux comptent pour plusieurs).
+  const floating = peakConcurrent(start, end, over.filter((a) => !validBay(a.bay, cap)));
   const free = Array.from({ length: cap }, (_, i) => i + 1).filter((b) => !taken.has(b));
   if (free.length - floating < 1) return null;
   const allowed = opts.allowed;
@@ -278,8 +297,8 @@ export function findNextFreeStart(
 
 /**
  * true si réserver [startTime, startTime+durationMin) dépasserait la capacité
- * du garage — c.-à-d. si au moins `capacity` RDV existants chevauchent déjà ce
- * nouveau créneau (chacun occupant un poste de travail différent).
+ * du garage — c.-à-d. si, à un moment de ce créneau, `capacity` RDV existants
+ * sont déjà en cours en même temps (chacun occupant un poste de travail différent).
  */
 export function wouldExceedCapacity(
   startTime: string,
@@ -289,6 +308,5 @@ export function wouldExceedCapacity(
 ): boolean {
   const start = toMinutes(startTime);
   const end = start + durationMin;
-  const concurrent = existing.filter((a) => overlaps(start, end, toMinutes(a.startTime), toMinutes(a.endTime))).length;
-  return concurrent >= capacity;
+  return peakConcurrent(start, end, existing) >= capacity;
 }

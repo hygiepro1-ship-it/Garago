@@ -14,7 +14,7 @@ import AgendaDayView, { assignPosts } from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
 import { findNextFreeStart } from "@/lib/availability";
 import type { CustomerMatch } from "@/lib/customers";
-import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
+import { emailSuggestions, emailTypoFix, formatPhone, normalizePlate, PHONE_PATTERN } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
 import VehicleFields from "@/components/VehicleFields";
@@ -27,6 +27,8 @@ export interface AgendaAppointment {
   vehicleYear?: number | null;
   vehicleMake?: string | null;
   vehicleModel?: string | null;
+  /** Plaque d'immatriculation (majuscules et chiffres, sans espace). */
+  licensePlate?: string | null;
   serviceName?: string | null;
   date: string;
   startTime: string;
@@ -91,16 +93,15 @@ function confirmationLabel(a: AgendaAppointment, tr: (fr: string) => string, en:
 const input = "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:border-orange-400";
 const label = "block text-[11px] font-semibold text-gray-500 mb-0.5";
 
+/**
+ * Fenêtre de l'agenda. Elle ne se ferme QUE par la croix, « Annuler » ou « Enregistrer » :
+ * ni clic à côté, ni touche Échap. Un clic trop rapide pendant qu'un client est au
+ * téléphone ne doit jamais effacer ce qui a été saisi.
+ */
 export function Dialog({ title, subtitle, onClose, children, wide }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const tr = useTr();
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3" style={{ background: "rgba(11,31,58,0.55)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3" style={{ background: "rgba(11,31,58,0.55)" }}>
       <div role="dialog" aria-modal="true" aria-label={title}
         className={`bg-white rounded-2xl shadow-2xl w-full ${wide ? "max-w-2xl" : "max-w-md"} max-h-[94vh] overflow-y-auto`}>
         <div className="px-4 py-2.5 flex items-center justify-between gap-3" style={{ borderBottom: "1px solid #f1f5f9" }}>
@@ -150,7 +151,7 @@ function DurationPicker({ value, onChange, idPrefix }: { value: number; onChange
 const EMPTY_FORM = {
   customerId: "", // fiche choisie dans le carnet de clients du garage, s'il y en a une
   customerName: "", customerPhone: "", customerEmail: "",
-  vehicleYear: "", vehicleMake: "", vehicleModel: "",
+  vehicleYear: "", vehicleMake: "", vehicleModel: "", licensePlate: "",
   categoryId: "", serviceName: "", date: "", startTime: "09:00", durationMin: 60,
   bay: "", // "" = automatique
   contactChannel: "EMAIL", language: "fr", notes: "", // courriel par défaut : il ne coûte rien, contrairement au texto
@@ -254,7 +255,7 @@ export default function GarageAgenda({
   // Modification complète d'un rendez-vous : client, plage, porte, service, véhicule, notes.
   const [edit, setEdit] = useState({
     customerName: "", customerPhone: "", customerEmail: "", serviceName: "",
-    vehicleYear: "", vehicleMake: "", vehicleModel: "",
+    vehicleYear: "", vehicleMake: "", vehicleModel: "", licensePlate: "",
     date: "", startTime: "", durationMin: 60, bay: "", notes: "",
   });
   const [note, setNote] = useState("");
@@ -264,6 +265,16 @@ export default function GarageAgenda({
   const [actionError, setActionError] = useState("");
 
   const open = openId ? appointments.find((a) => a.id === openId) ?? null : null;
+
+  // Recherche d'un rendez-vous (passé ou à venir) par plaque d'immatriculation.
+  const [plateQuery, setPlateQuery] = useState("");
+  const plateKey = normalizePlate(plateQuery);
+  const plateHits = plateKey.length >= 2
+    ? appointments
+      .filter((a) => a.licensePlate && a.licensePlate.includes(plateKey))
+      .sort((x, y) => y.date.localeCompare(x.date) || y.startTime.localeCompare(x.startTime))
+      .slice(0, 30)
+    : [];
   // Le tableau de bord garde cette fonction pour ouvrir un rendez-vous en modification depuis sa liste.
   useEffect(() => {
     if (!editRef) return;
@@ -331,7 +342,7 @@ export default function GarageAgenda({
       customerId: c.id, customerName: c.name, customerPhone: formatPhone(c.phone), customerEmail: c.email ?? "",
       language: c.language === "en" ? "en" : "fr",
       contactChannel: c.contactChannel === "NONE" ? "" : c.contactChannel === "SMS" || c.contactChannel === "EMAIL" ? c.contactChannel : form.contactChannel,
-      vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "",
+      vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "", licensePlate: v?.plate ?? "",
     });
   }
 
@@ -343,6 +354,14 @@ export default function GarageAgenda({
     setOpenId(id);
     if (a && (a.status === "PENDING" || a.status === "CONFIRMED")) startEdit(a);
     else setMode("view");
+  }
+
+  /** Résultat de la recherche par plaque : l'agenda va à ce jour-là et ouvre le rendez-vous. */
+  function goToAppointment(a: AgendaAppointment) {
+    setWeekStart(mondayOf(a.date));
+    setDayRef(a.date);
+    if (view === "month") setView("week");
+    openAppointment(a.id);
   }
 
   async function submitForm(e: React.FormEvent) {
@@ -378,6 +397,7 @@ export default function GarageAgenda({
       customerName: a.customerName, customerPhone: formatPhone(a.customerPhone), customerEmail: a.customerEmail ?? "",
       serviceName: a.serviceName ?? "",
       vehicleYear: a.vehicleYear ? String(a.vehicleYear) : "", vehicleMake: a.vehicleMake ?? "", vehicleModel: a.vehicleModel ?? "",
+      licensePlate: a.licensePlate ?? "",
       date: a.date, startTime: a.startTime, durationMin: Math.max(10, toMin(a.endTime) - toMin(a.startTime)),
       bay: a.bay ? String(a.bay) : "", notes: a.notes ?? "",
     });
@@ -465,6 +485,7 @@ export default function GarageAgenda({
       if (changed(edit.vehicleYear, open.vehicleYear ? String(open.vehicleYear) : "")) body.vehicleYear = edit.vehicleYear.trim();
       if (changed(edit.vehicleMake, open.vehicleMake)) body.vehicleMake = edit.vehicleMake.trim();
       if (changed(edit.vehicleModel, open.vehicleModel)) body.vehicleModel = edit.vehicleModel.trim();
+      if (normalizePlate(edit.licensePlate) !== (open.licensePlate ?? "")) body.licensePlate = normalizePlate(edit.licensePlate);
       if (changed(edit.notes, open.notes)) body.notes = edit.notes.trim() || null;
       if (Object.keys(body).length > 0) {
         const res = await send(open.id, body);
@@ -548,6 +569,46 @@ export default function GarageAgenda({
             {tr("+ Rendez-vous")}
           </button>
         </div>
+      </div>
+
+      <div className="relative max-w-md">
+        <label htmlFor="agenda-plate-search" className="sr-only">{tr("Rechercher un rendez-vous par plaque d'immatriculation")}</label>
+        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 focus-within:border-orange-400">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className="flex-shrink-0">
+            <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+          </svg>
+          <input id="agenda-plate-search" type="search" autoComplete="off" autoCapitalize="characters" spellCheck={false}
+            className="w-full py-2 sm:py-1.5 text-sm bg-transparent focus:outline-none uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
+            placeholder={tr("Rechercher par plaque")} value={plateQuery} onChange={(e) => setPlateQuery(e.target.value)}
+            aria-controls="agenda-plate-results" aria-expanded={plateKey.length >= 2} role="combobox" aria-autocomplete="list" />
+          {plateQuery && (
+            <button type="button" onClick={() => setPlateQuery("")} aria-label={tr("Fermer")} className="text-gray-400 font-bold px-1">×</button>
+          )}
+        </div>
+        {plateKey.length >= 2 && (
+          <ul id="agenda-plate-results" role="listbox" aria-label={tr("Rechercher par plaque")}
+            className="absolute z-30 left-0 right-0 top-full mt-1 max-h-80 overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-lg">
+            {plateHits.length === 0 ? (
+              <li className="px-3 py-2 text-xs text-gray-500">{en ? `No appointment with plate ${plateKey}.` : `Aucun rendez-vous avec la plaque ${plateKey}.`}</li>
+            ) : plateHits.map((a) => (
+              <li key={a.id} role="option" aria-selected={false}>
+                <button type="button" onClick={() => goToAppointment(a)}
+                  className="w-full text-left px-3 py-2 border-b border-gray-100 last:border-b-0 hover:bg-orange-50">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-bold text-gray-900 truncate">{a.customerName}</span>
+                    <span className="text-xs font-black tracking-wider text-gray-700 flex-shrink-0">{a.licensePlate}</span>
+                  </span>
+                  <span className="block text-[11px] text-gray-500 truncate first-letter:uppercase">
+                    {[`${shortDate(a.date, lang)} · ${a.startTime}–${a.endTime}`,
+                      a.serviceName ? translateServiceName(a.serviceName, lang) : "",
+                      [a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" "),
+                      tr(STATUS_LABEL[a.status] ?? a.status)].filter(Boolean).join(" · ")}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {toCall.length > 0 && (
@@ -799,11 +860,11 @@ export default function GarageAgenda({
               {known && known.vehicles.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-1" role="group" aria-label={tr("Véhicules de ce client")}>
                   {known.vehicles.map((v, i) => {
-                    const text = [v.year, v.make, v.model].filter(Boolean).join(" ");
+                    const text = [v.year, v.make, v.model, v.plate ? `(${v.plate})` : ""].filter(Boolean).join(" ");
                     const on = form.vehicleYear === (v.year ? String(v.year) : "") && form.vehicleMake === (v.make ?? "") && form.vehicleModel === (v.model ?? "");
                     return (
                       <button key={i} type="button" aria-pressed={on}
-                        onClick={() => setForm({ ...form, vehicleYear: v.year ? String(v.year) : "", vehicleMake: v.make ?? "", vehicleModel: v.model ?? "" })}
+                        onClick={() => setForm({ ...form, vehicleYear: v.year ? String(v.year) : "", vehicleMake: v.make ?? "", vehicleModel: v.model ?? "", licensePlate: v.plate ?? "" })}
                         className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
                         style={{ background: on ? "#0b1f3a" : "#f1f5f9", color: on ? "#fff" : "#0b1f3a" }}>
                         {text}
@@ -812,6 +873,13 @@ export default function GarageAgenda({
                   })}
                 </div>
               )}
+            </div>
+
+            <div className="col-span-6 sm:col-span-3">
+              <label className={label} htmlFor="rdv-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
+              <input id="rdv-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12}
+                className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
+                value={form.licensePlate} onChange={(e) => setForm({ ...form, licensePlate: e.target.value.toUpperCase() })} />
             </div>
 
             <div className="col-span-6 sm:col-span-4">
@@ -839,12 +907,17 @@ export default function GarageAgenda({
                 {form.contactChannel === ""
                   ? "Aucun message ne sera envoyé à ce client."
                   : en
-                    ? `The customer gets ${form.contactChannel === "SMS" ? "a text" : "an email"} 48 h before; with no reply 24 h before, you are told to call them.`
-                    : `Le client reçoit un ${form.contactChannel === "SMS" ? "texto" : "courriel"} 48 h avant ; sans réponse 24 h avant, vous êtes prévenu pour l'appeler.`}
+                    ? `The customer gets a confirmation by ${form.contactChannel === "SMS" ? "text" : "email"} right away, then a reminder 48 h before; with no reply 24 h before, you are told to call them.`
+                    : `Le client reçoit tout de suite une confirmation par ${form.contactChannel === "SMS" ? "texto" : "courriel"}, puis un rappel 48 h avant ; sans réponse 24 h avant, vous êtes prévenu pour l'appeler.`}
               </p>
-              <button type="submit" disabled={saving} className="flex-shrink-0 text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#e0600c" }}>
-                {saving ? "…" : tr("Enregistrer")}
-              </button>
+              <div className="flex gap-2 flex-shrink-0">
+                <button type="button" onClick={() => setForm(null)} className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-700 bg-white">
+                  {tr("Annuler")}
+                </button>
+                <button type="submit" disabled={saving} className="text-white px-5 py-2 rounded-lg text-sm font-bold disabled:opacity-60" style={{ background: "#e0600c" }}>
+                  {saving ? "…" : tr("Enregistrer")}
+                </button>
+              </div>
             </div>
           </form>
         </Dialog>
@@ -864,8 +937,8 @@ export default function GarageAgenda({
               <a href={`tel:${open.customerPhone}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#15803d" }}>{open.customerPhone}</a>
               {open.customerEmail && <a href={`mailto:${open.customerEmail}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm truncate max-w-full" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8" }}>{open.customerEmail}</a>}
             </div>
-            {mode !== "edit" && (open.serviceName || open.vehicleMake || open.vehicleYear) && (
-              <p className="text-gray-700">{[translateServiceName(open.serviceName, lang), [open.vehicleYear, open.vehicleMake, open.vehicleModel].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</p>
+            {mode !== "edit" && (open.serviceName || open.vehicleMake || open.vehicleYear || open.licensePlate) && (
+              <p className="text-gray-700">{[translateServiceName(open.serviceName, lang), [open.vehicleYear, open.vehicleMake, open.vehicleModel].filter(Boolean).join(" "), open.licensePlate ? `${en ? "Plate" : "Plaque"} ${open.licensePlate}` : ""].filter(Boolean).join(" · ")}</p>
             )}
             {mode !== "edit" && open.notes && <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-2">{open.notes}</p>}
             {open.status === "PENDING" && mode === "edit" && (
@@ -937,6 +1010,12 @@ export default function GarageAgenda({
                       onChange={(v) => setEdit({ ...edit, ...v })} />
                   </div>
                   <div className="col-span-2">
+                    <label className={label} htmlFor="ed-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
+                    <input id="ed-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12}
+                      className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
+                      value={edit.licensePlate} onChange={(e) => setEdit({ ...edit, licensePlate: e.target.value.toUpperCase() })} />
+                  </div>
+                  <div className="col-span-2">
                     <label className={label} htmlFor="ed-notes">{tr("Notes (visibles seulement par vous)")}</label>
                     <textarea id="ed-notes" rows={2} maxLength={1000} className={input} value={edit.notes} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} />
                   </div>
@@ -962,7 +1041,10 @@ export default function GarageAgenda({
                       className="px-3 py-2.5 min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-700 bg-white">
                       {en ? "More actions" : "Plus d'actions"} {moreOpen ? "▴" : "▾"}
                     </button>
-                    <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#e0600c" }}>{busy ? "…" : tr("Enregistrer")}</button>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setOpenId(null)} className="px-3 py-2.5 min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-700 bg-white">{tr("Annuler")}</button>
+                      <button type="submit" disabled={busy} className={actionBtn} style={{ background: "#e0600c" }}>{busy ? "…" : tr("Enregistrer")}</button>
+                    </div>
                   </div>
                   {moreOpen && (() => {
                     const startAt = new Date(`${open.date}T${open.startTime}:00`).getTime();
