@@ -8,8 +8,7 @@ import { loadBayRules } from "@/lib/bays";
 import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS, sendVehicleReadySMS } from "@/lib/sms";
-import { reviewPageUrl } from "@/lib/review-checks";
-import { randomBytes } from "crypto";
+import { reviewPageUrl, newReviewToken, reviewWindowOpen } from "@/lib/review-checks";
 import { cleanText, isValidEmail } from "@/lib/abuse";
 import { formatPhone, isFormattedPhone, normalizePlate } from "@/lib/contact-format";
 
@@ -345,13 +344,15 @@ export async function PATCH(
     const garagePhone2    = updated.garage.phone ?? "";
 
     const completedPromises: Promise<void>[] = [];
-    // Lien unique pour noter le garage (page /avis/[jeton]) : le même si le garage renvoie le message.
+    // Code unique pour noter le garage (page /avis/[code]) : le même si le garage renvoie le message.
+    // Pas de nouveau code si l'avis est déjà déposé ou si les 15 jours sont passés : le message part sans lien.
     let reviewToken = updated.reviewToken;
-    if (!reviewToken) {
-      reviewToken = randomBytes(24).toString("hex");
+    if (!reviewToken && reviewWindowOpen(updated.date)
+        && !(await prisma.review.findFirst({ where: { appointmentId: updated.id }, select: { id: true } }))) {
+      reviewToken = newReviewToken();
       await prisma.appointment.update({ where: { id: updated.id }, data: { reviewToken } });
     }
-    const reviewUrl = reviewPageUrl(reviewToken);
+    const reviewUrl = reviewToken ? reviewPageUrl(reviewToken) : null;
     const lang2 = updated.language === "en" ? "en" : "fr";
 
     // Un seul moyen : texto si le client l'a choisi, sinon courriel.

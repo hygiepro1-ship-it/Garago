@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { clientIp, isRateLimited } from "@/lib/abuse";
-import { containsOffensiveContent, checkAndCreateAlerts, reviewerDisplayName } from "@/lib/review-checks";
+import { containsOffensiveContent, checkAndCreateAlerts, reviewerDisplayName, REVIEW_TOKEN_RE, reviewWindowOpen } from "@/lib/review-checks";
 import { revalidateGarage } from "@/lib/revalidate-garage";
 
 // Avis sur un garage laissé depuis le lien du message « véhicule prêt » (page /avis/[jeton]).
-// Le jeton prouve la visite : l'avis est « vérifié », sans compte. Un seul avis par rendez-vous :
-// le renvoyer remplace le premier.
+// Le code prouve la visite : l'avis est « vérifié », sans compte. Le code est effacé dès que
+// l'avis est déposé (un seul avis par rendez-vous) et ne vaut plus rien 15 jours après le rendez-vous.
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   if (body._hp) return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
 
-  const token = typeof body.token === "string" && /^[a-f0-9]{48}$/.test(body.token) ? body.token : null;
+  const token = typeof body.token === "string" && REVIEW_TOKEN_RE.test(body.token) ? body.token : null;
   const rating = Number(body.rating);
   if (!token) return NextResponse.json({ error: "Lien invalide." }, { status: 400 });
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
@@ -26,12 +26,16 @@ export async function POST(req: NextRequest) {
   const appt = await prisma.appointment.findFirst({
     where: { reviewToken: token, status: "COMPLETED" },
     select: {
-      id: true, garageId: true, userId: true, customerName: true, serviceName: true,
+      id: true, garageId: true, userId: true, customerName: true, serviceName: true, date: true,
       vehicleMake: true, vehicleModel: true, vehicleYear: true,
       garage: { select: { name: true, slug: true } },
     },
   });
-  if (!appt) return NextResponse.json({ error: "Ce lien n'est plus valide." }, { status: 404 });
+  if (!appt || !reviewWindowOpen(appt.date)) return NextResponse.json({ error: "Ce lien n'est plus valide." }, { status: 404 });
+
+  // Le code n'est utilisable qu'une fois : on l'efface d'abord (deux envois simultanés ne passent pas tous les deux).
+  const claimed = await prisma.appointment.updateMany({ where: { id: appt.id, reviewToken: token }, data: { reviewToken: null } });
+  if (claimed.count !== 1) return NextResponse.json({ error: "Ce lien n'est plus valide." }, { status: 404 });
 
   const isHidden = containsOffensiveContent(comment ?? "");
   const data = {
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
     service: appt.serviceName?.slice(0, 80) ?? null,
     vehicleMake: appt.vehicleMake, vehicleModel: appt.vehicleModel, vehicleYear: appt.vehicleYear,
   };
-  // Même rendez-vous, ou client avec compte qui a déjà noté ce garage : on remplace son avis.
+  // Client avec compte qui a déjà noté ce garage : on remplace son avis plutôt que d'en ajouter un second.
   const previous = await prisma.review.findFirst({
     where: { garageId: appt.garageId, OR: [{ appointmentId: appt.id }, ...(appt.userId ? [{ userId: appt.userId }] : [])] },
     select: { id: true },

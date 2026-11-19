@@ -6,14 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ReviewCard from "@/components/ReviewCard";
-import StarRating from "@/components/StarRating";
 import BookingWidget from "@/components/BookingWidget";
 import UnclaimedGarageView from "@/components/UnclaimedGarageView";
 import ServiceIcon from "@/components/ServiceIcon";
 import BrandLogo from "@/components/BrandLogo";
 import { formatPrice } from "@/lib/price";
 import { languageLabel, parseLanguages } from "@/lib/languages";
-import { SERVICE_CATEGORIES, serviceLabel, translateServiceName } from "@/lib/services";
+import { translateServiceName } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -66,19 +65,12 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
   const { t, lang } = useLang();
   const g = t.garage;
 
-  const [garage, setGarage]         = useState<any>(initialGarage);
+  const [garage] = useState<any>(initialGarage);
   const loading = false;
   const [coverError, setCoverError] = useState(false);
   const [logoError,  setLogoError]  = useState(false);
   const [isFav, setIsFav]           = useState(false);
   const [favLoading, setFavLoading] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewError, setReviewError] = useState("");
-  const [reviewRating, setReviewRating]     = useState(5);
-  const [reviewTitle, setReviewTitle]       = useState("");
-  const [reviewComment, setReviewComment]   = useState("");
-  const [reviewService, setReviewService]   = useState("");
-  const [submitting, setSubmitting]         = useState(false);
 
   // Compte une vue (sauf celles du propriétaire), une fois la session connue.
   const { status: sessionStatus } = useSession();
@@ -110,27 +102,6 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
       setIsFav(true);
     }
     setFavLoading(false);
-  }
-
-  async function submitReview(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setReviewError("");
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ garageId: garage.id, rating: reviewRating, title: reviewTitle, comment: reviewComment, service: reviewService }),
-    });
-    if (res.ok) {
-      const review = await res.json();
-      setGarage((g: any) => ({ ...g, reviews: [review, ...g.reviews] }));
-      setShowReviewForm(false);
-      setReviewTitle(""); setReviewComment("");
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setReviewError(err?.error || "Impossible d'enregistrer votre avis. Réessayez.");
-    }
-    setSubmitting(false);
   }
 
   if (loading) {
@@ -442,62 +413,9 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
                 {g.reviews}
                 <span className="text-gray-400 font-normal text-base">({garage.reviewCount ?? 0})</span>
               </h2>
-              {session && !isOwner && (
-                <button onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="text-sm text-white px-4 py-2 rounded-xl font-semibold transition-colors flex-shrink-0"
-                  style={{ background: "#e0600c" }}>
-                  {g.leaveReview}
-                </button>
-              )}
-              {!session && (
-                <Link href="/connexion" className="text-sm font-semibold hover:underline flex-shrink-0 inline-flex items-center min-h-[44px]" style={{ color: "#c2410c" }}>
-                  {g.signInToReview}
-                </Link>
-              )}
             </div>
-
-            {showReviewForm && (
-              <form onSubmit={submitReview} className="rounded-2xl p-5 mb-6 space-y-4" style={{ background: "#fff4ed", border: "1px solid #fed7aa" }}>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{g.ratingLabel}</label>
-                  <StarRating value={reviewRating} onChange={setReviewRating} />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{g.serviceUsed}</label>
-                  <select className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={reviewService} onChange={(e) => setReviewService(e.target.value)}>
-                    <option value="">{g.chooseService}</option>
-                    {SERVICE_CATEGORIES.map((sc) => <option key={sc.id} value={sc.name}>{serviceLabel(sc, lang)}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{g.titleLabel}</label>
-                  <input type="text"
-                    className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    value={reviewTitle} onChange={(e) => setReviewTitle(e.target.value)}
-                    placeholder={g.titlePlaceholder} />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{g.commentLabel}</label>
-                  <textarea
-                    className="block w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 min-h-[80px]"
-                    value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder={g.commentPlaceholder} />
-                </div>
-                {reviewError && <p className="text-sm font-semibold" style={{ color: "#b91c1c" }} role="alert">{reviewError}</p>}
-                <div className="flex gap-2 pt-1">
-                  <button type="submit" disabled={submitting}
-                    className="text-white px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
-                    style={{ background: "#e0600c" }}>
-                    {submitting ? g.submitting : g.submitReview}
-                  </button>
-                  <button type="button" onClick={() => setShowReviewForm(false)}
-                    className="border border-gray-300 px-5 py-2 rounded-xl text-sm hover:bg-gray-50">
-                    {t.common.cancel}
-                  </button>
-                </div>
-              </form>
-            )}
+            {/* Avis : seulement depuis le lien reçu après un rendez-vous terminé (voir /avis/[code]). */}
+            <p className="text-xs text-gray-500 -mt-3 mb-5">{g.reviewsOnlyClients}</p>
 
             {garage.reviews?.length === 0 ? (
               <div className="text-center py-8 text-gray-400">

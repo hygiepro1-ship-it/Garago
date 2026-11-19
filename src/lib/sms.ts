@@ -182,13 +182,13 @@ export async function sendBookingConfirmedSMS(params: RdvSmsParams & { garagePho
 }
 
 /** Véhicule prêt (le garage a marqué le rendez-vous « Terminé »), avec le lien pour noter le garage. */
-export function vehicleReadyText(params: { lang: SmsLang; garageName: string; reviewUrl: string }): string {
-  return params.lang === "en"
-    ? `${smsName(params.garageName)}: your vehicle is ready. Rate the garage: ${params.reviewUrl}`
-    : `${smsName(params.garageName)}: votre véhicule est prêt. Notez le garage: ${params.reviewUrl}`;
+export function vehicleReadyText(params: { lang: SmsLang; garageName: string; reviewUrl: string | null }): string {
+  const en = params.lang === "en";
+  const link = params.reviewUrl ? (en ? ` Rate the garage: ${params.reviewUrl}` : ` Notez le garage: ${params.reviewUrl}`) : "";
+  return en ? `${smsName(params.garageName)}: your vehicle is ready.${link}` : `${smsName(params.garageName)}: votre véhicule est prêt.${link}`;
 }
 
-export async function sendVehicleReadySMS(params: { to: string; garageId: string; lang: SmsLang; garageName: string; reviewUrl: string }) {
+export async function sendVehicleReadySMS(params: { to: string; garageId: string; lang: SmsLang; garageName: string; reviewUrl: string | null }) {
   await sendSMS(params.to, vehicleReadyText(params), params.garageId);
 }
 

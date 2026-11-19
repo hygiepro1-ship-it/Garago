@@ -10,7 +10,6 @@ const T = {
   fr: {
     title: (g: string) => `Comment s'est passée votre visite chez ${g} ?`,
     sub: "Votre note paraît sur la fiche du garage dans Garago et aide d'autres conducteurs à choisir. Seuls votre prénom et l'initiale de votre nom sont affichés.",
-    again: "Vous avez déjà noté ce garage. Vous pouvez modifier votre avis.",
     q1: "Votre note",
     stars: ["Très déçu", "Déçu", "Correct", "Satisfait", "Très satisfait"],
     q2: "Votre commentaire (facultatif)",
@@ -22,7 +21,6 @@ const T = {
   en: {
     title: (g: string) => `How was your visit to ${g}?`,
     sub: "Your rating appears on the garage's Garago page and helps other drivers choose. Only your first name and last initial are shown.",
-    again: "You have already rated this garage. You can change your review.",
     q1: "Your rating",
     stars: ["Very disappointed", "Disappointed", "OK", "Satisfied", "Very satisfied"],
     q2: "Your comment (optional)",
@@ -35,11 +33,10 @@ const T = {
 
 export default function ReviewForm(props: {
   token: string; lang: "fr" | "en"; garageName: string; garageSlug: string; serviceName: string | null;
-  initialRating: number; initialComment: string; alreadyReviewed: boolean;
 }) {
-  const [rating, setRating] = useState(props.initialRating);
+  const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
-  const [comment, setComment] = useState(props.initialComment);
+  const [comment, setComment] = useState("");
   const [hp, setHp] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -85,7 +82,6 @@ export default function ReviewForm(props: {
               <h1 className="text-2xl font-extrabold text-gray-900 mb-1">{t.title(props.garageName)}</h1>
               {props.serviceName && <p className="text-sm text-gray-700 mb-2">{t.service} : {props.serviceName}</p>}
               <p className="text-sm text-gray-500 leading-relaxed">{t.sub}</p>
-              {props.alreadyReviewed && <p className="text-sm text-gray-700 mt-2 font-semibold">{t.again}</p>}
             </div>
 
             <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">

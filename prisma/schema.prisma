@@ -572,7 +572,7 @@ model Appointment {
   confirmRequestedAt DateTime?
   confirmNudgeAt     DateTime?
   arrivalReminderAt  DateTime?
-  reviewToken        String? // aléatoire (192 bits) — lien « notez le garage » envoyé quand le véhicule est prêt
+  reviewToken        String? // code de 16 caractères (lien « notez le garage ») — effacé après l'avis ou 15 jours après le rendez-vous
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

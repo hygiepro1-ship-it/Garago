@@ -1,5 +1,28 @@
+import { randomInt } from "crypto";
 import prisma from "@/lib/prisma";
 import { sendAdminBadReviewAlert } from "@/lib/email";
+import { addDaysStr, quebecToday } from "@/lib/availability";
+
+// ── Code pour noter le garage ────────────────────────────────────────────────
+// Chaque rendez-vous terminé reçoit un code unique de 16 caractères (lettres minuscules et chiffres,
+// environ 82 bits : impossible à deviner). Il donne le droit de déposer UN avis, puis il est effacé :
+// dès que l'avis est déposé, ou 15 jours après la date du rendez-vous (purge quotidienne,
+// /api/cron/cleanup-abuse-tables). Un code volé ensuite ne sert plus à rien.
+
+export const REVIEW_TOKEN_RE = /^[a-z0-9]{16}$/;
+export const REVIEW_WINDOW_DAYS = 15;
+const TOKEN_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+export function newReviewToken(): string {
+  let s = "";
+  for (let i = 0; i < 16; i++) s += TOKEN_ALPHABET[randomInt(TOKEN_ALPHABET.length)];
+  return s;
+}
+
+/** Vrai tant qu'on peut encore noter ce rendez-vous (jusqu'à 15 jours après sa date, inclus). */
+export function reviewWindowOpen(date: string): boolean {
+  return addDaysStr(date, REVIEW_WINDOW_DAYS) >= quebecToday();
+}
 
 // Contrôles communs aux avis sur un garage : avis laissé depuis un compte (/api/reviews)
 // ou depuis le lien du message « véhicule prêt » (/api/reviews/rdv).
