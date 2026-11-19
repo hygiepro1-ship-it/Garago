@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
 
   const data = { content, rating, source, garageId: appt?.garageId ?? null, authorName: appt ? cleanText(appt.customerName, 80) : null };
   if (appt) {
-    await prisma.suggestion.upsert({ where: { appointmentId: appt.id }, create: { ...data, appointmentId: appt.id }, update: { ...data, status: "PENDING" } });
+    const previous = await prisma.suggestion.findFirst({ where: { appointmentId: appt.id }, select: { id: true } });
+    if (previous) await prisma.suggestion.update({ where: { id: previous.id }, data: { ...data, status: "PENDING" } });
+    else await prisma.suggestion.create({ data: { ...data, appointmentId: appt.id } });
   } else {
     await prisma.suggestion.create({ data });
   }

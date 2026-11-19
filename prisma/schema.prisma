@@ -495,7 +495,9 @@ model Suggestion {
   rating        Int?
   source        String? // RAPPEL_SMS | RAPPEL_EMAIL | null = suggestion libre
   garageId      String?
-  appointmentId String? @unique // un seul avis par rendez-vous (le suivant remplace le premier)
+  appointmentId String? // un seul avis par rendez-vous (le suivant remplace le premier, voir /api/avis)
+
+  @@index([appointmentId])
 }
 
 model SupportQuestion {
