@@ -1288,6 +1288,8 @@ export interface ManualConfirmationRequestParams extends AppointmentDetails {
   garagePhone:  string;
   confirmUrl:   string;
   cancelUrl:    string;
+  /** Page d'avis sur Garago (rappels, fonctionnement). */
+  feedbackUrl?: string;
 }
 
 /**
@@ -1322,6 +1324,13 @@ export async function sendManualConfirmationRequest(params: ManualConfirmationRe
 
     <p style="margin:0 0 12px;color:#374151;font-size:14px">${en ? "Need another time? Call the garage:" : "Besoin d'un autre moment ? Appelez le garage :"}</p>
     ${phoneBtn(params.garagePhone)}
+
+    ${params.feedbackUrl ? `${HR}
+    <p style="margin:0 0 6px;color:#111827;font-size:15px;font-weight:800">${en ? "What do you think of these reminders?" : "Que pensez-vous de ces rappels ?"}</p>
+    <p style="margin:0 0 14px;color:#6b7280;font-size:13px">${en
+      ? "Your garage uses Garago to manage its appointments. Tell us in 30 seconds what you like and what we could do better."
+      : "Votre garage utilise Garago pour gérer ses rendez-vous. Dites-nous en 30 secondes ce que vous aimez et ce qu'on pourrait faire mieux."}</p>
+    ${secondaryBtn(params.feedbackUrl, en ? "Give my opinion" : "Donner mon avis")}` : ""}
   `;
 
   await send(

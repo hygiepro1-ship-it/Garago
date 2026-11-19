@@ -141,13 +141,35 @@ interface RdvSmsParams {
 
 // ── Textes — c'est ici qu'on façonne les messages envoyés aux clients ─────────
 
-/** Demande de confirmation (48 h avant) : un lien pour confirmer ou annuler. */
-export async function sendConfirmationRequestSMS(params: RdvSmsParams & { url: string }) {
-  const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;
-  const msg = params.lang === "en"
-    ? `${smsName(params.garageName)}: appointment ${when}. Confirm or cancel: ${params.url}`
-    : `${smsName(params.garageName)}: RDV ${when}. Confirmez ou annulez: ${params.url}`;
-  await sendSMS(params.to, msg, params.garageId);
+/** « jeu. 26 nov. à 12h30 » / « Thu, Nov 26 at 12:30 PM » */
+export function smsWhen(date: string, startTime: string, lang: SmsLang): string {
+  return `${smsDate(date, lang)} ${lang === "en" ? "at" : "à"} ${smsTime(startTime, lang)}`;
+}
+
+/** Texte du rappel 48 h avant : le client répond OUI ou NON (voir /api/webhooks/twilio-sms). */
+export function confirmationRequestText(params: { lang: SmsLang; garageName: string; date: string; startTime: string; feedbackUrl: string }): string {
+  const when = smsWhen(params.date, params.startTime, params.lang);
+  return params.lang === "en"
+    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel. Your opinion of Garago: ${params.feedbackUrl}`
+    : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler. Votre avis sur Garago: ${params.feedbackUrl}`;
+}
+
+/** Rappel 48 h avant : le client confirme ou annule en répondant au texto. */
+export async function sendConfirmationRequestSMS(params: RdvSmsParams & { feedbackUrl: string }) {
+  await sendSMS(params.to, confirmationRequestText(params), params.garageId);
+}
+
+/** Réponse automatique au texto du client (renvoyée directement à Twilio, pas par sendSMS). */
+export function smsReplyText(kind: "CONFIRMED" | "CANCELLED" | "ASK_AGAIN" | "TOO_LATE", params: { lang: SmsLang; garageName: string; garagePhone: string; date: string; startTime: string }): string {
+  const name = smsName(params.garageName);
+  const when = smsWhen(params.date, params.startTime, params.lang);
+  const en = params.lang === "en";
+  switch (kind) {
+    case "CONFIRMED": return en ? `${name}: thank you, your appointment ${when} is confirmed.` : `${name}: merci, votre RDV du ${when} est confirmé.`;
+    case "CANCELLED": return en ? `${name}: your appointment ${when} is cancelled, the garage has been notified. To rebook: ${params.garagePhone}` : `${name}: votre RDV du ${when} est annulé, le garage est prévenu. Pour en reprendre un: ${params.garagePhone}`;
+    case "ASK_AGAIN": return en ? `${name}: reply YES to confirm your appointment ${when}, or NO to cancel it.` : `${name}: répondez OUI pour confirmer votre RDV du ${when}, ou NON pour l'annuler.`;
+    case "TOO_LATE": return en ? `${name}: your appointment ${when} can no longer be changed by text. Call the garage: ${params.garagePhone}` : `${name}: votre RDV du ${when} ne peut plus être modifié par texto. Appelez le garage: ${params.garagePhone}`;
+  }
 }
 
 /** Rendez-vous enregistré par le garage : envoyé tout de suite après la saisie. */

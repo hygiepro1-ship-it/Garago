@@ -491,6 +491,11 @@ model Suggestion {
   status      String   @default("PENDING") // PENDING | READ | DONE
   adminNote   String?
   createdAt   DateTime @default(now())
+  // Avis laissé depuis un rappel de rendez-vous (page /avis) : note de 1 à 5, et d'où il vient.
+  rating        Int?
+  source        String? // RAPPEL_SMS | RAPPEL_EMAIL | null = suggestion libre
+  garageId      String?
+  appointmentId String? @unique // un seul avis par rendez-vous (le suivant remplace le premier)
 }
 
 model SupportQuestion {
@@ -553,7 +558,7 @@ model Appointment {
   // messages, et suivi des réponses (statistiques du projet pilote).
   contactChannel     String? // SMS | EMAIL | null = aucun message
   language           String    @default("fr") // fr | en
-  confirmedVia       String? // LINK (le client a cliqué) | PHONE (le garage a appelé)
+  confirmedVia       String? // LINK (le client a cliqué) | SMS (le client a répondu OUI au texto) | PHONE (le garage a appelé)
   confirmRespondedAt DateTime? // première réponse du client (confirmation ou annulation)
   noResponseAt       DateTime? // sans réponse à l'échéance : le garage a été prévenu
   cancelledBy        String? // CLIENT | GARAGE | SYSTEM
