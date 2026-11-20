@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { REVIEW_TOKEN_RE, reviewWindowOpen } from "@/lib/review-checks";
+import { REVIEW_TOKEN_RE, reviewWindowOpen, canReview } from "@/lib/review-checks";
 import ReviewForm from "./ReviewForm";
 
 // Le client note le garage après sa réparation, depuis le lien du message « véhicule prêt »
@@ -15,7 +15,7 @@ export default async function NoterGaragePage({ params }: { params: Promise<{ to
     : null;
   const lang = appt?.language === "en" ? "en" : "fr";
 
-  if (!appt || appt.status !== "COMPLETED" || !reviewWindowOpen(appt.date)) {
+  if (!appt || !canReview(appt.status, appt.date) || !reviewWindowOpen(appt.date)) {
     return (
       <main className="min-h-[70vh] px-4 py-10" style={{ background: "#f8fafc" }} lang={lang}>
         <div className="max-w-lg mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-8 text-center">

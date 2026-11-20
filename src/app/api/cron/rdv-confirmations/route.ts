@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
+import { processReviewRequests } from "@/lib/review-requests";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -14,5 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   const stats = await processRdvConfirmations();
-  return NextResponse.json({ ok: true, ...stats });
+  // Lendemain des rendez-vous non marqués « Terminé » : code d'avis et message au client.
+  const reviews = await processReviewRequests().catch((e) => { console.error("[REVIEW REQUESTS]", e); return { error: true }; });
+  return NextResponse.json({ ok: true, ...stats, reviews });
 }

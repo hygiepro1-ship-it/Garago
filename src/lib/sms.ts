@@ -192,6 +192,17 @@ export async function sendVehicleReadySMS(params: { to: string; garageId: string
   await sendSMS(params.to, vehicleReadyText(params), params.garageId);
 }
 
+/** Lendemain d'un rendez-vous que le garage n'a pas marqué « Terminé » : lien pour noter le garage. */
+export function visitReviewText(params: { lang: SmsLang; garageName: string; reviewUrl: string }): string {
+  return params.lang === "en"
+    ? `${smsName(params.garageName)}: thank you for your visit. Rate the garage: ${params.reviewUrl}`
+    : `${smsName(params.garageName)}: merci de votre visite. Notez le garage: ${params.reviewUrl}`;
+}
+
+export async function sendVisitReviewSMS(params: { to: string; garageId: string; lang: SmsLang; garageName: string; reviewUrl: string }) {
+  await sendSMS(params.to, visitReviewText(params), params.garageId);
+}
+
 /** Le garage a déplacé le rendez-vous. */
 export async function sendRescheduleSMS(params: RdvSmsParams & { garagePhone: string }) {
   const when = `${smsDate(params.date, params.lang)} ${params.lang === "en" ? "at" : "à"} ${smsTime(params.startTime, params.lang)}`;

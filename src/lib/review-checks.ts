@@ -4,7 +4,9 @@ import { sendAdminBadReviewAlert } from "@/lib/email";
 import { addDaysStr, quebecToday } from "@/lib/availability";
 
 // ── Code pour noter le garage ────────────────────────────────────────────────
-// Chaque rendez-vous terminé reçoit un code unique de 16 caractères (lettres minuscules et chiffres,
+// Chaque rendez-vous reçoit un code unique de 16 caractères, créé quand le garage le marque « Terminé »
+// ou, à défaut, le lendemain de sa date (src/lib/review-requests.ts) ; jamais avant : le code n'existe
+// pas tant qu'il ne peut pas servir. 16 caractères (lettres minuscules et chiffres,
 // environ 82 bits : impossible à deviner). Il donne le droit de déposer UN avis, puis il est effacé :
 // dès que l'avis est déposé, ou 15 jours après la date du rendez-vous (purge quotidienne,
 // /api/cron/cleanup-abuse-tables). Un code volé ensuite ne sert plus à rien.
@@ -17,6 +19,16 @@ export function newReviewToken(): string {
   let s = "";
   for (let i = 0; i < 16; i++) s += TOKEN_ALPHABET[randomInt(TOKEN_ALPHABET.length)];
   return s;
+}
+
+/**
+ * Rendez-vous qu'on peut noter : terminé (le garage l'a marqué « Terminé ») ou confirmé et dont la
+ * date est passée (le garage ne l'a pas marqué, le client est quand même venu). Annulé, absent
+ * (« NO_SHOW ») ou jamais confirmé : pas d'avis.
+ */
+export const REVIEWABLE_STATUSES = ["COMPLETED", "CONFIRMED"];
+export function canReview(status: string, date: string): boolean {
+  return status === "COMPLETED" || (status === "CONFIRMED" && date < quebecToday());
 }
 
 /** Vrai tant qu'on peut encore noter ce rendez-vous (jusqu'à 15 jours après sa date, inclus). */

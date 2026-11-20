@@ -483,6 +483,36 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
   await send(params.to, subject, vehicleReadyBody(params), undefined, params.lang === "en" ? "en" : "fr");
 }
 
+// ─── Email: Note du garage, le lendemain du rendez-vous ───────────────────────
+
+export interface VisitReviewParams {
+  to:           string;
+  customerName: string;
+  garageName:   string;
+  reviewUrl:    string;
+  lang?:        "fr" | "en";
+}
+
+/** Rendez-vous passé que le garage n'a pas marqué « Terminé » : on demande au client de noter le garage. */
+export function visitReviewBody(params: VisitReviewParams): string {
+  const en = params.lang === "en";
+  return `
+    ${iconBadge("check")}
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Thank you for your visit" : "Merci de votre visite"}</h2>
+    <p style="margin:0 0 8px;color:#6b7280;font-size:15px">${en ? `Hello ${esc(params.customerName)}, you had an appointment at ${esc(params.garageName)}.` : `Bonjour ${esc(params.customerName)}, vous aviez rendez-vous chez ${esc(params.garageName)}.`}</p>
+
+    ${garageReviewBlock(params.reviewUrl, params.garageName, en ? "en" : "fr")}
+
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">${en ? "This link works once and expires 15 days after your appointment." : "Ce lien sert une seule fois et expire 15 jours après votre rendez-vous."}</p>
+  `;
+}
+
+export async function sendVisitReviewRequest(params: VisitReviewParams) {
+  if (!canSend()) return;
+  const subject = params.lang === "en" ? `How was your visit to ${params.garageName}?` : `Comment s'est passée votre visite chez ${params.garageName} ?`;
+  await send(params.to, subject, visitReviewBody(params), undefined, params.lang === "en" ? "en" : "fr");
+}
+
 /** Courriel complet (gabarit Garago compris), pour un aperçu local. */
 export function emailPreviewHtml(body: string, lang: "fr" | "en" = "fr"): string {
   return baseLayout(body, lang);
