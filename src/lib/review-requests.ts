@@ -5,10 +5,10 @@ import { newReviewToken, reviewPageUrl, THANKS_DELAY_MS } from "@/lib/review-che
 import { sendVisitReviewRequest } from "@/lib/email";
 import { sendVisitReviewSMS } from "@/lib/sms";
 
-// « Merci de votre visite » : 30 minutes après l'heure de fin d'un rendez-vous confirmé que le garage
+// « Merci de votre visite » : 12 heures après l'heure de fin d'un rendez-vous confirmé que le garage
 // n'a pas marqué « Terminé », le client reçoit un merci avec son code pour noter le garage.
-// Appelé toutes les 15 minutes (/api/cron/rdv-confirmations, .github/workflows/rdv-confirmations.yml) :
-// le message part entre 30 et 45 minutes après la fin.
+// Appelé toutes les 15 minutes (/api/cron/rdv-confirmations, .github/workflows/rdv-confirmations.yml).
+// Jamais la nuit : entre 21 h et 8 h (heure du Québec), le message attend 8 h du matin.
 //
 // - Un client qui a reçu « véhicule prêt » (le garage a cliqué « Terminé ») ne reçoit pas ce merci :
 //   le rendez-vous n'est plus « confirmé » mais « terminé », et il a déjà son code.
@@ -17,7 +17,15 @@ import { sendVisitReviewSMS } from "@/lib/sms";
 // - Un rendez-vous qui a déjà un code, ou déjà un avis, ne reçoit rien (pas de doublon).
 // - Un seul moyen : texto si le client l'a choisi, sinon courriel ; « Aucun » (rendez-vous saisi
 //   par le garage sans moyen de contact) : rien ne part et aucun code n'est créé.
+/** Heure du Québec (0 à 23). */
+function quebecHour(at: Date): number {
+  return Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", hour: "numeric", hourCycle: "h23" }).format(at));
+}
+const QUIET_FROM = 21, QUIET_UNTIL = 8;
+
 export async function processReviewRequests(now: Date = new Date()) {
+  const hour = quebecHour(now);
+  if (hour >= QUIET_FROM || hour < QUIET_UNTIL) return { thanksSms: 0, thanksEmail: 0, thanksSkipped: 0, quietHours: true };
   const today = quebecToday(now);
   const candidates = await prisma.appointment.findMany({
     where: {

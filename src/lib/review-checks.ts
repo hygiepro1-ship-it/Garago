@@ -6,7 +6,7 @@ import { quebecInstant } from "@/lib/rdv-confirmation";
 
 // ── Code pour noter le garage ────────────────────────────────────────────────
 // Chaque rendez-vous reçoit un code unique de 16 caractères, créé quand le garage le marque « Terminé »
-// ou, à défaut, 30 minutes après la fin du rendez-vous (src/lib/review-requests.ts) ; jamais avant : le code n'existe
+// ou, à défaut, 12 heures après la fin du rendez-vous (src/lib/review-requests.ts) ; jamais avant : le code n'existe
 // pas tant qu'il ne peut pas servir. 16 caractères (lettres minuscules et chiffres,
 // environ 82 bits : impossible à deviner). Il donne le droit de déposer UN avis, puis il est effacé :
 // dès que l'avis est déposé, ou 15 jours après la date du rendez-vous (purge quotidienne,
@@ -23,11 +23,13 @@ export function newReviewToken(): string {
 }
 
 /** Délai après l'heure de fin d'un rendez-vous non marqué « Terminé » avant le message de remerciement. */
-export const THANKS_DELAY_MS = 30 * 60 * 1000;
+// 12 h : si la réparation déborde l'heure prévue, le client ne reçoit pas un merci alors que sa voiture
+// est encore au garage, et le garage a le temps de cliquer « Terminé » (« véhicule prêt » à la place).
+export const THANKS_DELAY_MS = 12 * 60 * 60 * 1000;
 
 /**
  * Rendez-vous qu'on peut noter : terminé (le garage l'a marqué « Terminé ») ou confirmé et fini depuis
- * au moins 30 minutes (le garage ne l'a pas marqué, le client est quand même venu). Annulé, absent
+ * au moins 12 heures (le garage ne l'a pas marqué, le client est quand même venu). Annulé, absent
  * (« NO_SHOW ») ou jamais confirmé : pas d'avis.
  */
 export const REVIEWABLE_STATUSES = ["COMPLETED", "CONFIRMED"];

@@ -483,7 +483,7 @@ export async function sendVehicleReady(params: VehicleReadyParams) {
   await send(params.to, subject, vehicleReadyBody(params), undefined, params.lang === "en" ? "en" : "fr");
 }
 
-// ─── Email: Merci de votre visite (30 min après la fin, sans clic « Terminé ») ──
+// ─── Email: Merci de votre visite (12 h après la fin, sans clic « Terminé ») ───
 
 export interface VisitReviewParams {
   to:           string;
@@ -493,7 +493,7 @@ export interface VisitReviewParams {
   lang?:        "fr" | "en";
 }
 
-/** Rendez-vous fini depuis 30 min que le garage n'a pas marqué « Terminé » : merci, et lien pour noter le garage. */
+/** Rendez-vous fini depuis 12 h que le garage n'a pas marqué « Terminé » : merci, et lien pour noter le garage. */
 export function visitReviewBody(params: VisitReviewParams): string {
   const en = params.lang === "en";
   return `

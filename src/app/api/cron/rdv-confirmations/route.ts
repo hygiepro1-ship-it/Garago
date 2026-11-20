@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   const stats = await processRdvConfirmations();
-  // Rendez-vous finis depuis 30 min et non marqués « Terminé » : merci de la visite, avec le code d'avis.
+  // Rendez-vous finis depuis 12 h et non marqués « Terminé » : merci de la visite, avec le code d'avis.
   const reviews = await processReviewRequests().catch((e) => { console.error("[REVIEW REQUESTS]", e); return { error: true }; });
   return NextResponse.json({ ok: true, ...stats, reviews });
 }
