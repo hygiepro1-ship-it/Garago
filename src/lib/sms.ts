@@ -192,7 +192,7 @@ export async function sendVehicleReadySMS(params: { to: string; garageId: string
   await sendSMS(params.to, vehicleReadyText(params), params.garageId);
 }
 
-/** Lendemain d'un rendez-vous que le garage n'a pas marqué « Terminé » : lien pour noter le garage. */
+/** 30 min après la fin d'un rendez-vous que le garage n'a pas marqué « Terminé » : merci, et lien pour noter le garage. */
 export function visitReviewText(params: { lang: SmsLang; garageName: string; reviewUrl: string }): string {
   return params.lang === "en"
     ? `${smsName(params.garageName)}: thank you for your visit. Rate the garage: ${params.reviewUrl}`

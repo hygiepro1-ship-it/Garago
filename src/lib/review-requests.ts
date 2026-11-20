@@ -1,35 +1,39 @@
 import { prisma } from "@/lib/prisma";
 import { addDaysStr, quebecToday } from "@/lib/availability";
-import { newReviewToken, reviewPageUrl } from "@/lib/review-checks";
+import { quebecInstant } from "@/lib/rdv-confirmation";
+import { newReviewToken, reviewPageUrl, THANKS_DELAY_MS } from "@/lib/review-checks";
 import { sendVisitReviewRequest } from "@/lib/email";
 import { sendVisitReviewSMS } from "@/lib/sms";
 
-// Le lendemain d'un rendez-vous confirmé que le garage n'a pas marqué « Terminé », le client reçoit
-// quand même son code pour noter le garage (le garage oublie souvent de cliquer « Terminé »).
-// Appelé une fois par jour (/api/cron/rdv-confirmations, le matin).
+// « Merci de votre visite » : 30 minutes après l'heure de fin d'un rendez-vous confirmé que le garage
+// n'a pas marqué « Terminé », le client reçoit un merci avec son code pour noter le garage.
+// Appelé toutes les 15 minutes (/api/cron/rdv-confirmations, .github/workflows/rdv-confirmations.yml) :
+// le message part entre 30 et 45 minutes après la fin.
 //
-// - Rendez-vous d'hier ou d'avant-hier seulement (un jour de tâche manqué est rattrapé, jamais plus) :
-//   aucun envoi en masse vers de vieux rendez-vous.
-// - Un rendez-vous qui a déjà un code, ou déjà un avis, ne reçoit rien (pas de doublon avec le
-//   message « véhicule prêt » envoyé quand le garage a marqué « Terminé »).
+// - Un client qui a reçu « véhicule prêt » (le garage a cliqué « Terminé ») ne reçoit pas ce merci :
+//   le rendez-vous n'est plus « confirmé » mais « terminé », et il a déjà son code.
+// - Rendez-vous d'aujourd'hui et des 2 jours précédents seulement (une panne de la tâche est
+//   rattrapée, jamais plus) : aucun envoi en masse vers de vieux rendez-vous.
+// - Un rendez-vous qui a déjà un code, ou déjà un avis, ne reçoit rien (pas de doublon).
 // - Un seul moyen : texto si le client l'a choisi, sinon courriel ; « Aucun » (rendez-vous saisi
 //   par le garage sans moyen de contact) : rien ne part et aucun code n'est créé.
 export async function processReviewRequests(now: Date = new Date()) {
   const today = quebecToday(now);
-  const rows = await prisma.appointment.findMany({
+  const candidates = await prisma.appointment.findMany({
     where: {
-      status: { in: ["CONFIRMED", "COMPLETED"] },
+      status: "CONFIRMED",
       reviewToken: null,
-      date: { gte: addDaysStr(today, -2), lt: today },
+      date: { gte: addDaysStr(today, -2), lte: today },
     },
     select: {
-      id: true, garageId: true, userId: true, source: true, contactChannel: true, language: true,
+      id: true, garageId: true, source: true, contactChannel: true, language: true, date: true, endTime: true,
       customerName: true, customerPhone: true, customerEmail: true,
       garage: { select: { name: true } },
       user: { select: { email: true } },
     },
     take: 500,
   });
+  const rows = candidates.filter((a) => quebecInstant(a.date, a.endTime).getTime() + THANKS_DELAY_MS <= now.getTime());
 
   let sms = 0, email = 0, skipped = 0;
   for (const a of rows) {
@@ -38,9 +42,10 @@ export async function processReviewRequests(now: Date = new Date()) {
     if (!channel) { skipped++; continue; }
     if (await prisma.review.findFirst({ where: { appointmentId: a.id }, select: { id: true } })) { skipped++; continue; }
 
-    // Le code n'est posé que s'il n'y en a toujours pas (deux tâches simultanées n'envoient pas deux fois).
+    // Le code n'est posé que si le rendez-vous est toujours « confirmé » sans code : le garage qui clique
+    // « Terminé » au même moment, ou deux tâches simultanées, n'entraînent pas deux messages.
     const reviewToken = newReviewToken();
-    const set = await prisma.appointment.updateMany({ where: { id: a.id, reviewToken: null }, data: { reviewToken } });
+    const set = await prisma.appointment.updateMany({ where: { id: a.id, status: "CONFIRMED", reviewToken: null }, data: { reviewToken } });
     if (set.count !== 1) { skipped++; continue; }
 
     const lang = a.language === "en" ? "en" : "fr";
@@ -57,5 +62,5 @@ export async function processReviewRequests(now: Date = new Date()) {
       console.error("[REVIEW REQUEST]", a.id, e);
     }
   }
-  return { reviewRequestsSms: sms, reviewRequestsEmail: email, reviewRequestsSkipped: skipped };
+  return { thanksSms: sms, thanksEmail: email, thanksSkipped: skipped };
 }

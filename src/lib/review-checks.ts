@@ -2,10 +2,11 @@ import { randomInt } from "crypto";
 import prisma from "@/lib/prisma";
 import { sendAdminBadReviewAlert } from "@/lib/email";
 import { addDaysStr, quebecToday } from "@/lib/availability";
+import { quebecInstant } from "@/lib/rdv-confirmation";
 
 // ── Code pour noter le garage ────────────────────────────────────────────────
 // Chaque rendez-vous reçoit un code unique de 16 caractères, créé quand le garage le marque « Terminé »
-// ou, à défaut, le lendemain de sa date (src/lib/review-requests.ts) ; jamais avant : le code n'existe
+// ou, à défaut, 30 minutes après la fin du rendez-vous (src/lib/review-requests.ts) ; jamais avant : le code n'existe
 // pas tant qu'il ne peut pas servir. 16 caractères (lettres minuscules et chiffres,
 // environ 82 bits : impossible à deviner). Il donne le droit de déposer UN avis, puis il est effacé :
 // dès que l'avis est déposé, ou 15 jours après la date du rendez-vous (purge quotidienne,
@@ -21,14 +22,18 @@ export function newReviewToken(): string {
   return s;
 }
 
+/** Délai après l'heure de fin d'un rendez-vous non marqué « Terminé » avant le message de remerciement. */
+export const THANKS_DELAY_MS = 30 * 60 * 1000;
+
 /**
- * Rendez-vous qu'on peut noter : terminé (le garage l'a marqué « Terminé ») ou confirmé et dont la
- * date est passée (le garage ne l'a pas marqué, le client est quand même venu). Annulé, absent
+ * Rendez-vous qu'on peut noter : terminé (le garage l'a marqué « Terminé ») ou confirmé et fini depuis
+ * au moins 30 minutes (le garage ne l'a pas marqué, le client est quand même venu). Annulé, absent
  * (« NO_SHOW ») ou jamais confirmé : pas d'avis.
  */
 export const REVIEWABLE_STATUSES = ["COMPLETED", "CONFIRMED"];
-export function canReview(status: string, date: string): boolean {
-  return status === "COMPLETED" || (status === "CONFIRMED" && date < quebecToday());
+export function canReview(status: string, date: string, endTime: string, now: Date = new Date()): boolean {
+  return status === "COMPLETED"
+    || (status === "CONFIRMED" && quebecInstant(date, endTime).getTime() + THANKS_DELAY_MS <= now.getTime());
 }
 
 /** Vrai tant qu'on peut encore noter ce rendez-vous (jusqu'à 15 jours après sa date, inclus). */

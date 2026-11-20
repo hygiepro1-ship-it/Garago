@@ -10,12 +10,12 @@ export default async function NoterGaragePage({ params }: { params: Promise<{ to
   const appt = REVIEW_TOKEN_RE.test(token)
     ? await prisma.appointment.findFirst({
         where: { reviewToken: token },
-        select: { id: true, status: true, date: true, language: true, serviceName: true, garage: { select: { name: true, slug: true } } },
+        select: { id: true, status: true, date: true, endTime: true, language: true, serviceName: true, garage: { select: { name: true, slug: true } } },
       })
     : null;
   const lang = appt?.language === "en" ? "en" : "fr";
 
-  if (!appt || !canReview(appt.status, appt.date) || !reviewWindowOpen(appt.date)) {
+  if (!appt || !canReview(appt.status, appt.date, appt.endTime) || !reviewWindowOpen(appt.date)) {
     return (
       <main className="min-h-[70vh] px-4 py-10" style={{ background: "#f8fafc" }} lang={lang}>
         <div className="max-w-lg mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-8 text-center">

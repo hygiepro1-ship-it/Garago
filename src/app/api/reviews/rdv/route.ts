@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
   const appt = await prisma.appointment.findFirst({
     where: { reviewToken: token, status: { in: REVIEWABLE_STATUSES } },
     select: {
-      id: true, garageId: true, userId: true, customerName: true, serviceName: true, date: true, status: true,
+      id: true, garageId: true, userId: true, customerName: true, serviceName: true, date: true, endTime: true, status: true,
       vehicleMake: true, vehicleModel: true, vehicleYear: true,
       garage: { select: { name: true, slug: true } },
     },
   });
-  if (!appt || !canReview(appt.status, appt.date) || !reviewWindowOpen(appt.date)) return NextResponse.json({ error: "Ce lien n'est plus valide." }, { status: 404 });
+  if (!appt || !canReview(appt.status, appt.date, appt.endTime) || !reviewWindowOpen(appt.date)) return NextResponse.json({ error: "Ce lien n'est plus valide." }, { status: 404 });
 
   // Le code n'est utilisable qu'une fois : on l'efface d'abord (deux envois simultanés ne passent pas tous les deux).
   const claimed = await prisma.appointment.updateMany({ where: { id: appt.id, reviewToken: token }, data: { reviewToken: null } });
