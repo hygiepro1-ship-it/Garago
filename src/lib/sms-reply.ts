@@ -26,7 +26,7 @@ const YES = [
 ];
 const NO = [
   "non", "n", "no", "nope", "nah", "non merci", "no thanks", "annule", "annuler", "annulez", "j annule", "je annule",
-  "cancel", "cancelled", "canceled", "please cancel", "je ne peux pas", "je peux pas", "peux pas", "pas disponible",
+  "cancelled", "canceled", "please cancel", "je ne peux pas", "je peux pas", "peux pas", "pas disponible",
   "je ne serai pas la", "impossible", "can t", "cant", "cannot", "i can t make it", "not available", "2",
 ];
 const YES_SET = new Set(YES);
@@ -42,6 +42,10 @@ const NO_EMOJI = /^(👎|❌|🚫|👎🏻|👎🏼|👎🏽|👎🏾|👎🏿)+
  * oui et un non (« oui mais non ») reste inconnue : on redemande plutôt que de deviner.
  */
 export function smsIntent(raw: string): SmsIntent {
+  // Réaction iPhone à notre texto (« A aimé “…” », « Liked “…” ») : le pouce levé vaut un oui.
+  if (/^\s*(liked|loved|a aimé|a adoré|aime|adore)\s*[“"«]/iu.test(raw)) return "YES";
+  // Autre réaction ou citation de notre message : on ne devine pas.
+  if (/^\s*\S.{0,25}[“"«]/u.test(raw) && /[”"»]\s*$/u.test(raw)) return "UNKNOWN";
   const trimmed = raw.trim().replace(/\s+/g, "");
   if (YES_EMOJI.test(trimmed)) return "YES";
   if (NO_EMOJI.test(trimmed)) return "NO";
@@ -61,7 +65,7 @@ export function smsIntent(raw: string): SmsIntent {
 
 /** Mots que Twilio traite lui-même (désabonnement, aide) : on ne répond jamais par-dessus. */
 export function isCarrierKeyword(raw: string): boolean {
-  return /^(stop|stopall|unsubscribe|end|quit|arret|arreter|start|unstop|help|aide|info)$/.test(normalize(raw).replace(/\s/g, ""));
+  return /^(stop|stopall|unsubscribe|cancel|end|quit|arret|arreter|start|unstop|help|aide|info)$/.test(normalize(raw).replace(/\s/g, ""));
 }
 
 /**

@@ -150,7 +150,7 @@ export function smsWhen(date: string, startTime: string, lang: SmsLang): string 
 export function confirmationRequestText(params: { lang: SmsLang; garageName: string; date: string; startTime: string }): string {
   const when = smsWhen(params.date, params.startTime, params.lang);
   return params.lang === "en"
-    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply YES to confirm or NO to cancel.`
+    ? `${smsName(params.garageName)}: reminder, appointment ${when}. Reply OK to confirm or NO to cancel.`
     : `${smsName(params.garageName)}: rappel, RDV ${when}. Répondez OUI pour confirmer ou NON pour annuler.`;
 }
 
@@ -167,7 +167,7 @@ export function smsReplyText(kind: "CONFIRMED" | "CANCELLED" | "ASK_AGAIN" | "TO
   switch (kind) {
     case "CONFIRMED": return en ? `${name}: thank you, your appointment ${when} is confirmed.` : `${name}: merci, votre RDV du ${when} est confirmé.`;
     case "CANCELLED": return en ? `${name}: your appointment ${when} is cancelled, the garage has been notified. To rebook: ${params.garagePhone}` : `${name}: votre RDV du ${when} est annulé, le garage est prévenu. Pour en reprendre un: ${params.garagePhone}`;
-    case "ASK_AGAIN": return en ? `${name}: reply YES to confirm your appointment ${when}, or NO to cancel it.` : `${name}: répondez OUI pour confirmer votre RDV du ${when}, ou NON pour l'annuler.`;
+    case "ASK_AGAIN": return en ? `${name}: reply OK to confirm your appointment ${when}, or NO to cancel it.` : `${name}: répondez OUI pour confirmer votre RDV du ${when}, ou NON pour l'annuler.`;
     case "TOO_LATE": return en ? `${name}: your appointment ${when} can no longer be changed by text. Call the garage: ${params.garagePhone}` : `${name}: votre RDV du ${when} ne peut plus être modifié par texto. Appelez le garage: ${params.garagePhone}`;
   }
 }

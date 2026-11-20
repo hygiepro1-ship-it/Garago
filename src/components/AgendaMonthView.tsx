@@ -7,7 +7,7 @@
  * ouvre sa semaine, un clic sur un rendez-vous ouvre sa fiche.
  */
 
-import { PAST_OVERLAY, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
+import { CANCELLED_STYLE, cancelledCount, PAST_OVERLAY, type WeekAppointment, type WeekAvailability, type WeekBlock } from "@/components/AgendaWeekView";
 import { useTr } from "@/lib/dashboard-en";
 
 const STEP = 30;
@@ -22,8 +22,10 @@ function chipColors(a: WeekAppointment): { bg: string; border: string; text: str
 }
 
 export default function AgendaMonthView({
-  year, month, appointments, availability, capacity, blocked = [], lang, onPickDay, onPickAppointment,
+  year, month, appointments, availability, capacity, blocked = [], lang, onPickDay, onPickAppointment, showCancelled = false,
 }: {
+  /** Afficher les rendez-vous annulés dans les cases (sinon seulement leur nombre). */
+  showCancelled?: boolean;
   year: number;
   month: number;                        // 0 = janvier
   appointments: WeekAppointment[];
@@ -77,6 +79,9 @@ export default function AgendaMonthView({
           const date = toDateStr(d);
           const inMonth = d.getMonth() === month;
           const dayAppts = active.filter((a) => a.date === date).sort((x, y) => x.startTime.localeCompare(y.startTime));
+          const dayCancelled = appointments.filter((a) => a.date === date && a.status === "CANCELLED");
+          // Les annulés passent après les rendez-vous actifs : ils ne prennent jamais leur place dans la case.
+          const chips = showCancelled ? [...dayAppts, ...dayCancelled.sort((x, y) => x.startTime.localeCompare(y.startTime))] : dayAppts;
           const free = freeMinutes(date, d.getDay(), dayAppts);
           const closed = free === null;
           const hasRoom = !closed && free > 0;
@@ -94,21 +99,25 @@ export default function AgendaMonthView({
                   : { color: closed ? "#94a3b8" : "#0b1f3a" }}>{d.getDate()}</span>
                 <span className="text-[10px] font-semibold truncate" style={{ color: hasRoom ? "#15803d" : "#94a3b8" }}>{freeLabel}</span>
               </button>
-              {dayAppts.slice(0, 3).map((a) => {
-                const c = chipColors(a);
+              {chips.slice(0, 3).map((a) => {
+                const isCancelled = a.status === "CANCELLED";
+                const c = isCancelled ? CANCELLED_STYLE : chipColors(a);
                 return (
                   <button key={a.id} type="button" onClick={(e) => { e.stopPropagation(); onPickAppointment(a); }}
                     title={`${a.startTime}–${a.endTime} · ${a.customerName}${a.serviceName ? ` · ${a.serviceName}` : ""}`}
                     className="text-left text-[10px] leading-tight rounded px-1 py-0.5 truncate"
                     style={{ background: c.bg, borderLeft: `3px solid ${c.border}`, color: c.text }}>
-                    <span className="font-bold tabular-nums">{a.startTime}</span> {a.customerName}
+                    <span className={isCancelled ? "line-through" : undefined}><span className="font-bold tabular-nums">{a.startTime}</span> {a.customerName}</span>
                   </button>
                 );
               })}
-              {dayAppts.length > 3 && (
+              {chips.length > 3 && (
                 <button type="button" onClick={(e) => { e.stopPropagation(); onPickDay(date); }} className="text-left text-[10px] font-semibold text-gray-500 px-1 hover:underline">
-                  + {dayAppts.length - 3} autre{dayAppts.length - 3 > 1 ? "s" : ""}
+                  + {chips.length - 3} autre{chips.length - 3 > 1 ? "s" : ""}
                 </button>
+              )}
+              {dayCancelled.length > 0 && (
+                <span className="text-[10px] font-semibold px-1" style={{ color: CANCELLED_STYLE.text }}>{cancelledCount(dayCancelled.length, lang)}</span>
               )}
             </div>
           );

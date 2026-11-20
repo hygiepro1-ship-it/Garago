@@ -60,6 +60,12 @@ function fakeAppointments(posts: number): AgendaAppointment[] {
       }
     }
   }
+  // Quelques annulations : un créneau repris par un autre client, ou resté libre.
+  const upcoming = out.filter((a) => a.date >= today);
+  upcoming.forEach((a, i) => {
+    if (i % 47 === 7) Object.assign(a, { status: "CANCELLED", cancelledBy: "CLIENT", cancelledAt: new Date().toISOString() });
+    else if (i % 37 === 3) out.push({ ...a, id: `demo-c-${i}`, customerName: `${pick(FIRST)} ${pick(NAMES)}`, status: "CANCELLED", cancelledBy: i % 2 ? "CLIENT" : "SYSTEM", cancelledAt: new Date().toISOString() });
+  });
   return out;
 }
 
@@ -73,7 +79,7 @@ const DEMO_CUSTOMERS: CustomerMatch[] = Array.from({ length: 64 }, (_, i) => {
     id: `demo-client-${i}`, name: `${first} ${last}`, phone: `(514) 555-01${pad(i)}`,
     email: i % 4 === 3 ? null : `${plain(first)}.${plain(last)}@${["gmail.com", "hotmail.com", "videotron.ca"][i % 3]}`,
     language: i % 9 === 0 ? "en" : "fr", contactChannel: i % 5 === 0 ? "EMAIL" : i % 13 === 0 ? "NONE" : "SMS",
-    visits: 1 + (i % 6), lastDate: `2026-0${1 + (i % 9)}-${pad(1 + (i % 27))}`, lastService: "Changement de pneus",
+    visits: 1 + (i % 6), cancellations: i % 7 === 2 ? 1 : i % 11 === 4 ? 2 : 0, noShows: i % 13 === 5 ? 1 : 0, lastDate: `2026-0${1 + (i % 9)}-${pad(1 + (i % 27))}`, lastService: "Changement de pneus",
     vehicles: i % 8 === 0 ? [] : i % 6 === 0 ? [{ year: car[0], make: car[1], model: car[2] }, { year: 2012, make: "Kia", model: "Rio" }] : [{ year: car[0], make: car[1], model: car[2] }],
   };
 }).sort((a, b) => a.name.localeCompare(b.name, "fr"));

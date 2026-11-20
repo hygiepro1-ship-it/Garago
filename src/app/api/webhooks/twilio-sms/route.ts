@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { formatPhone } from "@/lib/contact-format";
 import { isRateLimited } from "@/lib/abuse";
 import { quebecInstant, quebecDateStr } from "@/lib/rdv-confirmation";
 import { sendCancelledByCustomer } from "@/lib/email";
-import { smsReplyText, gsmSafe } from "@/lib/sms";
+import { smsReplyText, gsmSafe, toE164 } from "@/lib/sms";
 import { smsIntent, isCarrierKeyword, validTwilioSignature } from "@/lib/sms-reply";
 
 // Texto reçu sur le numéro Garago (Twilio → « A message comes in » → POST ici).
@@ -44,7 +43,6 @@ export async function POST(req: NextRequest) {
   // Le rendez-vous à venir de ce numéro dont le rappel est parti le plus récemment.
   const candidates = await prisma.appointment.findMany({
     where: {
-      customerPhone: formatPhone(national),
       contactChannel: "SMS",
       confirmTier: "MANUAL",
       confirmRequestedAt: { not: null },
@@ -52,10 +50,13 @@ export async function POST(req: NextRequest) {
       date: { gte: quebecDateStr(now) },
     },
     orderBy: { confirmRequestedAt: "desc" },
-    take: 5,
+    take: 200,
     include: { garage: { select: { name: true, phone: true, email: true, owner: { select: { email: true } } } } },
   });
-  const a = candidates.find((x) => quebecInstant(x.date, x.startTime).getTime() > now.getTime());
+  // Le numéro est saisi par le garage (anciens rendez-vous : format libre) : on compare les numéros normalisés.
+  const from164 = toE164(national);
+  if (!from164) return xml();
+  const a = candidates.find((x) => toE164(x.customerPhone) === from164 && quebecInstant(x.date, x.startTime).getTime() > now.getTime());
   if (!a) return xml(); // aucun rendez-vous en attente : on ne répond pas
 
   const lang = a.language === "en" ? "en" : "fr";
@@ -87,5 +88,7 @@ export async function POST(req: NextRequest) {
     return xml(smsReplyText("CANCELLED", info));
   }
 
+  // Déjà confirmé : un « merci » ou un « à jeudi » n'appelle pas de réponse.
+  if (a.confirmationStatus === "CONFIRMED") return xml();
   return xml(smsReplyText("ASK_AGAIN", info));
 }

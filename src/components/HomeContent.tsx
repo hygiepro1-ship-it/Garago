@@ -212,6 +212,8 @@ export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
           <h1 className="font-black tracking-tight mb-6"
             style={{ fontSize: "clamp(1.6rem, 4.2vw, 2.9rem)", lineHeight: 1.1 }}>
             <span className="block" style={{ color: "#f97316" }}>{h.heroLine2}</span>
+            {/* Ligne de mots-clés sous le slogan : le titre principal dit aussi ce que fait le site */}
+            <span className="block text-white font-bold mt-2" style={{ fontSize: "0.5em", letterSpacing: "0.01em" }}>{h.heroKeyword}</span>
           </h1>
 
           {/* Search form */}
