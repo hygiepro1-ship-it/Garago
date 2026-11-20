@@ -585,7 +585,7 @@ export default function GarageAgenda({
           </svg>
           <input id="agenda-plate-search" type="search" autoComplete="off" autoCapitalize="characters" spellCheck={false}
             className="w-full py-2 sm:py-1.5 text-sm bg-transparent focus:outline-none uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
-            placeholder={tr("Rechercher par plaque")} value={plateQuery} maxLength={7} onChange={(e) => setPlateQuery(formatPlate(e.target.value))}
+            placeholder={tr("Rechercher par plaque")} value={plateQuery} maxLength={8} onChange={(e) => setPlateQuery(formatPlate(e.target.value))}
             aria-controls="agenda-plate-results" aria-expanded={plateKey.length >= 2} role="combobox" aria-autocomplete="list" />
           {plateQuery && (
             <button type="button" onClick={() => setPlateQuery("")} aria-label={tr("Fermer")} className="text-gray-400 font-bold px-1">×</button>
@@ -883,7 +883,7 @@ export default function GarageAgenda({
 
             <div className="col-span-6 sm:col-span-3">
               <label className={label} htmlFor="rdv-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
-              <input id="rdv-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={7}
+              <input id="rdv-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={8}
                 className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
                 value={form.licensePlate} onChange={(e) => setForm({ ...form, licensePlate: formatPlate(e.target.value) })} />
             </div>
@@ -1017,7 +1017,7 @@ export default function GarageAgenda({
                   </div>
                   <div className="col-span-2">
                     <label className={label} htmlFor="ed-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
-                    <input id="ed-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={7}
+                    <input id="ed-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={8}
                       className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
                       value={edit.licensePlate} onChange={(e) => setEdit({ ...edit, licensePlate: formatPlate(e.target.value) })} />
                   </div>

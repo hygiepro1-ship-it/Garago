@@ -63,13 +63,17 @@ export function emailTypoFix(value: string): string | null {
  * Plaque d'immatriculation telle qu'enregistrée et cherchée : lettres et chiffres
  * en majuscules, sans espace ni tiret (« abc-123 » → « ABC123 »), 10 caractères au plus.
  */
-export const PLATE_MAX = 6;
+export const PLATE_MAX = 7; // Québec : 6 (« ABC 123 ») ; Ontario et autres provinces : jusqu'à 7 (« ABCD 123 »)
 export function normalizePlate(raw: unknown): string {
   return String(raw ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, PLATE_MAX);
 }
 
-/** Plaque telle qu'affichée et tapée : 6 caractères au plus, séparés après le 3e (« ABC123 » → « ABC 123 »). */
+/**
+ * Plaque telle qu'affichée et tapée : 7 caractères au plus. Jusqu'à 6, séparée après le 3e
+ * (« ABC123 » → « ABC 123 ») ; à 7, séparée avant les 3 derniers (« ABCD123 » → « ABCD 123 »).
+ */
 export function formatPlate(raw: unknown): string {
   const n = normalizePlate(raw);
+  if (n.length === 7) return `${n.slice(0, 4)} ${n.slice(4)}`;
   return n.length > 3 ? `${n.slice(0, 3)} ${n.slice(3)}` : n;
 }
