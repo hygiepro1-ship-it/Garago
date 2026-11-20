@@ -291,6 +291,7 @@ export const DASHBOARD_EN: Record<string, string> = {
   "Nom, téléphone, courriel ou plaque": "Name, phone, email or plate",
   "Plaque d'immatriculation": "License plate",
   "Plaque (facultatif)": "Plate (optional)",
+  "Retour à la semaine": "Back to week",
   "Rechercher par plaque": "Search by plate",
   "Rechercher un rendez-vous par plaque d'immatriculation": "Search an appointment by license plate",
   "Nombre de portes du garage": "Number of bays",

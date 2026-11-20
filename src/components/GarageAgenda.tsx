@@ -14,7 +14,7 @@ import AgendaDayView, { assignPosts } from "@/components/AgendaDayView";
 import AgendaMonthView from "@/components/AgendaMonthView";
 import { findNextFreeStart } from "@/lib/availability";
 import type { CustomerMatch } from "@/lib/customers";
-import { emailSuggestions, emailTypoFix, formatPhone, normalizePlate, PHONE_PATTERN } from "@/lib/contact-format";
+import { emailSuggestions, emailTypoFix, formatPhone, formatPlate, normalizePlate, PHONE_PATTERN } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
 import VehicleFields from "@/components/VehicleFields";
@@ -27,7 +27,7 @@ export interface AgendaAppointment {
   vehicleYear?: number | null;
   vehicleMake?: string | null;
   vehicleModel?: string | null;
-  /** Plaque d'immatriculation (majuscules et chiffres, sans espace). */
+  /** Plaque d'immatriculation enregistrée sans espace (« ABC123 »), affichée « ABC 123 » (formatPlate). */
   licensePlate?: string | null;
   serviceName?: string | null;
   date: string;
@@ -342,7 +342,7 @@ export default function GarageAgenda({
       customerId: c.id, customerName: c.name, customerPhone: formatPhone(c.phone), customerEmail: c.email ?? "",
       language: c.language === "en" ? "en" : "fr",
       contactChannel: c.contactChannel === "NONE" ? "" : c.contactChannel === "SMS" || c.contactChannel === "EMAIL" ? c.contactChannel : form.contactChannel,
-      vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "", licensePlate: v?.plate ?? "",
+      vehicleYear: v?.year ? String(v.year) : "", vehicleMake: v?.make ?? "", vehicleModel: v?.model ?? "", licensePlate: formatPlate(v?.plate),
     });
   }
 
@@ -397,7 +397,7 @@ export default function GarageAgenda({
       customerName: a.customerName, customerPhone: formatPhone(a.customerPhone), customerEmail: a.customerEmail ?? "",
       serviceName: a.serviceName ?? "",
       vehicleYear: a.vehicleYear ? String(a.vehicleYear) : "", vehicleMake: a.vehicleMake ?? "", vehicleModel: a.vehicleModel ?? "",
-      licensePlate: a.licensePlate ?? "",
+      licensePlate: formatPlate(a.licensePlate),
       date: a.date, startTime: a.startTime, durationMin: Math.max(10, toMin(a.endTime) - toMin(a.startTime)),
       bay: a.bay ? String(a.bay) : "", notes: a.notes ?? "",
     });
@@ -554,6 +554,12 @@ export default function GarageAgenda({
           <span className="text-sm font-semibold text-gray-700 min-w-[150px] text-center first-letter:uppercase">{view === "day" ? longDate(dayRef, lang) : view === "week" ? weekLabel : monthLabel}</span>
           <button type="button" className={navBtn} aria-label={en ? `Next ${view}` : view === "day" ? "Jour suivant" : view === "week" ? tr("Semaine suivante") : tr("Mois suivant")}
             onClick={() => shift(1)}>›</button>
+          {view === "day" && (
+            <button type="button" onClick={() => switchView("week")}
+              className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg font-bold text-white whitespace-nowrap" style={{ background: "#0b1f3a" }}>
+              ‹ {tr("Retour à la semaine")}
+            </button>
+          )}
           <button type="button" onClick={() => { setDayRef(today); setWeekStart(mondayOf(today)); setMonthRef({ year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 }); }}
             className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold">{tr("Aujourd'hui")}</button>
         </div>
@@ -579,7 +585,7 @@ export default function GarageAgenda({
           </svg>
           <input id="agenda-plate-search" type="search" autoComplete="off" autoCapitalize="characters" spellCheck={false}
             className="w-full py-2 sm:py-1.5 text-sm bg-transparent focus:outline-none uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
-            placeholder={tr("Rechercher par plaque")} value={plateQuery} onChange={(e) => setPlateQuery(e.target.value)}
+            placeholder={tr("Rechercher par plaque")} value={plateQuery} maxLength={7} onChange={(e) => setPlateQuery(formatPlate(e.target.value))}
             aria-controls="agenda-plate-results" aria-expanded={plateKey.length >= 2} role="combobox" aria-autocomplete="list" />
           {plateQuery && (
             <button type="button" onClick={() => setPlateQuery("")} aria-label={tr("Fermer")} className="text-gray-400 font-bold px-1">×</button>
@@ -589,14 +595,14 @@ export default function GarageAgenda({
           <ul id="agenda-plate-results" role="listbox" aria-label={tr("Rechercher par plaque")}
             className="absolute z-30 left-0 right-0 top-full mt-1 max-h-80 overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-lg">
             {plateHits.length === 0 ? (
-              <li className="px-3 py-2 text-xs text-gray-500">{en ? `No appointment with plate ${plateKey}.` : `Aucun rendez-vous avec la plaque ${plateKey}.`}</li>
+              <li className="px-3 py-2 text-xs text-gray-500">{en ? `No appointment with plate ${formatPlate(plateKey)}.` : `Aucun rendez-vous avec la plaque ${formatPlate(plateKey)}.`}</li>
             ) : plateHits.map((a) => (
               <li key={a.id} role="option" aria-selected={false}>
                 <button type="button" onClick={() => goToAppointment(a)}
                   className="w-full text-left px-3 py-2 border-b border-gray-100 last:border-b-0 hover:bg-orange-50">
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="text-sm font-bold text-gray-900 truncate">{a.customerName}</span>
-                    <span className="text-xs font-black tracking-wider text-gray-700 flex-shrink-0">{a.licensePlate}</span>
+                    <span className="text-xs font-black tracking-wider text-gray-700 flex-shrink-0">{formatPlate(a.licensePlate)}</span>
                   </span>
                   <span className="block text-[11px] text-gray-500 truncate first-letter:uppercase">
                     {[`${shortDate(a.date, lang)} · ${a.startTime}–${a.endTime}`,
@@ -860,11 +866,11 @@ export default function GarageAgenda({
               {known && known.vehicles.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-1" role="group" aria-label={tr("Véhicules de ce client")}>
                   {known.vehicles.map((v, i) => {
-                    const text = [v.year, v.make, v.model, v.plate ? `(${v.plate})` : ""].filter(Boolean).join(" ");
+                    const text = [v.year, v.make, v.model, v.plate ? `(${formatPlate(v.plate)})` : ""].filter(Boolean).join(" ");
                     const on = form.vehicleYear === (v.year ? String(v.year) : "") && form.vehicleMake === (v.make ?? "") && form.vehicleModel === (v.model ?? "");
                     return (
                       <button key={i} type="button" aria-pressed={on}
-                        onClick={() => setForm({ ...form, vehicleYear: v.year ? String(v.year) : "", vehicleMake: v.make ?? "", vehicleModel: v.model ?? "", licensePlate: v.plate ?? "" })}
+                        onClick={() => setForm({ ...form, vehicleYear: v.year ? String(v.year) : "", vehicleMake: v.make ?? "", vehicleModel: v.model ?? "", licensePlate: formatPlate(v.plate) })}
                         className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
                         style={{ background: on ? "#0b1f3a" : "#f1f5f9", color: on ? "#fff" : "#0b1f3a" }}>
                         {text}
@@ -877,9 +883,9 @@ export default function GarageAgenda({
 
             <div className="col-span-6 sm:col-span-3">
               <label className={label} htmlFor="rdv-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
-              <input id="rdv-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12}
+              <input id="rdv-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={7}
                 className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
-                value={form.licensePlate} onChange={(e) => setForm({ ...form, licensePlate: e.target.value.toUpperCase() })} />
+                value={form.licensePlate} onChange={(e) => setForm({ ...form, licensePlate: formatPlate(e.target.value) })} />
             </div>
 
             <div className="col-span-6 sm:col-span-4">
@@ -938,7 +944,7 @@ export default function GarageAgenda({
               {open.customerEmail && <a href={`mailto:${open.customerEmail}`} className="px-3 py-1.5 rounded-lg font-semibold text-sm truncate max-w-full" style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8" }}>{open.customerEmail}</a>}
             </div>
             {mode !== "edit" && (open.serviceName || open.vehicleMake || open.vehicleYear || open.licensePlate) && (
-              <p className="text-gray-700">{[translateServiceName(open.serviceName, lang), [open.vehicleYear, open.vehicleMake, open.vehicleModel].filter(Boolean).join(" "), open.licensePlate ? `${en ? "Plate" : "Plaque"} ${open.licensePlate}` : ""].filter(Boolean).join(" · ")}</p>
+              <p className="text-gray-700">{[translateServiceName(open.serviceName, lang), [open.vehicleYear, open.vehicleMake, open.vehicleModel].filter(Boolean).join(" "), open.licensePlate ? `${en ? "Plate" : "Plaque"} ${formatPlate(open.licensePlate)}` : ""].filter(Boolean).join(" · ")}</p>
             )}
             {mode !== "edit" && open.notes && <p className="text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-2">{open.notes}</p>}
             {open.status === "PENDING" && mode === "edit" && (
@@ -1011,9 +1017,9 @@ export default function GarageAgenda({
                   </div>
                   <div className="col-span-2">
                     <label className={label} htmlFor="ed-plate">{tr("Plaque d'immatriculation")} <span className="font-normal text-gray-400">{en ? "(optional)" : "(facultatif)"}</span></label>
-                    <input id="ed-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12}
+                    <input id="ed-plate" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={7}
                       className={`${input} uppercase tabular-nums tracking-wider`} placeholder="ABC 123"
-                      value={edit.licensePlate} onChange={(e) => setEdit({ ...edit, licensePlate: e.target.value.toUpperCase() })} />
+                      value={edit.licensePlate} onChange={(e) => setEdit({ ...edit, licensePlate: formatPlate(e.target.value) })} />
                   </div>
                   <div className="col-span-2">
                     <label className={label} htmlFor="ed-notes">{tr("Notes (visibles seulement par vous)")}</label>

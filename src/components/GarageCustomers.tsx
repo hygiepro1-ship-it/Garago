@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, Segmented, gfetch } from "@/components/GarageAgenda";
 import type { CustomerMatch, CustomerPage } from "@/lib/customers";
-import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN } from "@/lib/contact-format";
+import { emailSuggestions, emailTypoFix, formatPhone, PHONE_PATTERN, formatPlate } from "@/lib/contact-format";
 import { useTr } from "@/lib/dashboard-en";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -34,7 +34,7 @@ async function saveToApi(edit: Edit): Promise<string | null> {
 }
 
 const shortDate = (date: string, en = false) => new Date(date + "T12:00:00").toLocaleDateString(en ? "en-CA" : "fr-CA", { day: "numeric", month: "long", year: "numeric" });
-const carName = (v: CustomerMatch["vehicles"][number]) => [[v.year, v.make, v.model].filter(Boolean).join(" "), v.plate ? `(${v.plate})` : ""].filter(Boolean).join(" ");
+const carName = (v: CustomerMatch["vehicles"][number]) => [[v.year, v.make, v.model].filter(Boolean).join(" "), v.plate ? `(${formatPlate(v.plate)})` : ""].filter(Boolean).join(" ");
 const input = "w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-orange-400";
 const label = "block text-[11px] font-semibold text-gray-500 mb-0.5";
 

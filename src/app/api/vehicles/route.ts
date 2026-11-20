@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { cleanText } from "@/lib/abuse";
+import { normalizePlate } from "@/lib/contact-format";
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   const noTags = (v: string) => v.replace(/[<>]/g, "").trim();
   const make = noTags(cleanText(makeRaw, 60)), model = noTags(cleanText(modelRaw, 60));
   if (!year || !make || !model) return NextResponse.json({ error: "Année, marque et modèle valides requis." }, { status: 400 });
-  const trim = cleanText(trimRaw, 80) || null, color = cleanText(colorRaw, 40) || null, licensePlate = cleanText(plateRaw, 15) || null;
+  const trim = cleanText(trimRaw, 80) || null, color = cleanText(colorRaw, 40) || null, licensePlate = normalizePlate(plateRaw) || null;
   const mileage = Number.isFinite(Number(mileageRaw)) && Number(mileageRaw) >= 0 && Number(mileageRaw) < 3_000_000 && mileageRaw !== "" && mileageRaw != null ? Math.round(Number(mileageRaw)) : null;
   const vin = vinRaw ? String(vinRaw).trim().toUpperCase() : null;
   if (vin && !/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return NextResponse.json({ error: "NIV invalide (17 caractères)." }, { status: 400 });
