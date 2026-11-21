@@ -72,6 +72,13 @@ export async function PATCH(
     }
   }
 
+  // « Terminé » envoie « véhicule prêt » au client : jamais avant l'heure du rendez-vous
+  // (des rendez-vous ont été classés « terminé » par erreur des semaines à l'avance).
+  if (status === "COMPLETED" && appt.status !== "COMPLETED"
+    && quebecInstant(date ?? appt.date, startTime ?? appt.startTime).getTime() > Date.now()) {
+    return NextResponse.json({ error: "Le rendez-vous n'a pas encore commencé : il pourra être classé « terminé » à partir de son heure de début." }, { status: 400 });
+  }
+
   // Le garage peut corriger toute la fiche : client, service, véhicule. Seuls les champs envoyés changent.
   const details: Record<string, string | number | null> = {};
   if (isGarageOwner) {

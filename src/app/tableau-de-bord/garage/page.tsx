@@ -33,6 +33,13 @@ function quebecNowMin(): number {
   return h * 60 + m;
 }
 const UPCOMING_WINDOW_MIN = 3 * 60;
+/** « Terminé » n'est proposé qu'à partir de l'heure de début (il envoie « véhicule prêt » au client). */
+function hasStarted(a: { date: string; startTime: string }): boolean {
+  const today = quebecTodayStr();
+  if (a.date !== today) return a.date < today;
+  const [h, m] = a.startTime.split(":").map(Number);
+  return h * 60 + m <= quebecNowMin();
+}
 /**
  * « Prochains rendez-vous » : seulement ceux d'aujourd'hui en cours ou qui commencent dans les 3 prochaines heures.
  * Le reste se lit dans l'agenda, juste au-dessus : la liste reste courte même un jour chargé.
@@ -2853,7 +2860,7 @@ export default function DashboardGaragePage() {
                               <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">{tr("Refuser")}</button>
                             </>}
                             {a.status === "CONFIRMED" && <>
-                              <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>
+                              {hasStarted(a) && <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>}
                               <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">{tr("Annuler")}</button>
                             </>}
                           </div>
