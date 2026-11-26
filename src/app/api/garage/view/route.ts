@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { clientIp, isRateLimited } from "@/lib/abuse";
+import { isBotRequest } from "@/lib/bots";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // Robots : aucune vue comptée et aucune requête en base (ils réveillent la base la nuit).
+  if (isBotRequest(req)) return NextResponse.json({ ok: true });
   try {
     const { garageId } = await req.json();
     if (!garageId || typeof garageId !== "string") return NextResponse.json({ ok: false }, { status: 400 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { isBotRequest } from "@/lib/bots";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 an
 // personnelle collectée : un identifiant aléatoire dans un cookie, jamais lié
 // à un compte.
 export async function POST(req: NextRequest) {
+  // Robots : rien d'enregistré (ils faussent les statistiques et réveillent la base la nuit).
+  if (isBotRequest(req)) return NextResponse.json({ ok: true });
   try {
     const { path } = await req.json().catch(() => ({ path: "/" }));
     let visitorId = req.cookies.get(COOKIE_NAME)?.value;

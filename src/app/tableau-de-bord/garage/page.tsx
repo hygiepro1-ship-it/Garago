@@ -1352,8 +1352,19 @@ export default function DashboardGaragePage() {
     if (activeTab !== "apercu" || !rdvLoaded || !garageLoadedId) return;
     let busy = false;
     let last = Date.now();
+    // Poste resté allumé sans personne devant (la nuit, la fin de semaine) : après 10 minutes sans clic, frappe ni
+    // défilement, le rechargement automatique s'arrête. Sans cela, la base est réveillée toutes les 30 secondes
+    // jour et nuit (temps de calcul facturé). Il reprend dès qu'on touche à l'écran.
+    const IDLE_MS = 10 * 60 * 1000;
+    let lastActivity = Date.now();
+    const onActivity = () => {
+      const wasIdle = Date.now() - lastActivity > IDLE_MS;
+      lastActivity = Date.now();
+      if (wasIdle) refresh();
+    };
+    const activityEvents = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"] as const;
     const refresh = async () => {
-      if (busy || document.visibilityState !== "visible") return;
+      if (busy || document.visibilityState !== "visible" || Date.now() - lastActivity > IDLE_MS) return;
       busy = true;
       try {
         const [appts, blocks] = await Promise.all([
@@ -1366,12 +1377,14 @@ export default function DashboardGaragePage() {
       last = Date.now();
       busy = false;
     };
-    const onReturn = () => { if (Date.now() - last > 5000) refresh(); };
+    const onReturn = () => { lastActivity = Date.now(); if (Date.now() - last > 5000) refresh(); };
     const timer = setInterval(refresh, 30000);
     document.addEventListener("visibilitychange", onReturn);
     window.addEventListener("focus", onReturn);
+    activityEvents.forEach(e => window.addEventListener(e, onActivity, { passive: true }));
     return () => {
       clearInterval(timer);
+      activityEvents.forEach(e => window.removeEventListener(e, onActivity));
       document.removeEventListener("visibilitychange", onReturn);
       window.removeEventListener("focus", onReturn);
     };
