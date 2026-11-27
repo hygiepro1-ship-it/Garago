@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
 import { computeFreeSlots, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
+import { withGarageDayLock } from "@/lib/slot-lock";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
@@ -159,13 +160,13 @@ export async function POST(req: NextRequest) {
     hasEmail: !!contactEmail,
   });
 
-  // Check-then-create sous isolation Serializable pour empêcher une double réservation
-  // du même créneau par deux clients simultanés (Postgres détecte et rejette le conflit).
+  // Vérifier puis créer sous le verrou de la journée du garage (src/lib/slot-lock.ts) : une autre
+  // réservation, en ligne ou saisie par le garage, ne peut pas prendre la place entre les deux.
   // Le conflit se vérifie par chevauchement d'intervalles, pas par égalité d'heure de
   // début, puisque deux services peuvent avoir des durées différentes.
   let appt;
   try {
-    appt = await prisma.$transaction(async (tx) => {
+    appt = await withGarageDayLock(garageId, date, async (tx) => {
       const [sameDay, blocks, availRow] = await Promise.all([
         tx.appointment.findMany({
           where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
@@ -197,7 +198,7 @@ export async function POST(req: NextRequest) {
           vehicleTireSize: cleanText(vehicleTireSize, 30) || null,
           vehicleSpecs:    cleanText(vehicleSpecs, 300)    || null,
           serviceName:  resolvedServiceName ? cleanText(resolvedServiceName, 120) : null,
-          notes:        notes ? String(notes).replace(/[ --]/g, " ").slice(0, 1000) : null,
+          notes:        notes ? String(notes).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, " ").slice(0, 1000) : null,
           date,
           startTime,
           endTime,
@@ -211,10 +212,9 @@ export async function POST(req: NextRequest) {
         },
         include: { garage: { include: { owner: { select: { email: true } } } } },
       });
-    }, { isolationLevel: "Serializable" });
+    });
   } catch (err: any) {
-    // SLOT_TAKEN (conflit détecté) ou 40001 (échec de sérialisation Postgres — conflit concurrent)
-    if (err?.message === "SLOT_TAKEN" || err?.code === "P2034" || err?.meta?.code === "40001") {
+    if (err?.message === "SLOT_TAKEN") {
       return NextResponse.json({ error: "Ce créneau vient d'être réservé. Veuillez en choisir un autre." }, { status: 409 });
     }
     throw err;

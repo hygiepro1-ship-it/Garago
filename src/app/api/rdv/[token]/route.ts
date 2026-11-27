@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { wouldExceedCapacity, pickBay, toMinutes } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
+import { withGarageDayLock } from "@/lib/slot-lock";
 import { quebecInstant, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 import { sendCancelledByCustomer } from "@/lib/email";
 
@@ -103,7 +104,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     }
   } else if (action === "retake") {
     try {
-      await prisma.$transaction(async (tx) => {
+      // Sous le verrou de la journée (src/lib/slot-lock.ts), comme toute écriture qui reprend une place.
+      await withGarageDayLock(a.garageId, a.date, async (tx) => {
         const fresh = await tx.appointment.findUnique({ where: { id: a.id }, include: { garage: { select: { capacity: true } } } });
         if (!fresh || fresh.status !== "CANCELLED" || fresh.confirmationStatus !== "EXPIRED") throw new Error("NOT_RETAKABLE");
         if (quebecInstant(fresh.date, fresh.startTime).getTime() - Date.now() <= 60 * 60 * 1000) throw new Error("NOT_RETAKABLE");
@@ -122,9 +124,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
           where: { id: fresh.id },
           data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null, cancelledBy: null, cancelledAt: null, bay },
         });
-      }, { isolationLevel: "Serializable" });
+      });
     } catch (e: any) {
-      if (e?.message === "NOT_RETAKABLE" || e?.message === "SLOT_TAKEN" || e?.code === "P2034") {
+      if (e?.message === "NOT_RETAKABLE" || e?.message === "SLOT_TAKEN") {
         const again = await load(token);
         return NextResponse.json({ ...(again ? await describe(again) : {}), error: "Ce créneau n'est plus disponible." }, { status: 409 });
       }

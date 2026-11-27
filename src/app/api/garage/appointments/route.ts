@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
+import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
 import { cleanText, isValidEmail, isOverLimit, recordAttempt } from "@/lib/abuse";
 import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
@@ -109,70 +110,80 @@ export async function POST(req: NextRequest) {
   }
   const endTime = toHHMM(toMinutes(startTime) + durationMin);
 
-  const sameDay = await prisma.appointment.findMany({
-    where: { garageId: garage.id, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
-    select: { startTime: true, endTime: true, bay: true },
-  });
   const capacity = garage.capacity ?? 1;
-  if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
-    return NextResponse.json({ error: "Toutes vos portes sont déjà occupées sur ce créneau." }, { status: 409 });
-  }
-
-  // Poste : celui choisi par le garage s'il est libre. Sinon « Automatique » : le poste le
-  // plus spécialisé parmi ceux où ce service se fait, ou à défaut n'importe quel poste libre
-  // (le garage qui saisit lui-même un rendez-vous a toujours le dernier mot).
-  let bay: number | null;
-  const wantedBay = Number(body.bay);
-  if (body.bay !== undefined && body.bay !== null && body.bay !== "" && Number.isInteger(wantedBay) && wantedBay >= 1 && wantedBay <= capacity) {
-    if (!bayIsFree(wantedBay, startTime, durationMin, sameDay)) {
-      return NextResponse.json({ error: `La porte ${wantedBay} est déjà occupée sur ce créneau. Choisissez-en une autre ou laissez « Automatique ».` }, { status: 409 });
-    }
-    bay = wantedBay;
-  } else {
-    const rules = await loadBayRules(garage.id, capacity);
-    const allowed = categoryId ? rules.forCategories([String(categoryId)]) : rules.forServiceName(serviceName);
-    bay = pickBay(startTime, durationMin, sameDay, capacity, { allowed, versatility: rules.versatility })
-      ?? pickBay(startTime, durationMin, sameDay, capacity, { versatility: rules.versatility });
-  }
-
+  const rules = await loadBayRules(garage.id, capacity);
   const now = new Date();
   const start = quebecInstant(date, startTime);
   const plan = planManualConfirmation(start, now, { enabled: garage.requireConfirmation ?? true, reachable: contactChannel !== null });
 
-  // Le client reste dans le carnet du garage : ses coordonnées reviendront à sa
-  // prochaine visite. Un souci de carnet ne doit jamais empêcher de prendre le rendez-vous.
-  const customerId = await rememberCustomer(
-    garage.id,
-    { name: customerName, phone, email: customerEmail, language, contactChannel },
-    typeof body.customerId === "string" && body.customerId ? body.customerId : null,
-  ).catch((e) => { console.error("[CUSTOMER]", e); return null; });
+  // Vérifier puis créer sous le verrou de la journée (src/lib/slot-lock.ts) : un client en ligne
+  // ou un autre poste du garage ne peut pas prendre la même place entre les deux.
+  let appt;
+  try {
+    appt = await withGarageDayLock(garage.id, date, async (tx) => {
+      const sameDay = await tx.appointment.findMany({
+        where: { garageId: garage.id, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+        select: { startTime: true, endTime: true, bay: true },
+      });
+      if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {
+        throw new SlotError(409, "Toutes vos portes sont déjà occupées sur ce créneau.");
+      }
 
-  const appt = await prisma.appointment.create({
-    data: {
-      garageId: garage.id,
-      userId: null,
-      customerId,
-      customerName: cleanText(customerName, 80),
-      customerPhone: phone,
-      customerEmail: customerEmail ? String(customerEmail).toLowerCase() : null,
-      vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
-      vehicleMake:  cleanText(vehicleMake, 60)  || null,
-      vehicleModel: cleanText(vehicleModel, 60) || null,
-      licensePlate: normalizePlate(body.licensePlate) || null,
-      serviceName:  cleanText(serviceName, 120) || null,
-      date,
-      startTime,
-      endTime,
-      bay,
-      notes: notes ? String(notes).slice(0, 1000) : null,
-      status: "CONFIRMED", // manual = direct confirm
-      source: "MANUAL",
-      contactChannel,
-      language,
-      confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier,
-      confirmBy: plan.confirmBy, confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
-    },
-  });
+      // Poste : celui choisi par le garage s'il est libre. Sinon « Automatique » : le poste le
+      // plus spécialisé parmi ceux où ce service se fait, ou à défaut n'importe quel poste libre
+      // (le garage qui saisit lui-même un rendez-vous a toujours le dernier mot).
+      let bay: number | null;
+      const wantedBay = Number(body.bay);
+      if (body.bay !== undefined && body.bay !== null && body.bay !== "" && Number.isInteger(wantedBay) && wantedBay >= 1 && wantedBay <= capacity) {
+        if (!bayIsFree(wantedBay, startTime, durationMin, sameDay)) {
+          throw new SlotError(409, `La porte ${wantedBay} est déjà occupée sur ce créneau. Choisissez-en une autre ou laissez « Automatique ».`);
+        }
+        bay = wantedBay;
+      } else {
+        const allowed = categoryId ? rules.forCategories([String(categoryId)]) : rules.forServiceName(serviceName);
+        bay = pickBay(startTime, durationMin, sameDay, capacity, { allowed, versatility: rules.versatility })
+          ?? pickBay(startTime, durationMin, sameDay, capacity, { versatility: rules.versatility });
+      }
+
+      // Le client reste dans le carnet du garage : ses coordonnées reviendront à sa
+      // prochaine visite. Un souci de carnet ne doit jamais empêcher de prendre le rendez-vous.
+      const customerId = await rememberCustomer(
+        garage.id,
+        { name: customerName, phone, email: customerEmail, language, contactChannel },
+        typeof body.customerId === "string" && body.customerId ? body.customerId : null,
+      ).catch((e) => { console.error("[CUSTOMER]", e); return null; });
+
+      return tx.appointment.create({
+        data: {
+          garageId: garage.id,
+          userId: null,
+          customerId,
+          customerName: cleanText(customerName, 80),
+          customerPhone: phone,
+          customerEmail: customerEmail ? String(customerEmail).toLowerCase() : null,
+          vehicleYear:  Number.isInteger(Number(vehicleYear)) && Number(vehicleYear) >= 1950 && Number(vehicleYear) <= new Date().getFullYear() + 1 ? Number(vehicleYear) : null,
+          vehicleMake:  cleanText(vehicleMake, 60)  || null,
+          vehicleModel: cleanText(vehicleModel, 60) || null,
+          licensePlate: normalizePlate(body.licensePlate) || null,
+          serviceName:  cleanText(serviceName, 120) || null,
+          date,
+          startTime,
+          endTime,
+          bay,
+          notes: notes ? String(notes).slice(0, 1000) : null,
+          status: "CONFIRMED", // manual = direct confirm
+          source: "MANUAL",
+          contactChannel,
+          language,
+          confirmationStatus: plan.confirmationStatus, confirmTier: plan.confirmTier,
+          confirmBy: plan.confirmBy, confirmToken: plan.confirmToken, confirmRequestedAt: plan.confirmRequestedAt,
+        },
+      });
+    });
+  } catch (err) {
+    if (err instanceof SlotError) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
+  }
 
   if (contactChannel === "SMS") {
     const e164 = toE164(String(customerPhone));

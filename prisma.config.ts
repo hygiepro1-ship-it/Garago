@@ -1,6 +1,7 @@
 import { defineConfig } from "prisma/config";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { assertDatabaseAllowed } from "./src/lib/db-guard";
 
 // Charge .env.local manuellement (Prisma CLI ne charge pas .env.local automatiquement)
 function loadEnvLocal() {
@@ -22,6 +23,9 @@ function loadEnvLocal() {
 }
 
 loadEnvLocal();
+
+// Les commandes Prisma (db push, migrate, seed, studio) refusent la base de production hors de Vercel Production.
+assertDatabaseAllowed([process.env.DIRECT_URL, process.env.DATABASE_URL]);
 
 // prisma.config.ts : configuration pour les commandes CLI (migrate, db push, generate)
 // Utilise DIRECT_URL (connexion directe sans pooler) pour les migrations

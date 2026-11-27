@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { randomBytes } from "crypto";
+import { assertDatabaseAllowed } from "../src/lib/db-guard";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function generateReferralCode(): string {
@@ -28,7 +29,10 @@ try {
   }
 } catch { /* ignore */ }
 
-const pool = new Pool({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
+// Données de démonstration : jamais sur la production, même depuis Vercel (seule l'exception explicite passe).
+assertDatabaseAllowed([process.env.DIRECT_URL, process.env.DATABASE_URL], { ALLOW_PRODUCTION_DB: process.env.ALLOW_PRODUCTION_DB });
+
+const pool =new Pool({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const SERVICE_CATEGORIES = [
