@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { toPublicGarage } from "@/lib/public-garage";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 type Viewer = { id?: string; role?: string } | null | undefined;
 
@@ -21,12 +22,12 @@ export async function getGarageProfile(slug: string, getViewer: () => Promise<Vi
       photos: { orderBy: { sortOrder: "asc" } },
       reviews: {
         include: { user: { select: { name: true, image: true } } },
-        where: { isHidden: false },
+        where: VISIBLE_REVIEWS,
         orderBy: { createdAt: "desc" as const },
         take: 20,
       },
       owner: { select: { name: true, email: true } },
-      _count: { select: { reviews: true } },
+      _count: { select: { reviews: { where: VISIBLE_REVIEWS } } },
     },
   });
 
@@ -45,10 +46,9 @@ export async function getGarageProfile(slug: string, getViewer: () => Promise<Vi
     if (!isOwner && !isAdmin) return null;
   }
 
-  const avgRating =
-    garage.reviews.length > 0
-      ? garage.reviews.reduce((s, r) => s + r.rating, 0) / garage.reviews.length
-      : 0;
+  // Note sur TOUS les avis visibles, pas seulement les 20 affichés sur la fiche.
+  const ratingAgg = await prisma.review.aggregate({ where: { garageId: garage.id, ...VISIBLE_REVIEWS }, _avg: { rating: true } });
+  const avgRating = ratingAgg._avg.rating ?? 0;
 
   // Sort services by category sortOrder in JS (avoids relation-level orderBy issues)
   const services = [...garage.services].sort(

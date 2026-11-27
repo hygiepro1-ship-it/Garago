@@ -111,6 +111,7 @@ interface GarageReview {
   ownerReply?: string | null;
   user?:       { name?: string | null } | null;
   authorName?: string | null;
+  isHidden?:   boolean;
 }
 
 interface Garage {
@@ -1726,8 +1727,10 @@ export default function DashboardGaragePage() {
   const isMultiSelect = selectedDays.length > 1;
 
   // ── Computed values ─────────────────────────────────────────────────────
-  const avgRating = garage.reviews?.length > 0
-    ? (garage.reviews.reduce((s: number, r: any) => s + r.rating, 0) / garage.reviews.length).toFixed(1)
+  // Même règle que la fiche publique : les avis masqués ne comptent pas (src/lib/garage-rating.ts).
+  const visibleReviews = (garage.reviews ?? []).filter((r) => !r.isHidden);
+  const avgRating = visibleReviews.length > 0
+    ? (visibleReviews.reduce((s, r) => s + r.rating, 0) / visibleReviews.length).toFixed(1)
     : null;
 
   const isTrialExpiring = garage.subscriptionStatus === "TRIAL" && garage.subscriptionEndAt

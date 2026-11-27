@@ -6,6 +6,7 @@ import JsonLd from "@/components/JsonLd";
 import { getCities, publicGarageWhere, MIN_GARAGES_FOR_INDEX } from "@/lib/city-pages";
 import { garageType } from "@/lib/city-insights";
 import CityGarageList from "./CityGarageList";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -26,7 +27,7 @@ async function load(slug: string) {
     where: { ...publicGarageWhere(), city: info.city },
     select: {
       name: true, slug: true, address: true, postalCode: true, phone: true, claimStatus: true, latitude: true, longitude: true,
-      reviews: { select: { rating: true } },
+      reviews: { where: VISIBLE_REVIEWS, select: { rating: true } },
     },
     orderBy: { name: "asc" },
   });

@@ -6,6 +6,7 @@ import { toPublicGarage } from "@/lib/public-garage";
 import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
 import { serviceIdsFor } from "@/lib/services";
 import { notTestGarage } from "@/lib/test-garages";
+import { VISIBLE_REVIEWS, averageRating } from "@/lib/garage-rating";
 
 export async function GET(req: NextRequest) {
   try {
@@ -137,11 +138,12 @@ export async function GET(req: NextRequest) {
       },
       brands: true,
       reviews: {
+        where: VISIBLE_REVIEWS,
         select: { rating: true },
       },
       availability: true,
       _count: {
-        select: { reviews: true, appointments: true },
+        select: { reviews: { where: VISIBLE_REVIEWS }, appointments: true },
       },
     };
 
@@ -221,10 +223,6 @@ export async function GET(req: NextRequest) {
     const userPos = hasPos ? { lat, lng } : null;
 
     const garagesWithMeta = rawGarages.map((g) => {
-      const avgRating =
-        g.reviews.length > 0
-          ? g.reviews.reduce((s, r) => s + r.rating, 0) / g.reviews.length
-          : 0;
       const nextAvailability = findNextAvailability(
         g.availability,
         blockedByGarage.get(g.id) ?? new Map(),
@@ -233,7 +231,7 @@ export async function GET(req: NextRequest) {
       );
       return {
         ...toPublicGarage(g),
-        avgRating: Math.round(avgRating * 10) / 10,
+        avgRating: averageRating(g.reviews) ?? 0,
         reviewCount: g._count.reviews,
         distanceKm: userPos ? garageDistance(g, userPos) : null,
         nextAvailability,

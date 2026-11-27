@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,7 @@ export async function GET() {
         select: {
           id: true, name: true, slug: true, city: true, province: true,
           phone: true, logoUrl: true,
-          _count: { select: { reviews: true } },
+          _count: { select: { reviews: { where: VISIBLE_REVIEWS } } },
         },
       },
     },

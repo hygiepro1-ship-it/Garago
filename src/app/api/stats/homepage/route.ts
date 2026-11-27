@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 // Seuils minimaux avant d'afficher une stat
 const THRESHOLDS = { garages: 30, reviews: 50, cities: 2 } as const;
@@ -18,6 +19,7 @@ export async function GET() {
   const [garageCount, reviewAgg, cityRows] = await Promise.all([
     prisma.garage.count(),
     prisma.review.aggregate({
+      where:  VISIBLE_REVIEWS,
       _count: { id: true },
       _avg:   { rating: true },
     }),

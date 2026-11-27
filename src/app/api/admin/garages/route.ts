@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -22,8 +23,8 @@ export async function GET(_req: NextRequest) {
       subscriptionStatus: true, verificationStatus: true, claimStatus: true, createdAt: true,
       isAmbassador: true,
       owner: { select: { name: true, email: true } },
-      reviews: { select: { rating: true } },
-      _count: { select: { appointments: true, reviews: true, services: true, branches: true } },
+      reviews: { where: VISIBLE_REVIEWS, select: { rating: true } },
+      _count: { select: { appointments: true, reviews: { where: VISIBLE_REVIEWS }, services: true, branches: true } },
     },
     orderBy: { createdAt: "desc" },
   });

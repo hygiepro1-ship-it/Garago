@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import JsonLd from "@/components/JsonLd";
 import { isTestGarage } from "@/lib/test-garages";
 import { slugify } from "@/lib/utils";
+import { VISIBLE_REVIEWS } from "@/lib/garage-rating";
 
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://garagopro.ca";
 
@@ -63,7 +64,7 @@ export default async function GarageLayout({ children, params }: { children: Rea
       latitude: true, longitude: true, description: true,
       hiddenByReport: true, verificationStatus: true, claimStatus: true,
       availability: { select: { dayOfWeek: true, openTime: true, closeTime: true, isClosed: true } },
-      reviews: { select: { rating: true } },
+      reviews: { where: VISIBLE_REVIEWS, select: { rating: true } },
     },
   });
   // Mêmes règles de visibilité que la page : une fiche masquée ou non vérifiée n'émet aucune donnée.
