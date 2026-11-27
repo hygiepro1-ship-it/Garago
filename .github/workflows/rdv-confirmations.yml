@@ -1,13 +1,15 @@
-# Fait avancer la confirmation des rendez-vous toutes les 15 minutes : envoi des
+# Fait avancer la confirmation des rendez-vous toutes les 30 minutes : envoi des
 # textos et courriels 48 h avant, alerte « client à appeler » 24 h avant.
 # Le forfait Vercel Hobby limite ses tâches planifiées à une fois par jour ; cet
 # appel externe prend le relais. Le secret CRON_SECRET (Settings → Secrets and
 # variables → Actions) doit être le même que celui du projet Vercel.
+# 30 minutes et non 15 : sur un dépôt privé, GitHub offre 2 000 minutes par mois et compte chaque
+# passage pour au moins 1 minute (96 passages par jour dépasseraient le quota vers le 20 du mois).
 name: Confirmations de rendez-vous
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 concurrency:

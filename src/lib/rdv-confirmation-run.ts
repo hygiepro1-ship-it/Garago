@@ -16,7 +16,7 @@ export interface RdvRunStats { requested: number; nudged: number; released: numb
 
 /**
  * Fait avancer le cycle de confirmation de tous les rendez-vous concernés.
- * Appelée toutes les ~15 minutes par /api/cron/rdv-confirmations. Chaque étape
+ * Appelée toutes les ~30 minutes par /api/cron/rdv-confirmations. Chaque étape
  * « réserve » sa ligne avec un updateMany conditionnel avant d'envoyer le
  * courriel : deux exécutions qui se chevauchent n'envoient jamais deux fois.
  *
