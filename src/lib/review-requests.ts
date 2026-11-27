@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { addDaysStr, quebecToday } from "@/lib/availability";
+import { addDaysStr, quebecToday, garageTimeZone } from "@/lib/availability";
 import { quebecInstant } from "@/lib/rdv-confirmation";
 import { newReviewToken, reviewPageUrl, THANKS_DELAY_MS } from "@/lib/review-checks";
 import { sendVisitReviewRequest } from "@/lib/email";
@@ -18,15 +18,14 @@ import { QUEBEC_TZ } from "@/lib/availability";
 // - Un rendez-vous qui a déjà un code, ou déjà un avis, ne reçoit rien (pas de doublon).
 // - Un seul moyen : texto si le client l'a choisi, sinon courriel ; « Aucun » (rendez-vous saisi
 //   par le garage sans moyen de contact) : rien ne part et aucun code n'est créé.
-/** Heure du Québec (0 à 23). */
-function quebecHour(at: Date): number {
-  return Number(new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ, hour: "numeric", hourCycle: "h23" }).format(at));
+/** Heure locale (0 à 23) dans le fuseau donné : Québec par défaut, sinon celui du garage. */
+function quebecHour(at: Date, tz: string = QUEBEC_TZ): number {
+  return Number(new Intl.DateTimeFormat("en-CA", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(at));
 }
 const QUIET_FROM = 21, QUIET_UNTIL = 8;
 
 export async function processReviewRequests(now: Date = new Date()) {
-  const hour = quebecHour(now);
-  if (hour >= QUIET_FROM || hour < QUIET_UNTIL) return { thanksSms: 0, thanksEmail: 0, thanksSkipped: 0, quietHours: true };
+  // Heures de silence vérifiées garage par garage plus bas (fuseaux de Terre-Neuve à la Colombie-Britannique).
   const today = quebecToday(now);
   const candidates = await prisma.appointment.findMany({
     where: {
@@ -37,12 +36,18 @@ export async function processReviewRequests(now: Date = new Date()) {
     select: {
       id: true, garageId: true, source: true, contactChannel: true, language: true, date: true, endTime: true,
       customerName: true, customerPhone: true, customerEmail: true,
-      garage: { select: { name: true } },
+      garage: { select: { name: true, province: true } },
       user: { select: { email: true } },
     },
     take: 500,
   });
-  const rows = candidates.filter((a) => quebecInstant(a.date, a.endTime).getTime() + THANKS_DELAY_MS <= now.getTime());
+  // Heure de fin et heures de silence comptées dans le fuseau de chaque garage.
+  const rows = candidates.filter((a) => {
+    const tz = garageTimeZone(a.garage.province);
+    const localHour = quebecHour(now, tz);
+    if (localHour >= QUIET_FROM || localHour < QUIET_UNTIL) return false;
+    return quebecInstant(a.date, a.endTime, tz).getTime() + THANKS_DELAY_MS <= now.getTime();
+  });
 
   let sms = 0, email = 0, skipped = 0;
   for (const a of rows) {

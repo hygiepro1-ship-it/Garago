@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation, sendGarageNewAppointment } from "@/lib/email";
-import { computeFreeSlots, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { computeFreeSlots, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN, quebecToday, addDaysStr, dayOfWeekOf, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock } from "@/lib/slot-lock";
 import { activeSubscriptionOr } from "@/lib/garage-access";
@@ -75,11 +75,6 @@ export async function POST(req: NextRequest) {
       || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) {
     return NextResponse.json({ error: "Date ou heure invalide" }, { status: 400 });
   }
-  const today = quebecToday();
-  if (date < today || date > addDaysStr(today, 120)) {
-    return NextResponse.json({ error: "Cette date n'est pas disponible à la réservation." }, { status: 400 });
-  }
-
   // Seul un garage actif (réclamé, NEQ vérifié, abonnement valide) peut recevoir des réservations en ligne :
   // les fiches non activées n'ont personne pour les honorer.
   const subOr = activeSubscriptionOr();
@@ -94,9 +89,16 @@ export async function POST(req: NextRequest) {
         { parent: { verificationStatus: "APPROVED", AND: [{ OR: subOr }] } },
       ],
     },
-    select: { id: true },
+    select: { id: true, province: true },
   });
   if (!eligible) return NextResponse.json({ error: "Ce garage n'accepte pas de réservation en ligne." }, { status: 400 });
+
+  // « Aujourd'hui » et l'heure du rendez-vous s'entendent dans le fuseau du garage (voir garageTimeZone).
+  const tz = garageTimeZone(eligible.province);
+  const today = quebecToday(new Date(), tz);
+  if (date < today || date > addDaysStr(today, 120)) {
+    return NextResponse.json({ error: "Cette date n'est pas disponible à la réservation." }, { status: 400 });
+  }
 
   // Plafond de rendez-vous à venir par client (téléphone ou courriel) — évite qu'une même personne
   // n'accapare des créneaux dans plusieurs garages.
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
   const contactEmail: string | null = customerEmail || (session?.user?.email ?? null);
 
   // Palier de confirmation (standard / dernière minute / aucun) selon le délai.
-  const startInstant = quebecInstant(date, startTime);
+  const startInstant = quebecInstant(date, startTime, tz);
   const plan = planConfirmation(startInstant, new Date(), {
     enabled: true, // confirmation toujours demandée (la case pour la désactiver a été retirée le 2026-11-27)
     hasEmail: !!contactEmail,
@@ -178,7 +180,7 @@ export async function POST(req: NextRequest) {
       // Le créneau doit figurer parmi ceux réellement offerts : heures d'ouverture, blocages
       // (vacances), jour fermé, capacité et heure déjà passée — un client ne peut pas forcer
       // un horaire en contournant l'interface.
-      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: date === today, now: new Date(), capacity, allowedBays });
+      const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: date === today, now: new Date(), capacity, allowedBays, tz });
       if (!free.includes(startTime)) throw new Error("SLOT_TAKEN");
       // Le poste le plus spécialisé parmi ceux qui conviennent, pour garder les postes polyvalents libres.
       const bay = pickBay(startTime, durationMin, sameDay, capacity, { allowed: allowedBays, versatility: bayRules.versatility });
@@ -250,8 +252,8 @@ export async function POST(req: NextRequest) {
           ? {
               confirmUrl: confirmPageUrl(plan.confirmToken), cancelUrl: cancelPageUrl(plan.confirmToken),
               confirmDeadline: appt.language === "en"
-                ? `by ${formatQuebecMoment(plan.confirmBy, "en")}`
-                : `avant ${formatQuebecMoment(plan.confirmBy)}`,
+                ? `by ${formatQuebecMoment(plan.confirmBy, "en", tz)}`
+                : `avant ${formatQuebecMoment(plan.confirmBy, "fr", tz)}`,
             }
           : {}),
       }).catch(e => console.error("[BOOKING CONFIRMATION EMAIL]", e))

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
-import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN } from "@/lib/availability";
+import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DURATION_MIN, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
 import { cleanText, isValidEmail, isOverLimit, recordAttempt } from "@/lib/abuse";
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
   const capacity = garage.capacity ?? 1;
   const rules = await loadBayRules(garage.id, capacity);
   const now = new Date();
-  const start = quebecInstant(date, startTime);
+  const start = quebecInstant(date, startTime, garageTimeZone(garage.province));
   const plan = planManualConfirmation(start, now, { enabled: true, reachable: contactChannel !== null });
 
   // Vérifier puis créer sous le verrou de la journée (src/lib/slot-lock.ts) : un client en ligne

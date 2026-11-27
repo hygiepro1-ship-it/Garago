@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited } from "@/lib/abuse";
 import { quebecInstant, quebecDateStr } from "@/lib/rdv-confirmation";
+import { garageTimeZone } from "@/lib/availability";
 import { sendCancelledByCustomer } from "@/lib/email";
 import { smsReplyText, gsmSafe, toE164 } from "@/lib/sms";
 import { smsIntent, isCarrierKeyword, validTwilioSignature } from "@/lib/sms-reply";
@@ -51,12 +52,12 @@ export async function POST(req: NextRequest) {
     },
     orderBy: { confirmRequestedAt: "desc" },
     take: 200,
-    include: { garage: { select: { name: true, phone: true, email: true, owner: { select: { email: true } } } } },
+    include: { garage: { select: { name: true, phone: true, province: true, email: true, owner: { select: { email: true } } } } },
   });
   // Le numéro est saisi par le garage (anciens rendez-vous : format libre) : on compare les numéros normalisés.
   const from164 = toE164(national);
   if (!from164) return xml();
-  const a = candidates.find((x) => toE164(x.customerPhone) === from164 && quebecInstant(x.date, x.startTime).getTime() > now.getTime());
+  const a = candidates.find((x) => toE164(x.customerPhone) === from164 && quebecInstant(x.date, x.startTime, garageTimeZone(x.garage.province)).getTime() > now.getTime());
   if (!a) return xml(); // aucun rendez-vous en attente : on ne répond pas
 
   const lang = a.language === "en" ? "en" : "fr";
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   if (intent === "NO") {
     // Le jour même, à moins de 2 h : le garage a peut-être déjà préparé la pièce, on renvoie vers lui.
-    if (quebecInstant(a.date, a.startTime).getTime() - now.getTime() < 2 * 3600 * 1000) return xml(smsReplyText("TOO_LATE", info));
+    if (quebecInstant(a.date, a.startTime, garageTimeZone(a.garage.province)).getTime() - now.getTime() < 2 * 3600 * 1000) return xml(smsReplyText("TOO_LATE", info));
     const done = await prisma.appointment.updateMany({
       where: { id: a.id, status: { in: ["PENDING", "CONFIRMED"] } },
       data: { status: "CANCELLED", cancelledBy: "CLIENT", cancelledAt: now, confirmRespondedAt: a.confirmRespondedAt ?? now },

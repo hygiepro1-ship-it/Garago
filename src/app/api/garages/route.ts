@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
 import { garageDistance } from "@/lib/geo";
 import { toPublicGarage } from "@/lib/public-garage";
-import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "@/lib/availability";
+import { findNextAvailability, quebecToday, addDaysStr, garageTimeZone, type BlockedRow } from "@/lib/availability";
 import { serviceIdsFor } from "@/lib/services";
 import { notTestGarage } from "@/lib/test-garages";
 import { VISIBLE_REVIEWS, averageRating } from "@/lib/garage-rating";
@@ -228,7 +228,7 @@ export async function GET(req: NextRequest) {
         g.availability,
         blockedByGarage.get(g.id) ?? new Map(),
         bookedByGarage.get(g.id) ?? new Map(),
-        { daysAhead: DAYS_AHEAD, now, capacity: g.capacity ?? 1 }
+        { daysAhead: DAYS_AHEAD, now, capacity: g.capacity ?? 1, tz: garageTimeZone(g.province) }
       );
       return {
         ...toPublicGarage(g),

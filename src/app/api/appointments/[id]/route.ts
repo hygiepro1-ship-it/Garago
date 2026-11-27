@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, sendCancelledByCustomer } from "@/lib/email";
-import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
+import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
 import { quebecInstant, planConfirmation, planManualConfirmation, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
@@ -49,6 +49,8 @@ export async function PATCH(
 
   const userId = session.user?.id;
   const isGarageOwner = appt.garage.ownerId === userId;
+  // Dates et heures du rendez-vous : heure locale du garage (voir garageTimeZone).
+  const tz = garageTimeZone(appt.garage.province);
   const isClient      = appt.userId === userId;
 
   if (!isGarageOwner && !isClient) {
@@ -60,7 +62,7 @@ export async function PATCH(
   // ni écrire la note de complétion, qui appartiennent au garage.
   if (isClient && !isGarageOwner) {
     // Heure réelle du rendez-vous (fuseau du Québec) — le serveur tourne en UTC.
-    const hoursUntil = (quebecInstant(appt.date, appt.startTime).getTime() - Date.now()) / 3600000;
+    const hoursUntil = (quebecInstant(appt.date, appt.startTime, tz).getTime() - Date.now()) / 3600000;
     if (hoursUntil < 24) {
       return NextResponse.json({ error: "Modification impossible à moins de 24h du rendez-vous. Appelez le garage directement." }, { status: 403 });
     }
@@ -76,7 +78,7 @@ export async function PATCH(
   // « Terminé » envoie « véhicule prêt » au client : jamais avant l'heure du rendez-vous
   // (des rendez-vous ont été classés « terminé » par erreur des semaines à l'avance).
   if (status === "COMPLETED" && appt.status !== "COMPLETED"
-    && quebecInstant(date ?? appt.date, startTime ?? appt.startTime).getTime() > Date.now()) {
+    && quebecInstant(date ?? appt.date, startTime ?? appt.startTime, tz).getTime() > Date.now()) {
     return NextResponse.json({ error: "Le rendez-vous n'a pas encore commencé : il pourra être classé « terminé » à partir de son heure de début." }, { status: 400 });
   }
 
@@ -127,7 +129,7 @@ export async function PATCH(
   // Un rendez-vous déplacé repart à zéro côté confirmation : sinon une échéance ou un rappel de
   // l'ancienne date pourrait libérer le créneau (ou rester muet) à la nouvelle date.
   const freshConfirmation = (a: { source: string; contactChannel: string | null; customerEmail: string | null }, d: string, t: string) => {
-    const newStart = quebecInstant(d, t);
+    const newStart = quebecInstant(d, t, tz);
     const enabled = true; // confirmation toujours demandée (la case pour la désactiver a été retirée le 2026-11-27)
     const plan = a.source === "MANUAL"
       ? planManualConfirmation(newStart, new Date(), {
@@ -218,7 +220,7 @@ export async function PATCH(
         // Le client ne peut déplacer son rendez-vous que vers un créneau réellement offert par le garage
         // (heures d'ouverture, vacances, jour fermé, heure déjà passée) — jamais vers un horaire forcé.
         if (clientOnly) {
-          const today = quebecToday();
+          const today = quebecToday(new Date(), tz);
           if (newDate < today || newDate > addDaysStr(today, 120)) {
             throw new SlotError(400, "Cette date n'est pas disponible.");
           }
@@ -226,7 +228,7 @@ export async function PATCH(
             tx.blockedSlot.findMany({ where: { garageId: appt.garageId, date: newDate }, select: { startTime: true, endTime: true, allDay: true } }),
             tx.garageAvailability.findFirst({ where: { garageId: appt.garageId, dayOfWeek: dayOfWeekOf(newDate) } }),
           ]);
-          const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: newDate === today, now: new Date(), capacity, allowedBays });
+          const free = computeFreeSlots(availRow ?? undefined, blocks, sameDay, durationMin, { isToday: newDate === today, now: new Date(), capacity, allowedBays, tz });
           if (!free.includes(newStartTime)) {
             throw new SlotError(409, "Ce créneau n'est pas disponible.");
           }

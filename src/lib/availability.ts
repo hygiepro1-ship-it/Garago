@@ -43,18 +43,42 @@ function peakConcurrent(start: number, end: number, rows: BookedRow[]): number {
 
 export const DEFAULT_DURATION_MIN = 60;
 
-// Le serveur tourne en UTC alors que les garages et les rendez-vous sont en heure du
-// Québec : « aujourd'hui » et « maintenant » se calculent toujours dans ce fuseau.
+// Le serveur tourne en UTC alors que les rendez-vous sont enregistrés à l'heure locale du garage
+// (date "YYYY-MM-DD" et heure "HH:MM", sans fuseau) : « aujourd'hui » et « maintenant » se calculent
+// dans le fuseau du garage. Par défaut, celui du Québec (et de l'Ontario).
 export const QUEBEC_TZ = "America/Toronto";
 
-/** "YYYY-MM-DD" du jour courant au Québec. */
-export function quebecToday(at: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ }).format(at);
+// Fuseau principal de chaque province ou territoire. Les rares régions à part (nord-ouest de l'Ontario,
+// est du Québec, Lloydminster…) gardent le fuseau principal de leur province.
+const PROVINCE_TZ: Record<string, string> = {
+  QC: "America/Toronto", ON: "America/Toronto",
+  BC: "America/Vancouver", AB: "America/Edmonton", SK: "America/Regina", MB: "America/Winnipeg",
+  NB: "America/Moncton", NS: "America/Halifax", PE: "America/Halifax", NL: "America/St_Johns",
+  YT: "America/Whitehorse", NT: "America/Yellowknife", NU: "America/Iqaluit",
+};
+const PROVINCE_NAMES: Record<string, string> = {
+  "quebec": "QC", "québec": "QC", "ontario": "ON", "british columbia": "BC", "colombie-britannique": "BC",
+  "alberta": "AB", "saskatchewan": "SK", "manitoba": "MB", "new brunswick": "NB", "nouveau-brunswick": "NB",
+  "nova scotia": "NS", "nouvelle-écosse": "NS", "prince edward island": "PE", "île-du-prince-édouard": "PE",
+  "newfoundland and labrador": "NL", "terre-neuve-et-labrador": "NL", "yukon": "YT",
+  "northwest territories": "NT", "territoires du nord-ouest": "NT", "nunavut": "NU",
+};
+
+/** Fuseau d'un garage d'après sa province (code « QC » ou nom complet) ; Québec si inconnue. */
+export function garageTimeZone(province?: string | null): string {
+  const raw = (province ?? "").trim();
+  const code = raw.length === 2 ? raw.toUpperCase() : PROVINCE_NAMES[raw.toLowerCase()];
+  return (code && PROVINCE_TZ[code]) || QUEBEC_TZ;
 }
 
-/** Minutes écoulées depuis minuit, heure du Québec. */
-export function quebecMinutes(at: Date = new Date()): number {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: QUEBEC_TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(at);
+/** "YYYY-MM-DD" du jour courant dans le fuseau donné (Québec par défaut). */
+export function quebecToday(at: Date = new Date(), tz: string = QUEBEC_TZ): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(at);
+}
+
+/** Minutes écoulées depuis minuit dans le fuseau donné (Québec par défaut). */
+export function quebecMinutes(at: Date = new Date(), tz: string = QUEBEC_TZ): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(at);
   const h = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
   const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
   return h * 60 + m;
@@ -191,7 +215,7 @@ export function computeFreeSlots(
   blocks: BlockedRow[],
   booked: BookedRow[],
   durationMin: number,
-  opts: { isToday?: boolean; now?: Date; capacity?: number; allowedBays?: number[] } = {}
+  opts: { isToday?: boolean; now?: Date; capacity?: number; allowedBays?: number[]; tz?: string } = {}
 ): string[] {
   if (!avail || avail.isClosed) return [];
   // Un blocage (vacances, fermeture exceptionnelle) ferme tout le garage, peu
@@ -204,8 +228,8 @@ export function computeFreeSlots(
   const blockedIntervals = blocks
     .filter((b): b is { startTime: string; endTime: string; allDay: boolean } => !!b.startTime && !!b.endTime)
     .map((b) => ({ start: toMinutes(b.startTime), end: toMinutes(b.endTime) }));
-  const { isToday = false, now = new Date(), capacity = 1, allowedBays } = opts;
-  const nowMinutes = quebecMinutes(now) + 30;
+  const { isToday = false, now = new Date(), capacity = 1, allowedBays, tz = QUEBEC_TZ } = opts;
+  const nowMinutes = quebecMinutes(now, tz) + 30;
 
   return candidates.filter((s) => {
     const start = toMinutes(s);
@@ -234,11 +258,11 @@ export function findNextAvailability(
   availability: AvailabilityRow[],
   blockedByDate: Map<string, BlockedRow[]>,
   bookedByDate: Map<string, BookedRow[]>,
-  opts: { daysAhead?: number; now?: Date; maxSlots?: number; durationMin?: number; capacity?: number } = {}
+  opts: { daysAhead?: number; now?: Date; maxSlots?: number; durationMin?: number; capacity?: number; tz?: string } = {}
 ): NextAvailability | null {
-  const { daysAhead = 14, now = new Date(), maxSlots = 3, durationMin = DEFAULT_DURATION_MIN, capacity = 1 } = opts;
+  const { daysAhead = 14, now = new Date(), maxSlots = 3, durationMin = DEFAULT_DURATION_MIN, capacity = 1, tz = QUEBEC_TZ } = opts;
 
-  const baseDay = quebecToday(now);
+  const baseDay = quebecToday(now, tz);
   for (let offset = 0; offset <= daysAhead; offset++) {
     const dateStr = addDaysStr(baseDay, offset);
     const dow = dayOfWeekOf(dateStr);
@@ -249,7 +273,7 @@ export function findNextAvailability(
       blockedByDate.get(dateStr) ?? [],
       bookedByDate.get(dateStr) ?? [],
       durationMin,
-      { isToday: offset === 0, now, capacity }
+      { isToday: offset === 0, now, capacity, tz }
     );
 
     if (slots.length > 0) {

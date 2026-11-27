@@ -18,42 +18,43 @@ import GarageAgenda, { confirmationLabel } from "@/components/GarageAgenda";
 import GoogleReviewCta from "@/components/GoogleReviewCta";
 import GarageCustomers from "@/components/GarageCustomers";
 import { useTr } from "@/lib/dashboard-en";
-import { quebecToday, quebecMinutes } from "@/lib/availability";
+import { quebecToday, quebecMinutes, garageTimeZone } from "@/lib/availability";
 
 /**
  * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
  * routes API via `?g=<id>` — lu depuis l'URL de la page (paramètre `g`).
  * Sans paramètre, les routes ciblent le garage principal du propriétaire.
  */
-const quebecTodayStr = () => quebecToday();
-/** Heure actuelle au Québec, en minutes depuis minuit. */
-const quebecNowMin = () => quebecMinutes();
+// « Aujourd'hui » et « maintenant » dans le fuseau du garage (voir garageTimeZone), pas celui de l'appareil.
+const quebecTodayStr = (tz: string) => quebecToday(new Date(), tz);
+/** Heure actuelle du garage, en minutes depuis minuit. */
+const quebecNowMin = (tz: string) => quebecMinutes(new Date(), tz);
 const UPCOMING_WINDOW_MIN = 3 * 60;
 /** « Terminé » n'est proposé qu'à partir de l'heure de début (il envoie « véhicule prêt » au client). */
-function hasStarted(a: { date: string; startTime: string }): boolean {
-  const today = quebecTodayStr();
+function hasStarted(a: { date: string; startTime: string }, tz: string): boolean {
+  const today = quebecTodayStr(tz);
   if (a.date !== today) return a.date < today;
   const [h, m] = a.startTime.split(":").map(Number);
-  return h * 60 + m <= quebecNowMin();
+  return h * 60 + m <= quebecNowMin(tz);
 }
 /**
  * « Prochains rendez-vous » : seulement ceux d'aujourd'hui en cours ou qui commencent dans les 3 prochaines heures.
  * Le reste se lit dans l'agenda, juste au-dessus : la liste reste courte même un jour chargé.
  * S'il n'y en a aucun, la liste montre les 3 prochains rendez-vous à venir (voir isUpcomingLater).
  */
-function isUpcomingSoon(a: { date: string; startTime: string; endTime: string; status: string }): boolean {
-  if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW" || a.date !== quebecTodayStr()) return false;
+function isUpcomingSoon(a: { date: string; startTime: string; endTime: string; status: string }, tz: string): boolean {
+  if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW" || a.date !== quebecTodayStr(tz)) return false;
   const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-  const now = quebecNowMin();
+  const now = quebecNowMin(tz);
   return toMin(a.endTime) > now && toMin(a.startTime) < now + UPCOMING_WINDOW_MIN;
 }
 /** Rendez-vous encore à venir (plus tard aujourd'hui ou un jour suivant) : affichés quand rien ne tombe dans les 3 prochaines heures. */
-function isUpcomingLater(a: { date: string; startTime: string; status: string }): boolean {
+function isUpcomingLater(a: { date: string; startTime: string; status: string }, tz: string): boolean {
   if (a.status === "CANCELLED" || a.status === "COMPLETED" || a.status === "NO_SHOW") return false;
-  const today = quebecTodayStr();
+  const today = quebecTodayStr(tz);
   if (a.date !== today) return a.date > today;
   const [h, m] = a.startTime.split(":").map(Number);
-  return h * 60 + m >= quebecNowMin();
+  return h * 60 + m >= quebecNowMin(tz);
 }
 const UPCOMING_FALLBACK_COUNT = 3;
 function selectedGarageId(): string | null {
@@ -1729,6 +1730,8 @@ export default function DashboardGaragePage() {
     ? (visibleReviews.reduce((s, r) => s + r.rating, 0) / visibleReviews.length).toFixed(1)
     : null;
 
+  const garageTz = garageTimeZone(garage.province);
+
   const isTrialExpiring = garage.subscriptionStatus === "TRIAL" && garage.subscriptionEndAt
     && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -2034,10 +2037,10 @@ export default function DashboardGaragePage() {
           {/* Upcoming appointments list */}
           {(() => {
           const byTime = (a: any, b: any) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime);
-          const soon = appointments.filter(isUpcomingSoon).sort(byTime);
+          const soon = appointments.filter((a) => isUpcomingSoon(a, garageTz)).sort(byTime);
           // Rien dans les 3 prochaines heures : on montre les prochains rendez-vous plutôt qu'une liste vide.
           const fallback = soon.length === 0;
-          const upcoming = fallback ? appointments.filter(isUpcomingLater).sort(byTime).slice(0, UPCOMING_FALLBACK_COUNT) : soon;
+          const upcoming = fallback ? appointments.filter((a) => isUpcomingLater(a, garageTz)).sort(byTime).slice(0, UPCOMING_FALLBACK_COUNT) : soon;
           return (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
@@ -2852,7 +2855,7 @@ export default function DashboardGaragePage() {
                               <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-red-50 text-red-600 border border-red-200 font-semibold">{tr("Refuser")}</button>
                             </>}
                             {a.status === "CONFIRMED" && <>
-                              {hasStarted(a) && <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>}
+                              {hasStarted(a, garageTz) && <button onClick={() => updateApptStatus(a.id, "COMPLETED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-semibold">{tr("✓ Terminé")}</button>}
                               <button onClick={() => updateApptStatus(a.id, "CANCELLED")} className="text-xs px-2.5 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 font-semibold">{tr("Annuler")}</button>
                             </>}
                           </div>

@@ -37,9 +37,9 @@ export const HOLDING_STATUSES = ["PENDING", "CONFIRMED"];
 /** Statuts qui libèrent le créneau dans le calcul des disponibilités. */
 export const FREE_SLOT_STATUSES = ["CANCELLED", "NO_SHOW"];
 
-function tzOffsetMs(at: Date): number {
+function tzOffsetMs(at: Date, tz: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: QUEBEC_TZ, hourCycle: "h23",
+    timeZone: tz, hourCycle: "h23",
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit",
   }).formatToParts(at);
@@ -48,27 +48,27 @@ function tzOffsetMs(at: Date): number {
   return wallAsUtc - Math.floor(at.getTime() / 1000) * 1000;
 }
 
-/** Instant réel (UTC) d'une date/heure affichée en heure du Québec. */
-export function quebecInstant(date: string, time: string): Date {
+/** Instant réel (UTC) d'une date/heure locale du garage (fuseau du Québec par défaut, voir garageTimeZone). */
+export function quebecInstant(date: string, time: string, tz: string = QUEBEC_TZ): Date {
   const [y, m, d] = date.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
   const wall = Date.UTC(y, m - 1, d, hh, mm);
-  const first = tzOffsetMs(new Date(wall));
+  const first = tzOffsetMs(new Date(wall), tz);
   let t = wall - first;
-  const second = tzOffsetMs(new Date(t));
+  const second = tzOffsetMs(new Date(t), tz);
   if (second !== first) t = wall - second;
   return new Date(t);
 }
 
 /** "YYYY-MM-DD" du jour courant au Québec (le serveur tourne en UTC). */
-export function quebecDateStr(at: Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ }).format(at);
+export function quebecDateStr(at: Date, tz: string = QUEBEC_TZ): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(at);
 }
 
 /** « jeudi 8 octobre à 20 h 00 », ou « Thursday, October 8 at 8:00 p.m. » en anglais. */
-export function formatQuebecMoment(at: Date, lang: "fr" | "en" = "fr"): string {
+export function formatQuebecMoment(at: Date, lang: "fr" | "en" = "fr", tz: string = QUEBEC_TZ): string {
   return new Intl.DateTimeFormat(lang === "en" ? "en-CA" : "fr-CA", {
-    timeZone: QUEBEC_TZ, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
+    timeZone: tz, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
   }).format(at);
 }
 

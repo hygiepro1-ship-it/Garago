@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { wouldExceedCapacity, pickBay, toMinutes } from "@/lib/availability";
+import { wouldExceedCapacity, pickBay, toMinutes, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock } from "@/lib/slot-lock";
 import { quebecInstant, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
@@ -16,7 +16,7 @@ async function load(token: string) {
   if (!/^[a-f0-9]{48}$/.test(token)) return null;
   return prisma.appointment.findFirst({
     where: { confirmToken: token },
-    include: { garage: { select: { name: true, address: true, city: true, phone: true, capacity: true, email: true, owner: { select: { email: true } } } } },
+    include: { garage: { select: { name: true, address: true, city: true, province: true, phone: true, capacity: true, email: true, owner: { select: { email: true } } } } },
   });
 }
 
@@ -32,7 +32,7 @@ async function slotIsFree(a: Loaded): Promise<boolean> {
 }
 
 async function describe(a: Loaded, now = new Date()) {
-  const start = quebecInstant(a.date, a.startTime);
+  const start = quebecInstant(a.date, a.startTime, garageTimeZone(a.garage.province));
   let state: State;
   let canRetake = false;
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       data: { confirmationStatus: "CONFIRMED", confirmedVia: "LINK", confirmRespondedAt: a.confirmRespondedAt ?? new Date() },
     });
   } else if (action === "cancel") {
-    const start = quebecInstant(a.date, a.startTime);
+    const start = quebecInstant(a.date, a.startTime, garageTimeZone(a.garage.province));
     if (start.getTime() > Date.now()) {
       const now = new Date();
       const done = await prisma.appointment.updateMany({
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       await withGarageDayLock(a.garageId, a.date, async (tx) => {
         const fresh = await tx.appointment.findUnique({ where: { id: a.id }, include: { garage: { select: { capacity: true } } } });
         if (!fresh || fresh.status !== "CANCELLED" || fresh.confirmationStatus !== "EXPIRED") throw new Error("NOT_RETAKABLE");
-        if (quebecInstant(fresh.date, fresh.startTime).getTime() - Date.now() <= 60 * 60 * 1000) throw new Error("NOT_RETAKABLE");
+        if (quebecInstant(fresh.date, fresh.startTime, garageTimeZone(a.garage.province)).getTime() - Date.now() <= 60 * 60 * 1000) throw new Error("NOT_RETAKABLE");
         const duration = toMinutes(fresh.endTime) - toMinutes(fresh.startTime);
         const sameDay = await tx.appointment.findMany({
           where: { garageId: fresh.garageId, date: fresh.date, id: { not: fresh.id }, status: { notIn: FREE_SLOT_STATUSES } },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN, quebecToday, dayOfWeekOf } from "@/lib/availability";
+import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN, quebecToday, dayOfWeekOf, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 
@@ -77,10 +77,12 @@ export async function GET(
     select: { startTime: true, endTime: true, bay: true },
   });
 
+  // « Aujourd'hui » et l'heure passée s'entendent dans le fuseau du garage.
   const now = new Date();
-  const isToday = date === quebecToday(now);
+  const tz = garageTimeZone(garage.province);
+  const isToday = date === quebecToday(now, tz);
 
-  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity, allowedBays });
+  const available = computeFreeSlots(avail, blockedSlots, booked, durationMin, { isToday, now, capacity, allowedBays, tz });
 
   const closed = !avail || avail.isClosed || blockedSlots.some((b) => b.allDay);
 

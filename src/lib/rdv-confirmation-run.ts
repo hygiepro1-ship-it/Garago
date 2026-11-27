@@ -4,6 +4,7 @@ import {
   sendManualConfirmationRequest, sendGarageNoResponse,
 } from "@/lib/email";
 import { sendConfirmationRequestSMS } from "@/lib/sms";
+import { garageTimeZone } from "@/lib/availability";
 import {
   quebecInstant, quebecDateStr, formatQuebecMoment, standardDeadline, manualDeadline, confirmPageUrl, cancelPageUrl,
   REQUEST_HOURS_BEFORE, NUDGE_HOURS_BEFORE, ARRIVAL_REMINDER_HOURS_BEFORE, MANUAL_REQUEST_HOURS_BEFORE,
@@ -35,13 +36,14 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
       ...(onlyId ? { id: onlyId } : {}),
     },
     include: {
-      garage: { select: { name: true, phone: true, address: true, city: true, email: true, owner: { select: { email: true } } } },
+      garage: { select: { name: true, phone: true, address: true, city: true, province: true, email: true, owner: { select: { email: true } } } },
       user: { select: { email: true } },
     },
   });
 
   for (const a of rows) {
-    const start = quebecInstant(a.date, a.startTime);
+    const tz = garageTimeZone(a.garage.province);
+    const start = quebecInstant(a.date, a.startTime, tz);
     const to = a.customerEmail || a.user?.email || null;
     const token = a.confirmToken;
     if (!token) continue;
@@ -134,7 +136,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(deadline, details.lang), variant: "request" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(deadline, details.lang, tz), variant: "request" });
           stats.requested++;
         } catch (e) {
           // Courriel non parti : on remet en file plutôt que de risquer de libérer le créneau d'un client jamais prévenu.
@@ -183,7 +185,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(a.confirmBy, details.lang), variant: "nudge" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(a.confirmBy, details.lang, tz), variant: "nudge" });
           stats.nudged++;
         } catch (e) {
           await prisma.appointment.updateMany({ where: { id: a.id }, data: { confirmNudgeAt: null } });
