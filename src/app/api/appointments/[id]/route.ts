@@ -2,16 +2,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, sendCancelledByCustomer } from "@/lib/email";
 import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf, garageTimeZone } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
 import { quebecInstant, planConfirmation, planManualConfirmation, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
-import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
-import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS, sendVehicleReadySMS } from "@/lib/sms";
-import { reviewPageUrl, newReviewToken, reviewWindowOpen } from "@/lib/review-checks";
 import { cleanText, isValidEmail } from "@/lib/abuse";
 import { formatPhone, isFormattedPhone, normalizePlate } from "@/lib/contact-format";
+import { notifyCancellation, notifyChange, notifyVehicleReady } from "@/lib/appointment-notifications";
 
 // PATCH /api/appointments/[id] — update status (garage owner)
 export async function PATCH(
@@ -292,118 +289,18 @@ export async function PATCH(
   }
   const [updated, ...shiftedRows] = results;
 
-  // ── Annulation : l'autre partie doit toujours être prévenue ──────────────────────
-  // Garage qui annule -> courriel au client ; client qui annule -> courriel au garage.
-  if (status === "CANCELLED" && appt.status !== "CANCELLED") {
-    const jobs: Promise<void>[] = [];
-    if (isGarageOwner) {
-      const acct = updated.userId ? await prisma.user.findUnique({ where: { id: updated.userId }, select: { email: true } }) : null;
-      const to = updated.customerEmail || acct?.email || null;
-      if (updated.contactChannel === "SMS") {
-        jobs.push(sendCancelledByGarageSMS({
-          to: updated.customerPhone, garageId: updated.garageId, lang: updated.language === "en" ? "en" : "fr", garageName: updated.garage.name,
-          garagePhone: updated.garage.phone ?? "", date: updated.date, startTime: updated.startTime,
-        }).catch((e) => console.error("[CANCELLED BY GARAGE SMS]", e)));
-      } else if (to) {
-        jobs.push(sendCancelledByGarage({
-          to, customerName: updated.customerName, garageName: updated.garage.name, garagePhone: updated.garage.phone ?? "",
-          serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
-          lang: updated.language === "en" ? "en" : "fr",
-        }).catch((e) => console.error("[CANCELLED BY GARAGE EMAIL]", e)));
-      }
-    } else {
-      const owner = await prisma.user.findUnique({ where: { id: updated.garage.ownerId ?? "" }, select: { email: true } });
-      const to = updated.garage.email || owner?.email || null;
-      if (to) {
-        jobs.push(sendCancelledByCustomer({
-          to, garageName: updated.garage.name, customerName: updated.customerName, customerPhone: updated.customerPhone,
-          serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
-        }).catch((e) => console.error("[CANCELLED BY CUSTOMER EMAIL]", e)));
-      }
-    }
-    await Promise.all(jobs);
-  }
+  // ── Messages au client ou au garage (src/lib/appointment-notifications.ts) ──────────────
+  if (status === "CANCELLED" && appt.status !== "CANCELLED") await notifyCancellation(updated, isGarageOwner);
 
-  // ── Le client n'est prévenu que de ce qui le touche : la date, l'heure ou le service ──
+  // Le client n'est prévenu que de ce qui le touche : la date, l'heure ou le service
   // (un nom corrigé, une note, une porte ou une durée allongée ne lui envoient rien).
   const serviceChanged = isGarageOwner && details.serviceName !== undefined
     && String(details.serviceName ?? "") !== String(appt.serviceName ?? "");
-  const notifyChange = async (a: typeof updated, what: "time" | "service") => {
-    const garageAddress = [a.garage.address, a.garage.city].filter(Boolean).join(", ");
-    const garagePhone   = a.garage.phone ?? "";
-    // Priorité : courriel du rendez-vous, sinon celui du compte Garago du client.
-    const userRecord = a.userId ? await prisma.user.findUnique({ where: { id: a.userId }, select: { email: true } }) : null;
-    const recipientEmail = a.customerEmail || userRecord?.email || null;
-    const lang = a.language === "en" ? "en" : "fr";
-    if (a.contactChannel === "SMS") {
-      const sms = { to: a.customerPhone, garageId: a.garageId, lang, garageName: a.garage.name, garagePhone, date: a.date, startTime: a.startTime } as const;
-      await (what === "time" ? sendRescheduleSMS(sms) : sendServiceChangedSMS({ ...sms, serviceName: a.serviceName }))
-        .catch((e) => console.error("[CHANGE SMS]", e));
-    } else if (recipientEmail) {
-      await sendRescheduleNotification({
-        to: recipientEmail, customerName: a.customerName, garageName: a.garage.name, garagePhone, garageAddress,
-        date: a.date, startTime: a.startTime, endTime: a.endTime, serviceName: a.serviceName, what, lang,
-      }).catch((e) => console.error("[CHANGE EMAIL]", e));
-    }
-    // Déplacé à moins de 48 h : la demande de confirmation part tout de suite.
-    if (what === "time" && a.confirmTier === "MANUAL" && a.confirmationStatus === "SCHEDULED") {
-      await processRdvConfirmations(new Date(), a.id).catch((e) => console.error("[RESCHEDULE CONFIRMATION]", e));
-    }
-  };
   if (isGarageOwner && timeChanged) await notifyChange(updated, "time");
   else if (serviceChanged) await notifyChange(updated, "service");
   for (const row of shiftedRows) await notifyChange(row, "time");
 
-  // ── Notifications "véhicule prêt" quand le garage marque COMPLETED
-  if (status === "COMPLETED") {
-    const garageAddress = [updated.garage.address, updated.garage.city].filter(Boolean).join(", ");
-    const note = completionNote ?? updated.completionNote;
-
-    // Récupère l'email du compte client
-    const userRecord2 = updated.userId
-      ? await prisma.user.findUnique({
-          where:  { id: updated.userId },
-          select: { email: true },
-        })
-      : null;
-    const recipientEmail2 = updated.customerEmail || userRecord2?.email || null;
-    const garagePhone2    = updated.garage.phone ?? "";
-
-    const completedPromises: Promise<void>[] = [];
-    // Code unique pour noter le garage (page /avis/[code]) : le même si le garage renvoie le message.
-    // Pas de nouveau code si l'avis est déjà déposé ou si les 15 jours sont passés : le message part sans lien.
-    let reviewToken = updated.reviewToken;
-    if (!reviewToken && reviewWindowOpen(updated.date)
-        && !(await prisma.review.findFirst({ where: { appointmentId: updated.id }, select: { id: true } }))) {
-      reviewToken = newReviewToken();
-      await prisma.appointment.update({ where: { id: updated.id }, data: { reviewToken } });
-    }
-    const reviewUrl = reviewToken ? reviewPageUrl(reviewToken) : null;
-    const lang2 = updated.language === "en" ? "en" : "fr";
-
-    // Un seul moyen : texto si le client l'a choisi, sinon courriel.
-    if (updated.contactChannel === "SMS") {
-      completedPromises.push(
-        sendVehicleReadySMS({ to: updated.customerPhone, garageId: updated.garageId, lang: lang2, garageName: updated.garage.name, reviewUrl })
-          .catch(e => console.error("[VEHICLE READY SMS]", e))
-      );
-    } else if (recipientEmail2) {
-      completedPromises.push(
-        sendVehicleReady({
-          to:            recipientEmail2,
-          customerName:  updated.customerName,
-          garageName:    updated.garage.name,
-          garageAddress,
-          garagePhone:   garagePhone2,
-          completionNote: note,
-          lang:          lang2,
-          reviewUrl,
-        }).catch(e => console.error("[VEHICLE READY EMAIL]", e))
-      );
-    }
-
-    await Promise.all(completedPromises);
-  }
+  if (status === "COMPLETED") await notifyVehicleReady(updated, completionNote);
 
   return NextResponse.json(updated);
 }
