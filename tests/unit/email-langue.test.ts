@@ -37,7 +37,6 @@ async function all(lang?: "fr" | "en") {
   await m.sendArrivalReminder(p);
   await m.sendBookingConfirmation({ ...p, confirmUrl: undefined, cancelUrl: undefined });
   await m.sendBookingConfirmation({ ...p, confirmDeadline: lang === "en" ? "by 5:00 p.m." : "avant 17 h" });
-  await m.sendBookingReminder(p);
   await m.sendRescheduleNotification(p);
   await m.sendRescheduleNotification({ ...p, what: "service" });
   await m.sendCancelledByGarage(p);
@@ -51,7 +50,7 @@ const FRENCH_WORDS = /Bonjour|Rendez-vous|rendez-vous|créneau|Adresse|Heure|Vid
 
 test("client anglophone : aucun courriel ne contient de français, date et service traduits", async () => {
   const mails = await all("en");
-  assert.equal(mails.length, 10);
+  assert.equal(mails.length, 9);
   for (const m of mails) {
     assert.doesNotMatch(m.subject, FRENCH_WORDS, `sujet en français : ${m.subject}`);
     // On ignore l'adresse du garage (saisie par le garage) et les liens.
@@ -68,7 +67,7 @@ test("client anglophone : aucun courriel ne contient de français, date et servi
 test("client francophone, ou langue inconnue : courriels en français, identiques entre eux", async () => {
   const fr = await all("fr");
   const unknown = await all();
-  assert.equal(fr.length, 10);
+  assert.equal(fr.length, 9);
   assert.deepEqual(unknown, fr);
   for (const m of fr) assert.match(m.html, /Bonjour Marc/);
   assert.equal(fr[0].subject, "Vous arrivez ? Garage Test à 16:00");

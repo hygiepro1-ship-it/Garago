@@ -4,15 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   planConfirmation, planManualConfirmation, standardDeadline, manualDeadline, quebecInstant, quebecDateStr,
-  wantsEmailReminder,
 } from "../../src/lib/rdv-confirmation";
 
-test("rappel de la veille par courriel : seulement par le moyen choisi par le client", () => {
-  assert.equal(wantsEmailReminder({ source: "ONLINE", contactChannel: null }), true);
-  assert.equal(wantsEmailReminder({ source: "MANUAL", contactChannel: "EMAIL" }), true);
-  assert.equal(wantsEmailReminder({ source: "MANUAL", contactChannel: "SMS" }), false);
-  assert.equal(wantsEmailReminder({ source: "MANUAL", contactChannel: null }), false); // « aucun message »
-});
 
 const H = 60 * 60 * 1000;
 const NOW = new Date("2026-12-01T15:00:00Z");

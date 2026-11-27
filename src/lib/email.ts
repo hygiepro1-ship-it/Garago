@@ -540,40 +540,6 @@ export function emailPreviewHtml(body: string, lang: "fr" | "en" = "fr"): string
   return baseLayout(body, lang);
 }
 
-// ─── Email: Rappel rendez-vous (24h avant) ────────────────────────────────────
-
-export interface BookingReminderParams extends AppointmentDetails {
-  to:           string;
-  customerName: string;
-  garagePhone:  string;
-  appointmentId: string;
-}
-
-export async function sendBookingReminder(params: BookingReminderParams) {
-  if (!canSend()) return;
-
-  const lang = params.lang === "en" ? "en" : "fr";
-  const en = lang === "en";
-
-  const body = `
-    ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Reminder: your appointment is tomorrow" : "Rappel : votre rendez-vous est demain"}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
-      ? `Hello ${esc(params.customerName)}, this is a reminder of your appointment tomorrow.`
-      : `Bonjour ${esc(params.customerName)}, voici un rappel de votre rendez-vous prévu demain.`}</p>
-
-    ${appointmentCard(params, lang)}
-
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en ? "Any questions? Contact the garage directly:" : "Des questions ? Contactez le garage directement :"}</p>
-    ${phoneBtn(params.garagePhone)}
-  `;
-
-  const subject = en
-    ? `Reminder, appointment tomorrow: ${params.garageName} at ${params.startTime}`
-    : `Rappel RDV demain : ${params.garageName} à ${params.startTime}`;
-  await send(params.to, subject, body, undefined, lang);
-}
-
 // ─── Email: Rappel d'entretien véhicule ───────────────────────────────────────
 
 export interface MaintenanceReminderParams {

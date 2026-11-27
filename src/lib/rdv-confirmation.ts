@@ -70,16 +70,6 @@ export function formatQuebecMoment(at: Date, lang: "fr" | "en" = "fr"): string {
   }).format(at);
 }
 
-/**
- * Le client peut-il recevoir le rappel de la veille par courriel ? Un seul moyen, celui qu'il a choisi :
- * - réservation en ligne : oui (il a donné son courriel pour être joint) ;
- * - rendez-vous saisi par le garage : seulement si le client a choisi le courriel
- *   (« texto » ou « aucun message », null, n'en reçoivent pas).
- */
-export function wantsEmailReminder(a: { source: string; contactChannel: string | null }): boolean {
-  return a.source !== "MANUAL" || a.contactChannel === "EMAIL";
-}
-
 export function newConfirmToken(): string {
   return randomBytes(24).toString("hex");
 }

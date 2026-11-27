@@ -1084,10 +1084,6 @@ export default function DashboardGaragePage() {
   const [capacity, setCapacity] = useState("1");
   useEffect(() => { if (garage) setCapacity(String(garage.capacity ?? 1)); }, [garage]);
 
-  // Confirmation obligatoire du client (courriel à −48 h, créneau libéré sans réponse)
-  const [requireConfirmation, setRequireConfirmation] = useState(true);
-  useEffect(() => { if (garage) setRequireConfirmation(garage.requireConfirmation ?? true); }, [garage]);
-
   const [priceTried, setPriceTried] = useState(false);
 
   async function saveServices() {
@@ -1104,11 +1100,11 @@ export default function DashboardGaragePage() {
     const res = await gfetch("/api/garage/services", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services, capacity: cap, requireConfirmation, requirePrices: true }),
+      body: JSON.stringify({ services, capacity: cap, requirePrices: true }),
     });
     if (res.ok) {
       setCapacity(String(cap));
-      setGarage((g: any) => g ? { ...g, capacity: cap, requireConfirmation } : g);
+      setGarage((g: any) => g ? { ...g, capacity: cap } : g);
     }
     setSaving(false);
     setSuccess(res.ok ? tr("Services sauvegardés ✓") : tr("Erreur lors de la sauvegarde"));
@@ -2356,22 +2352,6 @@ export default function DashboardGaragePage() {
               {tr("Nombre de portes ou d'employés pouvant chacun s'occuper d'un véhicule en même temps. Un même")}{" "}
               {tr("créneau n'est complet que lorsque toutes vos portes sont occupées. Enregistrez pour appliquer.")}
             </p>
-          </div>
-
-          {/* Confirmation des rendez-vous */}
-          <div className="rounded-xl p-4 mb-5" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-            <label htmlFor="garage-require-confirmation" className="flex items-start gap-3 cursor-pointer">
-              <input id="garage-require-confirmation" type="checkbox" checked={requireConfirmation}
-                onChange={(e) => setRequireConfirmation(e.target.checked)} className="w-4 h-4 mt-0.5 accent-orange-500" />
-              <span>
-                <span className="block text-sm font-bold text-gray-900">{tr("Demander aux clients de confirmer leur rendez-vous")}</span>
-                <span className="block text-xs text-gray-500 mt-1 leading-relaxed">
-                  {tr("Chaque client reçoit un courriel 48 h avant pour confirmer. Sans réponse, le créneau est remis à")}{" "}
-                  {tr("disposition pour d'autres conducteurs (12 h avant le rendez-vous). Les rendez-vous pris moins de 24 h")}{" "}
-                  {tr("à l'avance doivent être confirmés dans l'heure. Enregistrez pour appliquer.")}
-                </span>
-              </span>
-            </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

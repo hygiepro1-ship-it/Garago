@@ -128,7 +128,7 @@ export async function PATCH(
   // l'ancienne date pourrait libérer le créneau (ou rester muet) à la nouvelle date.
   const freshConfirmation = (a: { source: string; contactChannel: string | null; customerEmail: string | null }, d: string, t: string) => {
     const newStart = quebecInstant(d, t);
-    const enabled = appt.garage.requireConfirmation ?? true;
+    const enabled = true; // confirmation toujours demandée (la case pour la désactiver a été retirée le 2026-11-27)
     const plan = a.source === "MANUAL"
       ? planManualConfirmation(newStart, new Date(), {
           enabled,

@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const userId = session.user.id;
-  const { services, capacity, requireConfirmation, requirePrices } = await req.json();
+  const { services, capacity, requirePrices } = await req.json();
 
   const garage = await prisma.garage.findFirst({
     where: ownedGarageWhere(userId, readGarageId(req.url)),
@@ -62,11 +62,6 @@ export async function PUT(req: NextRequest) {
   // qui remplit l'agenda) — omise du corps de requête, elle reste inchangée.
   if (capacity !== undefined) {
     await prisma.garage.update({ where: { id: garage.id }, data: { capacity: sanitizeCapacity(capacity) } });
-  }
-
-  // Confirmation du client par courriel : activée par défaut, désactivable par le garage.
-  if (typeof requireConfirmation === "boolean") {
-    await prisma.garage.update({ where: { id: garage.id }, data: { requireConfirmation } });
   }
 
   // Validation complète AVANT d'effacer quoi que ce soit : une valeur invalide ne doit jamais faire perdre

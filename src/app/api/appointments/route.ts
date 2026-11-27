@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
           select: { durationMin: true, category: { select: { name: true } } },
         })
       : Promise.resolve([] as { durationMin: number | null; category: { name: string } }[]),
-    prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true, requireConfirmation: true } }),
+    prisma.garage.findUnique({ where: { id: garageId }, select: { capacity: true } }),
   ]);
   // Durée = somme des durées réglées par le garage ; nom du service recalculé côté serveur.
   const durationMin = svcs.length
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
   // Palier de confirmation (standard / dernière minute / aucun) selon le délai.
   const startInstant = quebecInstant(date, startTime);
   const plan = planConfirmation(startInstant, new Date(), {
-    enabled: garageForCapacity?.requireConfirmation ?? true,
+    enabled: true, // confirmation toujours demandée (la case pour la désactiver a été retirée le 2026-11-27)
     hasEmail: !!contactEmail,
   });
 

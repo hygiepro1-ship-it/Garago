@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
   const rules = await loadBayRules(garage.id, capacity);
   const now = new Date();
   const start = quebecInstant(date, startTime);
-  const plan = planManualConfirmation(start, now, { enabled: garage.requireConfirmation ?? true, reachable: contactChannel !== null });
+  const plan = planManualConfirmation(start, now, { enabled: true, reachable: contactChannel !== null });
 
   // Vérifier puis créer sous le verrou de la journée (src/lib/slot-lock.ts) : un client en ligne
   // ou un autre poste du garage ne peut pas prendre la même place entre les deux.
