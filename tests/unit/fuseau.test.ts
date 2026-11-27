@@ -47,6 +47,9 @@ test("prochaine disponibilité : le jour de départ est celui du garage", () => 
 
 test("échéance affichée dans le fuseau du garage", () => {
   const at = new Date("2026-12-01T20:00:00Z");
-  assert.match(formatQuebecMoment(at, "en", "America/Vancouver"), /12:00\s?p\.m\./);
-  assert.match(formatQuebecMoment(at, "fr"), /15 h 00/);
+  // Le format exact (espaces insécables, « p.m. » ou « PM ») varie selon la version de Node : on ne lit que l'heure.
+  const plain = (s: string) => s.replace(/[  ]/g, " ");
+  assert.match(plain(formatQuebecMoment(at, "en", "America/Vancouver")), /\b12:00\b/);
+  assert.match(plain(formatQuebecMoment(at, "fr")), /\b15 ?h ?00\b/);
+  assert.doesNotMatch(plain(formatQuebecMoment(at, "fr")), /\b12 ?h/);
 });
