@@ -10,7 +10,7 @@ import { activeSubscriptionOr } from "@/lib/garage-access";
 import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from "@/lib/abuse";
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 import { icsToken } from "@/lib/ics-token";
-import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl } from "@/lib/rdv-confirmation";
+import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
     appt = await withGarageDayLock(garageId, date, async (tx) => {
       const [sameDay, blocks, availRow] = await Promise.all([
         tx.appointment.findMany({
-          where: { garageId, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+          where: { garageId, date, status: { notIn: FREE_SLOT_STATUSES } },
           select: { startTime: true, endTime: true, bay: true },
         }),
         tx.blockedSlot.findMany({ where: { garageId, date }, select: { startTime: true, endTime: true, allDay: true } }),

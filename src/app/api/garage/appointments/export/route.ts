@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
 import { toMinutes } from "@/lib/availability";
 import { buildXlsx, type Cell } from "@/lib/xlsx";
+import { quebecToday } from "@/lib/availability";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
   ]);
 
   const file = buildXlsx("Rendez-vous", header, rows, [12, 8, 8, 11, 26, 16, 28, 10, 10, 26, 8, 14, 14, 14, 22, 12, 18, 40]);
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
+  const today = quebecToday();
 
   return new NextResponse(new Uint8Array(file), {
     headers: {

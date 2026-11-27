@@ -7,7 +7,7 @@ import { wouldExceedCapacity, bayIsFree, pickBay, toHHMM, toMinutes, DEFAULT_DUR
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
 import { cleanText, isValidEmail, isOverLimit, recordAttempt } from "@/lib/abuse";
-import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE } from "@/lib/rdv-confirmation";
+import { quebecInstant, planManualConfirmation, MANUAL_REQUEST_HOURS_BEFORE, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { toE164, sendBookingConfirmedSMS } from "@/lib/sms";
 import { sendManualBookingConfirmation } from "@/lib/email";
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
   try {
     appt = await withGarageDayLock(garage.id, date, async (tx) => {
       const sameDay = await tx.appointment.findMany({
-        where: { garageId: garage.id, date, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+        where: { garageId: garage.id, date, status: { notIn: FREE_SLOT_STATUSES } },
         select: { startTime: true, endTime: true, bay: true },
       });
       if (wouldExceedCapacity(startTime, durationMin, sameDay, capacity)) {

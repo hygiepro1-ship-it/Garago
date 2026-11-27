@@ -18,20 +18,16 @@ import GarageAgenda, { confirmationLabel } from "@/components/GarageAgenda";
 import GoogleReviewCta from "@/components/GoogleReviewCta";
 import GarageCustomers from "@/components/GarageCustomers";
 import { useTr } from "@/lib/dashboard-en";
+import { quebecToday, quebecMinutes } from "@/lib/availability";
 
 /**
  * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
  * routes API via `?g=<id>` — lu depuis l'URL de la page (paramètre `g`).
  * Sans paramètre, les routes ciblent le garage principal du propriétaire.
  */
-function quebecTodayStr(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
-}
+const quebecTodayStr = () => quebecToday();
 /** Heure actuelle au Québec, en minutes depuis minuit. */
-function quebecNowMin(): number {
-  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()).split(":").map(Number);
-  return h * 60 + m;
-}
+const quebecNowMin = () => quebecMinutes();
 const UPCOMING_WINDOW_MIN = 3 * 60;
 /** « Terminé » n'est proposé qu'à partir de l'heure de début (il envoie « véhicule prêt » au client). */
 function hasStarted(a: { date: string; startTime: string }): boolean {

@@ -9,6 +9,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useTr } from "@/lib/dashboard-en";
 import { translateServiceName } from "@/lib/services";
 import GoogleReviewCta from "@/components/GoogleReviewCta";
+import { quebecToday } from "@/lib/availability";
 
 // ── Couleurs de marque ────────────────────────────────────────────────────────
 const BRAND_COLOR: Record<string, string> = {
@@ -644,7 +645,7 @@ export default function DashboardConducteurPage() {
       {/* ── KPI widgets ── */}
       {apptsLoaded && (() => {
         const now = new Date();
-        const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(now);
+        const todayStr = quebecToday(now);
         const totalRdv = appts.filter(a => a.status !== "CANCELLED").length;
         const prochainRdv = appts
           .filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr)
@@ -732,7 +733,7 @@ export default function DashboardConducteurPage() {
           {/* ── Rendez-vous ── */}
           {tab === "rdv" && (() => {
             const now = new Date();
-            const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(now);
+            const todayStr = quebecToday(now);
             const upcoming  = appts.filter(a => a.status !== "CANCELLED" && a.status !== "COMPLETED" && a.date >= todayStr);
             const active    = appts.filter(a => a.status === "CONFIRMED" && a.date === todayStr);
             const past      = appts.filter(a => a.status === "COMPLETED" || (a.date < todayStr && a.status !== "CANCELLED"));

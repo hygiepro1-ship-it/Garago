@@ -45,7 +45,7 @@ export const DEFAULT_DURATION_MIN = 60;
 
 // Le serveur tourne en UTC alors que les garages et les rendez-vous sont en heure du
 // Québec : « aujourd'hui » et « maintenant » se calculent toujours dans ce fuseau.
-const QUEBEC_TZ = "America/Toronto";
+export const QUEBEC_TZ = "America/Toronto";
 
 /** "YYYY-MM-DD" du jour courant au Québec. */
 export function quebecToday(at: Date = new Date()): string {

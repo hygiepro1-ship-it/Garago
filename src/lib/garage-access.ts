@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { quebecToday } from "@/lib/availability";
 
 /**
  * Un propriétaire peut posséder plusieurs garages : un garage principal
@@ -49,7 +50,7 @@ export const PAST_DUE_GRACE_DAYS = 7;
 /** Nombre de rendez-vous à venir (non annulés, non terminés) pour ces garages — date du jour au Québec. */
 export async function countUpcomingAppointments(garageIds: string[]): Promise<number> {
   if (garageIds.length === 0) return 0;
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
+  const today = quebecToday();
   return prisma.appointment.count({
     where: { garageId: { in: garageIds }, date: { gte: today }, status: { notIn: ["CANCELLED", "COMPLETED", "NO_SHOW"] } },
   });

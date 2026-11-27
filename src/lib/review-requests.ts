@@ -4,6 +4,7 @@ import { quebecInstant } from "@/lib/rdv-confirmation";
 import { newReviewToken, reviewPageUrl, THANKS_DELAY_MS } from "@/lib/review-checks";
 import { sendVisitReviewRequest } from "@/lib/email";
 import { sendVisitReviewSMS } from "@/lib/sms";
+import { QUEBEC_TZ } from "@/lib/availability";
 
 // « Merci de votre visite » : 12 heures après l'heure de fin d'un rendez-vous confirmé que le garage
 // n'a pas marqué « Terminé », le client reçoit un merci avec son code pour noter le garage.
@@ -19,7 +20,7 @@ import { sendVisitReviewSMS } from "@/lib/sms";
 //   par le garage sans moyen de contact) : rien ne part et aucun code n'est créé.
 /** Heure du Québec (0 à 23). */
 function quebecHour(at: Date): number {
-  return Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", hour: "numeric", hourCycle: "h23" }).format(at));
+  return Number(new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ, hour: "numeric", hourCycle: "h23" }).format(at));
 }
 const QUIET_FROM = 21, QUIET_UNTIL = 8;
 

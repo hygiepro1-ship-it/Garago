@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { addDaysStr, quebecToday } from "@/lib/availability";
 import { REVIEW_WINDOW_DAYS } from "@/lib/review-checks";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,7 @@ export const dynamic = "force-dynamic";
 // et grossiraient indéfiniment sinon — les fenêtres de rate-limit ne dépassent
 // jamais 15 minutes, donc tout ce qui a plus de 7 jours est inutile).
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

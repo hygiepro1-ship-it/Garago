@@ -13,7 +13,7 @@ export async function GET(
   if (!month) return NextResponse.json({ error: "month required" }, { status: 400 });
 
   const garage = await prisma.garage.findUnique({ where: { slug }, select: { id: true } });
-  if (!garage) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
 
   const blocked = await prisma.blockedSlot.findMany({
     where: { garageId: garage.id, allDay: true, date: { gte: `${month}-01`, lte: `${month}-31` } },

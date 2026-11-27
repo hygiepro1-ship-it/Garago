@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeFreeSlots, toMinutes, DEFAULT_DURATION_MIN, quebecToday, dayOfWeekOf } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
+import { FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 
 // GET /api/garages/[slug]/slots?date=YYYY-MM-DD&categoryId=...
 // Renvoie les créneaux libres pour une date donnée, dimensionnés à la durée
@@ -19,13 +20,13 @@ export async function GET(
     (req.nextUrl.searchParams.get("categoryIds") ?? req.nextUrl.searchParams.get("categoryId") ?? "")
       .split(",").map((s) => s.trim()).filter(Boolean)
   )).slice(0, 6);
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "date required" }, { status: 400 });
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "Date manquante ou invalide (AAAA-MM-JJ)" }, { status: 400 });
 
   const garage = await prisma.garage.findUnique({
     where: { slug },
     include: { availability: true },
   });
-  if (!garage) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!garage) return NextResponse.json({ error: "Garage introuvable" }, { status: 404 });
   // Réservation en ligne fermée pour ce garage : aucun créneau n'est proposé au public.
   if (!garage.onlineBooking) return NextResponse.json({ slots: [], closed: true, durationMin: DEFAULT_DURATION_MIN });
   const capacity = garage.capacity ?? 1;
@@ -70,7 +71,7 @@ export async function GET(
     where: {
       garageId: garage.id,
       date,
-      status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      status: { notIn: FREE_SLOT_STATUSES },
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: { startTime: true, endTime: true, bay: true },

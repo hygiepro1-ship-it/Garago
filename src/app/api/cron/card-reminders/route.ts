@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendCardReminder } from "@/lib/email";
 import { CARD_REQUIRED_SINCE } from "@/lib/trial-card";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,7 @@ export const dynamic = "force-dynamic";
 const SCHEDULE_DAYS = [1, 3, 7]; // index 0 → 1ʳᵉ relance, etc.
 
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

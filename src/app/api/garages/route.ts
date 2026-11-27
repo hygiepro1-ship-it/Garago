@@ -7,6 +7,7 @@ import { findNextAvailability, quebecToday, addDaysStr, type BlockedRow } from "
 import { serviceIdsFor } from "@/lib/services";
 import { notTestGarage } from "@/lib/test-garages";
 import { VISIBLE_REVIEWS, averageRating } from "@/lib/garage-rating";
+import { FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -198,7 +199,7 @@ export async function GET(req: NextRequest) {
             where: {
               garageId: { in: garageIds },
               date: { gte: todayStr, lte: endStr },
-              status: { notIn: ["CANCELLED", "NO_SHOW"] },
+              status: { notIn: FREE_SLOT_STATUSES },
             },
             select: { garageId: true, date: true, startTime: true, endTime: true },
           }),

@@ -6,7 +6,7 @@ import { sendVehicleReady, sendRescheduleNotification, sendCancelledByGarage, se
 import { wouldExceedCapacity, computeFreeSlots, bayIsFree, pickBay, toMinutes, toHHMM, quebecToday, addDaysStr, dayOfWeekOf } from "@/lib/availability";
 import { loadBayRules } from "@/lib/bays";
 import { withGarageDayLock, SlotError } from "@/lib/slot-lock";
-import { quebecInstant, planConfirmation, planManualConfirmation } from "@/lib/rdv-confirmation";
+import { quebecInstant, planConfirmation, planManualConfirmation, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 import { processRdvConfirmations } from "@/lib/rdv-confirmation-run";
 import { sendRescheduleSMS, sendServiceChangedSMS, sendCancelledByGarageSMS, sendVehicleReadySMS } from "@/lib/sms";
 import { reviewPageUrl, newReviewToken, reviewWindowOpen } from "@/lib/review-checks";
@@ -45,7 +45,7 @@ export async function PATCH(
     where: { id },
     include: { garage: true },
   });
-  if (!appt) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!appt) return NextResponse.json({ error: "Rendez-vous introuvable" }, { status: 404 });
 
   const userId = session.user?.id;
   const isGarageOwner = appt.garage.ownerId === userId;
@@ -170,7 +170,7 @@ export async function PATCH(
           throw new SlotError(400, "Heure de fin invalide.");
         }
         const sameDay = await tx.appointment.findMany({
-          where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { notIn: ["CANCELLED", "NO_SHOW"] } },
+          where: { garageId: appt.garageId, date: newDate, id: { not: id }, status: { notIn: FREE_SLOT_STATUSES } },
           select: { id: true, startTime: true, endTime: true, bay: true },
         });
         const capacity = appt.garage.capacity ?? 1;

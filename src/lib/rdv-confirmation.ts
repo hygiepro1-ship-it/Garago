@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { QUEBEC_TZ } from "@/lib/availability";
 
 /**
  * Cycle de confirmation des rendez-vous en ligne.
@@ -14,7 +15,8 @@ import { randomBytes } from "crypto";
  *    garage est prévenu pour appeler lui-même le client.
  */
 
-export const QUEBEC_TZ = "America/Toronto";
+// Fuseau unique, défini dans availability.ts (réexporté ici pour les modules qui l'importent d'ici).
+export { QUEBEC_TZ };
 
 export const REQUEST_HOURS_BEFORE = 48;
 export const NUDGE_HOURS_BEFORE = 16;
