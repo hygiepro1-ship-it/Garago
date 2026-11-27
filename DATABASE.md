@@ -39,21 +39,17 @@ PostgreSQL chez Neon, schéma dans `prisma/schema.prisma` (Prisma 7, client gén
 
 ## Migrations
 
-État actuel : le schéma est appliqué par `prisma db push` au build Vercel (`npm run build`).
+Depuis le 27 novembre 2026, le schéma évolue par migrations Prisma (`prisma/migrations/`) :
+- `0_baseline` décrit le schéma complet de départ ; elle est marquée comme appliquée en production et sur la base
+  de test (aucun écart vérifié avant).
+- Le build Vercel (`npm run build`) exécute `prisma migrate deploy` : il applique les nouvelles migrations, sans
+  jamais en créer ni réinitialiser la base.
+- Les anciennes migrations (écrites pour SQLite) sont archivées dans `prisma/migrations-sqlite-archive/`.
 
-Préparé le 27 novembre 2026 :
-- les anciennes migrations (écrites pour SQLite, inutilisables avec PostgreSQL) sont archivées dans
-  `prisma/migrations-sqlite-archive/` ;
-- `prisma/migrations/0_baseline/` décrit le schéma actuel complet ; elle est marquée comme appliquée sur la base de
-  **test** (`prisma migrate status` : « Database schema is up to date »), sans écart avec `schema.prisma`.
+Modifier le schéma :
+1. Changer `schema.prisma`.
+2. `npx prisma migrate dev --name <nom-court>` (base de **test** de `.env.local`) : crée le fichier SQL et l'applique.
+3. Relire le SQL généré ; vérifier sur le site démo.
+4. Publier : Vercel applique la migration en production au déploiement.
 
-Reste à faire, avec autorisation explicite (écrit dans la table `_prisma_migrations` de la production) :
-1. Vérifier l'absence d'écart en production :
-   `ALLOW_PRODUCTION_DB=1 npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`
-   (avec l'adresse de production dans l'environnement) doit être vide.
-2. `ALLOW_PRODUCTION_DB=1 npx prisma migrate resolve --applied 0_baseline` sur la production.
-3. Remplacer `prisma db push` par `prisma migrate deploy` dans le script `build`.
-
-Ensuite, modifier le schéma : changer `schema.prisma`, `npx prisma migrate dev --name <nom>` sur la base de
-**test**, vérifier sur le site démo, publier ; Vercel applique la migration. Jamais de suppression de colonne sans
-sauvegarde et accord.
+Jamais de suppression de colonne ou de table sans sauvegarde et accord explicite.

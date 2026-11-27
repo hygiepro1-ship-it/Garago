@@ -56,7 +56,7 @@ Sans `RESEND_API_KEY` ni clés Twilio, aucun courriel ni texto ne part (les code
 | `npm test` | Tests unitaires et de sécurité (sans base de données) |
 | `npm run test:integration` | Tests de double réservation contre le site démo (il doit tourner) |
 | `npm run lint` | ESLint |
-| `npm run build` | Build de production (exécute aussi `prisma db push` : réservé à Vercel) |
+| `npm run build` | Build de production (applique les migrations avec `prisma migrate deploy` : réservé à Vercel) |
 | `npm run db:studio` | Prisma Studio sur la base de `.env.local` |
 
 ## Documentation
