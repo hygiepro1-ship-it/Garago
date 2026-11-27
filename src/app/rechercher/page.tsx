@@ -57,7 +57,8 @@ function SearchContent() {
 
   const [garages, setGarages] = useState<SearchGarage[]>([]);
   const [total,   setTotal]   = useState(0);
-  const [loading, setLoading] = useState(true);
+  // Recherche dont les résultats (page 1) sont affichés : tant qu'elle diffère de la recherche en cours, on charge.
+  const [loadedSearch, setLoadedSearch] = useState<string | null>(null);
   const [page,      setPage]      = useState(1);
   const [hasMore,   setHasMore]   = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -147,23 +148,29 @@ function SearchContent() {
   }, [view, filterParams, radiusKm, sortByDist, userPos]);
 
   // Fiche touchée sur la carte mais absente de la page de liste chargée : on la demande seule.
-  const [pickedExtra, setPickedExtra] = useState<SearchGarage | null>(null);
+  // Le résultat est rangé sous le nom de la fiche demandée : il ne vaut que pour elle.
+  const [extraFetched, setExtraFetched] = useState<{ slug: string; garage: SearchGarage | null } | null>(null);
+  const needsExtra = !!selectedSlug && !garages.some((g) => g.slug === selectedSlug);
+  const pickedExtra = needsExtra && extraFetched?.slug === selectedSlug ? extraFetched.garage : null;
   useEffect(() => {
-    if (!selectedSlug || garages.some((g) => g.slug === selectedSlug)) { setPickedExtra(null); return; }
+    if (!needsExtra || !selectedSlug) return;
     let cancelled = false;
     const params = filterParams();
     params.set("slug", selectedSlug);
     params.set("limit", "1");
     fetch(`/api/garages?${params}`)
       .then((r) => r.json())
-      .then((d) => { if (!cancelled) setPickedExtra(d.garages?.[0] ?? null); })
-      .catch(() => { if (!cancelled) setPickedExtra(null); });
+      .then((d) => { if (!cancelled) setExtraFetched({ slug: selectedSlug, garage: d.garages?.[0] ?? null }); })
+      .catch(() => { if (!cancelled) setExtraFetched({ slug: selectedSlug, garage: null }); });
     return () => { cancelled = true; };
-  }, [selectedSlug, garages, filterParams]);
+  }, [needsExtra, selectedSlug, filterParams]);
+
+  const searchKey = JSON.stringify([q.trim(), make, model, service, city, walkInOnly, minRating, sortByDist, userPos]);
+  const loading = loadedSearch !== searchKey;
 
   const fetchGarages = useCallback(async (targetPage: number) => {
     const seq = ++requestSeq.current;
-    if (targetPage === 1) setLoading(true); else setLoadingMore(true);
+    // Page 1 : l'état « en chargement » se déduit de searchKey ; les pages suivantes allument leur indicateur dans loadMore.
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     if (make)      params.set("make",       make);
@@ -194,14 +201,19 @@ function SearchContent() {
       if (targetPage === 1) { setGarages([]); setTotal(0); }
       setHasMore(false);
     }
-    setLoading(false);
+    if (targetPage === 1) setLoadedSearch(JSON.stringify([q.trim(), make, model, service, city, walkInOnly, minRating, sortByDist, userPos]));
     setLoadingMore(false);
   }, [q, make, model, service, city, walkInOnly, minRating, sortByDist, userPos]);
 
-  useEffect(() => { fetchGarages(1); }, [fetchGarages]);
+  // Nouvelle recherche : la requête part hors du rendu en cours ; les résultats s'écrivent à leur arrivée.
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => { if (active) fetchGarages(1); });
+    return () => { active = false; };
+  }, [fetchGarages]);
 
   function loadMore() {
-    if (!loadingMore && hasMore) fetchGarages(page + 1);
+    if (!loadingMore && hasMore) { setLoadingMore(true); fetchGarages(page + 1); }
   }
 
   // Position automatique au chargement, seulement si le visiteur a déjà autorisé la localisation (pas de demande

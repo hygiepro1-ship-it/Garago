@@ -474,10 +474,28 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    // Premier chargement : toutes les listes en parallèle ; l'état n'est mis à jour qu'à l'arrivée des réponses
+    // (loading vaut déjà true au premier affichage). Les fonctions load* servent ensuite aux rechargements.
     if (status !== "authenticated") return;
-    setLoading(true);
-    Promise.all([loadStats(), loadAllGarages(), loadDrivers(), loadDescriptions(), loadVerifications(), loadClaimRequests(), loadSuggestions(), loadAlerts()]).finally(() => setLoading(false));
-  }, [status, loadStats, loadAllGarages, loadDrivers, loadDescriptions, loadVerifications, loadClaimRequests, loadSuggestions, loadAlerts]);
+    let ignore = false;
+    const getJson = (url: string) => fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    Promise.all([
+      "/api/admin/stats", "/api/admin/garages", "/api/admin/drivers", "/api/admin/descriptions",
+      "/api/admin/garages/pending", "/api/admin/claims", "/api/admin/suggestions", "/api/admin/alerts",
+    ].map(getJson)).then(([stats, allGarages, drivers, descriptions, verifications, claims, suggestions, alerts]) => {
+      if (ignore) return;
+      if (stats) setStats(stats);
+      if (allGarages) setAllGarages(allGarages);
+      if (drivers) setDrivers(drivers);
+      if (descriptions) setGarages(descriptions);
+      if (verifications) setVerifications(verifications);
+      if (claims) setClaimRequests(claims);
+      if (suggestions) setSuggestions(suggestions);
+      if (alerts) setAlerts(alerts);
+      setLoading(false);
+    });
+    return () => { ignore = true; };
+  }, [status]);
 
   async function markAlertsRead(ids: string[]) {
     await fetch("/api/admin/alerts", {

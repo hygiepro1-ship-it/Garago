@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
 import { formatPrice } from "@/lib/price";
@@ -8,6 +8,8 @@ import { translateServiceName } from "@/lib/services";
 import L from "@/components/L";
 import Turnstile, { turnstileActive } from "@/components/Turnstile";
 import GoogleReviewCta from "@/components/GoogleReviewCta";
+
+const noSubscribe = () => () => {};
 
 interface BookingWidgetProps {
   garageId:     string;
@@ -76,10 +78,21 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
     }
     const d = new Date(); d.setDate(1); return d;
   });
-  const [slots, setSlots]         = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [closedDay, setClosedDay] = useState(false);
+  // Créneaux reçus, rangés sous la clé de la demande (garage, date, services) : tant que la réponse de la demande
+  // en cours n'est pas arrivée, la liste est « en chargement » — sans état de chargement à remettre à zéro.
+  const slotsKey = selectedDate ? `${garageSlug}|${formatDate(selectedDate)}|${selectedCatsKey}` : null;
+  const [slotsData, setSlotsData] = useState<{ key: string; slots: string[]; closed: boolean } | null>(null);
+  const slotsReady = !!slotsKey && slotsData?.key === slotsKey;
+  const loadingSlots = !!slotsKey && !slotsReady;
+  const slots = slotsReady ? slotsData.slots : [];
+  const closedDay = slotsReady ? slotsData.closed : false;
+  // Nouvelle date ou nouveaux services : l'heure choisie pour l'ancienne demande ne vaut plus.
+  const [prevSlotsKey, setPrevSlotsKey] = useState(slotsKey);
+  if (slotsKey !== prevSlotsKey) {
+    setPrevSlotsKey(slotsKey);
+    setSelectedSlot("");
+  }
   const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
 
   const closedWeekdays = new Set(
@@ -104,11 +117,15 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [icsToken, setIcsToken] = useState<string | null>(null);
 
-  // Correct calMonth on client after SSR (avoid hydration mismatch)
-  useEffect(() => {
+  // Mois affiché recalé sur le mois courant une fois dans le navigateur (le rendu serveur ne connaît pas la date
+  // du visiteur) : fait pendant le rendu, après l'hydratation, sans écart entre serveur et navigateur.
+  const isClient = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const [calSynced, setCalSynced] = useState(false);
+  if (isClient && !calSynced) {
+    setCalSynced(true);
     const d = new Date(); d.setDate(1);
     setCalMonth(d);
-  }, []);
+  }
 
   // Fetch user profile (name, email, phone, vehicles) when authenticated
   useEffect(() => {
@@ -146,23 +163,20 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
   // (le garage la configure par prestation ; sans service précis, l'API retombe
   // sur une durée par défaut de 60 min).
   useEffect(() => {
-    if (!selectedDate) return;
-    const dateStr = formatDate(selectedDate);
-    setLoadingSlots(true);
-    setSlots([]);
-    setSelectedSlot("");
-    setClosedDay(false);
-    const qs = new URLSearchParams({ date: dateStr });
+    if (!slotsKey || !selectedDate) return;
+    let ignore = false;
+    const qs = new URLSearchParams({ date: formatDate(selectedDate) });
     if (selectedCatsKey) qs.set("categoryIds", selectedCatsKey);
     fetch(`/api/garages/${garageSlug}/slots?${qs}`)
       .then(r => r.json())
       .then(d => {
-        setSlots(d.slots ?? []);
-        setClosedDay(!!d.closed);
+        if (ignore) return;
+        setSlotsData({ key: slotsKey, slots: d.slots ?? [], closed: !!d.closed });
         setSlotDurationMin(d.durationMin ?? 60);
-        setLoadingSlots(false);
-      });
-  }, [selectedDate, garageSlug, selectedCatsKey]);
+      })
+      .catch(() => { if (!ignore) setSlotsData({ key: slotsKey, slots: [], closed: false }); });
+    return () => { ignore = true; };
+  }, [slotsKey, selectedDate, garageSlug, selectedCatsKey]);
 
   // Le courriel est obligatoire : la confirmation, le rappel et la remise à disposition du créneau passent par lui.
   const emailOk = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email.trim());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ChannelStats { settled: number; answered: number }
 
@@ -56,18 +56,15 @@ export default function AdminPilotStats({ garage, onShowAll }: {
   const [garages, setGarages] = useState<PilotGarage[] | null>(null);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch(`/api/admin/pilot?from=${from}&to=${to}${garageId ? `&garageId=${encodeURIComponent(garageId)}` : ""}`);
-      if (!r.ok) throw new Error();
-      setGarages((await r.json()).garages);
-      setError("");
-    } catch {
-      setError("Impossible de charger les résultats du pilote.");
-    }
+  // Chargement à l'ouverture et à chaque changement de période ou de garage ; l'état n'est mis à jour qu'à l'arrivée de la réponse.
+  useEffect(() => {
+    let ignore = false;
+    fetch(`/api/admin/pilot?from=${from}&to=${to}${garageId ? `&garageId=${encodeURIComponent(garageId)}` : ""}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => { if (!ignore) { setGarages(d.garages); setError(""); } })
+      .catch(() => { if (!ignore) setError("Impossible de charger les résultats du pilote."); });
+    return () => { ignore = true; };
   }, [from, to, garageId]);
-
-  useEffect(() => { load(); }, [load]);
 
   return (
     <div className="space-y-5">

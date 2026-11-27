@@ -32,6 +32,8 @@ export default function DashboardGaragePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("apercu");
+  // Moment d'ouverture du tableau de bord : sert aux échéances affichées (essai qui se termine bientôt).
+  const [openedAt] = useState(() => Date.now());
   // Ouvre un rendez-vous en modification dans l'agenda (bouton « Modifier » de la liste).
   const agendaEdit = useRef<((id: string) => void) | null>(null);
   const [garage, setGarage] = useState<Garage | null>(null);
@@ -272,7 +274,6 @@ export default function DashboardGaragePage() {
 
   // ── Services state ────────────────────────────────────────────────────────
   const [services, setServices] = useState<GarageService[]>([]);
-  useEffect(() => { if (garage?.services) setServices(garage.services); }, [garage]);
 
   function toggleService(catId: string, cat: (typeof SERVICE_CATEGORIES)[number]) {
     const existing = services.find((s) => s.categoryId === catId);
@@ -290,7 +291,6 @@ export default function DashboardGaragePage() {
   // ici, avec les durées de services, puisque les deux ensemble déterminent
   // ce qui remplit l'agenda. Chaîne pour permettre un champ temporairement vide.
   const [capacity, setCapacity] = useState("1");
-  useEffect(() => { if (garage) setCapacity(String(garage.capacity ?? 1)); }, [garage]);
 
   const [priceTried, setPriceTried] = useState(false);
 
@@ -321,21 +321,11 @@ export default function DashboardGaragePage() {
 
   // ── Brands state ──────────────────────────────────────────────────────────
   const [brands, setBrands] = useState<GarageBrand[]>([]);
-  useEffect(() => { if (garage?.brands) setBrands(garage.brands); }, [garage]);
 
   // ── Modèles précis par marque acceptée ──────────────────────────────────────
   // Absence d'entrée pour une marque = tous les modèles sont traités (défaut).
   const [brandModels, setBrandModels] = useState<Record<string, string[]>>({});
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
-  useEffect(() => {
-    if (garage?.brandModels) {
-      const grouped: Record<string, string[]> = {};
-      for (const bm of garage.brandModels) {
-        (grouped[bm.brand] ??= []).push(bm.model);
-      }
-      setBrandModels(grouped);
-    }
-  }, [garage]);
 
   function toggleBrandModel(brand: string, model: string) {
     setBrandModels((prev) => {
@@ -377,22 +367,7 @@ export default function DashboardGaragePage() {
   const [horaires, setHoraires] = useState<{ dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }[]>(
     DAYS.map((_, i) => ({ dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 }))
   );
-  useEffect(() => {
-    if ((garage?.availability?.length ?? 0) > 0) {
-      setHoraires(DAYS.map((_, i) => {
-        const a = garage!.availability.find((x) => x.dayOfWeek === i);
-        return a
-          ? { dayOfWeek: i, openTime: a.openTime ?? "08:00", closeTime: a.closeTime ?? "17:00", isClosed: !!a.isClosed }
-          : { dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 };
-      }));
-    }
-  }, [garage]);
 
-  // Force l'onglet Horaires tant qu'aucun horaire n'a jamais été enregistré —
-  // voir hoursConfigured plus bas, qui verrouille aussi la navigation.
-  useEffect(() => {
-    if (garage && (garage.availability?.length ?? 0) === 0) setActiveTab("horaires");
-  }, [garage]);
 
   function setHoraireField(dayIndex: number, field: string, value: string | boolean) {
     setHoraires((prev) => prev.map((h) => h.dayOfWeek === dayIndex ? { ...h, [field]: value } : h));
@@ -416,7 +391,6 @@ export default function DashboardGaragePage() {
 
   // ── Profile state ─────────────────────────────────────────────────────────
   const [profileData, setProfileData] = useState<Partial<Garage>>({});
-  useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
 
   // ── Image position/zoom state ──────────────────────────────────────────────
   const [coverPos, setCoverPos]         = useState({ tx: 0, ty: 0, zoom: 1 });
@@ -427,16 +401,6 @@ export default function DashboardGaragePage() {
   const [showCoverColorPicker, setShowCoverColorPicker] = useState(false);
   const hasEyeDropper = useEyeDropper();
   const [showLogoColorPicker,  setShowLogoColorPicker]  = useState(false);
-  useEffect(() => {
-    if (garage) {
-      const cp = parseImgPos(garage.coverPosition);
-      const lp = parseImgPos(garage.logoPosition);
-      setCoverPos(cp);
-      setLogoPos(lp);
-      setCoverBgColor(cp.color ?? null);
-      setLogoBgColor(lp.color ?? null);
-    }
-  }, [garage]);
   // Drag refs — hold mutable state without triggering re-renders
   const coverDrag = useRef<{ active: boolean; startX: number; startY: number; otx: number; oty: number } | null>(null);
   const logoDrag  = useRef<{ active: boolean; startX: number; startY: number; otx: number; oty: number } | null>(null);
@@ -491,7 +455,41 @@ export default function DashboardGaragePage() {
 
   // ── Reviews state (Aperçu tab) ─────────────────────────────────────────
   const [reviews, setReviews] = useState<GarageReview[]>([]);
-  useEffect(() => { if (garage?.reviews) setReviews(garage.reviews); }, [garage]);
+
+  // ── Formulaires remplis à partir du garage ───────────────────────────────
+  // À chaque nouvelle version du garage reçue du serveur, ses valeurs sont recopiées dans les formulaires.
+  // Fait pendant le rendu (et non dans des effets) : React l'applique avant d'afficher, sans rendu intermédiaire.
+  const [syncedGarage, setSyncedGarage] = useState<Garage | null>(null);
+  if (garage && garage !== syncedGarage) {
+    setSyncedGarage(garage);
+    if (garage.services) setServices(garage.services);
+    setCapacity(String(garage.capacity ?? 1));
+    if (garage.brands) setBrands(garage.brands);
+    if (garage.brandModels) {
+      const grouped: Record<string, string[]> = {};
+      for (const bm of garage.brandModels) (grouped[bm.brand] ??= []).push(bm.model);
+      setBrandModels(grouped);
+    }
+    if ((garage.availability?.length ?? 0) > 0) {
+      setHoraires(DAYS.map((_, i) => {
+        const a = garage.availability.find((x) => x.dayOfWeek === i);
+        return a
+          ? { dayOfWeek: i, openTime: a.openTime ?? "08:00", closeTime: a.closeTime ?? "17:00", isClosed: !!a.isClosed }
+          : { dayOfWeek: i, openTime: "08:00", closeTime: "17:00", isClosed: i === 0 };
+      }));
+    } else {
+      // Onglet Horaires imposé tant qu'aucun horaire n'a jamais été enregistré (voir hoursConfigured plus bas).
+      setActiveTab("horaires");
+    }
+    setProfileData({ ...garage });
+    const cp = parseImgPos(garage.coverPosition);
+    const lp = parseImgPos(garage.logoPosition);
+    setCoverPos(cp);
+    setLogoPos(lp);
+    setCoverBgColor(cp.color ?? null);
+    setLogoBgColor(lp.color ?? null);
+    if (garage.reviews) setReviews(garage.reviews);
+  }
 
   const [replyingTo, setReplyingTo] = useState<string | null>(null); // reviewId
   const [replyText, setReplyText]   = useState("");
@@ -531,6 +529,7 @@ export default function DashboardGaragePage() {
   }
 
   // ── RDV / Calendar ─────────────────────────────────────────────────────
+  const [rdvUpdatedAt, setRdvUpdatedAt] = useState<Date | null>(null);
   useEffect(() => {
     if ((activeTab === "apercu" || activeTab === "horaires") && !rdvLoaded && garage) {
       Promise.all([
@@ -550,7 +549,6 @@ export default function DashboardGaragePage() {
   // le calendrier se recharge toutes les 30 secondes et dès qu'on revient sur l'onglet,
   // pour voir ce qu'un collègue vient de saisir. Un rechargement raté garde ce qui est
   // affiché (jamais d'agenda vidé par une coupure de réseau).
-  const [rdvUpdatedAt, setRdvUpdatedAt] = useState<Date | null>(null);
   const garageLoadedId = garage?.id;
   useEffect(() => {
     if (activeTab !== "apercu" || !rdvLoaded || !garageLoadedId) return;
@@ -943,7 +941,7 @@ export default function DashboardGaragePage() {
   const garageTz = garageTimeZone(garage.province);
 
   const isTrialExpiring = garage.subscriptionStatus === "TRIAL" && garage.subscriptionEndAt
-    && new Date(garage.subscriptionEndAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    && new Date(garage.subscriptionEndAt) < new Date(openedAt + 7 * 24 * 60 * 60 * 1000);
 
   // Date limite de la période de grâce après un paiement échoué (7 jours)
   const pastDueDeadline = garage.pastDueSince

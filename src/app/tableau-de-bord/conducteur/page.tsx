@@ -352,6 +352,8 @@ export default function DashboardConducteurPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { t } = useLang();
+  // Moment d'ouverture de la page : date minimale proposée pour déplacer un rendez-vous (plus de 24 h).
+  const [openedAt] = useState(() => Date.now());
   const d = t.driver;
   const [tab, setTab] = useState<Tab>("rdv");
 
@@ -819,7 +821,7 @@ export default function DashboardConducteurPage() {
                             required
                             className={inputClass}
                             value={rescheduleDate}
-                            min={new Date(Date.now() + 25 * 3600000).toISOString().slice(0, 10)}
+                            min={new Date(openedAt + 25 * 3600000).toISOString().slice(0, 10)}
                             onChange={e => {
                               setRescheduleDate(e.target.value);
                               if (e.target.value) fetchSlots(e.target.value);

@@ -16,6 +16,7 @@ import { translateServiceName } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 import type { PublicGarageProfile } from "@/lib/garage-profile";
+import { useLocationSearch } from "@/lib/use-location-search";
 
 function StarDisplay({ rating, size = "md" }: { rating: number; size?: "sm" | "md" }) {
   const filled = Math.min(5, Math.max(0, Math.round(rating)));
@@ -59,10 +60,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
   const router = useRouter();
   // Lu après le chargement (pas useSearchParams) : la fiche est mise en cache côté serveur (ISR), et
   // useSearchParams forcerait le rendu de toute la fiche dans le navigateur, hors du HTML vu par Google.
-  const [fromDashboard, setFromDashboard] = useState(false);
-  useEffect(() => {
-    setFromDashboard(new URLSearchParams(window.location.search).get("from") === "dashboard");
-  }, []);
+  const fromDashboard = useLocationSearch().get("from") === "dashboard";
   const { t, lang } = useLang();
   const g = t.garage;
 

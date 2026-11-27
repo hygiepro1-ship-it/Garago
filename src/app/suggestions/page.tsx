@@ -26,14 +26,13 @@ export default function SuggestionsPage() {
   const [captchaErr, setCaptchaErr] = useState(false);
 
   // Pre-fill email from verified session
-  useEffect(() => {
-    if (session?.user?.email) {
-      setForm(f => ({ ...f, authorEmail: f.authorEmail || session.user!.email! }));
-    }
-    if (session?.user?.name) {
-      setForm(f => ({ ...f, authorName: f.authorName || session.user!.name! }));
-    }
-  }, [session]);
+  // Fait pendant le rendu, à l'arrivée de la session (pas d'effet) ; un champ déjà rempli n'est pas écrasé.
+  const sessionUser = session?.user ?? null;
+  const [prefilledFor, setPrefilledFor] = useState<typeof sessionUser>(null);
+  if (sessionUser && sessionUser !== prefilledFor) {
+    setPrefilledFor(sessionUser);
+    setForm(f => ({ ...f, authorEmail: f.authorEmail || sessionUser.email || "", authorName: f.authorName || sessionUser.name || "" }));
+  }
 
   const MAX = 2000;
 

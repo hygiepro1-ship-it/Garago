@@ -2,7 +2,7 @@
 
 // Extrait de src/app/tableau-de-bord/garage/page.tsx (découpage du tableau de bord du garage).
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useTr } from "@/lib/dashboard-en";
 
 // ─── Colour utilities ────────────────────────────────────────────────────────
@@ -26,10 +26,10 @@ export function hexToHue(hex: string | null): number {
 }
 
 // La pipette (EyeDropper) n'existe que sur Chrome/Edge de bureau : on ne montre pas un bouton qui ne marche pas.
+// Lu sans effet : faux pendant le rendu serveur, puis la vraie valeur du navigateur (aucun écart d'hydratation).
+const noSubscribe = () => () => {};
 export function useEyeDropper(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => { setOk("EyeDropper" in window); }, []);
-  return ok;
+  return useSyncExternalStore(noSubscribe, () => "EyeDropper" in window, () => false);
 }
 
 export const BG_PRESETS = [
@@ -50,7 +50,12 @@ export function BgColorPicker({ value, onChange, onClose }: {
   const tr = useTr();
   const [hex, setHex] = useState(value ?? "");
   const nativeRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { setHex(value ?? ""); }, [value]);
+  // Couleur changée de l'extérieur (pipette, préréglage) : le champ texte la reprend, pendant le rendu.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setHex(value ?? "");
+  }
 
   return (
     <div className="border border-gray-200 rounded-xl p-3 bg-white shadow-lg space-y-3 z-10 relative">

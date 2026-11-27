@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { translateServiceName } from "@/lib/services";
+import { useLocationSearch } from "@/lib/use-location-search";
 
 interface Info {
   state: "ask" | "confirmed" | "expired" | "cancelled" | "closed" | "past" | "invalid";
@@ -65,8 +66,8 @@ export default function ConfirmerRdvPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   // Le bouton « J'annule » du courriel ouvre cette page avec ?action=cancel.
-  const [wantsCancel, setWantsCancel] = useState(false);
-  useEffect(() => { setWantsCancel(new URLSearchParams(window.location.search).get("action") === "cancel"); }, []);
+  const [cancelDismissed, setCancelDismissed] = useState(false);
+  const wantsCancel = useLocationSearch().get("action") === "cancel" && !cancelDismissed;
 
   useEffect(() => {
     fetch(`/api/rdv/${token}`).then((r) => r.json()).then(setInfo).catch(() => setInfo({ state: "invalid" }));
@@ -134,7 +135,7 @@ export default function ConfirmerRdvPage() {
             <button onClick={() => act("cancel")} disabled={busy} style={{ ...btnPrimary, background: "#b91c1c" }} className="disabled:opacity-60">
               {busy ? "…" : tx.cancelYes}
             </button>
-            <button onClick={() => { setWantsCancel(false); act("confirm"); }} disabled={busy} style={btnGhost} className="disabled:opacity-60">
+            <button onClick={() => { setCancelDismissed(true); act("confirm"); }} disabled={busy} style={btnGhost} className="disabled:opacity-60">
               {tx.cancelNo}
             </button>
             <p className="text-xs text-gray-400 mt-4">{tx.cancelNote}</p>

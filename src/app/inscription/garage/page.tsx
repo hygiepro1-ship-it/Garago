@@ -11,6 +11,7 @@ import { VEHICLE_MAKES } from "@/lib/vehicleData";
 import AddressAutocomplete, { type AddressResult } from "@/components/AddressAutocomplete";
 import ServiceIcon from "@/components/ServiceIcon";
 import SiteLogo from "@/components/SiteLogo";
+import { useLocationSearch } from "@/lib/use-location-search";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -163,11 +164,15 @@ export default function InscriptionGaragePage() {
   // Retour depuis Stripe Checkout (carte annulée/refusée) : le compte et le
   // garage existent déjà, on ramène directement à l'étape du choix de
   // formule avec un message, plutôt que de laisser l'inscription "en l'air".
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("step") === "3") setStep(3);
-    if (params.get("cardError")) setCardError(true);
-  }, []);
+  // Appliqué pendant le rendu, une fois l'adresse connue dans le navigateur (pas d'effet).
+  const urlParams = useLocationSearch();
+  const urlSearch = urlParams.toString();
+  const [appliedSearch, setAppliedSearch] = useState("");
+  if (urlSearch !== appliedSearch) {
+    setAppliedSearch(urlSearch);
+    if (urlParams.get("step") === "3") setStep(3);
+    if (urlParams.get("cardError")) setCardError(true);
+  }
 
   // Step 1 — Compte + garage
   const [firstName,  setFirstName]  = useState("");
