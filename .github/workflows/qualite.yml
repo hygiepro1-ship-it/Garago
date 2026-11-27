@@ -31,7 +31,16 @@ jobs:
       - name: Types TypeScript
         run: npm run typecheck
       - name: Tests
-        run: npm test
+        shell: bash
+        # Les tests en échec sont aussi publiés en annotations (lisibles sans connexion à GitHub).
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
+          status=$?
+          if [ $status -ne 0 ]; then
+            grep -aE "^not ok|✖|AssertionError|Error:|expected|actual" test.log | head -25 | while IFS= read -r line; do echo "::error title=Test en échec::$line"; done
+          fi
+          exit $status
       - name: Lint (informatif)
         run: npm run lint
         continue-on-error: true
