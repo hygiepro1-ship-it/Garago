@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendBookingReminder } from "@/lib/email";
-import { quebecDateStr } from "@/lib/rdv-confirmation";
+import { quebecDateStr, wantsEmailReminder } from "@/lib/rdv-confirmation";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
   let sent = 0;
   for (const appt of appointments) {
     if (!appt.customerEmail) continue;
+    // Le client a choisi le texto ou aucun message : pas de courriel (avant la réservation du rappel).
+    if (!wantsEmailReminder(appt)) continue;
     // Réservation atomique du rappel : si deux déclencheurs (Vercel, GitHub Actions, service externe) passent en
     // même temps, un seul obtient la ligne et envoie le courriel.
     const claimed = await prisma.appointment.updateMany({
