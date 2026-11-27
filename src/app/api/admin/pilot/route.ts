@@ -21,7 +21,7 @@ function median(values: number[]): number | null {
 // téléphone) et réponses des clients à la demande de confirmation, par garage.
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== "ADMIN") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (session?.user?.role !== "ADMIN") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const isDate = (v: string | null): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
   const from = req.nextUrl.searchParams.get("from");

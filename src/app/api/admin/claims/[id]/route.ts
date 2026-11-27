@@ -7,7 +7,7 @@ import { revalidateGarage } from "@/lib/revalidate-garage";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== "ADMIN") return null;
+  if (session?.user?.role !== "ADMIN") return null;
   return session;
 }
 

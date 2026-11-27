@@ -76,7 +76,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
   const { status: sessionStatus } = useSession();
   useEffect(() => {
     if (sessionStatus === "loading" || !initialGarage?.id) return;
-    const userId = (session?.user as any)?.id;
+    const userId = session?.user?.id;
     if (initialGarage.ownerId !== userId) {
       fetch("/api/garage/view", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ garageId: initialGarage.id }) }).catch(() => {});
     }

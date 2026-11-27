@@ -42,7 +42,8 @@ export default function Turnstile({ onToken, resetKey = 0 }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const cb = useRef(onToken);
-  cb.current = onToken;
+  // Toujours la dernière fonction reçue, sans relancer le widget (mise à jour hors du rendu).
+  useEffect(() => { cb.current = onToken; });
 
   useEffect(() => {
     if (!SITE_KEY) return;

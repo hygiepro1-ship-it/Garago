@@ -15,10 +15,10 @@ export default function ConditionsPage() {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        Retour à l'accueil
+        Retour à l&apos;accueil
       </Link>
 
-      <h1 className="text-3xl font-black mb-2" style={{ color: "#0b1f3a" }}>Conditions d'utilisation</h1>
+      <h1 className="text-3xl font-black mb-2" style={{ color: "#0b1f3a" }}>Conditions d&apos;utilisation</h1>
       <p className="text-sm mb-10" style={{ color: "#94a3b8" }}>Dernière mise à jour : septembre 2026</p>
 
       <div className="prose prose-slate max-w-none space-y-8" style={{ color: "#374151" }}>
@@ -26,8 +26,8 @@ export default function ConditionsPage() {
         <section>
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>1. Acceptation des conditions</h2>
           <p className="text-sm leading-relaxed">
-            En utilisant la plateforme Garago (accessible à garagopro.ca), vous acceptez les présentes conditions d'utilisation.
-            Si vous n'êtes pas d'accord avec ces conditions, veuillez ne pas utiliser notre service.
+            En utilisant la plateforme Garago (accessible à garagopro.ca), vous acceptez les présentes conditions d&apos;utilisation.
+            Si vous n&apos;êtes pas d&apos;accord avec ces conditions, veuillez ne pas utiliser notre service.
           </p>
         </section>
 
@@ -54,7 +54,7 @@ export default function ConditionsPage() {
           <ul className="list-disc list-inside text-sm leading-relaxed space-y-1.5">
             <li>Utiliser la plateforme à des fins illicites ou frauduleuses</li>
             <li>Publier des avis faux ou trompeurs</li>
-            <li>Harceler ou menacer d'autres utilisateurs</li>
+            <li>Harceler ou menacer d&apos;autres utilisateurs</li>
             <li>Tenter de contourner les mesures de sécurité de la plateforme</li>
             <li>Extraire automatiquement des données sans autorisation</li>
           </ul>
@@ -71,8 +71,8 @@ export default function ConditionsPage() {
         <section>
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>6. Responsabilité</h2>
           <p className="text-sm leading-relaxed">
-            Garago agit en tant qu'intermédiaire entre les conducteurs et les garages. Nous ne sommes pas responsables
-            de la qualité des services fournis par les garages partenaires ni des dommages résultant de l'utilisation
+            Garago agit en tant qu&apos;intermédiaire entre les conducteurs et les garages. Nous ne sommes pas responsables
+            de la qualité des services fournis par les garages partenaires ni des dommages résultant de l&apos;utilisation
             de ces services. Les garages sont des entreprises indépendantes.
           </p>
         </section>

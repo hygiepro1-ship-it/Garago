@@ -22,7 +22,7 @@ export default function GarageProfileError({
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Une erreur s'est produite</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">Une erreur s&apos;est produite</h1>
       <p className="text-gray-500 mb-2 text-sm">{error?.message || "Erreur inconnue"}</p>
       {error?.digest && (
         <p className="text-gray-400 text-xs mb-6 font-mono">ID: {error.digest}</p>

@@ -19,7 +19,7 @@ export function getBestPosition(): Promise<Fix> {
     let best: Fix | null = null;
     let done = false;
     let watchId = 0;
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined = undefined;
 
     const finish = (err?: { code: number }) => {
       if (done) return;

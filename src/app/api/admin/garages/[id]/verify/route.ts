@@ -7,7 +7,7 @@ import { revalidateGarage } from "@/lib/revalidate-garage";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== "ADMIN") return null;
+  if (session?.user?.role !== "ADMIN") return null;
   return session;
 }
 
@@ -38,7 +38,7 @@ export async function POST(
     data: {
       action: action === "approve" ? "garage_verified" : "garage_rejected",
       targetType: "Garage", targetId: id,
-      actorEmail: (session.user as any)?.email ?? null,
+      actorEmail: session.user?.email ?? null,
       detail: `Vérification du NEQ : ${garage.name}`,
     },
   });

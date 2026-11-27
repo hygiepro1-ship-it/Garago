@@ -51,9 +51,9 @@ export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, se
   const overlays = useRef<any[]>([]);
   const markers = useRef<Map<string, { marker: any; online: boolean }>>(new Map());
   const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
   const onFailRef = useRef(onFail);
-  onFailRef.current = onFail;
+  // Toujours les derniers rappels reçus, sans recréer la carte (mise à jour hors du rendu).
+  useEffect(() => { onSelectRef.current = onSelect; onFailRef.current = onFail; });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -129,7 +129,7 @@ export default function GoogleGarageMap({ apiKey, garages, userPos, radiusKm, se
   }, [ready, selectedSlug]);
 
   if (failed) {
-    return <div className="w-full h-full flex items-center justify-center text-sm p-4 text-center" style={{ color: "#64748b", minHeight: 300 }}>La carte n'a pas pu se charger. Utilisez la vue « Liste ».</div>;
+    return <div className="w-full h-full flex items-center justify-center text-sm p-4 text-center" style={{ color: "#64748b", minHeight: 300 }}>La carte n&apos;a pas pu se charger. Utilisez la vue « Liste ».</div>;
   }
   return <div ref={el} role="region" aria-label="Carte des garages" style={{ width: "100%", height: "100%", minHeight: 300 }} />;
 }

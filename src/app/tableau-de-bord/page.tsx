@@ -12,7 +12,7 @@ export default function TableauDeBordPage() {
     if (status === "unauthenticated") {
       router.replace("/connexion");
     } else if (status === "authenticated") {
-      const role = (session?.user as any)?.role;
+      const role = session?.user?.role;
       if (role === "ADMIN") router.replace("/tableau-de-bord/admin");
       else if (role === "GARAGE_OWNER") router.replace("/tableau-de-bord/garage");
       else router.replace("/tableau-de-bord/conducteur");

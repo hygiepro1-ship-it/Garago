@@ -11,7 +11,7 @@ export async function GET(
     const { slug } = await params;
     const garage = await getGarageProfile(slug, async () => {
       const session = await getServerSession(authOptions);
-      return session?.user ? { id: session.user.id, role: (session.user as any).role } : null;
+      return session?.user ? { id: session.user.id, role: session.user.role } : null;
     });
     if (!garage) {
       return NextResponse.json({ error: "Garage non trouvé" }, { status: 404 });

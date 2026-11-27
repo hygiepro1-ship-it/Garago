@@ -245,7 +245,7 @@ function VerificationCard({
           <p className="text-lg font-mono font-bold text-gray-900 mb-2 select-all">{garage.neq}</p>
           {!!garage.neqDuplicates && (
             <p className="text-xs font-bold mb-2 px-2 py-1 rounded" style={{ background: "#fee2e2", color: "#b91c1c" }} role="alert">
-              Attention : ce NEQ est déjà utilisé par {garage.neqDuplicates} autre(s) garage(s) d'un autre propriétaire.
+              Attention : ce NEQ est déjà utilisé par {garage.neqDuplicates} autre(s) garage(s) d&apos;un autre propriétaire.
             </p>
           )}
           <a href={reqUrl} target="_blank" rel="noopener noreferrer"
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/connexion");
-    else if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN")
+    else if (status === "authenticated" && session?.user?.role !== "ADMIN")
       router.replace("/tableau-de-bord");
   }, [status, session, router]);
 
@@ -608,7 +608,7 @@ export default function AdminDashboard() {
 
           {/* Entonnoir d'acquisition */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h2 className="font-bold text-gray-900 mb-1">Entonnoir d'acquisition (30 derniers jours)</h2>
+            <h2 className="font-bold text-gray-900 mb-1">Entonnoir d&apos;acquisition (30 derniers jours)</h2>
             <p className="text-xs text-gray-400 mb-4">Visiteurs anonymes qui naviguent le site vs ceux qui créent un compte.</p>
             <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6">
               <div>
@@ -629,7 +629,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {stats.traffic.visitors30d === 0 && (
-              <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d'être activé. Ces chiffres se rempliront au fil des prochains jours.</p>
+              <p className="text-xs text-gray-400 mt-3">Le suivi des visiteurs vient d&apos;être activé. Ces chiffres se rempliront au fil des prochains jours.</p>
             )}
           </div>
 
@@ -654,7 +654,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {stats.garages.claimFunnel30d.clicks === 0 && (
-              <p className="text-xs text-gray-400 mt-3">Le suivi des clics vient d'être activé le 18 octobre 2026.</p>
+              <p className="text-xs text-gray-400 mt-3">Le suivi des clics vient d&apos;être activé le 18 octobre 2026.</p>
             )}
           </div>
 
@@ -676,7 +676,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-                <span className="text-gray-500">Taux de conversion de l'essai au payant</span>
+                <span className="text-gray-500">Taux de conversion de l&apos;essai au payant</span>
                 <span className="font-bold text-gray-900">
                   {stats.revenue.trialConversionRate !== null ? `${stats.revenue.trialConversionRate.toFixed(0)}%` : "—"}
                 </span>
@@ -716,9 +716,9 @@ export default function AdminDashboard() {
             {/* Garages par ville — utile pour cibler des campagnes */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-1">Garages par ville</h2>
-              <p className="text-xs text-gray-400 mb-4">Repérez les villes sous-desservies pour cibler l'acquisition de garages, ou sur-desservies pour cibler des campagnes conducteurs.</p>
+              <p className="text-xs text-gray-400 mb-4">Repérez les villes sous-desservies pour cibler l&apos;acquisition de garages, ou sur-desservies pour cibler des campagnes conducteurs.</p>
               {stats.garages.byCity.length === 0 ? (
-                <p className="text-sm text-gray-400">Aucune donnée pour l'instant.</p>
+                <p className="text-sm text-gray-400">Aucune donnée pour l&apos;instant.</p>
               ) : (
                 <div className="space-y-1.5">
                   {stats.garages.byCity.map(c => (
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
                     <span className="font-bold text-gray-900 flex-shrink-0">{g.appointmentCount} RDV</span>
                   </Link>
                 ))}
-                {stats.marketplace.topGarages.length === 0 && <p className="text-sm text-gray-400">Aucun rendez-vous enregistré pour l'instant.</p>}
+                {stats.marketplace.topGarages.length === 0 && <p className="text-sm text-gray-400">Aucun rendez-vous enregistré pour l&apos;instant.</p>}
               </div>
             </div>
 
@@ -773,7 +773,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 ))}
-                {stats.marketplace.leastActiveGarages.length === 0 && <p className="text-sm text-gray-400">Aucun garage établi depuis 14 jours ou plus pour l'instant.</p>}
+                {stats.marketplace.leastActiveGarages.length === 0 && <p className="text-sm text-gray-400">Aucun garage établi depuis 14 jours ou plus pour l&apos;instant.</p>}
               </div>
             </div>
           </div>
@@ -1058,8 +1058,8 @@ export default function AdminDashboard() {
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 leading-relaxed">
             <p className="font-semibold mb-1">Quand une alerte se déclenche</p>
-            <p><strong>Avis 1 étoile</strong> : dès qu'un garage reçoit un avis noté 1/5.</p>
-            <p><strong>Note moyenne sous 3/5</strong> : une fois qu'un garage a au moins 5 avis, si sa moyenne passe sous 3,0/5.</p>
+            <p><strong>Avis 1 étoile</strong> : dès qu&apos;un garage reçoit un avis noté 1/5.</p>
+            <p><strong>Note moyenne sous 3/5</strong> : une fois qu&apos;un garage a au moins 5 avis, si sa moyenne passe sous 3,0/5.</p>
             <p><strong>Série de mauvais avis</strong> : 3 avis notés 2/5 ou moins reçus en moins de 30 jours.</p>
           </div>
 

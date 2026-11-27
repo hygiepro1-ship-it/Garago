@@ -784,7 +784,7 @@ export default function InscriptionGaragePage() {
                     </svg>
                     Conseil
                   </p>
-                  <p className="text-green-600 mt-0.5">Indiquez les marques que vous réparez : les conducteurs qui filtrent par marque trouveront votre garage, et sauront qu'ils y seront accueillis.</p>
+                  <p className="text-green-600 mt-0.5">Indiquez les marques que vous réparez : les conducteurs qui filtrent par marque trouveront votre garage, et sauront qu&apos;ils y seront accueillis.</p>
                 </div>
               </div>
             </div>
@@ -833,7 +833,7 @@ export default function InscriptionGaragePage() {
                   <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
                 <div>
-                  <p className="font-bold text-red-900 text-sm">L'enregistrement de votre carte n'a pas été complété</p>
+                  <p className="font-bold text-red-900 text-sm">L&apos;enregistrement de votre carte n&apos;a pas été complété</p>
                   <p className="text-red-700 text-sm">Une carte valide est requise pour activer votre essai de 30 jours. Réessayez ci-dessous pour continuer.</p>
                 </div>
               </div>
@@ -888,7 +888,7 @@ export default function InscriptionGaragePage() {
               </span>
               <div>
                 <p className="font-black text-gray-900 mb-1">Le retour sur investissement est immédiat</p>
-                <p className="text-gray-600 text-sm">Il suffit d'<strong>un seul nouveau client par mois</strong> pour rentabiliser votre abonnement. La majorité de nos garages partenaires déclarent avoir récupéré leur investissement dès la première semaine.</p>
+                <p className="text-gray-600 text-sm">Il suffit d&apos;<strong>un seul nouveau client par mois</strong> pour rentabiliser votre abonnement. La majorité de nos garages partenaires déclarent avoir récupéré leur investissement dès la première semaine.</p>
               </div>
             </div>
 

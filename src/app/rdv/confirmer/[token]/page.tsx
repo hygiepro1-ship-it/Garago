@@ -123,7 +123,7 @@ export default function ConfirmerRdvPage() {
         {info.state === "invalid" && (
           <>
             <h1 className="text-xl font-black" style={{ color: navy }}>Lien invalide</h1>
-            <p className="text-sm text-gray-500 mt-2">Ce lien n'existe pas ou n'est plus valide. Vérifiez le courriel reçu ou contactez directement le garage.</p>
+            <p className="text-sm text-gray-500 mt-2">Ce lien n&apos;existe pas ou n&apos;est plus valide. Vérifiez le courriel reçu ou contactez directement le garage.</p>
           </>
         )}
 
@@ -179,7 +179,7 @@ export default function ConfirmerRdvPage() {
                 {busy ? "…" : "Reprendre ce créneau"}
               </button>
             )}
-            <a href="/rechercher" style={{ ...btnGhost, display: "block", textDecoration: "none" }}>Voir d'autres horaires</a>
+            <a href="/rechercher" style={{ ...btnGhost, display: "block", textDecoration: "none" }}>Voir d&apos;autres horaires</a>
             {call}
           </>
         )}

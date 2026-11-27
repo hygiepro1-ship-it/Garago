@@ -15,7 +15,7 @@ export default function ConfidentialitePage() {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        Retour à l'accueil
+        Retour à l&apos;accueil
       </Link>
 
       <h1 className="text-3xl font-black mb-2" style={{ color: "#0b1f3a" }}>Politique de confidentialité</h1>
@@ -27,10 +27,10 @@ export default function ConfidentialitePage() {
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>1. Informations que nous collectons</h2>
           <p className="text-sm leading-relaxed mb-3">Lors de votre utilisation de Garago, nous pouvons collecter :</p>
           <ul className="list-disc list-inside text-sm leading-relaxed space-y-1.5">
-            <li>Informations d'identification : nom, adresse courriel, numéro de téléphone</li>
+            <li>Informations d&apos;identification : nom, adresse courriel, numéro de téléphone</li>
             <li>Informations sur votre véhicule : marque, modèle, année</li>
             <li>Données de localisation (avec votre consentement) pour trouver les garages proches</li>
-            <li>Historique de navigation et d'utilisation de la plateforme</li>
+            <li>Historique de navigation et d&apos;utilisation de la plateforme</li>
             <li>Avis et évaluations que vous publiez</li>
           </ul>
         </section>
@@ -41,7 +41,7 @@ export default function ConfidentialitePage() {
           <ul className="list-disc list-inside text-sm leading-relaxed space-y-1.5">
             <li>Fournir et améliorer nos services</li>
             <li>Personnaliser votre expérience sur la plateforme</li>
-            <li>Vous envoyer des notifications et rappels d'entretien (si vous y avez consenti)</li>
+            <li>Vous envoyer des notifications et rappels d&apos;entretien (si vous y avez consenti)</li>
             <li>Assurer la sécurité et prévenir la fraude</li>
             <li>Répondre à vos demandes de support</li>
           </ul>
@@ -59,8 +59,8 @@ export default function ConfidentialitePage() {
         <section>
           <h2 className="text-xl font-bold mb-3" style={{ color: "#0b1f3a" }}>4. Localisation</h2>
           <p className="text-sm leading-relaxed">
-            Garago demande l'accès à votre localisation pour vous proposer des garages à proximité. Cette donnée
-            n'est utilisée qu'au moment de la recherche et n'est jamais stockée de façon permanente sur nos serveurs
+            Garago demande l&apos;accès à votre localisation pour vous proposer des garages à proximité. Cette donnée
+            n&apos;est utilisée qu&apos;au moment de la recherche et n&apos;est jamais stockée de façon permanente sur nos serveurs
             sans votre consentement explicite.
           </p>
         </section>
@@ -70,10 +70,10 @@ export default function ConfidentialitePage() {
           <p className="text-sm leading-relaxed">
             Nous utilisons des cookies essentiels, nécessaires pour maintenir votre session de connexion.
             Sur les pages publiques du site, nous utilisons aussi Microsoft Clarity pour mesurer, de façon anonyme,
-            comment les visiteurs utilisent le site (clics, défilement) et l'améliorer. Clarity peut déposer des cookies
-            de mesure. Le texte saisi dans les formulaires est masqué, et rien n'est mesuré dans les espaces connectés
-            (tableaux de bord), ni sur les pages de connexion, d'inscription et de rendez-vous. Bloquer ces cookies
-            dans votre navigateur n'empêche pas d'utiliser Garago.
+            comment les visiteurs utilisent le site (clics, défilement) et l&apos;améliorer. Clarity peut déposer des cookies
+            de mesure. Le texte saisi dans les formulaires est masqué, et rien n&apos;est mesuré dans les espaces connectés
+            (tableaux de bord), ni sur les pages de connexion, d&apos;inscription et de rendez-vous. Bloquer ces cookies
+            dans votre navigateur n&apos;empêche pas d&apos;utiliser Garago.
           </p>
         </section>
 

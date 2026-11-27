@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   const phoneDigits = normalizePhone(customerPhone);
   if (name.length < 2) return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
   if (!phoneDigits) return NextResponse.json({ error: "Numéro de téléphone invalide (10 chiffres)" }, { status: 400 });
-  const sessionEmail = (session?.user as any)?.email ?? null;
+  const sessionEmail = session?.user?.email ?? null;
   if (customerEmail ? !isValidEmail(customerEmail) : !sessionEmail) {
     return NextResponse.json({ error: customerEmail ? "Adresse courriel invalide" : "Le courriel est obligatoire pour recevoir la confirmation du rendez-vous." }, { status: 400 });
   }
@@ -146,12 +146,12 @@ export async function POST(req: NextRequest) {
   const bayRules = await loadBayRules(garageId, capacity);
   const allowedBays = bayRules.forCategories(wantedCats);
 
-  const sessionUserId = (session?.user as any)?.id ?? null;
+  const sessionUserId = session?.user?.id ?? null;
 
   // Courriel pour joindre le client : celui saisi, sinon celui de son compte.
   // On l'enregistre sur le rendez-vous pour que rappels et confirmations
   // fonctionnent aussi pour les clients connectés qui ne l'ont pas retapé.
-  const contactEmail: string | null = customerEmail || ((session?.user as any)?.email ?? null);
+  const contactEmail: string | null = customerEmail || (session?.user?.email ?? null);
 
   // Palier de confirmation (standard / dernière minute / aucun) selon le délai.
   const startInstant = quebecInstant(date, startTime);
