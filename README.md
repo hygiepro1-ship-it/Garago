@@ -1,37 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Garago
 
-## Getting Started
+Plateforme de prise de rendez-vous pour les garages automobiles au Canada (garagopro.ca).
 
-First, run the development server:
+- **Conducteurs** : recherche de garages (position, marque et modèle du véhicule, service), fiche du garage
+  avec avis, réservation en ligne avec ou sans compte, confirmation par courriel, annulation.
+- **Garages** : tableau de bord (agenda par portes, carnet de clients, services et durées, horaires, blocages,
+  marques acceptées, statistiques, abonnement Stripe, succursales), rendez-vous saisis au téléphone avec
+  confirmation par texto ou courriel.
+- **Admin** : vérification des garages (NEQ), réclamations de fiches, modération des descriptions et des avis.
+
+## Technologies
+
+| Couche | Outil |
+|---|---|
+| Application | Next.js 16 (App Router), React 19, TypeScript 5 — **lire `AGENTS.md`** : cette version de Next.js diffère des versions connues |
+| Style | Tailwind CSS 4 |
+| Base de données | PostgreSQL (Neon), Prisma 7 avec l'adaptateur `@prisma/adapter-pg` ; client généré dans `src/generated/prisma` |
+| Authentification | NextAuth 4 (sessions JWT de 14 jours, identifiants ou Google) |
+| Paiement | Stripe (abonnement, garages supplémentaires) |
+| Courriels / textos | Resend / Twilio |
+| Fichiers | Vercel Blob |
+| Hébergement | Vercel (déploiement automatique de `main`) ; tâches planifiées Vercel Cron + GitHub Actions |
+
+## Prérequis
+
+- Node.js 22 ou plus, npm.
+- Une base PostgreSQL **de test** (branche Neon). Ne jamais utiliser la base de production en local :
+  le code la refuse (`src/lib/db-guard.ts`).
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+cp .env.example .env.local      # puis remplir les valeurs (base de TEST)
+npx prisma generate
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables principales (voir `.env.example` pour la liste complète et les explications) :
+`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_*`, `CRON_SECRET`.
+Sans `RESEND_API_KEY` ni clés Twilio, aucun courriel ni texto ne part (les codes de vérification s'affichent dans la console).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Lancer en local
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Commande | Usage |
+|---|---|
+| `npm run dev` | Serveur de développement (port 3000), base de `.env.local` |
+| `node scripts/dev-apercu.mjs` | **Site démo** (port 3200) sur la base de test de `.env.apercu.local`, courriels et textos coupés. C'est là que tout changement se vérifie avant la mise en ligne |
+| `npx tsx scripts/comptes-test-apercu.ts` | Remplit la base de test (garages, conducteur, admin) et génère leurs mots de passe |
 
-## Learn More
+## Commandes
 
-To learn more about Next.js, take a look at the following resources:
+| Commande | Rôle |
+|---|---|
+| `npm run typecheck` | Vérification TypeScript |
+| `npm test` | Tests unitaires et de sécurité (sans base de données) |
+| `npm run test:integration` | Tests de double réservation contre le site démo (il doit tourner) |
+| `npm run lint` | ESLint |
+| `npm run build` | Build de production (exécute aussi `prisma db push` : réservé à Vercel) |
+| `npm run db:studio` | Prisma Studio sur la base de `.env.local` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Garago
+- [ARCHITECTURE.md](ARCHITECTURE.md) — organisation du code, flux principaux.
+- [DATABASE.md](DATABASE.md) — modèle de données, règles, multi-garage.
+- [DEVELOPMENT.md](DEVELOPMENT.md) — conventions, procédure de changement et de mise en ligne.
+- [SECURITE.md](SECURITE.md) — contrôles de sécurité et vérifications avant mise en ligne.
+- [docs/adr/](docs/adr/) — décisions d'architecture.

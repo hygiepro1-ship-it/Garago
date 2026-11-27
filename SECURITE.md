@@ -1,6 +1,6 @@
 # Sécurité de Garago — les 7 portes
 
-Dernière vérification : 8 novembre 2026.
+Dernière vérification : 27 novembre 2026.
 
 ## Relancer les tests
 
@@ -29,7 +29,11 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 | Point | État | Ce qui le ferme | Test |
 |---|---|---|---|
 | Injection de script (XSS) par le JSON-LD | Fermé | `src/components/JsonLd.tsx` échappe `<`, `>` et `&` (séquence `"\\u003c"`, pas `"<"` qui n'échappe rien). C'est le seul HTML brut du site. | `xss-json-ld.test.ts` |
-| Failles connues des dépendances | Fermé (9 novembre 2026) | Next.js 16.4.5 (failles critiques jusqu'à 16.4.0), Prisma 7.10.1 ; `npm audit --omit=dev` : 0 faille. | `dependances.test.ts` + `npm audit --omit=dev` |
+| Failles connues des dépendances | Surveillé (27 novembre 2026) | Next.js 16.4.5, Prisma 7.10.1. `npm audit --omit=dev` signale 3 failles « high » dans `effect`, tiré par la CLI `prisma` (outil de build, jamais exécuté par le site). | `dependances.test.ts` + `npm audit --omit=dev` |
+| Données publiques d'un garage | Fermé | Liste blanche `PUBLIC_GARAGE_FIELDS` (`src/lib/public-garage.ts`) : un nouveau champ reste privé par défaut. | `donnees-publiques-garage.test.ts` |
+| Tâches planifiées | Fermé | Secret `CRON_SECRET` comparé à durée constante (`src/lib/cron-auth.ts`) dans chaque route `src/app/api/cron/*`. | `cron-auth.test.ts` |
+| Base de production hors du site en ligne | Fermé | `src/lib/db-guard.ts` refuse son adresse hors de Vercel Production (serveur, CLI Prisma, seed). | `db-guard.test.ts` |
+| Double réservation | Fermé | Verrou par garage et par jour (`src/lib/slot-lock.ts`) pour toute écriture qui occupe une place. | `tests/integration/double-reservation.test.ts` |
 | Identifiant du propriétaire dans l'API publique | Accepté | `ownerId` sert à la fiche pour reconnaître son propriétaire ; seul, il ne donne accès à rien (toutes les routes vérifient la session). | — |
 
 ## À faire de votre côté
@@ -37,9 +41,9 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 - **Anti-robot Cloudflare Turnstile — désactivé en ligne.** Créer un widget sur dash.cloudflare.com → Turnstile
   (gratuit), puis ajouter `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` dans Vercel (Production)
   et redéployer. Sans ces clés, `src/lib/turnstile.ts` laisse tout passer.
-- **Base de test séparée.** Le fichier `.env` local pointe vers la base de production chez Neon : lancer le site
-  sur votre ordinateur, c'est travailler sur les vraies données des clients. Créer une branche Neon de test
-  et mettre son adresse dans `.env.local`.
+- **Base de test séparée.** Fait le 26 novembre 2026 : `.env.local` pointe vers la branche Neon de test, et le code
+  refuse la base de production hors du site en ligne.
+- **Dépôt GitHub public.** Le code est lisible par tous : le rendre privé (Settings → Danger Zone).
 - **Clé Google Maps** (si vous en ajoutez une) : la limiter au domaine `garagopro.ca` dans Google Cloud.
 
 ## Vérifications manuelles avant une mise en ligne
