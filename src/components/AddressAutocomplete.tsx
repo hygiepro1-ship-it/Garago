@@ -2,6 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
+// Résultat de Photon (OpenStreetMap), relayé par /api/geocode : seuls les champs lus ici.
+type PhotonFeature = {
+  geometry?: { coordinates?: [number, number] };
+  properties?: {
+    name?: string; housenumber?: string; street?: string; city?: string; town?: string; village?: string;
+    municipality?: string; county?: string; district?: string; suburb?: string; neighbourhood?: string; quarter?: string;
+    state?: string; postcode?: string; extent?: number[]; osm_id?: number | string;
+  };
+};
+
 export interface AddressResult {
   streetAddress: string;
   city: string;
@@ -44,7 +54,7 @@ function isValidPostal(p: string) {
   return /^[A-Z]\d[A-Z] \d[A-Z]\d$/.test(p);
 }
 
-function parsePhoton(feature: any): AddressResult {
+function parsePhoton(feature: PhotonFeature): AddressResult {
   const p = feature.properties ?? {};
   const [lng, lat] = feature.geometry?.coordinates ?? [0, 0];
   const num    = p.housenumber ?? "";
@@ -70,7 +80,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
   } | null>(null);
 
   const [street, setStreet]         = useState(initialValue);
-  const [results, setResults]       = useState<any[]>([]);
+  const [results, setResults]       = useState<PhotonFeature[]>([]);
   const [open, setOpen]             = useState(false);
   const [loading, setLoading]       = useState(false);
   const [selected, setSelected]     = useState(false);
@@ -161,7 +171,7 @@ export default function AddressAutocomplete({ onSelect, initialValue = "", input
     debounceRef.current = setTimeout(() => search(val, postalCenter, postal), 300);
   }
 
-  function handleSelect(feature: any) {
+  function handleSelect(feature: PhotonFeature) {
     const parsed = parsePhoton(feature);
     // Use postal code from input if result doesn't have one
     if (!parsed.postalCode && postal) parsed.postalCode = postal;

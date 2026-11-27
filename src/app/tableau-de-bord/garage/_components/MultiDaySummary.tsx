@@ -4,12 +4,12 @@
 
 import { translateServiceName } from "@/lib/services";
 import { useTr } from "@/lib/dashboard-en";
-import { statusBadge } from "../_lib/dashboard";
+import { statusBadge, type DashboardAppointment, type DashboardBlock } from "../_lib/dashboard";
 
 export function MultiDaySummary({ appointments, selectedDays, blockedSlots, onDeleteBlock }: {
-  appointments: any[];
+  appointments: DashboardAppointment[];
   selectedDays: string[];
-  blockedSlots: any[];
+  blockedSlots: DashboardBlock[];
   onDeleteBlock: (id: string) => void;
 }) {
   const tr = useTr();

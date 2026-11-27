@@ -15,6 +15,7 @@ import { languageLabel, parseLanguages } from "@/lib/languages";
 import { translateServiceName } from "@/lib/services";
 import { getDayName } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
+import type { PublicGarageProfile } from "@/lib/garage-profile";
 
 function StarDisplay({ rating, size = "md" }: { rating: number; size?: "sm" | "md" }) {
   const filled = Math.min(5, Math.max(0, Math.round(rating)));
@@ -52,7 +53,7 @@ function parseImgPos(raw: string | null | undefined): { tx: number; ty: number; 
 }
 
 /** Fiche publique d'un garage. Les données arrivent du serveur (page.tsx) : la fiche est dans le HTML dès le premier chargement. */
-export default function GarageProfileClient({ initialGarage }: { initialGarage: any }) {
+export default function GarageProfileClient({ initialGarage }: { initialGarage: PublicGarageProfile }) {
   const { slug } = useParams() as { slug: string };
   const { data: session } = useSession();
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
   const { t, lang } = useLang();
   const g = t.garage;
 
-  const [garage] = useState<any>(initialGarage);
+  const [garage] = useState<PublicGarageProfile>(initialGarage);
   const loading = false;
   const [coverError, setCoverError] = useState(false);
   const [logoError,  setLogoError]  = useState(false);
@@ -88,7 +89,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
     if (!session?.user || !garage?.id) return;
     fetch("/api/favorites")
       .then(r => r.json())
-      .then((favs: any[]) => setIsFav(favs.some(f => f.garageId === garage.id)));
+      .then((favs: { garageId: string }[]) => setIsFav(favs.some(f => f.garageId === garage.id)));
   }, [session, garage?.id]);
 
   async function toggleFav() {
@@ -140,13 +141,13 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
 
   const coverP = parseImgPos(garage.coverPosition);
   const logoP  = parseImgPos(garage.logoPosition);
-  const acceptedBrands = garage.brands?.filter((b: any) =>  b.accepts) ?? [];
-  const refusedBrands  = garage.brands?.filter((b: any) => !b.accepts) ?? [];
+  const acceptedBrands = garage.brands?.filter((b) =>  b.accepts) ?? [];
+  const refusedBrands  = garage.brands?.filter((b) => !b.accepts) ?? [];
   const parsedLangs    = parseLanguages(garage.languages);
   const garageLangs    = parsedLangs.length > 0 ? parsedLangs : null;
 
   // Group services by category name (same as old code — uses API data directly)
-  const servicesByCategory: Record<string, { catName: string; catId: string; services: any[] }> = {};
+  const servicesByCategory: Record<string, { catName: string; catId: string; services: PublicGarageProfile["services"] }> = {};
   for (const s of garage.services ?? []) {
     const catName = s.category?.name;
     if (!catName) continue;
@@ -248,7 +249,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{garage.name}</h1>
-                {(garage as any).isAmbassador && (
+                {garage.isAmbassador && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-black flex-shrink-0"
                     style={{ background: "linear-gradient(135deg, #1f2e67 0%, #f97316 100%)" }}>
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -384,7 +385,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
                 <div className="mb-3">
                   <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">{g.accepted}</p>
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                    {acceptedBrands.map((b: any) => (
+                    {acceptedBrands.map((b) => (
                       <BrandLogo key={b.brand} brand={b.brand} size={60} />
                     ))}
                   </div>
@@ -394,7 +395,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
                 <div>
                   <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-2">{g.refused}</p>
                   <div className="flex flex-wrap gap-2">
-                    {refusedBrands.map((b: any) => (
+                    {refusedBrands.map((b) => (
                       <span key={b.brand} className="text-sm bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-full font-medium">{b.brand}</span>
                     ))}
                   </div>
@@ -426,7 +427,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
               </div>
             ) : (
               <div className="space-y-4">
-                {garage.reviews?.map((review: any) => (
+                {garage.reviews?.map((review) => (
                   <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
@@ -474,7 +475,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
                   {g.hoursTitle}
                 </h3>
                 <div className="space-y-1.5">
-                  {garage.availability.map((a: any) => (
+                  {garage.availability.map((a) => (
                     <div key={a.dayOfWeek} className="flex justify-between text-sm">
                       <span className="text-gray-600 font-medium">{getDayName(a.dayOfWeek)}</span>
                       {a.isClosed ? (
@@ -507,7 +508,7 @@ export default function GarageProfileClient({ initialGarage }: { initialGarage: 
                   <span className="text-gray-500">{g.walkIn}</span>
                   <span className="font-semibold text-gray-900">{garage.acceptsWalkIn ? g.walkInYes : g.walkInNo}</span>
                 </div>
-                {(garage as any).emailPublic && garage.email && (
+                {garage.emailPublic && garage.email && (
                   <div className="flex justify-between gap-2">
                     <span className="text-gray-500 flex-shrink-0">Courriel</span>
                     <a href={`mailto:${garage.email}`} className="font-semibold text-orange-600 hover:underline truncate text-right">{garage.email}</a>

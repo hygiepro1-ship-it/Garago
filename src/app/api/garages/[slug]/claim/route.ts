@@ -74,8 +74,8 @@ export async function POST(
         },
       });
     });
-  } catch (e: any) {
-    if (e?.message === "ALREADY_CLAIMED") {
+  } catch (e: unknown) {
+    if ((e as Error | undefined)?.message === "ALREADY_CLAIMED") {
       return NextResponse.json(
         { error: "Cette page est déjà gérée par son propriétaire. Un problème ? Contactez-nous." },
         { status: 409 }

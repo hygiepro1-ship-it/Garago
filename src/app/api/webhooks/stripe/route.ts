@@ -13,9 +13,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncSubscriptionToGarage } from "@/lib/stripe-sync";
 import { revalidateAllGarages } from "@/lib/revalidate-garage";
+import type { Prisma } from "@/generated/prisma/client";
 
 // Force la route en dynamique — empêche Next.js d'évaluer ce module au build
 export const dynamic = "force-dynamic";
+
+// Facture Stripe : l'abonnement est dans `parent.subscription_details.subscription` (API « basil » et suivantes),
+// ou dans l'ancien champ `subscription` pour les factures plus anciennes.
+type InvoiceWithSubscription = import("stripe").Stripe.Invoice & { subscription?: string | { id: string } | null };
 
 export async function POST(req: NextRequest) {
   // Import dynamique de Stripe — évite l'évaluation au build sans STRIPE_SECRET_KEY
@@ -32,8 +37,8 @@ export async function POST(req: NextRequest) {
   let event: import("stripe").Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err: any) {
-    console.error("Stripe webhook signature invalide :", err.message);
+  } catch (err: unknown) {
+    console.error("Stripe webhook signature invalide :", (err as Error).message);
     return NextResponse.json({ error: "Signature invalide" }, { status: 400 });
   }
 
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest) {
 
       // ── Paiement réussi (renouvellement mensuel + parrainage) ────────────
       case "invoice.payment_succeeded": {
-        const inv = event.data.object as any;
+        const inv = event.data.object as InvoiceWithSubscription;
         // Depuis l'API « basil », l'abonnement d'une facture n'est plus dans `invoice.subscription` mais dans
         // `invoice.parent.subscription_details.subscription` : l'ancien champ seul rendait tout ce bloc inerte
         // (aucune récompense de parrainage). On lit les deux.
@@ -116,7 +121,7 @@ export async function POST(req: NextRequest) {
                 const oldTier = referrer.ambassadorTier ?? 0;
                 const firstTier = oldTier === 0 && newTier >= 1;
 
-                const updateData: any = {
+                const updateData: Prisma.GarageUpdateInput = {
                   referralCount: newCount,
                   ambassadorTier: newTier,
                   ambassadorSince: firstTier ? new Date() : referrer.ambassadorSince,
@@ -178,7 +183,7 @@ export async function POST(req: NextRequest) {
 
       // ── Paiement échoué ──────────────────────────────────────────────────
       case "invoice.payment_failed": {
-        const inv = event.data.object as any;
+        const inv = event.data.object as InvoiceWithSubscription;
         const failedSubRaw = inv.parent?.subscription_details?.subscription ?? inv.subscription;
         const failedSubId: string | null = typeof failedSubRaw === "string" ? failedSubRaw : failedSubRaw?.id ?? null;
         if (failedSubId) {

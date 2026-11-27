@@ -234,9 +234,9 @@ export default function HomePage({ seasonMonth }: { seasonMonth: number }) {
                     className="w-full border-0 bg-transparent py-1.5 sm:py-1 text-base sm:text-sm focus:outline-none text-gray-800"
                     value={f.value}
                     onChange={(e) => (f.setter as (v: string) => void)(e.target.value)}
-                    disabled={(f as any).disabled}>
+                    disabled={"disabled" in f && f.disabled}>
                     {/* Liste non remplie : « Choisir » plutôt qu'une case vide (le modèle reste « — » tant que la marque manque) */}
-                    <option value="">{(f as any).disabled ? "—" : (lang === "fr" ? "Choisir" : "Select")}</option>
+                    <option value="">{"disabled" in f && f.disabled ? "—" : (lang === "fr" ? "Choisir" : "Select")}</option>
                     {f.opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>

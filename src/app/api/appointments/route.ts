@@ -11,6 +11,7 @@ import { clientIp, isRateLimited, normalizePhone, isValidEmail, cleanText } from
 import { verifyTurnstile, CAPTCHA_ERROR } from "@/lib/turnstile";
 import { icsToken } from "@/lib/ics-token";
 import { planConfirmation, quebecInstant, formatQuebecMoment, confirmPageUrl, cancelPageUrl, FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
+import type { Prisma } from "@/generated/prisma/client";
 
 // GET /api/appointments — liste des RDV du client connecté
 export async function GET() {
@@ -104,10 +105,10 @@ export async function POST(req: NextRequest) {
   // n'accapare des créneaux dans plusieurs garages.
   // Téléphone enregistré sous une forme unique « (514) 555-0142 » pour que le plafond soit fiable.
   const phoneStd = `(${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
-  const identity: Record<string, unknown>[] = [{ customerPhone: phoneStd }];
+  const identity: Prisma.AppointmentWhereInput[] = [{ customerPhone: phoneStd }];
   if (customerEmail) identity.push({ customerEmail: { equals: String(customerEmail).toLowerCase(), mode: "insensitive" } });
   const upcoming = await prisma.appointment.count({
-    where: { date: { gte: today }, status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] }, OR: identity as any },
+    where: { date: { gte: today }, status: { notIn: ["CANCELLED", "NO_SHOW", "COMPLETED"] }, OR: identity },
   });
   if (upcoming >= 4) {
     return NextResponse.json({ error: "Vous avez déjà plusieurs rendez-vous à venir. Annulez-en un avant d'en réserver un autre." }, { status: 429 });
@@ -216,8 +217,8 @@ export async function POST(req: NextRequest) {
         include: { garage: { include: { owner: { select: { email: true } } } } },
       });
     });
-  } catch (err: any) {
-    if (err?.message === "SLOT_TAKEN") {
+  } catch (err: unknown) {
+    if ((err as Error | undefined)?.message === "SLOT_TAKEN") {
       return NextResponse.json({ error: "Ce créneau vient d'être réservé. Veuillez en choisir un autre." }, { status: 409 });
     }
     throw err;

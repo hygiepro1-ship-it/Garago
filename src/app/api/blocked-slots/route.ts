@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ownedGarageWhere, readGarageId } from "@/lib/garage-access";
+import type { Prisma } from "@/generated/prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const month = searchParams.get("month"); // "YYYY-MM"
 
-    const where: any = { garageId: garage.id };
+    const where: Prisma.BlockedSlotWhereInput = { garageId: garage.id };
     if (month) {
       where.date = { gte: `${month}-01`, lte: `${month}-31` };
     }

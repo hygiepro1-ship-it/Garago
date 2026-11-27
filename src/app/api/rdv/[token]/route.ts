@@ -125,8 +125,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
           data: { status: "CONFIRMED", confirmationStatus: "CONFIRMED", confirmBy: null, cancelledBy: null, cancelledAt: null, bay },
         });
       });
-    } catch (e: any) {
-      if (e?.message === "NOT_RETAKABLE" || e?.message === "SLOT_TAKEN") {
+    } catch (e: unknown) {
+      if ((e as Error | undefined)?.message === "NOT_RETAKABLE" || (e as Error | undefined)?.message === "SLOT_TAKEN") {
         const again = await load(token);
         return NextResponse.json({ ...(again ? await describe(again) : {}), error: "Ce créneau n'est plus disponible." }, { status: 409 });
       }

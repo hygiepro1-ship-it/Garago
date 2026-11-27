@@ -76,9 +76,29 @@ function CarImage({ make, model, year, type }: { make: string; model: string; ye
   );
 }
 
+
+// ── Données de l'espace conducteur (réponses de /api/vehicles, /api/favorites, /api/reminders, /api/vin-decode) ──
+interface VehicleSpecs {
+  engine?: string; fuel?: string; transmission?: string; driveType?: string; bodyType?: string;
+  doors?: number | string; hp?: number | string; recallCount?: number;
+  recalls?: { campaign?: string; component?: string; summary?: string; date?: string }[];
+}
+interface DriverVehicle {
+  id: string; year: number; make: string; model: string; trim?: string | null; tireSize?: string | null;
+  vin?: string | null; licensePlate?: string | null; isDefault?: boolean; specs?: string | VehicleSpecs | null;
+}
+interface DriverFavorite {
+  id: string; garageId: string;
+  garage: { id: string; name: string; slug: string; city: string; province: string; phone: string; logoUrl: string | null };
+}
+interface DriverReminder {
+  id: string; title: string; notes?: string | null; dueDate?: string | null; priority: string; done: boolean;
+  vehicleId?: string | null; vehicle?: { make: string; model: string; year: number } | null;
+}
+
 // ── Carte véhicule style Belair Direct ────────────────────────────────────────
 function VehicleCard({ v, findGarageLabel, onDelete }: {
-  v: any;
+  v: DriverVehicle;
   findGarageLabel: string;
   onDelete: (id: string) => Promise<void>;
 }) {
@@ -88,8 +108,9 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const color   = BRAND_COLOR[v.make] ?? "#1e3a5f";
 
-  let specs: any = null;
+  let specs: VehicleSpecs | null = null;
   try { if (v.specs) specs = typeof v.specs === "string" ? JSON.parse(v.specs) : v.specs; } catch { /**/ }
+  const recallCount = specs?.recallCount ?? 0;
 
   async function handleDelete() {
     setDeleting(true);
@@ -156,7 +177,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
         </div>
 
         {/* Bandeau rappel (toujours visible si rappels) */}
-        {specs?.recallCount > 0 && (
+        {recallCount > 0 && (
           <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
             style={{ background: "#fff1f2", color: "#be123c", borderLeft: "3px solid #be123c" }}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -164,7 +185,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
               <path d="M8 6v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
             </svg>
-            {specs.recallCount} rappel{specs.recallCount > 1 ? "s" : ""} constructeur NHTSA actif{specs.recallCount > 1 ? "s" : ""}
+            {recallCount} rappel{recallCount > 1 ? "s" : ""} constructeur NHTSA actif{recallCount > 1 ? "s" : ""}
           </div>
         )}
 
@@ -186,7 +207,7 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
                 specs.driveType   && { label: "Traction",     value: specs.driveType },
                 (specs.bodyType || specs.doors) && { label: tr("Carrosserie"), value: `${specs.bodyType ?? ""}${specs.doors ? ` · ${specs.doors} ${tr.en ? "doors" : "portes"}` : ""}`.trim() },
                 v.tireSize        && { label: tr("Pneus d'orig."), value: v.tireSize },
-              ].filter(Boolean).map((item: any, i: number) => (
+              ].filter((item): item is { label: string; value: string } => !!item).map((item, i) => (
                 <div key={i} className="px-3 py-2.5">
                   <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ fontSize: "9px", letterSpacing: "0.08em" }}>{tr(item.label)}</p>
                   <p className="text-gray-900 text-xs font-semibold leading-snug">{item.value}</p>
@@ -195,9 +216,9 @@ function VehicleCard({ v, findGarageLabel, onDelete }: {
             </div>
 
             {/* Section rappels détaillés */}
-            {specs.recallCount > 0 && (
+            {recallCount > 0 && (
               <div className="divide-y divide-red-100" style={{ borderTop: "1px solid #fecdd3", background: "#fff1f2" }}>
-                {specs.recalls?.map((rc: any, i: number) => (
+                {specs.recalls?.map((rc, i) => (
                   <div key={i} className="px-3 py-2">
                     <p className="text-xs font-bold text-red-700 mb-0.5">{rc.component}</p>
                     {rc.summary && <p className="text-xs text-red-500 leading-snug line-clamp-2">{rc.summary}</p>}
@@ -408,7 +429,7 @@ export default function DashboardConducteurPage() {
   const [rescheduleErr,   setRescheduleErr]   = useState("");
 
   // ── Vehicles ──────────────────────────────────────────────────────────────
-  const [vehicles, setVehicles]       = useState<any[]>([]);
+  const [vehicles, setVehicles]       = useState<DriverVehicle[]>([]);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [year, setYear]   = useState("");
   const [make, setMake]   = useState("");
@@ -416,7 +437,7 @@ export default function DashboardConducteurPage() {
   const [trim, setTrim]   = useState("");
   const [vin, setVin]         = useState("");
   const [tireSize, setTireSize] = useState("");
-  const [vinSpecs, setVinSpecs] = useState<any>(null);
+  const [vinSpecs, setVinSpecs] = useState<VehicleSpecs | null>(null);
   const [vinLoading, setVinLoading] = useState(false);
   const [vinError,   setVinError]   = useState("");
   const [savingVehicle, setSavingVehicle] = useState(false);
@@ -425,12 +446,12 @@ export default function DashboardConducteurPage() {
   const models = make ? getModelsForMake(make) : [];
 
   // ── Favorites ─────────────────────────────────────────────────────────────
-  const [favorites, setFavorites]     = useState<any[]>([]);
+  const [favorites, setFavorites]     = useState<DriverFavorite[]>([]);
   const [favsLoaded, setFavsLoaded]   = useState(false);
 
 
   // ── Reminders ─────────────────────────────────────────────────────────────
-  const [reminders, setReminders]       = useState<any[]>([]);
+  const [reminders, setReminders]       = useState<DriverReminder[]>([]);
   const [remindersLoaded, setRemindersLoaded] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [rTitle, setRTitle]     = useState("");
@@ -1002,10 +1023,10 @@ export default function DashboardConducteurPage() {
                           {vinSpecs.bodyType   && <span><strong>{tr("Carrosserie :")}</strong> {vinSpecs.bodyType}{vinSpecs.doors ? ` · ${vinSpecs.doors} ${tr.en ? "doors" : "portes"}` : ""}</span>}
                           {tireSize            && <span><strong>{tr("Pneus :")}</strong> {tireSize}</span>}
                         </div>
-                        {vinSpecs.recallCount > 0 && (
+                        {(vinSpecs.recallCount ?? 0) > 0 && (
                           <div className="mt-1 rounded-lg px-3 py-2" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
-                            <p className="text-xs font-bold text-red-700">{vinSpecs.recallCount} rappel{vinSpecs.recallCount > 1 ? "s" : ""} actif{vinSpecs.recallCount > 1 ? "s" : ""} (NHTSA)</p>
-                            {vinSpecs.recalls.slice(0, 2).map((rc: any, i: number) => (
+                            <p className="text-xs font-bold text-red-700">{(vinSpecs.recallCount ?? 0)} rappel{(vinSpecs.recallCount ?? 0) > 1 ? "s" : ""} actif{(vinSpecs.recallCount ?? 0) > 1 ? "s" : ""} (NHTSA)</p>
+                            {(vinSpecs.recalls ?? []).slice(0, 2).map((rc, i) => (
                               <p key={i} className="text-xs text-red-600 mt-0.5">· {rc.component}</p>
                             ))}
                           </div>

@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
   if (recallsRes.status === "fulfilled" && recallsRes.value.ok) {
     try {
       const recallData = await recallsRes.value.json();
-      recalls = (recallData?.results ?? []).slice(0, 5).map((rc: any) => ({
+      recalls = ((recallData?.results ?? []) as Record<string, string | undefined>[]).slice(0, 5).map((rc) => ({
         campaign:  rc.NHTSACampaignNumber ?? "",
         component: rc.Component           ?? "",
         summary:   rc.Summary             ?? "",

@@ -4,16 +4,16 @@
 
 import { useState } from "react";
 import { useTr } from "@/lib/dashboard-en";
-import { gfetch } from "../_lib/dashboard";
+import { gfetch, type Garage } from "../_lib/dashboard";
 
 // ─── Component ──────────────────────────────────────────────────────────────
 // ── Description verification section ────────────────────────────────────────
 export function DescriptionSection({
   garage, inputClass, onUpdated,
 }: {
-  garage: any;
+  garage: Garage;
   inputClass: string;
-  onUpdated: (data: any) => void;
+  onUpdated: (data: Partial<Garage>) => void;
 }) {
   const tr = useTr();
   const DESCRIPTION_MAX_PER_YEAR = 4;

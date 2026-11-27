@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Réponse de Photon (OpenStreetMap) : seuls les champs lus ici.
+type PhotonFeature = {
+  geometry?: { coordinates?: [number, number] };
+  properties?: { countrycode?: string; housenumber?: string; osm_key?: string; postcode?: string; street?: string; type?: string; [k: string]: unknown };
+};
+
 function normalizePostal(p: string) {
   return p.toUpperCase().replace(/\s/g, "");
 }
@@ -45,19 +51,19 @@ export async function GET(req: NextRequest) {
     if (!res.ok) return NextResponse.json([]);
 
     const data     = await res.json();
-    const features = data.features ?? [];
+    const features: PhotonFeature[] = data.features ?? [];
 
     const normalizedTarget = postcode ? normalizePostal(postcode) : null;
     const centerLat = lat ? parseFloat(lat) : null;
     const centerLng = lng ? parseFloat(lng) : null;
 
-    const filtered = features.filter((f: any) => {
+    const filtered = features.filter((f) => {
       const p = f.properties ?? {};
       if (p.countrycode !== "CA") return false;
       if (type === "postcode") return true;
       // Reject transit stops, waterways, parks — keep only routable addresses
       const REJECT_KEYS = ["railway", "waterway", "natural", "leisure", "tourism", "amenity"];
-      if (REJECT_KEYS.includes(p.osm_key)) return false;
+      if (p.osm_key && REJECT_KEYS.includes(p.osm_key)) return false;
 
       const isAddress = p.type === "house" || (p.street && p.housenumber);
       const isStreet  = p.type === "street";

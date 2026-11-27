@@ -8,6 +8,7 @@ import { serviceIdsFor } from "@/lib/services";
 import { notTestGarage } from "@/lib/test-garages";
 import { VISIBLE_REVIEWS, averageRating } from "@/lib/garage-rating";
 import { FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
+import type { Prisma } from "@/generated/prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     // ou impayé mais encore dans la période de grâce — et si son NEQ a été vérifié
     // par un admin (le sien, ou celui du garage principal pour une succursale).
     const subOr = activeSubscriptionOr();
-    const where: any = {
+    const where: Prisma.GarageWhereInput & { AND: Prisma.GarageWhereInput[] } = {
       AND: [
         // Fiche masquée (demande de retrait, ou garage activé hors vitrine comme un projet pilote).
         { hiddenByReport: false },
@@ -127,7 +128,7 @@ export async function GET(req: NextRequest) {
     }
 
     const sort = searchParams.get("sort");
-    const orderBy: any =
+    const orderBy: Prisma.GarageOrderByWithRelationInput[] =
       sort === "popular"
         ? [{ isAmbassador: "desc" }, { reviews: { _count: "desc" } }, { appointments: { _count: "desc" } }]
         : [{ isAmbassador: "desc" }, { createdAt: "desc" }];

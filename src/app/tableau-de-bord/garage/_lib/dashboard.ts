@@ -2,6 +2,8 @@
 
 import { confirmationLabel } from "@/components/GarageAgenda";
 import { quebecToday, quebecMinutes, garageTimeZone } from "@/lib/availability";
+import type { AgendaAppointment } from "@/components/GarageAgenda";
+import type { WeekBlock } from "@/components/AgendaWeekView";
 
 /**
  * Un propriétaire peut gérer plusieurs garages. Le garage actif est passé aux
@@ -100,6 +102,7 @@ export interface GarageReview {
   user?:       { name?: string | null } | null;
   authorName?: string | null;
   isHidden?:   boolean;
+  title?:      string | null;
 }
 
 export interface Garage {
@@ -113,6 +116,24 @@ export interface Garage {
   province:                 string | null;
   description:              string | null;
   descriptionDraft:         string | null;
+  descriptionStatus?:       string | null;
+  descriptionChanges?:      number;
+  descriptionChangesYear?:  number | null;
+  phone?:                   string | null;
+  email?:                   string | null;
+  emailPublic?:             boolean;
+  website?:                 string | null;
+  latitude?:                number | null;
+  longitude?:               number | null;
+  languages?:               string | null;
+  acceptsWalkIn?:           boolean;
+  appointmentOnly?:         boolean;
+  yearFounded?:             number | null;
+  employeeCount?:           number | null;
+  openingHours?:            string | null;
+  hourlyRate?:              number | null;
+  onlineBooking?:           boolean;
+  claimStatus?:             string;
   logoUrl:                  string | null;
   logoPosition:             string | null;
   coverUrl:                 string | null;
@@ -183,7 +204,7 @@ export const STATUS_COLORS: Record<string, { bg: string; color: string; label: s
 };
 
 /** Badge d'un rendez-vous : la réponse du client quand une confirmation est en jeu, sinon le statut à l'agenda. */
-export function statusBadge(a: any, tr: ((fr: string) => string) & { en?: boolean }): { bg: string; color: string; label: string } {
+export function statusBadge(a: { status: string; confirmationStatus?: string }, tr: ((fr: string) => string) & { en?: boolean }): { bg: string; color: string; label: string } {
   if (a.status === "PENDING" || a.status === "CONFIRMED") {
     const c = confirmationLabel(a, tr, !!tr.en);
     if (c) return { bg: c.bg, color: c.color, label: c.label };
@@ -192,3 +213,10 @@ export function statusBadge(a: any, tr: ((fr: string) => string) & { en?: boolea
 }
 
 // ─── Ambassador overview card ─────────────────────────────────────────────────
+
+/** Rendez-vous tel que le tableau de bord le reçoit de /api/garage/appointments. */
+export type DashboardAppointment = AgendaAppointment & { completionNote?: string | null; confirmRequestedAt?: string | null };
+/** Blocage (vacances, fermeture) tel que reçu de /api/blocked-slots. */
+export type DashboardBlock = WeekBlock & { id: string; reason?: string | null };
+/** Fonction EyeDropper du navigateur (Chrome, Edge) : absente des types DOM standard. */
+export type EyeDropperCtor = new () => { open(): Promise<{ sRGBHex: string }> };

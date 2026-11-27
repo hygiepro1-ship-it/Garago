@@ -48,9 +48,9 @@ export async function POST(req: NextRequest) {
     try {
       await sendVerificationCode(email, code, body?.lang === "en" ? "en" : "fr");
       emailSent = true;
-    } catch (emailErr: any) {
+    } catch (emailErr: unknown) {
       console.error("[verify-email/send] Échec d'envoi du courriel :", emailErr);
-      emailError = emailErr?.message ?? "Erreur inconnue";
+      emailError = (emailErr as Error | undefined)?.message ?? "Erreur inconnue";
     }
 
     const isDev = process.env.NODE_ENV !== "production";

@@ -19,10 +19,10 @@ import GoogleReviewCta from "@/components/GoogleReviewCta";
 import GarageCustomers from "@/components/GarageCustomers";
 import { useTr } from "@/lib/dashboard-en";
 import { garageTimeZone } from "@/lib/availability";
-import { hasStarted, isUpcomingSoon, isUpcomingLater, UPCOMING_FALLBACK_COUNT, selectedGarageId, gfetch, Tab, GarageService, GarageBrand, GarageReview, Garage, parseImgPos, getDaysInMonth, getFirstDayOfWeek, MONTH_NAMES_FR, DAY_ABBR_FR, statusBadge } from "./_lib/dashboard";
+import { hasStarted, isUpcomingSoon, isUpcomingLater, UPCOMING_FALLBACK_COUNT, selectedGarageId, gfetch, Tab, GarageService, GarageBrand, GarageReview, Garage, parseImgPos, getDaysInMonth, getFirstDayOfWeek, MONTH_NAMES_FR, DAY_ABBR_FR, statusBadge, type DashboardAppointment, type DashboardBlock, type EyeDropperCtor } from "./_lib/dashboard";
 import { useEyeDropper, BgColorPicker } from "./_components/BgColorPicker";
 import { DescriptionSection } from "./_components/DescriptionSection";
-import { AmbassadorOverviewCard, AmbassadeurTab } from "./_components/Ambassadeur";
+import { AmbassadorOverviewCard, AmbassadeurTab, type AmbassadeurStats } from "./_components/Ambassadeur";
 import { MultiDaySummary } from "./_components/MultiDaySummary";
 
 export default function DashboardGaragePage() {
@@ -162,7 +162,7 @@ export default function DashboardGaragePage() {
       setCancelLoading(false);
       return;
     }
-    setGarage((g: any) => g ? { ...g, cancelAtPeriodEnd: data.cancelAtPeriodEnd } : g);
+    setGarage((g) => g ? { ...g, cancelAtPeriodEnd: data.cancelAtPeriodEnd } : g);
     setShowCancelConfirm(false);
     setCancelLoading(false);
   }
@@ -207,12 +207,12 @@ export default function DashboardGaragePage() {
   }
 
   // ── Appointments + blocked slots state ──────────────────────────────────
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<DashboardBlock[]>([]);
   const [rdvLoaded, setRdvLoaded] = useState(false);
 
   // ── Reschedule modal state ─────────────────────────────────────────────
-  const [rescheduleAppt, setRescheduleAppt] = useState<any>(null);
+  const [rescheduleAppt, setRescheduleAppt] = useState<DashboardAppointment | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleSlots, setRescheduleSlots] = useState<string[]>([]);
   const [rescheduleSlot, setRescheduleSlot] = useState("");
@@ -263,7 +263,7 @@ export default function DashboardGaragePage() {
   }, [status, router]);
 
   // ── Stats avancées (palier 1+) ────────────────────────────────────────────
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AmbassadeurStats | null>(null);
   useEffect(() => {
     if ((garage?.ambassadorTier ?? 0) >= 1) {
       gfetch("/api/garage/stats").then(r => r.json()).then(s => { if (!s.error) setStats(s); });
@@ -274,7 +274,7 @@ export default function DashboardGaragePage() {
   const [services, setServices] = useState<GarageService[]>([]);
   useEffect(() => { if (garage?.services) setServices(garage.services); }, [garage]);
 
-  function toggleService(catId: string, cat: any) {
+  function toggleService(catId: string, cat: (typeof SERVICE_CATEGORIES)[number]) {
     const existing = services.find((s) => s.categoryId === catId);
     if (existing) {
       setServices(services.filter((s) => s.categoryId !== catId));
@@ -312,7 +312,7 @@ export default function DashboardGaragePage() {
     });
     if (res.ok) {
       setCapacity(String(cap));
-      setGarage((g: any) => g ? { ...g, capacity: cap } : g);
+      setGarage((g) => g ? { ...g, capacity: cap } : g);
     }
     setSaving(false);
     setSuccess(res.ok ? tr("Services sauvegardés ✓") : tr("Erreur lors de la sauvegarde"));
@@ -407,7 +407,7 @@ export default function DashboardGaragePage() {
     if (res.ok) {
       // Débloque immédiatement le reste du tableau de bord (voir hoursConfigured)
       // sans attendre un rechargement complet de la page.
-      setGarage((g: any) => g ? { ...g, availability: horaires.map((h) => ({ ...h })) } : g);
+      setGarage((g) => g ? { ...g, availability: horaires.map((h) => ({ ...h })) } : g);
     }
     setSaving(false);
     setSuccess(tr("Horaires sauvegardés ✓"));
@@ -415,7 +415,7 @@ export default function DashboardGaragePage() {
   }
 
   // ── Profile state ─────────────────────────────────────────────────────────
-  const [profileData, setProfileData] = useState<any>({});
+  const [profileData, setProfileData] = useState<Partial<Garage>>({});
   useEffect(() => { if (garage) setProfileData({ ...garage }); }, [garage]);
 
   // ── Image position/zoom state ──────────────────────────────────────────────
@@ -442,7 +442,7 @@ export default function DashboardGaragePage() {
   const logoDrag  = useRef<{ active: boolean; startX: number; startY: number; otx: number; oty: number } | null>(null);
 
   function handleAddressSelect(r: AddressResult) {
-    setProfileData((prev: any) => ({
+    setProfileData((prev) => ({
       ...prev, address: r.streetAddress, city: r.city,
       postalCode: r.postalCode, latitude: r.lat, longitude: r.lng,
     }));
@@ -480,8 +480,8 @@ export default function DashboardGaragePage() {
     const res = await gfetch("/api/garage/upload", { method: "POST", body: fd });
     const data = await res.json();
     if (data.url) {
-      setGarage((g: any) => ({ ...g, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
-      setProfileData((p: any) => ({ ...p, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
+      setGarage((g) => g ? { ...g, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url } : g);
+      setProfileData((p) => ({ ...p, [type === "logo" ? "logoUrl" : "coverUrl"]: data.url }));
       setSuccess(tr.en ? `${type === "logo" ? "Logo" : "Cover image"} updated ✓` : `${type === "logo" ? "Logo" : "Image de couverture"} mis à jour ✓`);
       setTimeout(() => setSuccess(""), 3000);
     }
@@ -1234,7 +1234,8 @@ export default function DashboardGaragePage() {
           {/* Agenda : calendrier de la semaine — c'est d'ici que les rendez-vous se prennent */}
           <GarageAgenda
             appointments={appointments}
-            services={garage.services as any[]}
+            // Venus de l'API, les durées sont des nombres (le type du formulaire les garde en texte pendant la saisie).
+            services={garage.services as unknown as Parameters<typeof GarageAgenda>[0]["services"]}
             availability={garage.availability}
             capacity={garage.capacity ?? 1}
             blocked={blockedSlots}
@@ -1246,7 +1247,7 @@ export default function DashboardGaragePage() {
 
           {/* Upcoming appointments list */}
           {(() => {
-          const byTime = (a: any, b: any) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime);
+          const byTime = (a: DashboardAppointment, b: DashboardAppointment) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime);
           const soon = appointments.filter((a) => isUpcomingSoon(a, garageTz)).sort(byTime);
           // Rien dans les 3 prochaines heures : on montre les prochains rendez-vous plutôt qu'une liste vide.
           const fallback = soon.length === 0;
@@ -1286,9 +1287,9 @@ export default function DashboardGaragePage() {
                             {(a.vehicleMake || a.vehicleModel) && (
                               <p className="text-xs text-gray-400">{[a.vehicleYear, a.vehicleMake, a.vehicleModel].filter(Boolean).join(" ")}</p>
                             )}
-                            {(a as any).notes && (
+                            {a.notes && (
                               <p className="text-xs mt-0.5 px-2 py-0.5 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                                {(a as any).notes}
+                                {a.notes}
                               </p>
                             )}
                           </div>
@@ -1323,7 +1324,7 @@ export default function DashboardGaragePage() {
             // Taux de confirmation : parmi les rendez-vous du mois pour lesquels une confirmation a été
             // demandée et dont on connaît l'issue, part de ceux que le client a confirmés (lien ou téléphone).
             const asked = appointments.filter(a => a.date?.startsWith(thisMonth) && (
-              ["CONFIRMED", "NO_RESPONSE", "EXPIRED"].includes(a.confirmationStatus) || (a.cancelledBy === "CLIENT" && a.confirmRequestedAt)
+              ["CONFIRMED", "NO_RESPONSE", "EXPIRED"].includes(a.confirmationStatus ?? "") || (a.cancelledBy === "CLIENT" && a.confirmRequestedAt)
             ));
             const confirmedByClient = asked.filter(a => a.confirmationStatus === "CONFIRMED" && a.cancelledBy !== "CLIENT").length;
             const tauxConfirmation = rdvLoaded && asked.length > 0 ? Math.round((confirmedByClient / asked.length) * 100) : null;
@@ -1341,7 +1342,8 @@ export default function DashboardGaragePage() {
               if (blocks.some(b => b.allDay || !b.startTime || !b.endTime)) continue;
               const open = minutesOf(h.openTime), close = minutesOf(h.closeTime);
               let free = close - open;
-              for (const b of blocks) free -= Math.max(0, Math.min(close, minutesOf(b.endTime)) - Math.max(open, minutesOf(b.startTime)));
+              // Heures toujours présentes ici : un blocage sans heures (journée entière) a déjà sauté ce jour.
+              for (const b of blocks) free -= Math.max(0, Math.min(close, minutesOf(b.endTime!)) - Math.max(open, minutesOf(b.startTime!)));
               openMin += Math.max(0, free) * posts;
             }
             const weekSet = new Set(weekDates.map(ymd));
@@ -1420,7 +1422,7 @@ export default function DashboardGaragePage() {
               <p className="text-gray-400 text-sm">{tr("Aucun avis pour l'instant. Encouragez vos clients à laisser un avis!")}</p>
             ) : (
               <div className="space-y-4">
-                {reviews.map((r: any) => (
+                {reviews.map((r) => (
                   <div key={r.id} className="rounded-xl border p-4 transition-all bg-white border-gray-200">
                     {/* Review header */}
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -2054,9 +2056,9 @@ export default function DashboardGaragePage() {
                             <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: sc.bg, color: sc.color }}>{tr(sc.label)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{a.customerPhone}{a.serviceName ? ` · ${translateServiceName(a.serviceName, tr.en ? "en" : "fr")}` : ""}</p>
-                          {(a as any).notes && (
+                          {a.notes && (
                             <p className="text-xs mt-1 px-2 py-1 rounded-lg" style={{ background: "#fef9f0", color: "#92400e", border: "1px solid #fde68a" }}>
-                              {(a as any).notes}
+                              {a.notes}
                             </p>
                           )}
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -2399,7 +2401,7 @@ export default function DashboardGaragePage() {
                     {hasEyeDropper && (
                     <button type="button" title={tr("Pipette : choisir une couleur à l'écran")}
                       onClick={async () => {
-                        try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
+                        try { const { sRGBHex } = await (new (window as unknown as { EyeDropper: EyeDropperCtor }).EyeDropper()).open(); setCoverBgColor(sRGBHex); setShowCoverColorPicker(false); } catch { /**/ }
                       }}
                       className="text-xs px-3 min-h-[44px] sm:min-h-0 sm:px-2.5 sm:py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
                       {tr("Pipette")}
@@ -2530,7 +2532,7 @@ export default function DashboardGaragePage() {
                         {hasEyeDropper && (
                         <button type="button" title={tr("Pipette")}
                           onClick={async () => {
-                            try { const { sRGBHex } = await (new (window as any).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
+                            try { const { sRGBHex } = await (new (window as unknown as { EyeDropper: EyeDropperCtor }).EyeDropper()).open(); setLogoBgColor(sRGBHex); setShowLogoColorPicker(false); } catch { /**/ }
                           }}
                           className="text-xs px-1.5 py-0.5 min-h-[44px] sm:min-h-0 rounded border border-gray-200 hover:bg-gray-50 text-gray-600">
                           {tr("Pipette")}
@@ -2658,7 +2660,7 @@ export default function DashboardGaragePage() {
           </div>
 
           {/* ── Description section ─────────────────────────────────────────── */}
-          <DescriptionSection garage={garage} inputClass={inputClass} onUpdated={(data) => setGarage((g: any) => ({ ...g, ...data }))} />
+          <DescriptionSection garage={garage} inputClass={inputClass} onUpdated={(data) => setGarage((g) => (g ? { ...g, ...data } : g))} />
 
         </div>
       )}

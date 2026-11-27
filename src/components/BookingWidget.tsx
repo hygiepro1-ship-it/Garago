@@ -123,7 +123,7 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         if (Array.isArray(data.vehicles) && data.vehicles.length > 0) {
           setUserVehicles(data.vehicles);
           // Pre-select default vehicle (or first one)
-          const def = data.vehicles.find((v: any) => v.isDefault) ?? data.vehicles[0];
+          const def = data.vehicles.find((v: { isDefault?: boolean }) => v.isDefault) ?? data.vehicles[0];
           setSelectedVehicleId(def.id);
           setVehicleYear(String(def.year));
           setVehicleMake(def.make);

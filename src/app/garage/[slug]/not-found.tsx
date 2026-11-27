@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import NotFound from "@/app/not-found";
 import GarageProfileClient from "./GarageProfileClient";
+import type { PublicGarageProfile } from "@/lib/garage-profile";
 
 /**
  * 404 d'une fiche de garage. La page étant en cache (ISR), elle ne lit pas la session : une fiche dont le NEQ
@@ -14,7 +15,7 @@ import GarageProfileClient from "./GarageProfileClient";
 export default function GarageNotFound() {
   const { slug } = useParams() as { slug: string };
   const { status } = useSession();
-  const [preview, setPreview] = useState<any>(null);
+  const [preview, setPreview] = useState<PublicGarageProfile | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated" || !slug) return;

@@ -183,11 +183,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, userId: user.id });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[register] Erreur :", err);
     // Retourner un message plus précis en développement
-    const msg = process.env.NODE_ENV !== "production" && err?.message
-      ? `Erreur serveur : ${err.message}`
+    const msg = process.env.NODE_ENV !== "production" && (err as Error | undefined)?.message
+      ? `Erreur serveur : ${(err as Error).message}`
       : "Erreur serveur";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

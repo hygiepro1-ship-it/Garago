@@ -33,7 +33,8 @@ export async function GET() {
   const sub = subs.data.find((s) => ["active", "trialing", "past_due"].includes(s.status));
   if (!sub) return NextResponse.json({ hasSubscription: false });
 
-  const subAny = sub as any;
+  // current_period_end a quitté l'objet Subscription dans les API récentes (il est sur chaque ligne) : lu s'il existe.
+  const subAny = sub as typeof sub & { current_period_end?: number };
   const interval: string = subAny.items?.data?.[0]?.price?.recurring?.interval ?? "month";
   const currency: string = (subAny.currency ?? "cad").toUpperCase();
 
@@ -61,7 +62,7 @@ export async function GET() {
     if (pm.type === "card" && pm.card) {
       paymentMethod = { type: "card", brand: pm.card.brand, last4: pm.card.last4 };
     } else if (pm.type === "acss_debit" && pm.acss_debit) {
-      paymentMethod = { type: "acss_debit", last4: pm.acss_debit.last4 };
+      paymentMethod = { type: "acss_debit", last4: pm.acss_debit.last4 ?? undefined };
     } else {
       paymentMethod = { type: pm.type };
     }

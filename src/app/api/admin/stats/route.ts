@@ -116,7 +116,7 @@ export async function GET(_req: NextRequest) {
     prisma.claimRequest.count({ where: { createdAt: { gte: d30 } } }),
   ]);
 
-  const groupToMap = (rows: any[], key: string) =>
+  const groupToMap = <R extends { _count: unknown }>(rows: R[], key: keyof R) =>
     Object.fromEntries(rows.map((r) => [r[key], r._count]));
 
   const mrr = activeMonthly * MONTHLY_PRICE + activeAnnual * ANNUAL_MONTHLY_EQUIVALENT + activeBranches * BRANCH_ADDON;
@@ -142,8 +142,8 @@ export async function GET(_req: NextRequest) {
       noServices: garagesNoServices,
       noReviews: garagesNoReviews,
       byCity: garagesByCity
-        .map((g: any) => ({ city: g.city || "—", count: g._count }))
-        .sort((a: any, b: any) => b.count - a.count)
+        .map((g) => ({ city: g.city || "—", count: g._count }))
+        .sort((a, b) => b.count - a.count)
         .slice(0, 10),
     },
     revenue: {
@@ -155,11 +155,11 @@ export async function GET(_req: NextRequest) {
       totalAppointments, appointments30d,
       appointmentsByStatus30d: groupToMap(appointmentsByStatus30d, "status"),
       totalReviews, avgRating: ratingAgg._avg.rating,
-      topGarages: topByAppointments.map((g: any) => ({
+      topGarages: topByAppointments.map((g) => ({
         id: g.id, name: g.name, slug: g.slug, city: g.city, subscriptionStatus: g.subscriptionStatus,
         appointmentCount: g._count.appointments, reviewCount: g._count.reviews,
       })),
-      leastActiveGarages: leastActiveGarages.map((g: any) => ({
+      leastActiveGarages: leastActiveGarages.map((g) => ({
         id: g.id, name: g.name, slug: g.slug, city: g.city, phone: g.phone,
         subscriptionStatus: g.subscriptionStatus, createdAt: g.createdAt,
         ownerName: g.owner?.name ?? null, ownerEmail: g.owner?.email ?? null,

@@ -16,7 +16,8 @@ import { revalidateAllGarages } from "@/lib/revalidate-garage";
 export async function syncSubscriptionToGarage(sub: import("stripe").Stripe.Subscription) {
   const isTrialing = sub.status === "trialing";
   const isActive   = sub.status === "active";
-  const subAny     = sub as any;
+  // current_period_end a quitté l'objet Subscription dans les API récentes : lu s'il existe.
+  const subAny     = sub as typeof sub & { current_period_end?: number };
   const endDate    = subAny.current_period_end
     ? new Date(subAny.current_period_end * 1000)
     : null;
