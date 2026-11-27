@@ -204,6 +204,7 @@ export async function POST(req: NextRequest) {
           endTime,
           status: "CONFIRMED",
           source: "ONLINE",
+          language: body.language === "en" ? "en" : "fr",
           confirmationStatus: plan.confirmationStatus,
           confirmTier:        plan.confirmTier,
           confirmBy:          plan.confirmBy,

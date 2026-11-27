@@ -203,7 +203,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
           data: { arrivalReminderAt: now },
         });
         if (claimed.count !== 1) continue;
-        await sendArrivalReminder({ ...details, confirmUrl: confirmPageUrl(token) });
+        await sendArrivalReminder({ ...details, confirmUrl: confirmPageUrl(token), lang: a.language === "en" ? "en" : "fr" });
         stats.arrivalReminders++;
       }
     } catch (e) {

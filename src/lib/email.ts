@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
 import { GOOGLE_REVIEW_URL } from "@/lib/google-business";
 import { icsToken } from "@/lib/ics-token";
+import { translateServiceName } from "@/lib/services";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -250,13 +251,14 @@ function baseLayout(body: string, lang: "fr" | "en" = "fr"): string {
 }
 
 /** Renders the standard appointment details card. */
-function appointmentCard(appt: AppointmentDetails): string {
+function appointmentCard(appt: AppointmentDetails, lang: "fr" | "en" = "fr"): string {
+  const en = lang === "en";
   return infoCard(`
-    ${appt.serviceName ? row("Service", esc(appt.serviceName)) : ""}
-    ${row("Date", fmtDateFr(appt.date))}
-    ${row("Heure", `${esc(appt.startTime)} – ${esc(appt.endTime)}`)}
+    ${appt.serviceName ? row("Service", esc(translateServiceName(appt.serviceName, lang))) : ""}
+    ${row("Date", fmtDateLang(appt.date, lang))}
+    ${row(en ? "Time" : "Heure", `${esc(appt.startTime)} – ${esc(appt.endTime)}`)}
     ${row("Garage", esc(appt.garageName))}
-    ${row("Adresse", esc(appt.garageAddress), true)}
+    ${row(en ? "Address" : "Adresse", esc(appt.garageAddress), true)}
   `);
 }
 
@@ -1270,24 +1272,35 @@ export interface ArrivalReminderParams extends AppointmentDetails {
   customerName: string;
   garagePhone:  string;
   confirmUrl:   string;
+  /** Langue du client (celle du site au moment de la réservation). */
+  lang?:        "fr" | "en";
 }
 
 export async function sendArrivalReminder(params: ArrivalReminderParams) {
   if (!canSend()) return;
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
 
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vous arrivez ?</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, votre rendez-vous a lieu dans environ 2 heures.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "On your way?" : "Vous arrivez ?"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, your appointment is in about 2 hours.`
+      : `Bonjour ${esc(params.customerName)}, votre rendez-vous a lieu dans environ 2 heures.`}</p>
 
-    ${appointmentCard(params)}
+    ${appointmentCard(params, lang)}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Un imprévu ? Prévenez le garage en annulant ici, pour qu'un autre conducteur profite du créneau.</p>
-    <p style="margin:0 0 20px">${secondaryBtn(params.confirmUrl, "Voir ou annuler mon rendez-vous")}</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en
+      ? "Something came up? Let the garage know by cancelling here, so another driver can take the time slot."
+      : "Un imprévu ? Prévenez le garage en annulant ici, pour qu'un autre conducteur profite du créneau."}</p>
+    <p style="margin:0 0 20px">${secondaryBtn(params.confirmUrl, en ? "View or cancel my appointment" : "Voir ou annuler mon rendez-vous")}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Vous arrivez ? ${params.garageName} à ${params.startTime}`, body);
+  const subject = en
+    ? `On your way? ${params.garageName} at ${params.startTime}`
+    : `Vous arrivez ? ${params.garageName} à ${params.startTime}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 export interface GarageSlotReleasedParams {

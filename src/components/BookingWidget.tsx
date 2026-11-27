@@ -193,6 +193,8 @@ export default function BookingWidget({ garageId, garageSlug, garageName, garage
         notes:         notes.trim() || null,
         date:      formatDate(selectedDate!),
         startTime: selectedSlot,
+        // Langue du site au moment de la réservation : celle des courriels et de la page de confirmation.
+        language:  lang,
       }),
     });
     setSubmitting(false);
