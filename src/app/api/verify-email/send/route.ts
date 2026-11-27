@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     let emailSent = false;
     let emailError: string | null = null;
     try {
-      await sendVerificationCode(email, code);
+      await sendVerificationCode(email, code, body?.lang === "en" ? "en" : "fr");
       emailSent = true;
     } catch (emailErr: any) {
       console.error("[verify-email/send] Échec d'envoi du courriel :", emailErr);

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       await prisma.passwordResetCode.create({ data: { email, code, expiresAt } });
 
       try {
-        await sendPasswordResetCode(email, code);
+        await sendPasswordResetCode(email, code, body?.lang === "en" ? "en" : "fr");
       } catch (e) {
         console.error("[reset-password/send] Échec d'envoi :", e);
       }

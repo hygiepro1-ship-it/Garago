@@ -277,15 +277,16 @@ async function send(to: string | string[], subject: string, body: string, fromNa
 
 // ─── Email: Vérification de compte ───────────────────────────────────────────
 
-export async function sendVerificationCode(to: string, code: string) {
+export async function sendVerificationCode(to: string, code: string, lang: "fr" | "en" = "fr") {
   if (!canSend()) {
     console.log(`[DEV] Code de vérification pour ${to} : ${code}`);
     return;
   }
 
+  const en = lang === "en";
   const body = `
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Vérification de votre courriel</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bienvenue sur Garago ! Voici votre code de vérification :</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Verify your email" : "Vérification de votre courriel"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en ? "Welcome to Garago! Here is your verification code:" : "Bienvenue sur Garago ! Voici votre code de vérification :"}</p>
 
     <div style="text-align:center;margin:32px 0">
       <div style="display:inline-block;background:#0b1f3a;border-radius:6px;padding:24px 40px">
@@ -293,26 +294,27 @@ export async function sendVerificationCode(to: string, code: string) {
       </div>
     </div>
 
-    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">Ce code est valide pendant <strong>15 minutes</strong>.</p>
-    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé ce code, ignorez simplement ce message.</p>
+    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">${en ? "This code is valid for <strong>15 minutes</strong>." : "Ce code est valide pendant <strong>15 minutes</strong>."}</p>
+    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">${en ? "If you did not request this code, simply ignore this message." : "Si vous n'avez pas demandé ce code, ignorez simplement ce message."}</p>
     ${HR}
-    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">${en ? "Never share this code with anyone." : "Ne partagez jamais ce code avec qui que ce soit."}</p>
   `;
 
-  await send(to, `${code} : Code de vérification Garago`, body);
+  await send(to, en ? `${code}: Garago verification code` : `${code} : Code de vérification Garago`, body, undefined, lang);
 }
 
 // ─── Email: Réinitialisation de mot de passe ──────────────────────────────────
 
-export async function sendPasswordResetCode(to: string, code: string) {
+export async function sendPasswordResetCode(to: string, code: string, lang: "fr" | "en" = "fr") {
   if (!canSend()) {
     console.log(`[DEV] Code de réinitialisation pour ${to} : ${code}`);
     return;
   }
 
+  const en = lang === "en";
   const body = `
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Réinitialisation de mot de passe</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Voici votre code pour réinitialiser votre mot de passe Garago :</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Reset your password" : "Réinitialisation de mot de passe"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en ? "Here is your code to reset your Garago password:" : "Voici votre code pour réinitialiser votre mot de passe Garago :"}</p>
 
     <div style="text-align:center;margin:32px 0">
       <div style="display:inline-block;background:#0b1f3a;border-radius:6px;padding:24px 40px">
@@ -320,13 +322,13 @@ export async function sendPasswordResetCode(to: string, code: string) {
       </div>
     </div>
 
-    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">Ce code est valide pendant <strong>15 minutes</strong>.</p>
-    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement ce message. Votre mot de passe ne changera pas.</p>
+    <p style="margin:0 0 8px;color:#374151;font-size:14px;text-align:center">${en ? "This code is valid for <strong>15 minutes</strong>." : "Ce code est valide pendant <strong>15 minutes</strong>."}</p>
+    <p style="margin:0;color:#9ca3af;font-size:13px;text-align:center">${en ? "If you did not request a password reset, simply ignore this message. Your password will not change." : "Si vous n'avez pas demandé cette réinitialisation, ignorez simplement ce message. Votre mot de passe ne changera pas."}</p>
     ${HR}
-    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">Ne partagez jamais ce code avec qui que ce soit.</p>
+    <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">${en ? "Never share this code with anyone." : "Ne partagez jamais ce code avec qui que ce soit."}</p>
   `;
 
-  await send(to, `${code} : Réinitialisation de mot de passe Garago`, body);
+  await send(to, en ? `${code}: Reset your Garago password` : `${code} : Réinitialisation de mot de passe Garago`, body, undefined, lang);
 }
 
 // ─── Email: Confirmation de rendez-vous (client) ──────────────────────────────

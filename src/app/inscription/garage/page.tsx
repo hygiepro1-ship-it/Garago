@@ -272,7 +272,7 @@ export default function InscriptionGaragePage() {
       const res = await fetch("/api/verify-email/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, turnstileToken: tsToken }),
+        body: JSON.stringify({ email, turnstileToken: tsToken, lang }),
       });
       const data = await res.json();
       if (!res.ok) { setTsReset((n) => n + 1); setCodeError(data.error ?? "Erreur lors de l'envoi."); return; }

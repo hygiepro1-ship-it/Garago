@@ -64,6 +64,22 @@ test("client anglophone : aucun courriel ne contient de français, date et servi
   assert.equal(mails[1].subject, "Appointment at Garage Test: December 1, 2026 at 16:00");
 });
 
+test("codes de vérification et de mot de passe : anglais ou français selon la langue du site", async () => {
+  const m = await import("../../src/lib/email");
+  sent = [];
+  await m.sendVerificationCode("a@exemple.com", "123456", "en");
+  await m.sendPasswordResetCode("a@exemple.com", "654321", "en");
+  await m.sendVerificationCode("a@exemple.com", "123456");
+  await m.sendPasswordResetCode("a@exemple.com", "654321");
+  assert.deepEqual(sent.map((s) => s.subject), [
+    "123456: Garago verification code", "654321: Reset your Garago password",
+    "123456 : Code de vérification Garago", "654321 : Réinitialisation de mot de passe Garago",
+  ]);
+  for (const s of sent.slice(0, 2)) assert.doesNotMatch(s.html, /Ce code|Bienvenue|Voici|Ne partagez/);
+  assert.match(sent[0].html, /valid for <strong>15 minutes/);
+  assert.match(sent[2].html, /valide pendant <strong>15 minutes/);
+});
+
 test("client francophone, ou langue inconnue : courriels en français, identiques entre eux", async () => {
   const fr = await all("fr");
   const unknown = await all();

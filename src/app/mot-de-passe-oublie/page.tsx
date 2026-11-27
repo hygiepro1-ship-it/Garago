@@ -78,7 +78,8 @@ function CodeInput({ value, onChange, disabled }: { value: string; onChange: (v:
 }
 
 export default function MotDePasseOubliePage() {
-  const tx = TX[useLang().lang];
+  const { lang } = useLang();
+  const tx = TX[lang];
   const [step, setStep] = useState<"email" | "reset" | "done">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -94,7 +95,7 @@ export default function MotDePasseOubliePage() {
     try {
       const res = await fetch("/api/auth/reset-password/send", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, lang }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? tx.generic); setLoading(false); return; }
