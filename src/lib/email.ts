@@ -38,6 +38,8 @@ interface AppointmentDetails {
   endTime:       string;
   garageName:    string;
   garageAddress: string;
+  /** Langue du client : celle du site au moment de la réservation, ou celle choisie par le garage. */
+  lang?:         "fr" | "en";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,10 +58,14 @@ function fmtDateFr(dateStr: string): string {
  * requise), Apple/Outlook desktop/autres via le fichier .ics déjà généré par
  * /api/appointments/[id]/ics. Mêmes paramètres que ceux de BookingWidget. */
 function calendarLinks(appt: AppointmentDetails & { appointmentId: string }): { google: string; outlook: string; ics: string } {
+  const en = appt.lang === "en";
   const start = `${appt.date.replace(/-/g, "")}T${appt.startTime.replace(":", "")}00`;
   const end   = `${appt.date.replace(/-/g, "")}T${appt.endTime.replace(":", "")}00`;
-  const title = `RDV ${appt.garageName}${appt.serviceName ? ` · ${appt.serviceName}` : ""}`;
-  const details = `Rendez-vous chez ${appt.garageName}${appt.serviceName ? `\nService : ${appt.serviceName}` : ""}`;
+  const service = appt.serviceName ? translateServiceName(appt.serviceName, en ? "en" : "fr") : "";
+  const title = `${en ? "Appointment" : "RDV"} ${appt.garageName}${service ? ` · ${service}` : ""}`;
+  const details = en
+    ? `Appointment at ${appt.garageName}${service ? `\nService: ${service}` : ""}`
+    : `Rendez-vous chez ${appt.garageName}${service ? `\nService : ${service}` : ""}`;
 
   const google = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
     `&text=${encodeURIComponent(title)}` +
@@ -339,41 +345,55 @@ export interface BookingConfirmationParams extends AppointmentDetails {
 export async function sendBookingConfirmation(params: BookingConfirmationParams) {
   if (!canSend()) return;
 
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
   const cal = calendarLinks(params);
 
   const body = `
     ${iconBadge(params.confirmUrl ? "calendar" : "check")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${params.confirmUrl ? "Rendez-vous réservé : confirmez votre venue" : "Rendez-vous confirmé"}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${params.confirmUrl ? "votre créneau est réservé. Confirmez que vous venez pour le garder." : "votre rendez-vous est confirmé."}</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${params.confirmUrl
+      ? (en ? "Appointment booked: please confirm you are coming" : "Rendez-vous réservé : confirmez votre venue")
+      : (en ? "Appointment confirmed" : "Rendez-vous confirmé")}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en ? "Hello" : "Bonjour"} ${esc(params.customerName)}, ${params.confirmUrl
+      ? (en ? "your time slot is booked. Confirm that you are coming to keep it." : "votre créneau est réservé. Confirmez que vous venez pour le garder.")
+      : (en ? "your appointment is confirmed." : "votre rendez-vous est confirmé.")}</p>
 
-    ${appointmentCard(params)}
+    ${appointmentCard(params, lang)}
 
     ${params.confirmUrl ? `
     <div style="background:#fdf1d8;border-radius:6px;padding:16px 18px;margin:0 0 24px">
-      <p style="margin:0 0 6px;color:#7a3d00;font-size:15px;font-weight:800">Confirmez votre venue ${esc(params.confirmDeadline ?? "dans l'heure")}</p>
-      <p style="margin:0 0 14px;color:#7a3d00;font-size:13px">Ce rendez-vous est très proche. Sans confirmation, le créneau est remis à disposition des autres conducteurs.</p>
-      ${confirmCancelBtns(params.confirmUrl, params.cancelUrl ?? params.confirmUrl)}
+      <p style="margin:0 0 6px;color:#7a3d00;font-size:15px;font-weight:800">${en ? "Confirm you are coming" : "Confirmez votre venue"} ${esc(params.confirmDeadline ?? (en ? "within the hour" : "dans l'heure"))}</p>
+      <p style="margin:0 0 14px;color:#7a3d00;font-size:13px">${en
+        ? "This appointment is very soon. Without confirmation, the time slot is released to other drivers."
+        : "Ce rendez-vous est très proche. Sans confirmation, le créneau est remis à disposition des autres conducteurs."}</p>
+      ${en
+        ? confirmCancelBtns(params.confirmUrl, params.cancelUrl ?? params.confirmUrl, "I confirm", "Cancel my booking")
+        : confirmCancelBtns(params.confirmUrl, params.cancelUrl ?? params.confirmUrl)}
     </div>` : ""}
 
     <p style="margin:0 0 16px;color:#374151;font-size:14px">
-      En cas de question, appelez directement le garage :
+      ${en ? "Any questions? Call the garage directly:" : "En cas de question, appelez directement le garage :"}
     </p>
     ${phoneBtn(params.garagePhone)}
 
     ${HR}
-    <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">Ajouter à votre calendrier</p>
-    <p style="margin:0 0 16px;color:#6b7280;font-size:13px">Ne manquez pas votre rendez-vous :</p>
+    <p style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:700">${en ? "Add to your calendar" : "Ajouter à votre calendrier"}</p>
+    <p style="margin:0 0 16px;color:#6b7280;font-size:13px">${en ? "Don't miss your appointment:" : "Ne manquez pas votre rendez-vous :"}</p>
     <table cellpadding="0" cellspacing="0"><tr>
       <td style="padding-right:8px;padding-bottom:8px">${secondaryBtn(cal.google, "Google Calendar")}</td>
       <td style="padding-bottom:8px">${secondaryBtn(cal.outlook, "Outlook")}</td>
     </tr></table>
-    ${secondaryBtn(cal.ics, "Apple Calendar / autre (.ics)")}
+    ${secondaryBtn(cal.ics, en ? "Apple Calendar / other (.ics)" : "Apple Calendar / autre (.ics)")}
   `;
 
   const subject = params.confirmUrl
-    ? `Confirmez dans l'heure : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`
-    : `RDV ${params.garageName} : ${fmtDateFr(params.date)} à ${params.startTime}`;
-  await send(params.to, subject, body);
+    ? (en
+        ? `Confirm within the hour: ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+        : `Confirmez dans l'heure : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`)
+    : (en
+        ? `Appointment at ${params.garageName}: ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+        : `RDV ${params.garageName} : ${fmtDateFr(params.date)} à ${params.startTime}`);
+  await send(params.to, subject, body, undefined, lang);
 }
 
 // ─── Email: Nouveau rendez-vous (garage) ──────────────────────────────────────
@@ -532,18 +552,26 @@ export interface BookingReminderParams extends AppointmentDetails {
 export async function sendBookingReminder(params: BookingReminderParams) {
   if (!canSend()) return;
 
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
+
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Rappel : votre rendez-vous est demain</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, voici un rappel de votre rendez-vous prévu demain.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Reminder: your appointment is tomorrow" : "Rappel : votre rendez-vous est demain"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, this is a reminder of your appointment tomorrow.`
+      : `Bonjour ${esc(params.customerName)}, voici un rappel de votre rendez-vous prévu demain.`}</p>
 
-    ${appointmentCard(params)}
+    ${appointmentCard(params, lang)}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Des questions ? Contactez le garage directement :</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en ? "Any questions? Contact the garage directly:" : "Des questions ? Contactez le garage directement :"}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Rappel RDV demain : ${params.garageName} à ${params.startTime}`, body);
+  const subject = en
+    ? `Reminder, appointment tomorrow: ${params.garageName} at ${params.startTime}`
+    : `Rappel RDV demain : ${params.garageName} à ${params.startTime}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 // ─── Email: Rappel d'entretien véhicule ───────────────────────────────────────
@@ -629,30 +657,38 @@ export interface RescheduleParams extends AppointmentDetails {
 export async function sendRescheduleNotification(params: RescheduleParams) {
   if (!canSend()) return;
 
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
+  const serviceOnly = params.what === "service";
+
   const rescheduledCard = infoCard(`
-    ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
-    ${row(params.what === "service" ? "Date" : "Nouvelle date", fmtDateFr(params.date))}
-    ${row(params.what === "service" ? "Horaire" : "Nouvel horaire", `${esc(params.startTime)} – ${esc(params.endTime)}`)}
+    ${params.serviceName ? row("Service", esc(translateServiceName(params.serviceName, lang))) : ""}
+    ${row(serviceOnly ? "Date" : (en ? "New date" : "Nouvelle date"), fmtDateLang(params.date, lang))}
+    ${row(serviceOnly ? (en ? "Time" : "Horaire") : (en ? "New time" : "Nouvel horaire"), `${esc(params.startTime)} – ${esc(params.endTime)}`)}
     ${row("Garage", esc(params.garageName))}
-    ${row("Adresse", esc(params.garageAddress), true)}
+    ${row(en ? "Address" : "Adresse", esc(params.garageAddress), true)}
   `);
 
+  const title = serviceOnly
+    ? (en ? "Your appointment has been changed" : "Votre rendez-vous a été modifié")
+    : (en ? "Your appointment has been moved" : "Votre rendez-vous a été déplacé");
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${params.what === "service" ? "Votre rendez-vous a été modifié" : "Votre rendez-vous a été déplacé"}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, le garage a modifié ${params.what === "service" ? "le service" : "l'horaire"} de votre rendez-vous.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${title}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, the garage has changed the ${serviceOnly ? "service" : "time"} of your appointment.`
+      : `Bonjour ${esc(params.customerName)}, le garage a modifié ${serviceOnly ? "le service" : "l'horaire"} de votre rendez-vous.`}</p>
 
     ${rescheduledCard}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Des questions ou vous souhaitez annuler ? Contactez le garage :</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en ? "Questions, or want to cancel? Contact the garage:" : "Des questions ou vous souhaitez annuler ? Contactez le garage :"}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(
-    params.to,
-    `${params.what === "service" ? "RDV modifié" : "RDV déplacé"} : ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`,
-    body,
-  );
+  const subject = en
+    ? `${serviceOnly ? "Appointment changed" : "Appointment moved"}: ${params.garageName} · ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+    : `${serviceOnly ? "RDV modifié" : "RDV déplacé"} : ${params.garageName} · ${fmtDateFr(params.date)} à ${params.startTime}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 // ─── Email: Nouvelle suggestion (admin) ───────────────────────────────────────
@@ -697,29 +733,39 @@ export interface AppointmentCancelledParams {
   serviceName:   string | null;
   date:          string;
   startTime:     string;
+  lang?:         "fr" | "en";
 }
 
 /** Le GARAGE annule : le client doit en être informé (sinon il se présente pour rien). */
 export async function sendCancelledByGarage(params: AppointmentCancelledParams) {
   if (!canSend()) return;
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
 
   const body = `
     ${iconBadge("warning")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre rendez-vous a été annulé</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${esc(params.garageName)} a dû annuler votre rendez-vous. Nous sommes désolés pour le dérangement.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Your appointment has been cancelled" : "Votre rendez-vous a été annulé"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, ${esc(params.garageName)} had to cancel your appointment. We are sorry for the inconvenience.`
+      : `Bonjour ${esc(params.customerName)}, ${esc(params.garageName)} a dû annuler votre rendez-vous. Nous sommes désolés pour le dérangement.`}</p>
 
     ${infoCard(`
-      ${params.serviceName ? row("Service", esc(params.serviceName)) : ""}
-      ${row("Date", fmtDateFr(params.date))}
-      ${row("Heure", esc(params.startTime), true)}
+      ${params.serviceName ? row("Service", esc(translateServiceName(params.serviceName, lang))) : ""}
+      ${row("Date", fmtDateLang(params.date, lang))}
+      ${row(en ? "Time" : "Heure", esc(params.startTime), true)}
     `)}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Vous pouvez joindre le garage pour convenir d'une autre date, ou choisir un autre créneau en ligne :</p>
-    <p style="margin:0 0 20px">${primaryBtn(`${BASE_URL}/rechercher`, "Trouver un autre créneau")}</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en
+      ? "You can call the garage to arrange another date, or choose another time slot online:"
+      : "Vous pouvez joindre le garage pour convenir d'une autre date, ou choisir un autre créneau en ligne :"}</p>
+    <p style="margin:0 0 20px">${primaryBtn(`${BASE_URL}${en ? "/en/garages" : "/rechercher"}`, en ? "Find another time slot" : "Trouver un autre créneau")}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Rendez-vous annulé : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`, body);
+  const subject = en
+    ? `Appointment cancelled: ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+    : `Rendez-vous annulé : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 export interface CancelledByCustomerParams {
@@ -1216,29 +1262,42 @@ export interface ConfirmationRequestParams extends AppointmentDetails {
 export async function sendConfirmationRequest(params: ConfirmationRequestParams) {
   if (!canSend()) return;
   const nudge = params.variant === "nudge";
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
 
+  const title = en
+    ? (nudge ? "Last reminder: please confirm your appointment" : "Please confirm your appointment")
+    : (nudge ? "Dernier rappel : confirmez votre rendez-vous" : "Confirmez votre rendez-vous");
+  const intro = en
+    ? (nudge ? "we have not received your confirmation yet." : "your appointment is coming up. One click is all it takes to keep it.")
+    : (nudge ? "nous n'avons pas encore reçu votre confirmation." : "votre rendez-vous approche. Un clic suffit pour le garder.");
   const body = `
     ${iconBadge("calendar")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${nudge ? "Dernier rappel : confirmez votre rendez-vous" : "Confirmez votre rendez-vous"}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, ${nudge ? "nous n'avons pas encore reçu votre confirmation." : "votre rendez-vous approche. Un clic suffit pour le garder."}</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${title}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en ? "Hello" : "Bonjour"} ${esc(params.customerName)}, ${intro}</p>
 
-    ${appointmentCard(params)}
+    ${appointmentCard(params, lang)}
 
-    ${confirmCancelBtns(params.confirmUrl, params.cancelUrl)}
+    ${en
+      ? confirmCancelBtns(params.confirmUrl, params.cancelUrl, "I confirm", "Cancel my booking")
+      : confirmCancelBtns(params.confirmUrl, params.cancelUrl)}
 
     <div style="background:#fdf1d8;border-radius:5px;padding:12px 16px;margin:0 0 20px">
-      <p style="margin:0;color:#7a3d00;font-size:13px;font-weight:700">Sans réponse avant ${esc(params.deadline)}, ce créneau sera remis à disposition des autres conducteurs.</p>
+      <p style="margin:0;color:#7a3d00;font-size:13px;font-weight:700">${en
+        ? `Without a reply by ${esc(params.deadline)}, this time slot will be released to other drivers.`
+        : `Sans réponse avant ${esc(params.deadline)}, ce créneau sera remis à disposition des autres conducteurs.`}</p>
     </div>
 
-    <p style="margin:0 0 12px;color:#374151;font-size:14px">Un empêchement ? Utilisez « J'annule ma réservation » : un autre conducteur pourra prendre votre place.</p>
+    <p style="margin:0 0 12px;color:#374151;font-size:14px">${en
+      ? "Can't make it? Use “Cancel my booking”: another driver will be able to take your place."
+      : "Un empêchement ? Utilisez « J'annule ma réservation » : un autre conducteur pourra prendre votre place."}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(
-    params.to,
-    `${nudge ? "Dernier rappel : confirmez" : "Confirmez"} votre rendez-vous : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`,
-    body,
-  );
+  const subject = en
+    ? `${nudge ? "Last reminder: confirm" : "Confirm"} your appointment: ${params.garageName}, ${fmtDateLang(params.date, "en")} at ${params.startTime}`
+    : `${nudge ? "Dernier rappel : confirmez" : "Confirmez"} votre rendez-vous : ${params.garageName}, ${fmtDateFr(params.date)} à ${params.startTime}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 export interface SlotReleasedParams extends AppointmentDetails {
@@ -1252,19 +1311,27 @@ export interface SlotReleasedParams extends AppointmentDetails {
 export async function sendSlotReleased(params: SlotReleasedParams) {
   if (!canSend()) return;
 
+  const lang = params.lang === "en" ? "en" : "fr";
+  const en = lang === "en";
+
   const body = `
     ${iconBadge("warning")}
-    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">Votre créneau a été libéré</h2>
-    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">Bonjour ${esc(params.customerName)}, nous n'avons pas reçu votre confirmation : ce créneau est remis à disposition des autres conducteurs.</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:800">${en ? "Your time slot has been released" : "Votre créneau a été libéré"}</h2>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:15px">${en
+      ? `Hello ${esc(params.customerName)}, we did not receive your confirmation: this time slot is now available to other drivers.`
+      : `Bonjour ${esc(params.customerName)}, nous n'avons pas reçu votre confirmation : ce créneau est remis à disposition des autres conducteurs.`}</p>
 
-    ${appointmentCard(params)}
+    ${appointmentCard(params, lang)}
 
-    <p style="margin:0 0 16px;color:#374151;font-size:14px">Toujours intéressé ? Si le créneau est encore libre, vous pouvez le reprendre en un clic.</p>
-    <p style="margin:0 0 20px">${primaryBtn(params.retakeUrl, "Reprendre ce créneau")}</p>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px">${en
+      ? "Still interested? If the time slot is still free, you can take it back in one click."
+      : "Toujours intéressé ? Si le créneau est encore libre, vous pouvez le reprendre en un clic."}</p>
+    <p style="margin:0 0 20px">${primaryBtn(params.retakeUrl, en ? "Take back this time slot" : "Reprendre ce créneau")}</p>
     ${phoneBtn(params.garagePhone)}
   `;
 
-  await send(params.to, `Votre créneau a été libéré : ${params.garageName}`, body);
+  const subject = en ? `Your time slot has been released: ${params.garageName}` : `Votre créneau a été libéré : ${params.garageName}`;
+  await send(params.to, subject, body, undefined, lang);
 }
 
 export interface ArrivalReminderParams extends AppointmentDetails {

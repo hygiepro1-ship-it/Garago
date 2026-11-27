@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
         endTime:       appt.endTime,
         serviceName:   appt.serviceName,
         appointmentId: appt.id,
+        lang:          appt.language === "en" ? "en" : "fr",
       });
       sent++;
     } catch (err) {

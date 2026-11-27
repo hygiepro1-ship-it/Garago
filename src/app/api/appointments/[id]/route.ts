@@ -306,6 +306,7 @@ export async function PATCH(
         jobs.push(sendCancelledByGarage({
           to, customerName: updated.customerName, garageName: updated.garage.name, garagePhone: updated.garage.phone ?? "",
           serviceName: updated.serviceName, date: updated.date, startTime: updated.startTime,
+          lang: updated.language === "en" ? "en" : "fr",
         }).catch((e) => console.error("[CANCELLED BY GARAGE EMAIL]", e)));
       }
     } else {
@@ -339,7 +340,7 @@ export async function PATCH(
     } else if (recipientEmail) {
       await sendRescheduleNotification({
         to: recipientEmail, customerName: a.customerName, garageName: a.garage.name, garagePhone, garageAddress,
-        date: a.date, startTime: a.startTime, endTime: a.endTime, serviceName: a.serviceName, what,
+        date: a.date, startTime: a.startTime, endTime: a.endTime, serviceName: a.serviceName, what, lang,
       }).catch((e) => console.error("[CHANGE EMAIL]", e));
     }
     // Déplacé à moins de 48 h : la demande de confirmation part tout de suite.

@@ -244,9 +244,15 @@ export async function POST(req: NextRequest) {
         endTime:       appt.endTime,
         serviceName:   appt.serviceName,
         appointmentId: appt.id,
+        lang:          appt.language === "en" ? "en" : "fr",
         // Dernière minute : la confirmation se fait dès ce premier courriel.
         ...(plan.confirmTier === "LAST_MINUTE" && plan.confirmToken && plan.confirmBy
-          ? { confirmUrl: confirmPageUrl(plan.confirmToken), cancelUrl: cancelPageUrl(plan.confirmToken), confirmDeadline: `avant ${formatQuebecMoment(plan.confirmBy)}` }
+          ? {
+              confirmUrl: confirmPageUrl(plan.confirmToken), cancelUrl: cancelPageUrl(plan.confirmToken),
+              confirmDeadline: appt.language === "en"
+                ? `by ${formatQuebecMoment(plan.confirmBy, "en")}`
+                : `avant ${formatQuebecMoment(plan.confirmBy)}`,
+            }
           : {}),
       }).catch(e => console.error("[BOOKING CONFIRMATION EMAIL]", e))
     );

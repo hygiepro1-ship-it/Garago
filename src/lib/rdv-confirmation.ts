@@ -63,9 +63,9 @@ export function quebecDateStr(at: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: QUEBEC_TZ }).format(at);
 }
 
-/** « jeudi 8 octobre à 20 h 00 » */
-export function formatQuebecMoment(at: Date): string {
-  return new Intl.DateTimeFormat("fr-CA", {
+/** « jeudi 8 octobre à 20 h 00 », ou « Thursday, October 8 at 8:00 p.m. » en anglais. */
+export function formatQuebecMoment(at: Date, lang: "fr" | "en" = "fr"): string {
+  return new Intl.DateTimeFormat(lang === "en" ? "en-CA" : "fr-CA", {
     timeZone: QUEBEC_TZ, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
   }).format(at);
 }

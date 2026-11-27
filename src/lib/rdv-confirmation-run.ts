@@ -54,6 +54,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
       garageAddress: [a.garage.address, a.garage.city].filter(Boolean).join(", "),
       date: a.date, startTime: a.startTime, endTime: a.endTime,
       serviceName: a.serviceName,
+      lang: (a.language === "en" ? "en" : "fr") as "fr" | "en",
     };
 
     try {
@@ -133,7 +134,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(deadline), variant: "request" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(deadline, details.lang), variant: "request" });
           stats.requested++;
         } catch (e) {
           // Courriel non parti : on remet en file plutôt que de risquer de libérer le créneau d'un client jamais prévenu.
@@ -182,7 +183,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
         });
         if (claimed.count !== 1) continue;
         try {
-          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(a.confirmBy), variant: "nudge" });
+          await sendConfirmationRequest({ ...details, confirmUrl: confirmPageUrl(token), cancelUrl: cancelPageUrl(token), deadline: formatQuebecMoment(a.confirmBy, details.lang), variant: "nudge" });
           stats.nudged++;
         } catch (e) {
           await prisma.appointment.updateMany({ where: { id: a.id }, data: { confirmNudgeAt: null } });
@@ -203,7 +204,7 @@ export async function processRdvConfirmations(now: Date = new Date(), onlyId?: s
           data: { arrivalReminderAt: now },
         });
         if (claimed.count !== 1) continue;
-        await sendArrivalReminder({ ...details, confirmUrl: confirmPageUrl(token), lang: a.language === "en" ? "en" : "fr" });
+        await sendArrivalReminder({ ...details, confirmUrl: confirmPageUrl(token) });
         stats.arrivalReminders++;
       }
     } catch (e) {
