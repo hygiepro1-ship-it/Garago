@@ -54,3 +54,6 @@ prisma/*.db-wal
 
 .vercel
 apercu-courriels/
+
+# Rapports d'audit : gardés en local, jamais publiés (le dépôt est public)
+/docs/audit/
