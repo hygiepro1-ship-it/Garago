@@ -35,8 +35,8 @@ jobs:
         # Les tests en échec sont aussi publiés en annotations (lisibles sans connexion à GitHub).
         run: |
           set -o pipefail
-          npm test 2>&1 | tee test.log
-          status=$?
+          status=0
+          npm test 2>&1 | tee test.log || status=$?
           if [ $status -ne 0 ]; then
             { grep -aE "^not ok|✖|AssertionError|Error|expected|actual|Cannot|failed" test.log | head -20; tail -n 25 test.log; } | while IFS= read -r line; do [ -n "$line" ] && echo "::error title=Test en échec::$line"; done
           fi
