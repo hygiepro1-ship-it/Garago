@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useLang } from "@/contexts/LanguageContext";
+import { useIsClient } from "@/lib/use-location-search";
 
 // Simple math captcha — 2 random numbers 1–9
 function newCaptcha() {
@@ -21,7 +22,11 @@ export default function SuggestionsPage() {
   const [sending, setSending] = useState(false);
   const [done, setDone]       = useState(false);
   const [error, setError]     = useState("");
-  const [captcha, setCaptcha] = useState(newCaptcha);
+  // Addition tirée au hasard dans le navigateur seulement : tirée aussi au rendu serveur, elle différerait
+  // de celle du navigateur (erreur d'hydratation). Un « ? » s'affiche le temps de l'hydratation.
+  const isClient = useIsClient();
+  const [captcha, setCaptcha] = useState<ReturnType<typeof newCaptcha> | null>(null);
+  if (isClient && !captcha) setCaptcha(newCaptcha());
   const [captchaVal, setCaptchaVal] = useState("");
   const [captchaErr, setCaptchaErr] = useState(false);
 
@@ -50,7 +55,7 @@ export default function SuggestionsPage() {
     setCaptchaErr(false);
 
     // Captcha check (client-side guard)
-    if (captchaVal.trim() !== captcha.answer) {
+    if (!captcha || captchaVal.trim() !== captcha.answer) {
       setCaptchaErr(true);
       setCaptcha(newCaptcha());
       setCaptchaVal("");
@@ -182,7 +187,7 @@ export default function SuggestionsPage() {
               </label>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 font-mono font-bold text-gray-900 text-lg select-none flex-shrink-0">
-                  {captcha.a} + {captcha.b} = ?
+                  {captcha ? `${captcha.a} + ${captcha.b} = ?` : "… + … = ?"}
                 </div>
                 <input
                   type="text"
