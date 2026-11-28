@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { activeSubscriptionOr } from "@/lib/garage-access";
-import { garageDistance } from "@/lib/geo";
+import { garageDistance, haversineKm, CITY_COORDINATES } from "@/lib/geo";
 import { toPublicGarage } from "@/lib/public-garage";
 import { findNextAvailability, quebecToday, addDaysStr, garageTimeZone, type BlockedRow } from "@/lib/availability";
 import { serviceIdsFor } from "@/lib/services";
@@ -9,6 +9,9 @@ import { notTestGarage } from "@/lib/test-garages";
 import { VISIBLE_REVIEWS, averageRating } from "@/lib/garage-rating";
 import { FREE_SLOT_STATUSES } from "@/lib/rdv-confirmation";
 import type { Prisma } from "@/generated/prisma/client";
+
+// Rayons de recherche autour du conducteur, essayés dans l'ordre (km).
+const SEARCH_RADII_KM = [15, 40, 100, 300] as const;
 
 export async function GET(req: NextRequest) {
   try {
@@ -149,20 +152,46 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    // Avec géolocalisation : on classe TOUS les garages correspondants par distance à partir de leurs seules
-    // coordonnées (quelques octets par garage), puis on charge le détail complet (services, avis, horaires,
-    // disponibilités) uniquement pour la page demandée. Avant, les 800+ garages étaient chargés au complet
-    // avec leurs disponibilités à chaque recherche, ce qui ne tiendrait pas à 10 000 garages.
+    // Avec géolocalisation : on cherche par rayons croissants autour du conducteur (préfiltre en carré sur
+    // l'index latitude/longitude, puis cercle exact), et on s'arrête au premier rayon qui contient assez de
+    // garages pour la page demandée. Seules les coordonnées de ces garages proches sortent de la base ; le détail
+    // complet (services, avis, horaires, disponibilités) n'est chargé que pour la page affichée.
+    // Au-delà du plus grand rayon (région isolée), on retombe sur tous les garages, classés par distance.
     let rawGarages;
     let total: number;
+    let searchRadiusKm: number | null = null;
+    let canWiden = false;
     if (hasPos) {
-      const light = await prisma.garage.findMany({
-        where,
-        select: { id: true, latitude: true, longitude: true, city: true },
-      });
-      const ranked = light
-        .map((g) => ({ id: g.id, d: garageDistance(g, { lat, lng }) }))
-        .sort((a, b) => (a.d == null ? (b.d == null ? 0 : 1) : b.d == null ? -1 : a.d - b.d));
+      const need = page * limit;
+      const boxAround = (km: number) => {
+        const dLat = km / 111;
+        const dLng = km / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+        return { latitude: { gte: lat - dLat, lte: lat + dLat }, longitude: { gte: lng - dLng, lte: lng + dLng } };
+      };
+      let ranked: { id: string; d: number | null }[] = [];
+      for (const km of SEARCH_RADII_KM) {
+        // Garages sans coordonnées : placés au centre de leur ville (voir garageDistance) — on ne garde que les villes proches.
+        const nearCities = Object.entries(CITY_COORDINATES)
+          .filter(([, c]) => haversineKm(lat, lng, c.lat, c.lng) <= km)
+          .map(([name]) => name);
+        const rows = await prisma.garage.findMany({
+          where: { AND: [where, { OR: [boxAround(km), { latitude: null, city: { in: nearCities } }] }] },
+          select: { id: true, latitude: true, longitude: true, city: true },
+        });
+        ranked = rows
+          .map((g) => ({ id: g.id, d: garageDistance(g, { lat, lng }) }))
+          .filter((g) => g.d != null && g.d <= km);
+        searchRadiusKm = km;
+        if (ranked.length >= need) break;
+      }
+      // Toujours pas assez près du conducteur : tous les garages correspondants (cas rare, région isolée).
+      if (ranked.length < need) {
+        const rows = await prisma.garage.findMany({ where, select: { id: true, latitude: true, longitude: true, city: true } });
+        ranked = rows.map((g) => ({ id: g.id, d: garageDistance(g, { lat, lng }) }));
+        searchRadiusKm = null;
+      }
+      canWiden = searchRadiusKm !== null && searchRadiusKm < SEARCH_RADII_KM[SEARCH_RADII_KM.length - 1];
+      ranked.sort((a, b) => (a.d == null ? (b.d == null ? 0 : 1) : b.d == null ? -1 : a.d - b.d));
       total = ranked.length;
       const pageIds = ranked.slice((page - 1) * limit, page * limit).map((r) => r.id);
       const rank = new Map(pageIds.map((id, i) => [id, i]));
@@ -267,8 +296,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       garages: pageItems,
       total: effectiveTotal,
-      pages: Math.ceil(effectiveTotal / limit),
+      // Rayon encore élargissable : une page de plus est toujours proposée (le rayon s'agrandit à la demande).
+      pages: Math.max(Math.ceil(effectiveTotal / limit), canWiden ? page + 1 : 0),
       page,
+      radiusKm: searchRadiusKm,
     });
   } catch (err) {
     console.error(err);

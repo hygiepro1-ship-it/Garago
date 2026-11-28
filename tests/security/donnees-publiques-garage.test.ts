@@ -26,9 +26,9 @@ test("seuls les champs de la liste blanche sortent", () => {
 });
 
 test("courriel masqué sauf choix du garage ; avis sans identifiant du client", () => {
-  const out = toPublicGarage(row) as Record<string, any>;
+  const out = toPublicGarage(row) as { email: string | null; reviews: { userId?: string; rating: number }[] };
   assert.equal(out.email, null);
   assert.equal(out.reviews[0].userId, undefined);
   assert.equal(out.reviews[0].rating, 5);
-  assert.equal((toPublicGarage({ ...row, emailPublic: true }) as Record<string, any>).email, "prive@exemple.com");
+  assert.equal((toPublicGarage({ ...row, emailPublic: true }) as { email: string | null }).email, "prive@exemple.com");
 });

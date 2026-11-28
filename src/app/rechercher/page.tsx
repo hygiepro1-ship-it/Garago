@@ -57,6 +57,8 @@ function SearchContent() {
 
   const [garages, setGarages] = useState<SearchGarage[]>([]);
   const [total,   setTotal]   = useState(0);
+  // Rayon parcouru autour du conducteur pour cette recherche (null : sans position, ou tous les garages).
+  const [resultRadiusKm, setResultRadiusKm] = useState<number | null>(null);
   // Recherche dont les résultats (page 1) sont affichés : tant qu'elle diffère de la recherche en cours, on charge.
   const [loadedSearch, setLoadedSearch] = useState<string | null>(null);
   const [page,      setPage]      = useState(1);
@@ -194,6 +196,7 @@ function SearchContent() {
       if (minRating) results = results.filter((g) => g.avgRating >= parseFloat(minRating));
       setGarages((prev) => (targetPage === 1 ? results : [...prev, ...results]));
       setTotal(data.total ?? results.length);
+      setResultRadiusKm(typeof data.radiusKm === "number" ? data.radiusKm : null);
       setHasMore(typeof data.pages === "number" ? targetPage < data.pages : false);
       setPage(targetPage);
     } catch {
@@ -493,6 +496,7 @@ function SearchContent() {
                     <>
                       <strong style={{ color: "#0b1f3a" }}>{total}</strong>{" "}
                       {total !== 1 ? s.garagesFound : s.garageFound}
+                      {sortByDist && userPos && resultRadiusKm != null && <span> {lang === "en" ? `within ${resultRadiusKm} km` : `dans un rayon de ${resultRadiusKm} km`}</span>}
                       {make && <span> · {s.compatible} <strong style={{ color: "#f97316" }}>{[make, model].filter(Boolean).join(" ")}</strong></span>}
                     </>
                   )}
