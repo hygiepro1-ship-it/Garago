@@ -21,7 +21,7 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 | 3 | Sécurité de la base (RLS) | Fermée | Base Postgres chez Neon : seul le serveur s'y connecte, le navigateur n'a aucun accès direct (pas de Supabase ni de Firebase). | — |
 | 4 | À qui appartient chaque donnée | Fermée | Routes garage : `ownedGarageWhere` (`src/lib/garage-access.ts`). Rendez-vous, rappels, véhicules : filtrés par `userId`. Lien calendrier `.ics` : jeton signé (`src/lib/ics-token.ts`) ou client / garage connecté. | `porte4-lien-calendrier.test.ts` |
 | 5 | Espace admin | Fermée | `src/app/tableau-de-bord/admin/layout.tsx` (contrôle serveur de la page) et contrôle du rôle ADMIN dans chaque route `src/app/api/admin/*`. | `porte5-espace-admin.test.ts` |
-| 6 | Limites | Fermée, sauf anti-robot | Inscription : 5 par IP / 15 min et courriel vérifié avant création du compte. Connexion : 8 échecs par courriel et 30 par IP / 15 min (`src/lib/auth.ts`). Courriels de code : limités par IP et par adresse. SMS : 6 par numéro, 100 par garage et 1000 pour le site, par jour (`src/lib/sms.ts`). | `porte6-*.test.ts` |
+| 6 | Limites | Fermée | Inscription : 5 par IP / 15 min et courriel vérifié avant création du compte. Connexion : 8 échecs par courriel et 30 par IP / 15 min (`src/lib/auth.ts`). Courriels de code : limités par IP et par adresse. SMS : 6 par numéro, 100 par garage et 1000 pour le site, par jour (`src/lib/sms.ts`). | `porte6-*.test.ts` |
 | 7 | Webhook de paiement (Stripe) | Fermée | Signature vérifiée avec `STRIPE_WEBHOOK_SECRET` ; événements de plus de 5 minutes refusés (règle Stripe) ; doublons sans effet (abonnement relu chez Stripe, drapeau `referralRewardGranted`). | Vérification manuelle (voir plus bas) |
 
 ## Hors des 7 portes
@@ -38,9 +38,8 @@ grosse modification faite par l'IA. Un test rouge = une porte rouverte : ne pas 
 
 ## À faire de votre côté
 
-- **Anti-robot Cloudflare Turnstile — désactivé en ligne.** Créer un widget sur dash.cloudflare.com → Turnstile
-  (gratuit), puis ajouter `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` dans Vercel (Production)
-  et redéployer. Sans ces clés, `src/lib/turnstile.ts` laisse tout passer.
+- **Anti-robot Cloudflare Turnstile — actif en ligne** (clés dans Vercel Production depuis le 6 octobre 2026 ; case
+  affichée sur l'inscription et la réservation sans compte, vérifié le 28 novembre 2026).
 - **Base de test séparée.** Fait le 26 novembre 2026 : `.env.local` pointe vers la branche Neon de test, et le code
   refuse la base de production hors du site en ligne.
 - **Dépôt GitHub public.** Le code est lisible par tous : le rendre privé (Settings → Danger Zone).
